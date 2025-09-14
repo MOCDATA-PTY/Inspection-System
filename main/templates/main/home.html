@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Food Safety Agency</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        'sidebar-bg': '#1e293b',
+                        'sidebar-text': '#f1f5f9',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            /* Light theme (default) - matching settings.html exactly */
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --spacing: 5px;
+            --sidebar-bg: #ffffff;
+            --sidebar-text: #1f2937;
+            --sidebar-hover: #f3f4f6;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        /* Dark theme - #2D2D2D containers and sidebar */
+        [data-theme="dark"] {
+            --primary: #007890;
+            --primary-light: #1a3a40;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --background: transparent;
+            --card-bg: #2D2D2D;
+            --text: #ffffff;
+            --text-light: #ffffff;
+            --border: #404040;
+            --shadow: 0 1px 3px rgba(0,0,0,0.5);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.6), 0 2px 4px -1px rgba(0,0,0,0.4);
+            --sidebar-bg: #2D2D2D;
+            --sidebar-text: #ffffff;
+            --sidebar-hover: #404040;
+            --input-bg: #2D2D2D;
+            --input-border: #404040;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+        
+        /* Sidebar theme styles */
+        #sidebar {
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a {
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        #sidebar .border-slate-600 {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #sidebar .text-sidebar-text {
+            color: var(--sidebar-text) !important;
+        }
+        
+        /* Force sidebar to be dark in light theme */
+        [data-theme="light"] #sidebar {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar a {
+            color: #f1f5f9 !important;
+        }
+        
+        /* Force sidebar to be #2D2D2D in dark theme */
+        [data-theme="dark"] #sidebar {
+            background-color: #2D2D2D !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] #sidebar a {
+            color: #ffffff !important;
+        }
+        
+        /* Ensure smooth sidebar transitions */
+        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+        }
+        
+        
+        /* Dark mode specific text overrides */
+        [data-theme="dark"] .text-gray-800,
+        [data-theme="dark"] .text-gray-600,
+        [data-theme="dark"] .text-gray-500 {
+            color: #ffffff !important;
+        }
+        
+        /* Exception: Make Quick Actions links black in dark mode */
+        [data-theme="dark"] .quick-action-link span {
+            color: #000000 !important;
+        }
+        
+        /* Ensure smooth transitions between themes */
+        body, .container, .theme-toggle, .bg-white, .bg-card-bg, .text-gray-800, .text-gray-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        /* Theme-aware background classes */
+        .bg-card-bg {
+            background-color: var(--card-bg);
+        }
+        
+        body {
+            background: transparent;
+            color: var(--text);
+        }
+
+        /* Background image at full opacity */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 1.0;
+            z-index: -1;
+        }
+        
+        
+        /* Mobile sidebar toggle */
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        /* Responsive sidebar and layout */
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+            
+            #main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            /* Add overlay when sidebar is open on mobile */
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+                display: none;
+            }
+            
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            /* Further mobile optimizations */
+            #sidebar {
+                width: 280px;
+            }
+            
+            /* Adjust content padding on mobile */
+            .mobile-content-padding {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            /* Extra small mobile devices */
+            #sidebar {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            /* Stack statistics cards on small mobile */
+            .stats-grid-mobile {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 overflow-x-hidden">
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn fixed top-4 left-4 z-50 bg-sidebar-bg text-white p-3 rounded-lg shadow-lg lg:hidden">
+        <i class="fas fa-bars text-lg"></i>
+    </button>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 w-64 h-screen bg-sidebar-bg text-sidebar-text transition-all duration-300 z-50 shadow-2xl flex flex-col">
+            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
+                <div class="text-center mb-2">
+                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
+                </div>
+                <div class="text-sidebar-text text-sm font-semibold text-center">
+                    Food Safety Agency (Pty) Ltd
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <ul class="px-2 py-2 space-y-1">
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-home mr-2 w-4 text-center"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Clients -->
+                    <li>
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users mr-2 w-4 text-center"></i>
+                            Clients
+                        </a>
+                    </li>
+                    
+                    <!-- Inspections -->
+                    <li>
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                            Inspections
+                        </a>
+                    </li>
+                    
+                    <!-- User Management -->
+                    <li>
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
+                            User Management
+                        </a>
+                    </li>
+                    
+                    <!-- System Logs -->
+                    <li>
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
+                            System Logs
+                        </a>
+                    </li>
+                    
+                    <!-- OneDrive View (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cloud mr-2 w-4 text-center"></i>
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Performance Monitor (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
+                            Performance Monitor
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Settings -->
+                    <li>
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Logout Button - Fixed at bottom -->
+            <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
+                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 w-full lg:ml-64 transition-all duration-300">
+            
+            <!-- Header -->
+            <div class="pt-16 lg:pt-16 pb-8 text-center mb-4 lg:mb-8 px-4">
+                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-2" style="color: #ffffff;">Welcome to Food Safety Agency</h1>
+                <h2 class="text-base sm:text-lg md:text-xl font-normal" style="color: #ffffff;">Your comprehensive food safety management platform</h2>
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4 lg:mb-8 px-4 lg:px-8">
+                {% for message in messages %}
+                <div class="bg-card-bg border border-gray-200 rounded-lg p-3 lg:p-4 mb-2 flex items-center gap-2 shadow-sm">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                    <span class="text-sm lg:text-base">{{ message }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Welcome Section -->
+            <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 xl:p-8 mb-4 lg:mb-8 mx-4 lg:mx-8">
+                <h2 class="text-lg lg:text-xl xl:text-2xl font-semibold text-gray-800 mb-3 lg:mb-4">Getting Started</h2>
+                <p class="text-gray-600 text-sm lg:text-base leading-relaxed mb-4 lg:mb-6">
+                    Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different sections of the platform. 
+                    You can manage clients, track inspections, handle inspections, and integrate with Google Sheets for data management.
+                </p>
+                
+                <!-- Sync Buttons Section - Hidden for administrators -->
+                {% if request.user.role != 'admin' %}
+                <div class="flex flex-col sm:flex-row gap-3 lg:gap-4">
+                    <button id="sync-clients-btn" onclick="syncClients()" class="flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none min-h-[44px] text-sm lg:text-base">
+                        <i class="fas fa-sync-alt"></i>
+                        <span id="sync-clients-text">Sync Clients</span>
+                    </button>
+                    
+                    <button id="sync-inspections-btn" onclick="syncInspections()" class="flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none min-h-[44px] text-sm lg:text-base">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span id="sync-inspections-text">Sync Inspections</span>
+                    </button>
+                </div>
+                {% endif %}
+                
+                <!-- Sync Status Messages -->
+                <div id="sync-status" class="mt-4"></div>
+            </div>
+            
+            <!-- Statistics Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 xl:gap-6 mb-4 lg:mb-8 mx-4 lg:mx-8">
+                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 text-center">
+                    <h3 class="text-primary text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">{{ total_clients|default:"0" }}</h3>
+                    <p class="text-gray-500 text-xs lg:text-sm uppercase tracking-wide font-medium">Total Clients</p>
+                </div>
+                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 text-center">
+                    <h3 class="text-primary text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">{{ total_inspections|default:"0" }}</h3>
+                    <p class="text-gray-500 text-xs lg:text-sm uppercase tracking-wide font-medium">Total Inspections</p>
+                </div>
+            </div>
+            
+            <!-- Content Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mx-4 lg:mx-8 pb-8">
+                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Quick Actions</h3>
+                    <div class="space-y-2 lg:space-y-3">
+                        <a href="{% url 'client_list' %}" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 quick-action-link">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-users text-primary"></i>
+                                <span class="font-medium text-sm lg:text-base">View All Clients</span>
+                            </div>
+                        </a>
+                        <a href="{% url 'shipment_list' %}" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 quick-action-link">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-clipboard-check text-primary"></i>
+                                <span class="font-medium text-sm lg:text-base">View All Inspections</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">System Status</h3>
+                    <div class="space-y-2 lg:space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 text-sm lg:text-base">Database</span>
+                            <span class="flex items-center gap-2 text-green-600">
+                                <i class="fas fa-circle text-xs"></i>
+                                <span class="text-sm lg:text-base">Online</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 text-sm lg:text-base">API Status</span>
+                            <span class="flex items-center gap-2 text-green-600">
+                                <i class="fas fa-circle text-xs"></i>
+                                <span class="text-sm lg:text-base">Connected</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 text-sm lg:text-base">Last Sync</span>
+                            <span class="text-gray-500 text-xs lg:text-sm">Just now</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
+                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Recent Activity</h3>
+                    <div class="space-y-2 lg:space-y-3">
+                        <div class="text-xs lg:text-sm text-gray-600">
+                            <i class="fas fa-sync-alt text-primary mr-2"></i>
+                            Inspection data synced successfully
+                        </div>
+                        <div class="text-xs lg:text-sm text-gray-600">
+                            <i class="fas fa-user-plus text-green-500 mr-2"></i>
+                            New client added to system
+                        </div>
+                        <div class="text-xs lg:text-sm text-gray-600">
+                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>
+                            Report generated and sent
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+                
+                // Update menu button icon
+                const icon = mobileMenuBtn.querySelector('i');
+                if (sidebar.classList.contains('show')) {
+                    icon.className = 'fas fa-times text-lg';
+                } else {
+                    icon.className = 'fas fa-bars text-lg';
+                }
+            }
+            
+            // Toggle sidebar when menu button is clicked
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar when overlay is clicked
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+            
+            // Close sidebar when a navigation link is clicked (on mobile)
+            const navLinks = sidebar.querySelectorAll('a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    const icon = mobileMenuBtn.querySelector('i');
+                    icon.className = 'fas fa-bars text-lg';
+                }
+            });
+        });
+
+        // Sync Clients Function
+        function syncClients() {
+            const btn = document.getElementById('sync-clients-btn');
+            const text = document.getElementById('sync-clients-text');
+            const statusDiv = document.getElementById('sync-status');
+            
+            btn.disabled = true;
+            text.textContent = 'Syncing...';
+            btn.style.opacity = '0.7';
+            statusDiv.innerHTML = '<div class="p-4 mt-4 rounded-lg bg-blue-50 border border-blue-200 text-blue-700"><i class="fas fa-spinner fa-spin mr-2"></i>Syncing clients from Google Sheets...</div>';
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+            fetch('{% url "refresh_clients" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                if (data.success) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            ✅ Client sync completed successfully! 
+                            <br>Deleted: ${data.deleted_count || 0} old clients
+                            <br>Created: ${data.clients_created || 0} new clients
+                            <br>Total processed: ${data.total_processed || 0} rows
+                        </div>
+                    `;
+                    // Refresh the page after successful sync
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            ❌ Sync failed: ${data.error || 'Unknown error occurred'}
+                        </div>
+                    `;
+                }
+                resetClientButton();
+            })
+            .catch(error => {
+                console.error('Error syncing clients:', error);
+                statusDiv.innerHTML = `
+                    <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+                resetClientButton();
+            });
+
+            function resetClientButton() {
+                btn.disabled = false;
+                text.textContent = 'Sync Clients';
+                btn.style.opacity = '1';
+            }
+        }
+
+        // Sync Inspections Function
+        function syncInspections() {
+            const btn = document.getElementById('sync-inspections-btn');
+            const text = document.getElementById('sync-inspections-text');
+            const statusDiv = document.getElementById('sync-status');
+
+            btn.disabled = true;
+            text.textContent = 'Starting...';
+            btn.style.opacity = '0.7';
+            statusDiv.innerHTML = '';
+
+            let pollCount = 0;
+            const maxPolls = 60; // 2 minutes max (60 * 2 seconds)
+
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+            fetch('{% url "refresh_inspections" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            })
+            .then(data => {
+                if (data.success && data.status === 'started') {
+                    // Background sync started - just start polling
+                    pollSyncStatus();
+                } else if (data.success) {
+                    // Immediate success - just reset button, no message
+                    resetButton();
+                    // Don't refresh page to avoid logout
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            ${data.error || 'Failed to start sync'}
+                        </div>
+                    `;
+                    resetButton();
+                }
+            })
+            .catch(error => {
+                console.error('Error starting sync:', error);
+                statusDiv.innerHTML = `
+                    <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Error: ${error.message}
+                    </div>
+                `;
+                resetButton();
+            });
+
+            function pollSyncStatus() {
+                pollCount++;
+                if (pollCount > maxPolls) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Sync is taking longer than expected. Please check back later.
+                        </div>
+                    `;
+                    resetButton();
+                    return;
+                }
+
+                // Refresh session every 10 polls (20 seconds) to prevent logout
+                if (pollCount % 10 === 0) {
+                    fetch('{% url "session_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
+                }
+
+                fetch('{% url "check_sync_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => {
+                    if (response.ok) { 
+                        return response.json(); 
+                    } else { 
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`); 
+                    }
+                })
+                .then(data => {
+                    console.log('Sync status response:', data); // Debug logging
+                    
+                    if (data.success && data.message) {
+                        // Sync completed successfully - update page values and reset button
+                        updatePageAfterSync();
+                        resetButton();
+                        // Don't auto-refresh to avoid logout
+                    } else if (data.status === 'running' || !data.success) {
+                        // Still running, just update button text and poll again
+                        text.textContent = 'Syncing...';
+                        setTimeout(pollSyncStatus, 2000); // Poll every 2 seconds
+                    } else {
+                        // Error occurred
+                        statusDiv.innerHTML = `
+                            <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                ${data.error || 'Sync failed'}
+                            </div>
+                        `;
+                        resetButton();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking sync status:', error);
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Error checking sync status: ${error.message}
+                        </div>
+                    `;
+                    resetButton();
+                });
+            }
+
+            function resetButton() {
+                btn.disabled = false;
+                text.textContent = 'Sync Inspections';
+                btn.style.opacity = '1';
+            }
+
+            function updatePageAfterSync() {
+                // Simply reload the page to show updated values
+                // This is the most reliable way to ensure all values are updated
+                window.location.reload();
+            }
+        }
+    </script>
+    <!-- CSRF Token for theme saving -->
+    {% csrf_token %}
+
+    <script>
+        console.log('Home JavaScript is loading...');
+        
+        // Theme management - matching system_logs.html functionality exactly
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+            
+            console.log('=== HOME THEME DEBUG ===');
+            console.log('savedTheme from localStorage:', savedTheme);
+            console.log('serverTheme from Django:', serverTheme);
+            console.log('settings.dark_mode raw value:', '{{ settings.dark_mode }}');
+            
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+                console.log('Using savedTheme:', activeTheme);
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+                console.log('Using serverTheme:', activeTheme);
+            } else {
+                console.log('Using default theme:', activeTheme);
+            }
+            
+            console.log('Final activeTheme:', activeTheme);
+            document.documentElement.setAttribute('data-theme', activeTheme);
+            console.log('Applied data-theme attribute:', document.documentElement.getAttribute('data-theme'));
+            
+            console.log('=== END HOME THEME DEBUG ===');
+        }
+        
+        
+        function getCsrfToken() {
+            return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        }
+        
+        async function saveThemeToServer(theme) {
+            try {
+                const response = await fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCsrfToken(),
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `action=save_theme&theme_mode=${theme === 'dark' ? 'on' : ''}`
+                });
+                
+                if (response.ok) {
+                    console.log('Theme saved to server:', theme);
+                }
+            } catch (error) {
+                console.log('Could not save theme to server:', error);
+            }
+        }
+        
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+        });
+    </script>
+</body>
+</html>
