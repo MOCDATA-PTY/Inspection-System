@@ -1426,11 +1426,6 @@
                                     <a href="' + file.url || `/download-inspection-file/?file=${encodeURIComponent(file.relative_path) + '&source=' + file.source || 'local'}" class="btn btn-file btn-secondary" title="Download File">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    ${category.key === 'compliance' ? '' : '
-                                    <button class="btn btn-file btn-danger" onclick="deleteFile(\'' + file.relative_path + '\', \'' + category.key + '\')" title="Delete File">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                    '}
                                 </div>
                             </div>
                         `;

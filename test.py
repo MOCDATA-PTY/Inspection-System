@@ -1,255 +1,227 @@
 #!/usr/bin/env python3
 """
-Test script to check which clients have compliance documents.
-Simple YES/NO check for each client.
+Test script to debug file listing and create test files for Canonbury Eggs
 """
 
 import os
 import sys
 import django
+from datetime import datetime
 
-# Setup Django environment
-sys.path.append('.')
+# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
+from django.conf import settings
 from main.models import FoodSafetyAgencyInspection
-from datetime import datetime, date
 
-def check_database_fields():
-    """
-    Check what compliance-related fields exist in the database model.
-    """
-    print("🔍 DATABASE FIELDS CHECK")
-    print("=" * 60)
+def create_test_files():
+    """Create test files for Canonbury Eggs to demonstrate the system working"""
     
-    try:
-        # Get a sample inspection to check available fields
-        sample_inspection = FoodSafetyAgencyInspection.objects.first()
-        if sample_inspection:
-            all_fields = [field.name for field in sample_inspection._meta.get_fields()]
-            compliance_fields = [field for field in all_fields if 'compliance' in field.lower()]
-            
-            print(f"📋 Total database fields: {len(all_fields)}")
-            print(f"🎯 Compliance-related fields: {compliance_fields}")
-            
-            # Check field values for sample
-            print(f"\n📊 Sample inspection ({sample_inspection.client_name}):")
-            for field in compliance_fields:
-                try:
-                    value = getattr(sample_inspection, field, 'N/A')
-                    print(f"   {field}: {value}")
-                except:
-                    print(f"   {field}: Error reading")
-        else:
-            print("❌ No inspections found in database")
-            
-    except Exception as e:
-        print(f"❌ Error checking database fields: {e}")
+    # Define the path structure
+    media_root = settings.MEDIA_ROOT
+    year_folder = "2025"
+    month_folder = "September"
+    client_folder = "CanonburyEggs"  # This matches the folder naming convention
+    
+    base_path = os.path.join(media_root, 'inspection', year_folder, month_folder, client_folder)
+    
+    print(f"🔧 Creating test files in: {base_path}")
+    
+    # Create directories
+    folders = ['rfi', 'invoice', 'lab', 'lab_form', 'retest']
+    for folder in folders:
+        folder_path = os.path.join(base_path, folder)
+        os.makedirs(folder_path, exist_ok=True)
+        print(f"✅ Created directory: {folder_path}")
+    
+    # Create test PDF content (simple text files for testing)
+    test_files = {
+        'rfi': [
+            'Canonbury_Eggs_20250912_rfi_20250914_142552.pdf',
+            'Canonbury_Eggs_20250912_rfi_response_20250914_143000.pdf'
+        ],
+        'invoice': [
+            'Canonbury_Eggs_20250912_invoice_20250914_142600.pdf'
+        ],
+        'lab': [
+            'Canonbury_Eggs_20250912_lab_report_20250914_150000.pdf'
+        ],
+        'lab_form': [
+            'Canonbury_Eggs_20250912_lab_form_20250914_150500.pdf'
+        ],
+        'retest': []  # No retest files for this example
+    }
+    
+    # Create the actual files
+    for folder, files in test_files.items():
+        for filename in files:
+            file_path = os.path.join(base_path, folder, filename)
+            with open(file_path, 'w') as f:
+                f.write(f"""TEST PDF CONTENT FOR {filename}
+                
+This is a test file created to demonstrate the file listing system.
+File: {filename}
+Created: {datetime.now()}
+Path: {file_path}
 
-def test_all_file_types():
-    """
-    OPTIMIZED: Test ALL file types (RFI, Invoice, Lab, Retest, Compliance) for all clients.
-    Uses database + directory existence checks only - no file scanning.
-    """
+This would normally be a PDF file with inspection data.
+""")
+            print(f"✅ Created test file: {file_path}")
     
-    print("\n🔍 ALL FILE TYPES CHECK (OPTIMIZED)")
-    print("=" * 60)
+    # Also create compliance files
+    compliance_path = os.path.join(base_path, 'Compliance', 'Eggs')
+    os.makedirs(compliance_path, exist_ok=True)
     
-    # Client list from the user's data
-    clients_to_check = [
-        {"name": "Canonbury Eggs", "date": "2025-09-12"},
-        {"name": "Ccchickens abattoir", "date": "2025-09-12"},
-        {"name": "Maralou Farm East London", "date": "2025-09-12"},
-        {"name": "Mikon Farming CC", "date": "2025-09-12"},
-        {"name": "New Egg Producer", "date": "2025-09-12"},
-        {"name": "New Poultry Retailer", "date": "2025-09-12"},
-        {"name": "New Processed Meat Retailer", "date": "2025-09-12"},
-        {"name": "New RMP Retailer", "date": "2025-09-12"},
-        {"name": "New Retailer", "date": "2025-09-12"},
-        {"name": "Amakhosi Chickens", "date": "2025-09-11"},
-        {"name": "Bluff Meat Supply Bluff", "date": "2025-09-11"},
-        {"name": "Boxer Superstore - Peddie", "date": "2025-09-11"},
-        {"name": "Hetmar Eiers", "date": "2025-09-11"},
-        {"name": "Jwayelani Pine Town", "date": "2025-09-11"},
-        {"name": "Kwikspar Belladonna", "date": "2025-09-11"},
-        {"name": "New Egg Producer", "date": "2025-09-11"},
-        {"name": "New Poultry Retailer", "date": "2025-09-11"},
-        {"name": "New Processed Meat Retailer", "date": "2025-09-11"},
-        {"name": "New RMP Retailer", "date": "2025-09-11"},
-        {"name": "New Retailer", "date": "2025-09-11"},
-        {"name": "OBC Better Butchery Parys", "date": "2025-09-11"},
-        {"name": "Pick 'n Pay - Despatch", "date": "2025-09-11"},
-        {"name": "Pick 'n Pay - Midway Mems", "date": "2025-09-11"},
-        {"name": "Quantum foods NuLaid - Elandsdrift", "date": "2025-09-11"},
-        {"name": "Roots Butchery - Berea", "date": "2025-09-11"},
+    compliance_files = [
+        'Canonbury_Eggs_compliance_certificate_20250912.pdf',
+        'Canonbury_Eggs_compliance_audit_20250912.pdf'
     ]
     
-    clients_with_files = {'rfi': [], 'invoice': [], 'lab': [], 'retest': [], 'compliance': []}
-    clients_without_files = {'rfi': [], 'invoice': [], 'lab': [], 'retest': [], 'compliance': []}
-    
-    print(f"📋 Checking {len(clients_to_check)} clients for ALL file types...\n")
-    print("Status | Client Name                    | Date       | RFI | Inv | Lab | Ret | Com")
-    print("-" * 80)
-    
-    for client in clients_to_check:
-        client_name = client["name"]
-        inspection_date = datetime.strptime(client["date"], "%Y-%m-%d").date()
-        
-        # Check ALL file types
-        file_status = check_all_file_types(client_name, inspection_date)
-        
-        # Create status indicators
-        rfi_icon = "✅" if file_status['rfi'] else "❌"
-        inv_icon = "✅" if file_status['invoice'] else "❌"
-        lab_icon = "✅" if file_status['lab'] else "❌"
-        ret_icon = "✅" if file_status['retest'] else "❌"
-        com_icon = "✅" if file_status['compliance'] else "❌"
-        
-        print(f"       | {client_name:30} | {client['date']} | {rfi_icon:3} | {inv_icon:3} | {lab_icon:3} | {ret_icon:3} | {com_icon:3}")
-        
-        # Track which clients have which file types
-        for file_type, has_files in file_status.items():
-            if has_files:
-                clients_with_files[file_type].append(client_name)
-            else:
-                clients_without_files[file_type].append(client_name)
-    
-    print("\n" + "=" * 80)
-    print("📊 SUMMARY BY FILE TYPE:")
-    for file_type in ['rfi', 'invoice', 'lab', 'retest', 'compliance']:
-        with_count = len(clients_with_files[file_type])
-        without_count = len(clients_without_files[file_type])
-        print(f"   {file_type.upper():12}: {with_count:2} have, {without_count:2} don't have")
-    
-    print(f"\n🎯 COMPLIANCE DOCUMENTS SPECIFIC:")
-    compliance_with = len(clients_with_files['compliance'])
-    compliance_without = len(clients_without_files['compliance'])
-    print(f"   ✅ {compliance_with} clients HAVE compliance documents")
-    print(f"   ❌ {compliance_without} clients DO NOT have compliance documents")
-    
-    if clients_with_files['compliance']:
-        print(f"\n✅ CLIENTS WITH COMPLIANCE DOCUMENTS ({compliance_with}):")
-        for i, client in enumerate(clients_with_files['compliance'], 1):
-            print(f"   {i}. {client}")
-    
-    return compliance_with, compliance_without
-
-def check_all_file_types(client_name, inspection_date):
-    """
-    OPTIMIZED: Check ALL file types using database + directory existence only.
-    No file scanning or content reading.
-    Returns dict with status for each file type.
-    """
-    
-    import os
-    from django.conf import settings
-    import re
-    
-    try:
-        # Database check first (fastest)
-        inspections = FoodSafetyAgencyInspection.objects.filter(
-            client_name=client_name,
-            date_of_inspection=inspection_date
-        )
-        
-        if not inspections.exists():
-            return {'rfi': False, 'invoice': False, 'lab': False, 'retest': False, 'compliance': False}
-        
-        # Check database for upload records (super fast)
-        # Only RFI and Invoice have database tracking fields
-        has_rfi_db = inspections.filter(rfi_uploaded_by__isnull=False).exists()
-        has_invoice_db = inspections.filter(invoice_uploaded_by__isnull=False).exists()
-        # Lab, Retest, Compliance are only tracked via file system
-        
-        # Directory existence check (fast - no file scanning)
-        client_folder = re.sub(r'[^a-zA-Z0-9_]', '_', client_name).replace('__', '_').strip('_')
-        year = inspection_date.strftime('%Y')
-        month = inspection_date.strftime('%B')
-        
-        base_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year, month, client_folder)
-        
-        # Just check if directories exist (no file listing)
-        has_rfi_dir = os.path.exists(os.path.join(base_path, 'rfi'))
-        has_invoice_dir = os.path.exists(os.path.join(base_path, 'invoice'))
-        has_lab_dir = os.path.exists(os.path.join(base_path, 'lab'))
-        has_retest_dir = os.path.exists(os.path.join(base_path, 'retest'))
-        has_compliance_dir = os.path.exists(os.path.join(base_path, 'Compliance'))
-        
-        # Combine checks
-        return {
-            'rfi': has_rfi_db or has_rfi_dir,
-            'invoice': has_invoice_db or has_invoice_dir,
-            'lab': has_lab_db or has_lab_dir,
-            'retest': has_retest_dir,  # Retest is usually file-based
-            'compliance': has_compliance_dir
-        }
-        
-    except Exception as e:
-        print(f"   ⚠️ Error for {client_name}: {e}")
-        return {'rfi': False, 'invoice': False, 'lab': False, 'retest': False, 'compliance': False}
-
-def detailed_compliance_check():
-    """
-    Provide detailed information about compliance document locations.
-    """
-    print("\n🔍 DETAILED COMPLIANCE CHECK")
-    print("=" * 60)
-    
-    base_path = os.path.join('media', 'inspection')
-    
-    if not os.path.exists(base_path):
-        print("❌ Media inspection folder does not exist!")
-        return
-    
-    years = [d for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]
-    print(f"📁 Found years: {years}")
-    
-    for year in years:
-        year_path = os.path.join(base_path, year)
-        months = [d for d in os.listdir(year_path) if os.path.isdir(os.path.join(year_path, d))]
-        print(f"📁 {year} months: {months}")
-        
-        for month in months:
-            month_path = os.path.join(year_path, month)
-            clients = [d for d in os.listdir(month_path) if os.path.isdir(os.path.join(month_path, d))]
+    for filename in compliance_files:
+        file_path = os.path.join(compliance_path, filename)
+        with open(file_path, 'w') as f:
+            f.write(f"""COMPLIANCE DOCUMENT: {filename}
             
-            for client in clients:
-                client_path = os.path.join(month_path, client)
-                compliance_path = os.path.join(client_path, 'Compliance')
-                
-                if os.path.exists(compliance_path):
-                    files = os.listdir(compliance_path)
-                    files = [f for f in files if not f.startswith('.') and os.path.isfile(os.path.join(compliance_path, f))]
-                    if files:
-                        print(f"✅ {client} ({year}/{month}): {len(files)} compliance files")
+This is a test compliance document.
+Created: {datetime.now()}
+Client: Canonbury Eggs
+""")
+        print(f"✅ Created compliance file: {file_path}")
+    
+    return base_path
 
-if __name__ == "__main__":
+def test_file_listing():
+    """Test the file listing function directly"""
+    
+    print("\n🧪 Testing file listing function...")
+    
+    # Import the function
+    from main.views.core_views import list_uploaded_files
+    from django.http import HttpRequest
+    
+    # Create a mock request
+    request = HttpRequest()
+    request.method = 'GET'
+    request.GET = {'group_id': 'Canonbury_Eggs_20250912'}
+    
     try:
-        # Check database fields first
-        check_database_fields()
+        response = list_uploaded_files(request)
+        print(f"✅ Function executed successfully")
+        print(f"📄 Response status: {response.status_code}")
+        print(f"📄 Response content: {response.content.decode()[:500]}...")
         
-        # Test all file types with optimization
-        with_compliance, without_compliance = test_all_file_types()
+        # Parse JSON response
+        import json
+        data = json.loads(response.content.decode())
+        print(f"📊 Response data keys: {list(data.keys())}")
         
-        print(f"\n🎯 QUICK ANSWER:")
-        print(f"   📊 {with_compliance} clients HAVE compliance documents")
-        print(f"   📊 {without_compliance} clients DO NOT have compliance documents")
+        if 'files' in data:
+            files = data['files']
+            print(f"📁 Files found: {list(files.keys())}")
+            for category, file_list in files.items():
+                print(f"  - {category}: {len(file_list)} files")
         
-        if with_compliance == 0:
-            print("\n❌ RESULT: NO clients have compliance documents")
-        elif without_compliance == 0:
-            print("\n✅ RESULT: ALL clients have compliance documents")
-        else:
-            print(f"\n🔄 RESULT: MIXED - {with_compliance} have, {without_compliance} don't have compliance documents")
-        
-        print("\n⚡ OPTIMIZATION STATUS:")
-        print("   ✅ ALL file types now use database + directory existence checks only")
-        print("   ✅ No file scanning during page load")
-        print("   ✅ Retest button logic should work when dropdown = YES")
-        print("   ✅ Expected page load time: 2-5 seconds instead of 43+")
+        return data
         
     except Exception as e:
-        print(f"❌ Error running file type check: {e}")
+        print(f"❌ Error testing file listing: {e}")
         import traceback
         traceback.print_exc()
+        return None
+
+def check_existing_files():
+    """Check what files already exist"""
+    
+    print("\n🔍 Checking existing files...")
+    
+    media_root = settings.MEDIA_ROOT
+    inspection_path = os.path.join(media_root, 'inspection')
+    
+    if not os.path.exists(inspection_path):
+        print(f"❌ Inspection path doesn't exist: {inspection_path}")
+        return
+    
+    print(f"📁 Inspection base path: {inspection_path}")
+    
+    # Check 2025/September structure
+    september_path = os.path.join(inspection_path, '2025', 'September')
+    if os.path.exists(september_path):
+        print(f"📁 September path exists: {september_path}")
+        
+        # List all client folders
+        try:
+            clients = [d for d in os.listdir(september_path) if os.path.isdir(os.path.join(september_path, d))]
+            print(f"👥 Client folders found: {clients}")
+            
+            # Check Canonbury variations
+            canonbury_variations = [
+                'CanonburyEggs',
+                'Canonbury_Eggs',
+                'canonburyeggs',
+                'Canonbury Eggs'
+            ]
+            
+            for variation in canonbury_variations:
+                path = os.path.join(september_path, variation)
+                if os.path.exists(path):
+                    print(f"✅ Found Canonbury folder: {path}")
+                    
+                    # List contents
+                    contents = os.listdir(path)
+                    print(f"   Contents: {contents}")
+                    
+                    # Check for document folders
+                    for doc_type in ['rfi', 'invoice', 'lab', 'lab_form', 'retest']:
+                        doc_path = os.path.join(path, doc_type)
+                        if os.path.exists(doc_path):
+                            files = [f for f in os.listdir(doc_path) if os.path.isfile(os.path.join(doc_path, f))]
+                            print(f"   📄 {doc_type}: {len(files)} files - {files}")
+                else:
+                    print(f"❌ Not found: {path}")
+        
+        except Exception as e:
+            print(f"❌ Error listing client folders: {e}")
+    else:
+        print(f"❌ September path doesn't exist: {september_path}")
+
+def main():
+    """Main test function"""
+    
+    print("🚀 Starting file system test and setup...")
+    print("=" * 60)
+    
+    # Check existing files first
+    check_existing_files()
+    
+    # Create test files
+    print("\n" + "=" * 60)
+    base_path = create_test_files()
+    
+    # Test the file listing function
+    print("\n" + "=" * 60)
+    result = test_file_listing()
+    
+    print("\n" + "=" * 60)
+    print("🎯 Test Summary:")
+    print(f"✅ Test files created in: {base_path}")
+    
+    if result:
+        if result.get('success'):
+            print("✅ File listing function works correctly")
+            files = result.get('files', {})
+            total_files = sum(len(file_list) for file_list in files.values())
+            print(f"📊 Total files found: {total_files}")
+        else:
+            print(f"❌ File listing returned error: {result.get('error', 'Unknown error')}")
+    else:
+        print("❌ File listing function failed")
+    
+    print("\n🧪 Now test in browser:")
+    print("1. Refresh the page")
+    print("2. Click 'View Files' on Canonbury Eggs")
+    print("3. Should see real files instead of test data")
+    print("4. Button should be BLUE (partial files)")
+
+if __name__ == '__main__':
+    main()

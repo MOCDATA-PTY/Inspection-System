@@ -900,13 +900,13 @@ def shipment_list(request):
             
             # Check compliance folder
             compliance_base = os.path.join(
-                settings.MEDIA_ROOT,
-                'inspection',
-                year_folder,
-                month_folder,
-                client_folder,
-                'Compliance'
-            )
+                    settings.MEDIA_ROOT,
+                    'inspection',
+                    year_folder,
+                    month_folder,
+                    client_folder,
+                    'Compliance'
+                )
             
             if not os.path.exists(compliance_base):
                 return 'no_compliance'
@@ -1275,8 +1275,30 @@ def shipment_list(request):
         
         has_compliance_documents = False
         
-        # Note: compliance_status removed - now using comprehensive file status check
-        # This prevents incorrect green dots and uses our new automatic coloring system
+        # Check compliance documents status for color coding
+        compliance_status_result = check_compliance_documents_status(group_inspections, client_name, date_of_inspection)
+        
+        # Also check for RFI and Invoice files to determine partial status
+        has_rfi = rfi_uploader is not None
+        has_invoice = invoice_uploader is not None
+        has_compliance = compliance_status_result.get('has_any_compliance', False)
+        
+        # Determine compliance status for button coloring
+        # Complete = has RFI + Invoice + Compliance docs
+        # Partial = has any files but not all required
+        # None = no files at all
+        if has_rfi and has_invoice and has_compliance:
+            compliance_status = 'complete'  # Green - all required files present
+        elif has_rfi or has_invoice or has_compliance:
+            compliance_status = 'partial'   # Yellow - some files present  
+        else:
+            compliance_status = 'no_compliance'  # Red - no files found
+            
+        print(f"🎨 COMPLIANCE STATUS DEBUG for {client_name}:")
+        print(f"    RFI: {has_rfi} (uploader: {rfi_uploader})")
+        print(f"    Invoice: {has_invoice} (uploader: {invoice_uploader})")
+        print(f"    Compliance: {has_compliance}")
+        print(f"    Final status: {compliance_status}")
         
         # Generate group_id
         sanitized_client = sanitize_group_id(client_name) if client_name else ""
@@ -1308,9 +1330,10 @@ def shipment_list(request):
             'rfi_upload_date': rfi_upload_date,  # When RFI was uploaded
             'invoice_uploader': invoice_uploader,  # Who uploaded Invoice
             'invoice_upload_date': invoice_upload_date,  # When Invoice was uploaded
+            'compliance_status': compliance_status,  # For View Files button color coding
             'compliance_documents_status': {
-                'all_commodities_have_compliance': bool(_cached_status.get('has_compliance_docs', False)),
-                'has_any_compliance': bool(_cached_status.get('has_compliance_docs', False))
+                'all_commodities_have_compliance': bool(compliance_status_result['all_commodities_have_compliance']),
+                'has_any_compliance': bool(compliance_status_result['has_any_compliance'])
             },
             'products': products  # Now populated with actual inspection data
         }
@@ -2102,8 +2125,15 @@ def list_uploaded_files(request):
                 # Parse group_id to get client name and date
                 parts = group_id.split('_')
                 if len(parts) >= 2:
-                    client_name = '_'.join(parts[:-1])
+                    # Reconstruct the original client name from group_id
+                    # Group ID format: "Client_Name_20250912" -> Client Name
+                    client_name_from_group = '_'.join(parts[:-1])
                     date_str = parts[-1]
+                    
+                    # Convert the group_id client name back to original format
+                    # "Canonbury_Eggs" -> "Canonbury Eggs"
+                    original_client_name = client_name_from_group.replace('_', ' ')
+                    
                     if len(date_str) == 8:
                         year = date_str[:4]
                         month_num = int(date_str[4:6])
@@ -2114,18 +2144,12 @@ def list_uploaded_files(request):
                         year_folder = datetime.now().strftime("%Y")
                         month_folder = datetime.now().strftime("%B")
                 else:
-                    client_name = group_id
-                    # Sanitize client name to match file lookup logic
-                    import re
-                    client_name = re.sub(r'[^a-zA-Z0-9_]', '_', client_name)
-                    client_name = re.sub(r'_+', '_', client_name).strip('_')
+                    original_client_name = group_id
                     year_folder = datetime.now().strftime("%Y")
                     month_folder = datetime.now().strftime("%B")
                 
-                # Use already sanitized client_name as client_folder
-                client_folder = client_name
-                
-                base_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_folder)
+                # Now create the proper folder variations using the original client name
+                client_name = original_client_name
                 
             else:
                 # Individual inspection
@@ -2143,82 +2167,127 @@ def list_uploaded_files(request):
                     year_folder = datetime.now().strftime("%Y")
                     month_folder = datetime.now().strftime("%B")
                 
-                import re
-                client_folder = re.sub(r'[^a-zA-Z0-9_]', '_', client_name)
-                client_folder = re.sub(r'_+', '_', client_folder).strip('_')
-                
-                base_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_folder)
+            # Create folder variations for both group_id and individual inspection cases
+            import re
+            parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
+            client_folder_variations = [
+                # PRIMARY: Remove spaces and special chars completely (consistent with upload)
+                re.sub(r'[^a-zA-Z0-9]', '', client_name),
+                # LEGACY: Original sanitized name with underscores (for backwards compatibility)
+                re.sub(r'[^a-zA-Z0-9_]', '_', client_name).replace('__', '_').strip('_'),
+                # LEGACY: Replace spaces with underscores
+                client_name.replace(' ', '_').replace('-', '_').replace("'", '').replace('"', ''),
+                # LEGACY: Lowercase variations
+                re.sub(r'[^a-zA-Z0-9]', '', client_name).lower(),
+                re.sub(r'[^a-zA-Z0-9]', '', client_name).lower().capitalize(),
+            ]
             
-            # List files in document type folders (primary method)
+            # Remove duplicates while preserving order
+            client_folder_variations = list(dict.fromkeys(client_folder_variations))
+            
+            # List files in document type folders (checking multiple folder variations)
             files_list = {}
+            seen_files = set()  # Track files to avoid duplicates
             
-            # Check traditional document folders first (where files are actually uploaded)
-            traditional_docs = ['rfi', 'invoice', 'lab', 'lab_form', 'retest']
-            for doc_type in traditional_docs:
-                doc_path = os.path.join(base_path, doc_type)
-                if os.path.exists(doc_path):
-                    files = []
-                    for filename in os.listdir(doc_path):
-                        if os.path.isfile(os.path.join(doc_path, filename)):
-                            file_path = os.path.join(doc_path, filename)
-                            file_size = os.path.getsize(file_path)
-                            file_info = get_file_info(file_path, doc_type)
-                            files.append(file_info)
-                    if files:
-                        files_list[doc_type] = files
-                        print(f"Found {len(files)} files in {doc_type} folder")
-                else:
-                    files_list[doc_type] = []
-            
-            # Also check for compliance documents in the new folder structure (secondary)
-            compliance_path = os.path.join(base_path, 'Compliance')
-            if os.path.exists(compliance_path):
-                print(f"Compliance path exists: {compliance_path}")
+            # Check all folder variations for files
+            for folder_variation in client_folder_variations:
+                test_path = os.path.join(parent_path, folder_variation)
+                if not os.path.exists(test_path):
+                    continue
                 
-                # Get all commodity subfolders
-                for commodity_folder in os.listdir(compliance_path):
-                    commodity_path = os.path.join(compliance_path, commodity_folder)
-                    
-                    if os.path.isdir(commodity_path):
-                        print(f"Checking commodity folder: {commodity_folder}")
-                        
-                        # List all files in this commodity folder
+                print(f"🔍 [DEBUG] Checking folder: {test_path}")
+                
+                # Check traditional document folders first (where files are actually uploaded)
+                traditional_docs = ['rfi', 'invoice', 'lab', 'lab_form', 'retest']
+                for doc_type in traditional_docs:
+                    doc_path = os.path.join(test_path, doc_type)
+                    if os.path.exists(doc_path):
+                        print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
                         files = []
-                        for filename in os.listdir(commodity_path):
-                            if os.path.isfile(os.path.join(commodity_path, filename)):
-                                file_path = os.path.join(commodity_path, filename)
+                        for filename in os.listdir(doc_path):
+                            if os.path.isfile(os.path.join(doc_path, filename)):
+                                file_path = os.path.join(doc_path, filename)
                                 file_size = os.path.getsize(file_path)
                                 
-                                # Determine document type based on filename or folder
-                                doc_type = 'compliance'
-                                if 'rfi' in filename.lower():
-                                    doc_type = 'rfi'
-                                elif 'invoice' in filename.lower():
-                                    doc_type = 'invoice'
-                                elif 'lab' in filename.lower():
-                                    doc_type = 'lab'
-                                elif 'retest' in filename.lower():
-                                    doc_type = 'retest'
-                                
-                                file_info = get_file_info(file_path, doc_type)
-                                file_info['commodity'] = commodity_folder
-                                files.append(file_info)
+                                # Create unique key to avoid duplicates
+                                unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                if unique_key not in seen_files:
+                                    seen_files.add(unique_key)
+                                    file_info = get_file_info(file_path, doc_type)
+                                    files.append(file_info)
+                                    print(f"✅ Added unique file: {filename}")
+                                else:
+                                    print(f"⚠️ Skipped duplicate file: {filename}")
                         
                         if files:
-                            files_list[commodity_folder] = files
-                            print(f"Found {len(files)} files in {commodity_folder}")
-            else:
-                print(f"Compliance path does not exist: {compliance_path}")
+                            if doc_type not in files_list:
+                                files_list[doc_type] = []
+                            files_list[doc_type].extend(files)
+                            print(f"Found {len(files)} files in {doc_type} folder")
+                    else:
+                        if doc_type not in files_list:
+                            files_list[doc_type] = []
+            
+            # Also check for compliance documents in the new folder structure
+            for folder_variation in client_folder_variations:
+                test_path = os.path.join(parent_path, folder_variation)
+                if not os.path.exists(test_path):
+                    continue
+                
+                compliance_path = os.path.join(test_path, 'Compliance')
+                if os.path.exists(compliance_path):
+                    print(f"🔍 [DEBUG] Found compliance folder at: {compliance_path}")
+                    
+                    # Get all commodity subfolders
+                    for commodity_folder in os.listdir(compliance_path):
+                        commodity_path = os.path.join(compliance_path, commodity_folder)
+                        
+                        if os.path.isdir(commodity_path):
+                            print(f"Checking commodity folder: {commodity_folder}")
+                            
+                            # List all files in this commodity folder
+                            files = []
+                            for filename in os.listdir(commodity_path):
+                                if os.path.isfile(os.path.join(commodity_path, filename)):
+                                    file_path = os.path.join(commodity_path, filename)
+                                    file_size = os.path.getsize(file_path)
+                                    
+                                    # Create unique key to avoid duplicates
+                                    unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                    if unique_key not in seen_files:
+                                        seen_files.add(unique_key)
+                                        
+                                        # Determine document type based on filename or folder
+                                        doc_type = 'compliance'
+                                        if 'rfi' in filename.lower():
+                                            doc_type = 'rfi'
+                                        elif 'invoice' in filename.lower():
+                                            doc_type = 'invoice'
+                                        elif 'lab' in filename.lower():
+                                            doc_type = 'lab'
+                                        elif 'retest' in filename.lower():
+                                            doc_type = 'retest'
+                                        
+                                        file_info = get_file_info(file_path, doc_type)
+                                        file_info['commodity'] = commodity_folder
+                                        files.append(file_info)
+                                        print(f"✅ Added compliance file: {filename}")
+                            
+                            if files:
+                                if 'compliance' not in files_list:
+                                    files_list['compliance'] = []
+                                files_list['compliance'].extend(files)
+                                print(f"Found {len(files)} compliance files in {commodity_folder}")
             
             # Log the results for debugging
             print(f"Files found for {inspection_id or group_id}: {files_list}")
             print(f"Group ID: {group_id}, Inspection ID: {inspection_id}")
-            print(f"Base path: {base_path}")
+            print(f"Parent path: {parent_path}")
             
             return JsonResponse({
                 'success': True,
                 'files': files_list,
-                'base_path': base_path
+                'base_path': parent_path
             })
             
         except Exception as e:
@@ -5509,12 +5578,12 @@ def get_inspection_files_local(client_name, inspection_date):
         
         # Base client path - use correct structure: media/inspection/YYYY/Month/ClientName/
         client_base_path = os.path.join(
-            settings.MEDIA_ROOT,
-            'inspection',
-            year_folder,
-            month_folder,
-            client_folder
-        )
+                settings.MEDIA_ROOT,
+                'inspection',
+                year_folder,
+                month_folder,
+                client_folder
+            )
         
         # Define file categories
         categories = {
@@ -5932,6 +6001,14 @@ def delete_inspection_file(request):
         
         if not file_path or not client_name or not inspection_date:
             return JsonResponse({'success': False, 'error': 'Missing required parameters'})
+        
+        # Prevent deletion of compliance documents
+        if '/Compliance/' in file_path or file_path.lower().startswith('compliance/'):
+            print(f"🚫 BLOCKED: Attempted to delete compliance document: {file_path}")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Compliance documents cannot be deleted for security and audit purposes.'
+            })
         
         # Security check: ensure the file path is within the media directory
         media_root = settings.MEDIA_ROOT
@@ -6438,26 +6515,45 @@ def get_page_clients_file_status(request):
         import re
         
         data = json.loads(request.body)
-        client_names = data.get('client_names', [])
-        inspection_dates = data.get('inspection_dates', {})  # New: client_name -> inspection_date mapping
         
-        if not client_names:
-            return JsonResponse({'success': False, 'error': 'Client names list is required'})
+        # Support both old and new formats for backwards compatibility
+        client_date_combinations = data.get('client_date_combinations', [])
         
-        # Limit to reasonable number of clients per request (prevent abuse)
-        if len(client_names) > 25:
-            client_names = client_names[:25]
-            print(f"⚠️ [TERMINAL] Limited to first 25 clients to prevent performance issues")
+        # Legacy format support
+        if not client_date_combinations:
+            client_names = data.get('client_names', [])
+            inspection_dates = data.get('inspection_dates', {})
+            
+            if client_names:
+                # Convert legacy format to new format
+                for client_name in client_names:
+                    dates = inspection_dates.get(client_name, [])
+                    if isinstance(dates, list):
+                        for date in dates:
+                            client_date_combinations.append({
+                                'client_name': client_name,
+                                'inspection_date': date,
+                                'unique_key': f"{client_name}_{date}"
+                            })
         
-        print(f"🔍 [TERMINAL] Checking file status for {len(client_names)} clients from current page")
-        print(f"📋 [TERMINAL] Client names: {client_names[:5]}...")  # Show first 5 clients
+        if not client_date_combinations:
+            return JsonResponse({'success': False, 'error': 'Client date combinations are required'})
         
-        # Check cache first for bulk results
+        # Limit to reasonable number of combinations per request (prevent abuse)
+        if len(client_date_combinations) > 50:
+            client_date_combinations = client_date_combinations[:50]
+            print(f"⚠️ [TERMINAL] Limited to first 50 combinations to prevent performance issues")
+        
+        print(f"🔍 [TERMINAL] Checking file status for {len(client_date_combinations)} client+date combinations")
+        print(f"📋 [TERMINAL] Combinations: {[c.get('unique_key', 'unknown') for c in client_date_combinations[:5]]}...")  # Show first 5
+        
+        # Check cache first for bulk results (updated for new format)
         from django.core.cache import cache
-        cache_key = f"page_status:{hash(tuple(sorted(client_names)))}"
+        combination_keys = [c.get('unique_key', '') for c in client_date_combinations]
+        cache_key = f"combination_status:{hash(tuple(sorted(combination_keys)))}"
         cached_result = cache.get(cache_key)
         if cached_result:
-            print(f"🚀 [TERMINAL] Using cached status for {len(client_names)} clients")
+            print(f"🚀 [TERMINAL] Using cached status for {len(client_date_combinations)} combinations")
             return JsonResponse(cached_result)
         
         # Base inspection path
@@ -6466,108 +6562,154 @@ def get_page_clients_file_status(request):
         if not os.path.exists(inspection_base):
             return JsonResponse({
                 'success': True,
-                'client_statuses': {},
+                'combination_statuses': {},
                 'message': 'No inspection folder found. Run the 6-month data pull first.'
             })
         
         # Define file categories
         categories = ['rfi', 'invoice', 'lab', 'retest', 'compliance']
         
-        client_statuses = {}
+        combination_statuses = {}
         
-        # Process each client
-        for client_name in client_names:
+        # Process each client+date combination individually
+        for combination in client_date_combinations:
+            client_name = combination.get('client_name')
+            inspection_date = combination.get('inspection_date')
+            unique_key = combination.get('unique_key')
+            
+            if not client_name or not inspection_date or not unique_key:
+                print(f"⚠️ Invalid combination data: {combination}")
+                continue
             try:
-                # OPTIMIZED: Use database + lightweight directory checks only
-                # No file content reading or detailed file info gathering
+                print(f"🔍 [BUTTON] Checking {unique_key}: {client_name} on {inspection_date}")
                 
-                # Get the specific inspection date for this client
-                inspection_date = inspection_dates.get(client_name)
-                if inspection_date:
-                    try:
-                        # OPTIMIZATION 1: Database check first (fastest - no file system access)
-                        date_obj = datetime.strptime(str(inspection_date), '%Y-%m-%d').date()
-                        inspections = FoodSafetyAgencyInspection.objects.filter(
-                            client_name=client_name,
-                            date_of_inspection=date_obj
-                        )
-                        
-                        # Check database for upload records (super fast)
-                        has_rfi_db = inspections.filter(rfi_uploaded_by__isnull=False).exists()
-                        has_invoice_db = inspections.filter(invoice_uploaded_by__isnull=False).exists()
-                        # Note: lab_uploaded_by field doesn't exist in database, rely on directory check only
-                        
-                        # OPTIMIZATION 2: Lightweight directory existence check only (no file scanning)
-                        client_folder = re.sub(r'[^a-zA-Z0-9_]', '_', client_name).replace('__', '_').strip('_')
-                        year = date_obj.strftime('%Y')
-                        month = date_obj.strftime('%B')
-                        
-                        base_path = os.path.join(inspection_base, year, month, client_folder)
-                        
-                        # Just check if directories exist (super fast - no file reading/listing)
-                        has_rfi_dir = os.path.exists(os.path.join(base_path, 'rfi'))
-                        has_invoice_dir = os.path.exists(os.path.join(base_path, 'invoice'))
-                        has_lab_dir = os.path.exists(os.path.join(base_path, 'lab'))
-                        has_retest_dir = os.path.exists(os.path.join(base_path, 'retest'))
-                        has_compliance_dir = os.path.exists(os.path.join(base_path, 'Compliance'))
-                        
-                        # Combine database and directory checks for ALL file types
-                        has_rfi = has_rfi_db or has_rfi_dir
-                        has_invoice = has_invoice_db or has_invoice_dir
-                        has_lab = has_lab_dir  # Lab only checked via directory (no DB field)
-                        has_retest = has_retest_dir  # Retest only checked via directory
-                        has_compliance = has_compliance_dir  # Compliance only checked via directory
-                        
-                        # Simple status determination (no file counting needed for page load)
-                        if has_rfi and has_invoice and has_lab and has_compliance:
-                            file_status = 'all_files'  # Green
-                        elif has_compliance:
-                            file_status = 'compliance_only'  # Orange
-                        elif has_rfi or has_invoice or has_lab or has_retest:
-                            file_status = 'partial_files'  # Blue
-                        else:
-                            file_status = 'no_files'  # Red
-                        
-                    except ValueError:
-                        print(f"⚠️ Invalid date format for {client_name}: {inspection_date}")
-                        # Set default values for invalid dates
-                        has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
-                        file_status = 'no_files'
+                # Initialize results for this specific combination
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                file_status = 'no_files'
+                
+                # OPTIMIZATION 1: Database check first (fastest - no file system access)
+                date_obj = datetime.strptime(str(inspection_date), '%Y-%m-%d').date()
+                inspections = FoodSafetyAgencyInspection.objects.filter(
+                    client_name=client_name,
+                    date_of_inspection=date_obj
+                )
+                
+                # Check database for upload records (super fast)
+                has_rfi_db = inspections.filter(rfi_uploaded_by__isnull=False).exists()
+                has_invoice_db = inspections.filter(invoice_uploaded_by__isnull=False).exists()
+                # Note: lab_uploaded_by field doesn't exist in database, rely on directory check only
+                
+                # OPTIMIZATION 2: Try multiple folder variations (consistent with list_uploaded_files)
+                year = date_obj.strftime('%Y')
+                month = date_obj.strftime('%B')
+                
+                # Try multiple client folder name variations (consistent with list_uploaded_files)
+                client_folder_variations = [
+                    # PRIMARY: Remove spaces and special chars completely (consistent with upload)
+                    re.sub(r'[^a-zA-Z0-9]', '', client_name),
+                    # LEGACY: Original sanitized name with underscores (for backwards compatibility)
+                    re.sub(r'[^a-zA-Z0-9_]', '_', client_name).replace('__', '_').strip('_'),
+                    # LEGACY: Replace spaces with underscores
+                    client_name.replace(' ', '_').replace('-', '_').replace("'", '').replace('"', ''),
+                    # LEGACY: Lowercase variations
+                    re.sub(r'[^a-zA-Z0-9]', '', client_name).lower(),
+                    re.sub(r'[^a-zA-Z0-9]', '', client_name).lower().capitalize(),
+                ]
+                
+                # Remove duplicates while preserving order
+                client_folder_variations = list(dict.fromkeys(client_folder_variations))
+                
+                # Check all folder variations for files for this specific date
+                has_rfi_dir = has_invoice_dir = has_lab_dir = has_retest_dir = has_compliance_dir = False
+                
+                parent_path = os.path.join(inspection_base, year, month)
+                if os.path.exists(parent_path):
+                    for folder_variation in client_folder_variations:
+                        test_path = os.path.join(parent_path, folder_variation)
+                        if os.path.exists(test_path):
+                            print(f"🔍 [BUTTON] Checking path for {inspection_date}: {test_path}")
+                            
+                            # Check for files in each document type folder (not just directory existence)
+                            if not has_rfi_dir:
+                                rfi_path = os.path.join(test_path, 'rfi')
+                                has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
+                            
+                            if not has_invoice_dir:
+                                invoice_path = os.path.join(test_path, 'invoice')
+                                has_invoice_dir = os.path.exists(invoice_path) and any(os.path.isfile(os.path.join(invoice_path, f)) for f in os.listdir(invoice_path)) if os.path.exists(invoice_path) else False
+                            
+                            if not has_lab_dir:
+                                lab_path = os.path.join(test_path, 'lab')
+                                has_lab_dir = os.path.exists(lab_path) and any(os.path.isfile(os.path.join(lab_path, f)) for f in os.listdir(lab_path)) if os.path.exists(lab_path) else False
+                            
+                            if not has_retest_dir:
+                                retest_path = os.path.join(test_path, 'retest')
+                                has_retest_dir = os.path.exists(retest_path) and any(os.path.isfile(os.path.join(retest_path, f)) for f in os.listdir(retest_path)) if os.path.exists(retest_path) else False
+                            
+                            if not has_compliance_dir:
+                                compliance_path = os.path.join(test_path, 'Compliance')
+                                if os.path.exists(compliance_path):
+                                    # Check for files in commodity subfolders
+                                    for commodity_folder in os.listdir(compliance_path):
+                                        commodity_path = os.path.join(compliance_path, commodity_folder)
+                                        if os.path.isdir(commodity_path):
+                                            if any(os.path.isfile(os.path.join(commodity_path, f)) for f in os.listdir(commodity_path)):
+                                                has_compliance_dir = True
+                                                print(f"✅ [BUTTON] Found compliance files for {inspection_date}")
+                                                break
+                
+                # Check ONLY actual file existence on disk (ignore database records)
+                # This ensures button colors reflect real file status even if files are manually deleted
+                has_rfi = has_rfi_dir
+                has_invoice = has_invoice_dir
+                has_lab = has_lab_dir
+                has_retest = has_retest_dir
+                has_compliance = has_compliance_dir
+                
+                # Determine status for this specific client+date combination
+                if has_rfi and has_invoice and has_lab and has_compliance:
+                    file_status = 'all_files'  # Green
+                elif has_compliance:
+                    file_status = 'compliance_only'  # Orange
+                elif has_rfi or has_invoice or has_lab or has_retest:
+                    file_status = 'partial_files'  # Blue
                 else:
-                    # No inspection date provided - set defaults
-                    has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
-                    file_status = 'no_files'
+                    file_status = 'no_files'  # Red
                 
-                # Store optimized status (no file arrays, just boolean flags)
-                print(f"🎨 [TERMINAL] Client '{client_name}': {file_status} (RFI:{has_rfi}, Invoice:{has_invoice}, Lab:{has_lab}, Retest:{has_retest}, Compliance:{has_compliance}, Total:0)")
-                
-                client_statuses[client_name] = {
-                    'file_status': file_status,
-                    'total_files': 0,  # Not counting files for page load performance
-                    'has_rfi': has_rfi,
-                    'has_invoice': has_invoice,
-                    'has_lab': has_lab,
-                    'has_retest': has_retest,  # Now properly checking retest files
-                    'has_compliance': has_compliance
-                }
-                
-                print(f"✅ {client_name}: {file_status} (0 files)")
+                print(f"📊 [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk)")
+                print(f"🎯 [BUTTON] Final status for {unique_key}: {file_status} (based on actual files only)")
+                        
+            except ValueError:
+                print(f"⚠️ Invalid date format for {unique_key}: {inspection_date}")
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                file_status = 'no_files'
                 
             except Exception as e:
-                print(f"❌ Error checking files for {client_name}: {e}")
-                client_statuses[client_name] = {
-                    'file_status': 'error',
-                    'total_files': 0,
-                    'error': str(e)
-                }
+                print(f"❌ Error checking files for {unique_key}: {e}")
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                file_status = 'error'
+            
+            # Store optimized status for this specific combination (common for all cases)
+            combination_statuses[unique_key] = {
+                'file_status': file_status,
+                'client_name': client_name,
+                'inspection_date': inspection_date,
+                'has_rfi': has_rfi,
+                'has_invoice': has_invoice,
+                'has_lab': has_lab,
+                'has_retest': has_retest,
+                'has_compliance': has_compliance
+            }
+            
+            print(f"✅ {unique_key}: {file_status}")
         
-        print(f"📊 Completed status check for {len(client_statuses)} clients")
+        print(f"📊 Completed status check for {len(combination_statuses)} combinations")
         
-        # Cache the results for 5 minutes to prevent repeated processing
+        # Prepare optimized response
         result_data = {
             'success': True,
-            'client_statuses': client_statuses,
-            'total_checked': len(client_names),
+            'combination_statuses': combination_statuses,
+            'total_checked': len(client_date_combinations),
             'source': 'local',
             'optimized': True
         }
@@ -7320,7 +7462,7 @@ Food Safety Agency (Pty) Ltd
             email.attach_file(file_path)
         
         # Send email
-        email.send()
+            email.send()
         
         # Log the activity
         from ..models import SystemLog

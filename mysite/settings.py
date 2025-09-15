@@ -95,6 +95,18 @@ DATABASES = {
         'PASSWORD': 'MagnumOpus123',     # superuser password
         'HOST': '82.25.97.159',          # your server IP
         'PORT': '5432',                   # default PostgreSQL port
+    },
+    'sql_server': {
+        'ENGINE': 'mssql',
+        'NAME': 'AFS',
+        'USER': 'FSAUser2',
+        'PASSWORD': 'password',
+        'HOST': '102.67.140.12',
+        'PORT': '1053',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'trusted_connection': 'no',
+        },
     }
 }
 

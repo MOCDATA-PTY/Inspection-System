@@ -74,6 +74,31 @@
             color: white !important;
         }
         
+        /* Dark mode support for file status buttons */
+        [data-theme="dark"] .btn-files-complete {
+            background-color: #22c55e !important;
+            border-color: #16a34a !important;
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .btn-files-partial {
+            background-color: #f59e0b !important;
+            border-color: #d97706 !important;
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .btn-files-none {
+            background-color: #ef4444 !important;
+            border-color: #dc2626 !important;
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .btn-files-checking {
+            background-color: #6b7280 !important;
+            border-color: #4b5563 !important;
+            color: white !important;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -519,9 +544,12 @@
         .col-date { width: 65px; min-width: 65px; max-width: 65px; }
         .col-email { width: 120px; min-width: 120px; max-width: 120px; }
         .col-inspector { width: 80px; min-width: 80px; max-width: 80px; }
-        .col-location { width: 80px; min-width: 80px; max-width: 80px; }
         .col-view-files { width: 60px; min-width: 60px; max-width: 60px; text-align: center; }
-        .col-actions { width: 300px; min-width: 300px; max-width: 300px; }
+        .col-rfi { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
+        .col-invoice { width: 90px; min-width: 90px; max-width: 90px; text-align: center; }
+        .col-km { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
+        .col-hours { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
+        .col-send { width: 120px; min-width: 120px; max-width: 120px; text-align: center; }
         
         /* Ensure text doesn't wrap unnecessarily */
         #shipmentsTable td {
@@ -537,12 +565,67 @@
             word-wrap: break-word;
         }
         
-        /* Actions column specific styling */
-        .col-actions {
+        /* Action columns specific styling */
+        .col-rfi, .col-invoice, .col-km, .col-hours, .col-send {
             white-space: nowrap !important;
             overflow: visible !important;
             text-overflow: initial !important;
         }
+        
+        /* View Files button color coding */
+        .btn-files-complete {
+            background-color: #22c55e !important; /* Green */
+            border-color: #16a34a !important;
+            color: white !important;
+        }
+        
+        .btn-files-partial {
+            background-color: #f59e0b !important; /* Yellow/Orange */
+            border-color: #d97706 !important;
+            color: white !important;
+        }
+        
+        .btn-files-none {
+            background-color: #ef4444 !important; /* Red */
+            border-color: #dc2626 !important;
+            color: white !important;
+        }
+        
+        .btn-files-checking {
+            background-color: #6b7280 !important; /* Gray */
+            border-color: #4b5563 !important;
+            color: white !important;
+        }
+        
+        /* Additional classes for JavaScript compatibility */
+        .btn-view-files[style*="rgb(255, 193, 7)"],
+        .btn-view-files[style*="#ffc107"],
+        .btn-view-files[style*="rgb(245, 158, 11)"],
+        .btn-view-files[style*="#f59e0b"] {
+            background-color: #f59e0b !important; /* Yellow - partial files */
+            border-color: #d97706 !important;
+            color: white !important;
+        }
+        
+        .btn-view-files[style*="rgb(34, 197, 94)"],
+        .btn-view-files[style*="#22c55e"],
+        .btn-view-files[style*="rgb(40, 167, 69)"],
+        .btn-view-files[style*="#28a745"] {
+            background-color: #22c55e !important; /* Green - complete */
+            border-color: #16a34a !important;
+            color: white !important;
+        }
+        
+        .btn-view-files[style*="rgb(239, 68, 68)"],
+        .btn-view-files[style*="#ef4444"],
+        .btn-view-files[style*="rgb(220, 53, 69)"],
+        .btn-view-files[style*="#dc3545"] {
+            background-color: #ef4444 !important; /* Red - no files */
+            border-color: #dc2626 !important;
+            color: white !important;
+        }
+        
+        /* Hover effects removed for file status buttons */
         
         /* Special styling for the client reference */
         .client-reference {
@@ -853,36 +936,39 @@
         }
         
         .btn-rfi {
-            background-color: #007890;
-            color: white;
+            background-color: #28a745;
+            color: white !important;
             margin: 1px;
             transition: all 0.3s ease;
-            min-width: 60px;
-            width: 60px;
-            max-width: 60px;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            min-width: 60px !important;
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            font-size: 0.7rem !important;
         }
         
         .btn-rfi:hover {
-            background-color: #005a6b;
+            background-color: #1e7e34;
         }
         
         .btn-rfi.uploaded {
-            background-color: #059669;
-            min-width: 60px;
-            width: 60px;
-            max-width: 60px;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            background-color: #d4edda;
+            color: #155724 !important;
+            min-width: 60px !important;
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            font-size: 0.7rem !important;
         }
         
         .btn-rfi.uploaded:hover {
-            background-color: #047857;
+            background-color: #c3e6cb;
         }
         
         /* Ensure all RFI buttons have consistent width regardless of content */
@@ -895,6 +981,7 @@
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
             font-size: 0.7rem !important;
+            color: white !important;
         }
         
         /* Ensure all Invoice buttons have consistent width regardless of content */
@@ -907,69 +994,172 @@
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
             font-size: 0.7rem !important;
+            color: white !important;
         }
         
-        .btn-view-files {
-            background: linear-gradient(135deg, #EF4444, #dc2626);
-            color: white;
-            margin: 1px;
-            transition: all 0.3s ease;
-            border: none;
-            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
-            font-weight: 500;
-            padding: 4px 8px !important;
-            font-size: 0.65rem !important;
+        /* Keep icons white in Invoice buttons */
+        button[id^="invoice-"] i {
+            color: white !important;
         }
         
-        .btn-view-files:hover {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+        /* Complete redesign of View Files button - isolated from all other styles */
+        .files-button-custom {
+            /* Reset all inherited styles */
+            all: unset !important;
+            
+            /* Core button styling */
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            
+            /* Size and spacing */
+            padding: 6px 12px !important;
+            margin: 1px !important;
+            min-width: 60px !important;
+            height: auto !important;
+            
+            /* Typography */
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            text-align: center !important;
+            text-decoration: none !important;
+            white-space: nowrap !important;
+            
+            /* Default appearance (red - no files) */
+            background: linear-gradient(135deg, #EF4444, #dc2626) !important;
+            background-color: #EF4444 !important;
+            color: white !important;
+            
+            /* Border and shape */
+            border: none !important;
+            border-radius: 6px !important;
+            
+            /* Effects */
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            
+            /* Prevent text selection */
+            user-select: none !important;
+            -webkit-user-select: none !important;
         }
-        
-        .btn-view-files:active {
-            transform: translateY(0);
+
+
+        .files-button-custom:active {
+            transform: translateY(0) !important;
         }
+
+        /* Color variants for compliance status */
+        .files-button-custom.status-orange {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            background-color: #f59e0b !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3) !important;
+        }
+
+
+        .files-button-custom.status-green {
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            background-color: #10B981 !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+        }
+
+
+        .files-button-custom.status-red {
+            background: linear-gradient(135deg, #EF4444, #dc2626) !important;
+            background-color: #EF4444 !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3) !important;
+        }
+
+
+        .files-button-custom.status-blue {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            background-color: #3b82f6 !important;
+            color: white !important;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
+        }
+
         
         .btn-view-files-blue {
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+            background-color: #fbbf24 !important;
+            color: white !important;
             box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
         }
         
-        .btn-view-files-blue:hover {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            box-shadow: 0 4px 8px rgba(251, 191, 36, 0.4);
+        
+        /* More specific selectors to override inline styles and btn-danger class */
+        .btn.btn-view-files.btn-view-files-orange,
+        .btn-sm.btn-view-files.btn-view-files-orange,
+        .btn-danger.btn-view-files-orange,
+        button.btn.btn-view-files.btn-view-files-orange,
+        button.btn-sm.btn-view-files.btn-view-files-orange,
+        button.btn-danger.btn-view-files-orange {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            background-color: #f59e0b !important;
+            color: white !important;
+        }
+        
+        .btn.btn-view-files.btn-view-files-green,
+        .btn-sm.btn-view-files.btn-view-files-green,
+        .btn-danger.btn-view-files-green,
+        button.btn.btn-view-files.btn-view-files-green,
+        button.btn-sm.btn-view-files.btn-view-files-green,
+        button.btn-danger.btn-view-files-green {
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            background-color: #10B981 !important;
+            color: white !important;
+        }
+        
+        .btn.btn-view-files.btn-view-files-red,
+        .btn-sm.btn-view-files.btn-view-files-red,
+        .btn-danger.btn-view-files-red,
+        button.btn.btn-view-files.btn-view-files-red,
+        button.btn-sm.btn-view-files.btn-view-files-red,
+        button.btn-danger.btn-view-files-red {
+            background: linear-gradient(135deg, #EF4444, #dc2626) !important;
+            background-color: #EF4444 !important;
+            color: white !important;
+        }
+        
+        .btn.btn-view-files.btn-view-files-blue,
+        .btn-sm.btn-view-files.btn-view-files-blue,
+        .btn-danger.btn-view-files-blue,
+        button.btn.btn-view-files.btn-view-files-blue,
+        button.btn-sm.btn-view-files.btn-view-files-blue,
+        button.btn-danger.btn-view-files-blue {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+            background-color: #fbbf24 !important;
+            color: white !important;
         }
         
         .btn-view-files-green {
-            background: linear-gradient(135deg, #10B981, #059669);
+            background: linear-gradient(135deg, #10B981, #059669) !important;
+            background-color: #10B981 !important;
+            color: white !important;
             box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
         }
         
-        .btn-view-files-green:hover {
-            background: linear-gradient(135deg, #059669, #047857);
-            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
-        }
         
         .btn-view-files-red {
-            background: linear-gradient(135deg, #EF4444, #dc2626);
+            background: linear-gradient(135deg, #EF4444, #dc2626) !important;
+            background-color: #EF4444 !important;
+            color: white !important;
             box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
         
-        .btn-view-files-red:hover {
-            background: linear-gradient(135deg, #dc2626, #b91c1c);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
-        }
         
         .btn-view-files-orange {
-            background: linear-gradient(135deg, #f59e0b, #d97706);
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            background-color: #f59e0b !important;
+            color: white !important;
             box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
         }
         
-        .btn-view-files-orange:hover {
-            background: linear-gradient(135deg, #d97706, #b45309);
-            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
-        }
         
         
         .btn-send {
@@ -1253,8 +1443,9 @@
             }
             .col-client-name { min-width: 70px; max-width: 70px; }
             .col-date { min-width: 50px; }
-            .col-location { min-width: 80px; max-width: 100px; }
-            .col-actions { min-width: 120px; }
+            .col-rfi, .col-km, .col-hours { min-width: 60px; }
+            .col-invoice { min-width: 70px; }
+            .col-send { min-width: 100px; }
         }
         
         /* Expandable table styles */
@@ -1361,11 +1552,11 @@
         
         /* Keep actions inline on desktop and tablets */
         @media (max-width: 1024px) and (min-width: 769px) {
-            .col-actions { 
-                width: 280px; 
-                min-width: 280px; 
-                max-width: 280px; 
-            }
+            .col-rfi { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-invoice { width: 80px; min-width: 80px; max-width: 80px; }
+            .col-km { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-hours { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-send { width: 100px; min-width: 100px; max-width: 100px; }
             .group-buttons .btn {
                 font-size: 7px;
                 padding: 2px 3px;
@@ -1841,8 +2032,7 @@
             }
             
             /* Hide less important columns on mobile */
-            .col-account-code,
-            .col-location {
+            .col-account-code {
                 display: none;
             }
             
@@ -1869,11 +2059,11 @@
                 min-width: 90px;
             }
             
-            .col-actions {
-                width: 240px;
-                min-width: 240px;
-                max-width: 240px;
-            }
+            .col-rfi { width: 60px; min-width: 60px; max-width: 60px; }
+            .col-invoice { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-km { width: 60px; min-width: 60px; max-width: 60px; }
+            .col-hours { width: 60px; min-width: 60px; max-width: 60px; }
+            .col-send { width: 90px; min-width: 90px; max-width: 90px; }
             
             /* Keep buttons inline but smaller */
             .group-buttons {
@@ -1990,11 +2180,11 @@
             }
             
             /* Make action buttons even smaller but keep inline */
-            .col-actions {
-                width: 220px;
-                min-width: 220px;
-                max-width: 220px;
-            }
+            .col-rfi { width: 50px; min-width: 50px; max-width: 50px; }
+            .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
+            .col-km { width: 50px; min-width: 50px; max-width: 50px; }
+            .col-hours { width: 50px; min-width: 50px; max-width: 50px; }
+            .col-send { width: 80px; min-width: 80px; max-width: 80px; }
             
             .group-buttons {
                 flex-wrap: nowrap;
@@ -2380,9 +2570,12 @@
                                 <th class="col-date">Inspection Date</th>
                                 <th class="col-email">Email</th>
                                 <th class="col-inspector">Inspector</th>
-                                <th class="col-location">Location</th>
                                 <th class="col-view-files">View Files</th>
-                                <th class="col-actions">Actions</th>
+                                <th class="col-rfi">RFI</th>
+                                <th class="col-invoice">Invoice</th>
+                                <th class="col-km">Km</th>
+                                <th class="col-hours">Hours</th>
+                                <th class="col-send">Sent Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2418,163 +2611,174 @@
                                     {% endif %}
                                 </td>
                                 <td class="col-inspector">{{ shipment.inspector_name|default:"-" }}</td>
-                                <td class="col-location">{{ shipment.location|default:"-" }}</td>
                                 <td class="col-view-files">
-                                    <button class="btn btn-sm btn-view-files" 
+                                    <button class="btn btn-sm btn-view-files
+                                           {% if shipment.compliance_status == 'complete' %}
+                                               btn-files-complete
+                                           {% elif shipment.compliance_status == 'partial' %}
+                                               btn-files-partial
+                                           {% elif shipment.compliance_status == 'no_compliance' %}
+                                               btn-files-none
+                                           {% else %}
+                                               btn-files-checking
+                                           {% endif %}" 
                                            data-group-id="{{ fallback_group_id|escapejs }}" 
                                            data-client-name="{{ shipment.client_name|escapejs }}" 
                                            data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d"|escapejs }}" 
                                            onclick="openFilesPopup(this.dataset.groupId, this.dataset.clientName, this.dataset.inspectionDate)" 
-                                           title="View Files - Status will be checked automatically">
+                                           title="View Files - 
+                                           {% if shipment.compliance_status == 'complete' %}All required files present
+                                           {% elif shipment.compliance_status == 'partial' %}Some files present
+                                           {% elif shipment.compliance_status == 'no_compliance' %}No files found
+                                           {% else %}Status checking...{% endif %}">
                                         Files
-                                        <i class="fas fa-sync fa-spin" style="margin-left: 2px; font-size: 0.7em; color: #6b7280;" id="status-icon-{{ fallback_group_id }}"></i>
                                     </button>
                                 </td>
-                                <td class="col-actions">
-                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-                                    <div class="group-actions">
-                                        <div class="group-inputs" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                            <div class="input-group">
-                                                <label class="input-label">Km:</label>
-                                                <input type="number" class="form-control form-control-sm group-km-input" 
-                                                       data-group-id="{{ fallback_group_id }}" 
-                                                       value="{{ shipment.km_traveled|default:'' }}" 
-                                                       placeholder="0.0" 
-                                                       step="0.1" 
-                                                       min="0" 
-                                                       onchange="updateGroupKmTraveled(this)"
-                                                       title="Total kilometers traveled for this inspection group">
-                                            </div>
-                                            <div class="input-group">
-                                                <label class="input-label">Hours:</label>
-                                                <input type="number" class="form-control form-control-sm group-hours-input" 
-                                                       data-group-id="{{ fallback_group_id }}" 
-                                                       value="{{ shipment.hours|default:'' }}" 
-                                                       placeholder="0.0" 
-                                                       step="0.1" 
-                                                       min="0" 
-                                                       onchange="updateGroupHours(this)"
-                                                       title="Total hours spent on this inspection group">
-                                            </div>
-                                            <div class="button-with-uploader" style="display: flex; flex-direction: column; align-items: center;">
-                                                {% if shipment.rfi_uploader %}
-                                                <button class="btn btn-sm" id="rfi-{{ fallback_group_id }}" disabled 
-                                                        style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                        title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}"
-                                                        data-debug-group-id="{{ fallback_group_id }}" 
-                                                        data-client-name="{{ shipment.client_name }}" 
-                                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
-                                                    {{ shipment.rfi_uploader }}
-                                                </button>
-                                                {% else %}
-                                                <button class="btn btn-sm btn-upload" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
-                                                        title="Upload RFI - Group ID: {{ fallback_group_id }}" 
-                                                        data-debug-group-id="{{ fallback_group_id }}" 
-                                                        data-client-name="{{ shipment.client_name }}" 
-                                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                        style="background: #28a745; color: white;">
-                                                    <i class="fas fa-upload"></i> RFI
-                                                </button>
-                                                {% endif %}
-                                            </div>
-                                            <div class="button-with-uploader" style="display: flex; flex-direction: column; align-items: center;">
-                                                {% if shipment.invoice_uploader %}
-                                                <button class="btn btn-sm" id="invoice-{{ fallback_group_id }}" disabled 
-                                                        style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                        title="Invoice uploaded by {{ shipment.invoice_uploader }} on {{ shipment.invoice_upload_date|date:'m/d/y' }}">
-                                                    {{ shipment.invoice_uploader }}
-                                                </button>
-                                                {% else %}
-                                                <button class="btn btn-sm btn-upload" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
-                                                        title="Upload Invoice"
-                                                        style="background: #28a745; color: white;">
-                                                    <i class="fas fa-file-invoice"></i> Invoice
-                                                </button>
-                                                {% endif %}
-                                            </div>
-                                            <div style="display: flex; flex-direction: column; align-items: center; min-width: 80px; width: 80px;">
-                                                <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}" data-group-id="{{ fallback_group_id }}" data-delay-days="{{ onedrive_delay_days }}" onchange="updateSentStatus(this)" title="Mark as sent when documents are delivered">
-                                                    <option value="NO" {% if shipment.is_sent == False %}selected{% endif %}>Not Sent</option>
-                                                    <option value="YES" {% if shipment.is_sent %}selected{% endif %}>Sent</option>
-                                                </select>
-                                                {% if shipment.is_sent and shipment.sent_date %}
-                                                <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center;">
-                                                    {% if shipment.sent_by %}{{ shipment.sent_by.username }}{% else %}{{ request.user.username }}{% endif %} - {{ shipment.sent_date|date:"M d, Y H:i" }}
-                                                </small>
-                                                <div class="onedrive-countdown" 
-                                                     data-sent-date="{{ shipment.sent_date|date:'c' }}" 
-                                                     data-onedrive-uploaded="{{ shipment.onedrive_uploaded|yesno:'true,false' }}"
-                                                     data-onedrive-upload-date="{% if shipment.onedrive_upload_date %}{{ shipment.onedrive_upload_date|date:'c' }}{% endif %}"
-                                                     data-delay-days="{{ onedrive_delay_days }}"
-                                                     style="font-size: 0.5rem; margin-top: 1px; text-align: center;">
-                                                    <span class="countdown-text">{{ onedrive_delay_days|floatformat:0 }} days until upload</span>
-                                                </div>
-                                                {% else %}
-                                                <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px;">Status</small>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    <!-- Inspector-specific actions - RFI upload, Km and Hours -->
+                                <!-- RFI Column -->
+                                <td class="col-rfi">
                                     {% if request.user.role == 'inspector' %}
-                                    <div class="group-actions">
-                                        <div class="group-buttons">
-                                            <div class="button-with-uploader">
-                                                {% if shipment.rfi_uploader %}
-                                                <button class="btn btn-sm" id="rfi-{{ fallback_group_id }}" disabled 
-                                                        style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                        title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}"
-                                                        data-debug-group-id="{{ fallback_group_id }}" 
-                                                        data-client-name="{{ shipment.client_name }}" 
-                                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
-                                                    {{ shipment.rfi_uploader }}
-                                                </button>
-                                                {% else %}
-                                                <button class="btn btn-sm btn-upload" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
-                                                        title="Upload RFI" 
-                                                        data-debug-group-id="{{ fallback_group_id }}"
-                                                        data-client-name="{{ shipment.client_name }}" 
-                                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                        style="background: #28a745; color: white;">
-                                                    <i class="fas fa-upload"></i> RFI
-                                                </button>
-                                                {% endif %}
-                                            </div>
+                                        {% if shipment.rfi_uploader %}
+                                        <button class="btn btn-sm" id="rfi-{{ fallback_group_id }}" disabled 
+                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
+                                                title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}">
+                                            {{ shipment.rfi_uploader }}
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-upload" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                                title="Upload RFI" 
+                                                data-client-name="{{ shipment.client_name }}" 
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                style="background: #28a745; color: white;">
+                                            RFI
+                                        </button>
+                                        {% endif %}
+                                    {% elif request.user.role != 'scientist' %}
+                                        {% if shipment.rfi_uploader %}
+                                        <button class="btn btn-sm" disabled 
+                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
+                                                title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}">
+                                            {{ shipment.rfi_uploader }}
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-upload" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                                title="Upload RFI" 
+                                                style="background: #28a745; color: white;">
+                                            RFI
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Invoice Column -->
+                                <td class="col-invoice">
+                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+                                        {% if shipment.invoice_uploader %}
+                                        <button class="btn btn-sm" id="invoice-{{ fallback_group_id }}" disabled 
+                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
+                                                title="Invoice uploaded by {{ shipment.invoice_uploader }} on {{ shipment.invoice_upload_date|date:'m/d/y' }}">
+                                            {{ shipment.invoice_uploader }}
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-upload" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
+                                                title="Upload Invoice"
+                                                data-client-name="{{ shipment.client_name }}" 
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                style="background: #28a745; color: white;">
+                                            Invoice
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Km Column -->
+                                <td class="col-km">
+                                    {% if request.user.role == 'inspector' %}
+                                        <input type="number" class="form-control form-control-sm group-km-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.km_traveled|default:'' }}" 
+                                               placeholder="0.0" 
+                                               step="0.1" 
+                                               min="0" 
+                                               onchange="updateGroupKmTraveled(this)"
+                                               title="Total kilometers traveled for this inspection group">
+                                    {% elif request.user.role != 'scientist' %}
+                                        <input type="number" class="form-control form-control-sm group-km-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.km_traveled|default:'' }}" 
+                                               placeholder="0.0" 
+                                               step="0.1" 
+                                               min="0" 
+                                               onchange="updateGroupKmTraveled(this)"
+                                               title="Total kilometers traveled for this inspection group">
+                                    {% else %}
+                                        {{ shipment.km_traveled|default:"-" }}
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Hours Column -->
+                                <td class="col-hours">
+                                    {% if request.user.role == 'inspector' %}
+                                        <input type="number" class="form-control form-control-sm group-hours-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.hours|default:'' }}" 
+                                               placeholder="0.0" 
+                                               step="0.1" 
+                                               min="0" 
+                                               onchange="updateGroupHours(this)"
+                                               title="Total hours spent on this inspection group">
+                                    {% elif request.user.role != 'scientist' %}
+                                        <input type="number" class="form-control form-control-sm group-hours-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.hours|default:'' }}" 
+                                               placeholder="0.0" 
+                                               step="0.1" 
+                                               min="0" 
+                                               onchange="updateGroupHours(this)"
+                                               title="Total hours spent on this inspection group">
+                                    {% else %}
+                                        {{ shipment.hours|default:"-" }}
+                                    {% endif %}
+                                </td>
+                                
+                                <!-- Sent Status Column -->
+                                <td class="col-send">
+                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+                                        <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}" 
+                                                data-group-id="{{ fallback_group_id }}" 
+                                                data-delay-days="{{ onedrive_delay_days }}" 
+                                                onchange="updateSentStatus(this)" 
+                                                title="Mark as sent when documents are delivered">
+                                            <option value="NO" {% if shipment.is_sent == False %}selected{% endif %}>Not Sent</option>
+                                            <option value="YES" {% if shipment.is_sent %}selected{% endif %}>Sent</option>
+                                        </select>
+                                        {% if shipment.is_sent and shipment.sent_date %}
+                                        <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">
+                                            {% if shipment.sent_by %}{{ shipment.sent_by.username }}{% else %}{{ request.user.username }}{% endif %} - {{ shipment.sent_date|date:"M d, Y H:i" }}
+                                        </small>
+                                        <div class="onedrive-countdown" 
+                                             data-sent-date="{{ shipment.sent_date|date:'c' }}" 
+                                             data-onedrive-uploaded="{{ shipment.onedrive_uploaded|yesno:'true,false' }}"
+                                             data-onedrive-upload-date="{% if shipment.onedrive_upload_date %}{{ shipment.onedrive_upload_date|date:'c' }}{% endif %}"
+                                             data-delay-days="{{ onedrive_delay_days }}"
+                                             style="font-size: 0.5rem; margin-top: 1px; text-align: center;">
+                                            <span class="countdown-text">{{ onedrive_delay_days|floatformat:0 }} days until upload</span>
                                         </div>
-                                        <div class="group-inputs" style="margin-left: 8px;">
-                                            <div class="input-group">
-                                                <label class="input-label">Km:</label>
-                                                <input type="number" class="form-control form-control-sm group-km-input" 
-                                                       data-group-id="{{ fallback_group_id }}" 
-                                                       value="{{ shipment.km_traveled|default:'' }}" 
-                                                       placeholder="0.0" 
-                                                       step="0.1" 
-                                                       min="0" 
-                                                       onchange="updateGroupKmTraveled(this)"
-                                                       title="Total kilometers traveled for this inspection group">
-                                            </div>
-                                            <div class="input-group">
-                                                <label class="input-label">Hours:</label>
-                                                <input type="number" class="form-control form-control-sm group-hours-input" 
-                                                       data-group-id="{{ fallback_group_id }}" 
-                                                       value="{{ shipment.hours|default:'' }}" 
-                                                       placeholder="0.0" 
-                                                       step="0.1" 
-                                                       min="0" 
-                                                       onchange="updateGroupHours(this)"
-                                                       title="Total hours spent on this inspection group">
-                                            </div>
-                                        </div>
-                                    </div>
+                                        {% else %}
+                                        <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">Status</small>
+                                        {% endif %}
+                                    {% else %}
+                                        -
                                     {% endif %}
                                 </td>
                             </tr>
                             
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
-                                <td colspan="9" class="detail-cell">
+                                <td colspan="12" class="detail-cell">
                                     <div class="detail-content">
                                         <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"m/d/y" }} 
                                             <small style="color: #666; font-size: 0.8em;">
@@ -2785,7 +2989,7 @@
                             {% endwith %}
                             {% empty %}
                             <tr>
-                                <td colspan="9" class="empty-message">No inspections found. Try adjusting your filters or sync inspections.</td>
+                                <td colspan="12" class="empty-message">No inspections found. Try adjusting your filters or sync inspections.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -3172,7 +3376,7 @@
     <!-- Load sent status functionality from external file -->
     <script src="{% static 'js/sent_status.js' %}"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20250914-fix-file-listing"></script>
     <script>
         // Set global CSRF token for upload functions
         window.csrfToken = '{{ csrf_token|escapejs }}';
@@ -3361,8 +3565,14 @@
         
         // CSRF functions now defined at top of script section
         
-        // Delete file function
+        // Delete file function - Only compliance documents are protected from deletion
         async function deleteFile(filePath, category) {
+            // Prevent deletion of compliance documents only
+            if (category === 'compliance' || (filePath && filePath.toLowerCase().includes('compliance'))) {
+                alert('Compliance documents cannot be deleted for security and audit purposes.');
+                return;
+            }
+            
             if (!confirm('Are you sure you want to delete this ' + category + ' file? This action cannot be undone.')) {
                 return;
             }
@@ -3385,19 +3595,75 @@
                 
                 if (result.success) {
                     // Show success message
-                    showMessage(result.message, 'success');
+                    console.log('✅ File deleted successfully:', filePath);
+                    
+                    // Re-enable RFI and Invoice buttons if their files were deleted
+                    reEnableUploadButtons(filePath, category);
                     
                     // Refresh the files display
                     if (window.currentFilesClient && window.currentFilesDate) {
                         openFilesPopup(window.currentFilesGroupId, window.currentFilesClient, window.currentFilesDate);
                     }
                 } else {
-                    showMessage(result.error || 'Failed to delete file', 'error');
+                    console.error('❌ Failed to delete file:', result.error);
                 }
                 
             } catch (error) {
-                console.error('Error deleting file:', error);
-                showMessage('Error deleting file: ' + error.message, 'error');
+                console.error('❌ Error deleting file:', error);
+            }
+        }
+        
+        // Function to re-enable upload buttons when files are deleted
+        function reEnableUploadButtons(filePath, category) {
+            console.log('🔄 Re-enabling upload buttons for deleted file:', filePath, 'category:', category);
+            
+            // Determine which button to re-enable based on file path or category
+            let buttonId = null;
+            
+            if (category === 'rfi' || filePath.includes('/RFI/') || filePath.toLowerCase().includes('rfi')) {
+                // Find RFI button for current client
+                const groupId = window.currentFilesGroupId;
+                if (groupId) {
+                    buttonId = 'rfi-' + groupId;
+                }
+            } else if (category === 'invoice' || filePath.includes('/Invoice/') || filePath.toLowerCase().includes('invoice')) {
+                // Find Invoice button for current client
+                const groupId = window.currentFilesGroupId;
+                if (groupId) {
+                    buttonId = 'invoice-' + groupId;
+                }
+            }
+            
+            if (buttonId) {
+                const button = document.getElementById(buttonId);
+                if (button) {
+                    console.log('🔄 Re-enabling button:', buttonId);
+                    
+                    // Reset button to upload state
+                    button.disabled = false;
+                    button.style.background = '#28a745'; // Same green color for both RFI and Invoice
+                    button.style.color = 'white';
+                    button.style.border = '1px solid #1e7e34'; // Same border color for both
+                    button.style.cursor = 'pointer';
+                    
+                    // Reset button content
+                    button.innerHTML = '<i class="fas fa-upload"></i>';
+                    
+                    // Reset button title
+                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
+                    button.title = 'Upload ' + docType;
+                    
+                    // Remove from localStorage
+                    const uploadStatus = JSON.parse(localStorage.getItem('uploadStatus') || '{}');
+                    delete uploadStatus[buttonId];
+                    localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
+                    
+                    console.log('✅ Button re-enabled:', buttonId);
+                } else {
+                    console.log('⚠️ Button not found:', buttonId);
+                }
+            } else {
+                console.log('⚠️ Could not determine button ID for file:', filePath);
             }
         }
         
@@ -4350,48 +4616,39 @@
             buttons.forEach((button, index) => {
                 if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
                     console.log('   Button ' + index + 1 + ': "' + button.textContent.trim() + '"');
-                    // Remove existing color classes
-                    button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+                    // COMPLETE REDESIGN: Clear all existing classes and styles
+                    button.className = 'files-button-custom';
                     
-                    // Find the status icon
-                    const statusIcon = button.querySelector('i[class*="fa-"]');
+                    // Clear any conflicting inline styles completely
+                    button.removeAttribute('style');
+                    
+                    // Icons removed - buttons now show only text
                     
                     // Add appropriate color class and icon based on status
                     switch(fileStatus) {
                         case 'all_files':
-                            button.classList.add('btn-view-files-green');
+                            button.classList.add('status-green');
                             button.title = 'All files available (RFI, Invoice, Lab Results, Compliance)';
-                            if (statusIcon) {
-                                statusIcon.className = 'fas fa-check-circle';
-                                statusIcon.style.color = '#059669';
-                            }
                             console.log('   ✅ Applied GREEN color to button');
                             break;
                         case 'compliance_only':
-                            button.classList.add('btn-view-files-orange');
+                            button.classList.add('status-orange');
                             button.title = 'Only compliance documents available';
-                            if (statusIcon) {
-                                statusIcon.className = 'fas fa-shield-alt';
-                                statusIcon.style.color = '#f59e0b';
-                            }
-                            console.log('   🟡 Applied ORANGE color to button');
+                            console.log('   🟠 Applied ORANGE color to button');
                             break;
                         case 'no_files':
-                            button.classList.add('btn-view-files-red');
+                            button.classList.add('status-red');
                             button.title = 'No files found';
-                            if (statusIcon) {
-                                statusIcon.className = 'fas fa-times-circle';
-                                statusIcon.style.color = '#dc2626';
-                            }
                             console.log('   🔴 Applied RED color to button');
                             break;
+                        case 'partial_files':
+                            button.classList.add('status-blue');
+                            button.title = 'Some files available';
+                            console.log('   🔵 Applied BLUE color to button');
+                            break;
                         default:
-                            button.classList.add('btn-view-files');
+                            button.classList.add('status-red');
                             button.title = 'View Files';
-                            if (statusIcon) {
-                                statusIcon.className = 'fas fa-download';
-                                statusIcon.style.color = '#6b7280';
-                            }
                     }
                 }
             });
@@ -4638,9 +4895,10 @@
                 }));
             }
             
-            categories.forEach(category => {
-                const categoryFiles = files[category.key] || [];
-                console.log(`📁 Processing category: ${category.key}`, categoryFiles);
+                categories.forEach(category => {
+                    const categoryFiles = files[category.key] || [];
+                    console.log(`📁 Processing category: ${category.key}`, categoryFiles);
+                    console.log(`🔍 Category key: "${category.key}", Is compliance: ${category.key === 'compliance'}`);
                 console.log(`📁 Files object for ${category.key}:`, files[category.key]);
                 
                 html += `
@@ -4659,6 +4917,7 @@
                     html += '<div class="empty-category">No files in this category</div>';
                 } else {
                     categoryFiles.forEach(file => {
+                        console.log(`📄 File processing: ${file.name}, category.key: "${category.key}", file.category: "${file.category}"`);
                         html += `
                             <div class="file-item">
                                 <div class="file-info">
@@ -4678,11 +4937,11 @@
                                     <a href="${file.url || '/download-inspection-file/?file=' + encodeURIComponent(file.path) + '&source=' + (file.source || 'local')}" class="btn btn-file btn-secondary" title="Download File">
                                         <i class="fas fa-download"></i>
                                     </a>
-                                    ${category.key === 'compliance' ? '' : `
-                                    <button class="btn btn-file btn-danger" onclick="console.log('Delete file:', '${file.relative_path}'); deleteFile('${file.relative_path}', '${category.key}')" title="Delete File">
+                                    ${category.key !== 'compliance' && !(file.relative_path && file.relative_path.toLowerCase().includes('compliance')) && !(file.path && file.path.toLowerCase().includes('compliance')) ? `
+                                    <button class="btn btn-file btn-danger" onclick="console.log('Delete file:', '${file.relative_path || file.path}'); deleteFile('${file.relative_path || file.path}', '${category.key}')" title="Delete File">
                                         <i class="fas fa-trash"></i>
                                     </button>
-                                    `}
+                                    ` : ''}
                                 </div>
                             </div>
                         `;
@@ -5133,6 +5392,7 @@
         window.markAsUploaded = function markAsUploaded(buttonId) {
             // Mark button as uploaded and save to localStorage
             console.log('🔍 [DEBUG] markAsUploaded called for:', buttonId);
+            console.log('🔍 [DEBUG] Button type:', buttonId.startsWith('rfi-') ? 'RFI' : buttonId.startsWith('invoice-') ? 'Invoice' : 'Unknown');
             
             const button = document.getElementById(buttonId);
             console.log('🔍 [DEBUG] Button element found:', button);
@@ -5146,9 +5406,9 @@
                 button.removeAttribute('data-file-deleted');
                 console.log('🔍 [DEBUG] Removed data-file-deleted attribute');
                 
-                // Get current user name from template context
-                const currentUserName = '{{ user_name|escapejs }}';
-                console.log('🔍 [DEBUG] Current user name from template:', currentUserName);
+                // Get current user first name from template context
+                const currentUserName = '{{ request.user.first_name|default:request.user.username|escapejs }}';
+                console.log('🔍 [DEBUG] Current user first name from template:', currentUserName);
                 console.log('🔍 [DEBUG] User name length:', currentUserName.length);
                 console.log('🔍 [DEBUG] User name type:', typeof currentUserName);
                 
@@ -5174,12 +5434,13 @@
                 button.disabled = true;
                 
                 console.log('🔍 [DEBUG] Setting button styles...');
-                button.style.background = '#d4edda';
-                button.style.color = '#155724';
-                button.style.border = '1px solid #c3e6cb';
-                button.style.cursor = 'not-allowed';
+                // Force override any existing styles
+                button.style.setProperty('background', '#d4edda', 'important');
+                button.style.setProperty('color', '#155724', 'important');
+                button.style.setProperty('border', '1px solid #c3e6cb', 'important');
+                button.style.setProperty('cursor', 'not-allowed', 'important');
                 
-                console.log('🔍 [DEBUG] Setting button.innerHTML to:', currentUserName);
+                console.log('🔍 [DEBUG] Setting button.innerHTML to user first name:', currentUserName);
                 button.innerHTML = currentUserName;
                 
                 // Verify the change was applied
@@ -5457,7 +5718,7 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                alert('RFI uploaded successfully!');
+                                console.log('✅ RFI uploaded successfully!');
                                 markAsUploaded('rfi-' + groupId);
                                 
                                 // Auto-open files popup after successful upload
@@ -5535,8 +5796,10 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('Invoice uploaded successfully!');
+                            console.log('✅ Invoice uploaded successfully!');
+                            console.log('🔧 About to call markAsUploaded for invoice-' + groupId);
                             markAsUploaded('invoice-' + groupId);
+                            console.log('🔧 markAsUploaded called for invoice-' + groupId);
                             
                             // Auto-open files popup after successful upload
                             const button = document.getElementById('invoice-' + groupId);
@@ -5612,7 +5875,7 @@
                     .then(data => {
                         console.log('Lab upload response:', data);
                         if (data.success) {
-                            alert('Lab report uploaded successfully!');
+                            console.log('✅ Lab report uploaded successfully!');
                             console.log('Marking lab button as uploaded:', 'lab-' + inspectionId);
                             markAsUploaded('lab-' + inspectionId);
                             
@@ -5630,11 +5893,11 @@
                                 }
                             }
                         } else {
-                            alert('Error uploading Lab report: ' + data.error);
+                            console.error('❌ Error uploading Lab report:', data.error);
                         }
                     })
                     .catch(error => {
-                        alert('Error uploading Lab report: ' + error.message);
+                        console.error('❌ Error uploading Lab report:', error.message);
                     });
                 }
             };
@@ -5691,7 +5954,7 @@
                     .then(data => {
                         console.log('Lab form upload response:', data);
                         if (data.success) {
-                            alert('Lab form submission uploaded successfully!');
+                            console.log('✅ Lab form submission uploaded successfully!');
                             console.log('Marking lab form button as uploaded:', 'lab-form-' + inspectionId);
                             markAsUploaded('lab-form-' + inspectionId);
                             
@@ -5709,11 +5972,11 @@
                                 }
                             }
                         } else {
-                            alert('Error uploading Lab form submission: ' + data.error);
+                            console.error('❌ Error uploading Lab form submission:', data.error);
                         }
                     })
                     .catch(error => {
-                        alert('Error uploading Lab form submission: ' + error.message);
+                        console.error('❌ Error uploading Lab form submission:', error.message);
                     });
                 }
             };
@@ -5770,7 +6033,7 @@
                     .then(data => {
                         console.log('Retest upload response:', data);
                         if (data.success) {
-                            alert('Retest report uploaded successfully!');
+                            console.log('✅ Retest report uploaded successfully!');
                             console.log('Marking retest button as uploaded:', 'retest-' + inspectionId);
                             markAsUploaded('retest-' + inspectionId);
                             
@@ -5788,11 +6051,11 @@
                                 }
                             }
                         } else {
-                            alert('Error uploading Retest report: ' + data.error);
+                            console.error('❌ Error uploading Retest report:', data.error);
                         }
                     })
                     .catch(error => {
-                        alert('Error uploading Retest report: ' + error.message);
+                        console.error('❌ Error uploading Retest report:', error.message);
                     });
                 }
             };
@@ -6387,7 +6650,7 @@
         // Function to handle Send button clicks with validation
         function handleSendButtonClick(groupId, clientName, inspectionDate, hasAllDocuments) {
             if (!hasAllDocuments) {
-                alert('Cannot send: Missing required documents. Ensure all compliance documents are downloaded and RFI/Invoice are uploaded.');
+                console.warn('⚠️ Cannot send: Missing required documents. Ensure all compliance documents are downloaded and RFI/Invoice are uploaded.');
                 return false;
             }
             

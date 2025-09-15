@@ -567,15 +567,16 @@ function displayFiles(files, message = null, isTestData = false) {
                             <i class="fas fa-eye"></i> Preview
                         </span>`;
                     } else {
-                        html += `<button class="btn btn-sm" onclick="viewFile('${filePath}', '${fileName}')" title="View" style="background: #17a2b8; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
+                        html += `                        <button class="btn btn-sm" onclick="viewFile('${filePath}', '${fileName}')" title="View" style="background: #17a2b8; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
                             <i class="fas fa-eye"></i>
                         </button>
                         <button class="btn btn-sm" onclick="downloadFile('${filePath}')" title="Download" style="background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button class="btn btn-sm" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                        ${!filePath.toLowerCase().includes('compliance') ? `<button class="btn btn-sm" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
                             <i class="fas fa-trash"></i>
-                        </button>`;
+                        </button>` : ''}
+                        `;
                     }
                     
                     html += `</div></div>`;
@@ -655,12 +656,18 @@ function downloadFile(filePath) {
         });
 }
 
-// Delete file function
+// Delete file function - Only compliance documents are protected from deletion
 async function deleteFile(filePath, fileName) {
     console.log('Deleting file:', filePath, fileName);
     
     if (filePath.startsWith('/test/')) {
         alert('This is a test file and cannot be deleted.');
+        return;
+    }
+    
+    // Prevent deletion of compliance documents only
+    if (filePath.includes('/Compliance/') || filePath.toLowerCase().includes('compliance')) {
+        alert('Compliance documents cannot be deleted for security and audit purposes.');
         return;
     }
     
@@ -1275,6 +1282,85 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
     });
 }
 
+// Update View Files button color for a specific client and inspection date
+function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStatus) {
+    console.log('🎨 Updating button color for specific client+date: "' + clientName + '" on ' + inspectionDate);
+    console.log('   File status: ' + fileStatus);
+    
+    // Find buttons for this specific client and date combination
+    let buttons = [];
+    
+    // Look for buttons in rows that match both client name and inspection date
+    const rows = document.querySelectorAll('tr[data-client-name="' + clientName + '"][data-inspection-date="' + inspectionDate + '"]');
+    rows.forEach(row => {
+        const filesButton = row.querySelector('.btn-view-files, button[class*="view-files"], button[onclick*="openFilesPopup"]');
+        if (filesButton && (filesButton.textContent.includes('View Files') || filesButton.textContent.includes('Files'))) {
+            buttons.push(filesButton);
+        }
+    });
+    
+    // Also try to find buttons by group ID pattern
+    const groupId = clientName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + inspectionDate.replace(/-/g, '');
+    const groupButtons = document.querySelectorAll('button[onclick*="' + groupId + '"]');
+    groupButtons.forEach(btn => {
+        if (btn.textContent.includes('View Files') || btn.textContent.includes('Files')) {
+            buttons.push(btn);
+        }
+    });
+    
+    // Remove duplicates
+    buttons = [...new Set(buttons)];
+    
+    console.log('   Found ' + buttons.length + ' View Files buttons for "' + clientName + '" on ' + inspectionDate);
+    
+    buttons.forEach((button, index) => {
+        if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
+            console.log('   Button ' + (index + 1) + ': "' + button.textContent.trim() + '"');
+            
+            // Remove existing color classes
+            button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-danger');
+            
+            // Apply color based on file status
+            switch (fileStatus) {
+                case 'all_files':
+                    button.classList.add('btn-success');
+                    button.style.backgroundColor = '#28a745';
+                    button.style.color = 'white';
+                    button.title = 'All files available (RFI, Invoice, Lab, Compliance)';
+                    console.log('   🟢 Applied GREEN color to button');
+                    break;
+                case 'compliance_only':
+                    button.classList.add('btn-warning');
+                    button.style.backgroundColor = '#ffc107';
+                    button.style.color = 'black';
+                    button.title = 'Only compliance documents available';
+                    console.log('   🟠 Applied ORANGE color to button');
+                    break;
+                case 'partial_files':
+                    button.classList.add('btn-info');
+                    button.style.backgroundColor = '#17a2b8';
+                    button.style.color = 'white';
+                    button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
+                    console.log('   🔵 Applied BLUE color to button');
+                    break;
+                case 'no_files':
+                    button.classList.add('btn-danger');
+                    button.style.backgroundColor = '#dc3545';
+                    button.style.color = 'white';
+                    button.title = 'No files available';
+                    console.log('   🔴 Applied RED color to button');
+                    break;
+                default:
+                    button.style.backgroundColor = '#6c757d';
+                    button.style.color = 'white';
+                    button.title = 'Unknown file status';
+                    console.log('   🔄 Applied default color to button');
+                    break;
+            }
+        }
+    });
+}
+
 // Check file status for all clients and update button colors
 let statusCheckInProgress = false;
 
@@ -1289,21 +1375,20 @@ async function updateAllViewFilesButtonColors() {
     console.log('🎨 [FRONTEND] Starting automatic View Files button color update...');
     
     try {
-        const clientData = getCurrentPageClientData();
-        const clientNames = Object.keys(clientData);
+        const clientDateCombinations = getCurrentPageClientData();
         
-        if (clientNames.length === 0) {
-            console.log('📄 No clients found on current page for color update');
+        if (clientDateCombinations.length === 0) {
+            console.log('📄 No client+date combinations found on current page for color update');
             return;
         }
         
-        // Limit to reasonable number of clients
-        if (clientNames.length > 25) {
-            console.log('⚠️ [FRONTEND] Too many clients on page, limiting to first 25');
-            clientNames.splice(25);
+        // Limit to reasonable number of combinations
+        if (clientDateCombinations.length > 50) {
+            console.log('⚠️ [FRONTEND] Too many combinations on page, limiting to first 50');
+            clientDateCombinations.splice(50);
         }
         
-        console.log('🔄 [FRONTEND] Checking file status for ' + clientNames.length + ' clients...');
+        console.log('🔄 [FRONTEND] Checking file status for ' + clientDateCombinations.length + ' client+date combinations...');
         
         const response = await fetch('/page-clients-status/', {
             method: 'POST',
@@ -1312,20 +1397,19 @@ async function updateAllViewFilesButtonColors() {
                 'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({
-                client_names: clientNames,
-                inspection_dates: clientData
+                client_date_combinations: clientDateCombinations
             })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            console.log('✅ Received file status data for all clients');
+            console.log('✅ Received file status data for all client+date combinations');
             
-            // Update button colors for each client
-            Object.entries(result.client_statuses).forEach(([clientName, statusData]) => {
-                console.log('🎨 Updating colors for ' + clientName + ': ' + statusData.file_status);
-                updateViewFilesButtonColor(clientName, statusData.file_status);
+            // Update button colors for each client+date combination
+            Object.entries(result.combination_statuses).forEach(([uniqueKey, statusData]) => {
+                console.log('🎨 Updating colors for ' + uniqueKey + ': ' + statusData.file_status);
+                updateViewFilesButtonColorSpecific(statusData.client_name, statusData.inspection_date, statusData.file_status);
             });
             
             console.log('🎨 Completed automatic color update for all buttons');
@@ -1342,7 +1426,7 @@ async function updateAllViewFilesButtonColors() {
 
 // Get current page client data for color updates - ONLY VISIBLE ROWS
 function getCurrentPageClientData() {
-    const clientData = {};
+    const clientDateCombinations = [];
     
     // Only get rows that are actually visible on the current page
     const visibleShipmentRows = document.querySelectorAll('tbody .shipment-row[data-client-name]:not([style*="display: none"])');
@@ -1357,16 +1441,23 @@ function getCurrentPageClientData() {
         console.log(`🔍 [PAGE] Row ${index + 1}: "${clientName}" on ${inspectionDate}`);
         
         if (clientName && inspectionDate) {
-            // Use the specific inspection date for this row
-            clientData[clientName] = [inspectionDate];
+            const combination = {
+                client_name: clientName,
+                inspection_date: inspectionDate,
+                unique_key: `${clientName}_${inspectionDate}`
+            };
+            
+            // Only add if we haven't seen this combination before
+            if (!clientDateCombinations.find(c => c.unique_key === combination.unique_key)) {
+                clientDateCombinations.push(combination);
+            }
         }
     });
     
-    const clientCount = Object.keys(clientData).length;
-    console.log('📄 [PAGE] Final result: ' + clientCount + ' unique clients on current visible page');
-    console.log('📄 [PAGE] Clients: ' + Object.keys(clientData).join(', '));
+    console.log('📄 [PAGE] Final result: ' + clientDateCombinations.length + ' unique client+date combinations on current visible page');
+    console.log('📄 [PAGE] Combinations: ' + clientDateCombinations.map(c => c.unique_key).join(', '));
     
-    return clientData;
+    return clientDateCombinations;
 }
 
 // Function to check if upload buttons should be enabled/disabled based on actual files
