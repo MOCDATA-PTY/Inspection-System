@@ -2518,6 +2518,14 @@
                                 <option value="NO" {% if request.GET.sent_status == 'NO' %}selected{% endif %}>Not Sent Only</option>
                             </select>
                         </div>
+                        <div class="form-field" style="flex: 1;">
+                            <label class="form-label">RFI Status</label>
+                            <select class="form-control" name="rfi_status">
+                                <option value="">All Inspections</option>
+                                <option value="HAS_RFI" {% if request.GET.rfi_status == 'HAS_RFI' %}selected{% endif %}>Has RFI</option>
+                                <option value="NO_RFI" {% if request.GET.rfi_status == 'NO_RFI' %}selected{% endif %}>No RFI</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <!-- Action Buttons Row -->

@@ -846,7 +846,7 @@ def shipment_list(request):
     
     # Use caching to improve performance, but skip cache if filters are applied
     from django.core.cache import cache
-    has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'page'])
+    has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'rfi_status', 'page'])
     
     cache_key = f"shipment_list_{request.user.id}_{request.user.role}"
     
@@ -1039,7 +1039,9 @@ def shipment_list(request):
         latest_inspection_id=Max('id'),
         earliest_inspection_id=Min('id'),
         has_sent_inspections=Count('id', filter=Q(is_sent=True)),  # Count sent inspections in group
-        has_unsent_inspections=Count('id', filter=Q(is_sent=False))  # Count unsent inspections in group
+        has_unsent_inspections=Count('id', filter=Q(is_sent=False)),  # Count unsent inspections in group
+        has_rfi_inspections=Count('id', filter=Q(rfi_uploaded_by__isnull=False)),  # Count inspections with RFI uploaded
+        has_no_rfi_inspections=Count('id', filter=Q(rfi_uploaded_by__isnull=True))  # Count inspections without RFI uploaded
     ).order_by('-date_of_inspection', 'client_name')
     
     # FILTER GROUPS BY SENT STATUS: Apply sent status filter to groups, not individual inspections
@@ -1051,6 +1053,16 @@ def shipment_list(request):
         elif sent_status == 'NO':
             # Only show groups that have at least one unsent inspection
             groups_queryset = groups_queryset.filter(has_unsent_inspections__gt=0)
+    
+    # FILTER GROUPS BY RFI STATUS: Apply RFI status filter to groups, not individual inspections
+    rfi_status = request.GET.get('rfi_status')
+    if rfi_status:
+        if rfi_status == 'HAS_RFI':
+            # Only show groups that have at least one inspection with RFI uploaded
+            groups_queryset = groups_queryset.filter(has_rfi_inspections__gt=0)
+        elif rfi_status == 'NO_RFI':
+            # Only show groups that have at least one inspection without RFI uploaded
+            groups_queryset = groups_queryset.filter(has_no_rfi_inspections__gt=0)
     
     # Apply database-level pagination
     paginator = Paginator(groups_queryset, 25)  # 25 groups per page
