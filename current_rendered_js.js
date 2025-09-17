@@ -1373,7 +1373,10 @@
                 </div>';
             }
             
-            if (!files || Object.keys(files).length === 0) {
+            // Check if there are actually any files (not just empty arrays)
+            const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
+            
+            if (!hasFiles) {
                 filesList.innerHTML += '<div class="empty-category">No files found for this inspection</div>';
                 return;
             }

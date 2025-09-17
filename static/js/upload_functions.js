@@ -460,10 +460,10 @@ function closeFilesPopup() {
     processPendingButtonUpdates();
 }
 
-// Load inspection files with fallback to test data
+// Load inspection files with direct working method (removed unreliable first attempt)
 async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDate) {
     try {
-        console.log('🔄 File fetch: Starting file fetch request...');
+        console.log('🔄 File fetch: Starting direct file fetch (using working method)...');
         
         // Fix client name - decode any Unicode escapes
         let cleanClientName = clientName;
@@ -504,7 +504,19 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         console.log('🔄 Original date:', inspectionDate);
         console.log('🔄 Cleaned date:', cleanDate);
         
-        const response = await fetch(`/list-uploaded-files/?group_id=${encodeURIComponent(groupId)}`);
+        // Use the working method directly
+        const response = await fetch('/inspections/files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                group_id: groupId,
+                client_name: cleanClientName,
+                inspection_date: cleanDate
+            })
+        });
         
         const result = await response.json();
         console.log('🔄 File fetch: File fetch completed:', result.success);
@@ -517,26 +529,13 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         if (filesLoading) filesLoading.style.display = 'none';
         if (filesContent) filesContent.style.display = 'block';
         
-        if (result.success && filesList) {
-            // Check if we got actual files or just empty array
-            if (result.files && typeof result.files === 'object' && !Array.isArray(result.files)) {
-                // We got a proper files object with categories
-                console.log('✅ Got real files from server');
-                console.log('🔍 Server files object:', result.files);
-                console.log('🔍 Server files keys:', Object.keys(result.files));
-                for (const [key, value] of Object.entries(result.files)) {
-                    console.log(`🔍 ${key}:`, value);
-                }
+        if (result.success && result.files && filesList) {
+            const hasFiles = Object.values(result.files).some(fileList => fileList && fileList.length > 0);
+            
+            if (hasFiles) {
+                console.log('✅ Files found and displaying');
                 displayFiles(result.files, result.message);
-            } else if (result.files && Array.isArray(result.files) && result.files.length > 0) {
-                // We got an array of files - convert to categories
-                console.log('✅ Got file array from server, converting to categories');
-                const categorizedFiles = {
-                    'Server Files': result.files
-                };
-                displayFiles(categorizedFiles, result.message);
             } else {
-                // No files found - show test data
                 console.log('📁 No files found, showing test data');
                 showTestFiles(clientName, inspectionDate, result.message);
             }
@@ -611,6 +610,7 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
         const result = await response.json();
         console.log('🔄 File fetch: File fetch completed:', result.success);
         console.log('🔄 File fetch: Full server response:', result);
+        console.log('🔄 File fetch: Response text length:', JSON.stringify(result).length);
         console.log('🔄 File fetch: Files data:', result.files);
         console.log('🔄 File fetch: Message:', result.message);
         
@@ -667,7 +667,10 @@ function displayFiles(files, message = null, isTestData = false) {
         </div>`;
     }
     
-    if (!files || Object.keys(files).length === 0) {
+    // Check if there are actually any files (not just empty arrays)
+    const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
+    
+    if (!hasFiles) {
         html += '<div class="empty-category">📂 No files found for this inspection.</div>';
     } else {
         html += '<div class="files-grid">';
@@ -2456,6 +2459,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
         
         if (hasFiles) {
             // Files exist - button should show uploader's name (or stay as is if already showing name)
+            console.log(`🔍 Button current innerHTML: "${button.innerHTML}", expected: "${buttonType.toUpperCase()}"`);
             if (button.innerHTML === buttonType.toUpperCase()) {
                 // Button is still showing "RFI" or "Invoice" - update to show uploader
                 button.disabled = true;
@@ -2468,6 +2472,8 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
                 button.title = `${buttonType.toUpperCase()} uploaded by Developer`;
                 button.onclick = null;
                 console.log(`✅ Updated ${buttonType} button to show uploaded state`);
+            } else {
+                console.log(`ℹ️ ${buttonType} button already shows uploader name: "${button.innerHTML}"`);
             }
         } else {
             // No files - reset button to uploadable state

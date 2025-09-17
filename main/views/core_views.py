@@ -231,7 +231,7 @@ def user_login(request):
                     from django.utils import timezone
                     request.session['last_activity'] = timezone.now().isoformat()
                     request.session.set_expiry(0)  # Expire session on browser close
-                    messages.success(request, f"Welcome back, {user.username}!")
+                    # messages.success(request, f"Welcome back, {user.username}!")
                     
                     # Role-based redirect logic
                     user_role = getattr(user, 'role', 'inspector')
@@ -5932,10 +5932,9 @@ def get_inspection_files_local(client_name, inspection_date):
             return files_by_category
         
         # Scan for files in each category (optimized with error handling)
-        # Check both old structure (lowercase) and new structure (capital letters)
+        # Use only one folder structure to avoid duplicates
         folder_structures = [
-            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'},
-            {'rfi': 'RFI', 'invoice': 'Invoice', 'lab': 'Lab', 'retest': 'Retest', 'compliance': 'Compliance'}
+            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'}
         ]
         
         # First check top-level folders
@@ -6301,7 +6300,9 @@ def get_inspection_files(request):
         
         # Since files are now fetched in the background when the inspections page loads,
         # we just return the local files that are already available
-        if not local_files or len(local_files) == 0:
+        # Check if there are actually any files (not just empty arrays)
+        has_files = local_files and any(file_list for file_list in local_files.values() if file_list)
+        if not has_files:
             return JsonResponse({
                 'success': True,
                 'files': [],

@@ -3404,7 +3404,7 @@
     <!-- Load sent status functionality from external file -->
     <script src="{% static 'js/sent_status.js' %}"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20250914-fix-file-listing"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20250917-simplified-working-method"></script>
     <script>
         // Set global CSRF token for upload functions
         try {
@@ -4933,7 +4933,10 @@
                 </div>`;
             }
             
-            if (!files || Object.keys(files).length === 0) {
+            // Check if there are actually any files (not just empty arrays)
+            const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
+            
+            if (!hasFiles) {
                 filesList.innerHTML += '<div class="empty-category">No files found for this inspection</div>';
                 return;
             }
