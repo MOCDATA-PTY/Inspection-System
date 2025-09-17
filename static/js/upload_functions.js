@@ -550,32 +550,13 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
     }
 }
 
-// Show test files when no real files are available
+// Show no files message when no real files are available
 function showTestFiles(clientName, inspectionDate, serverMessage) {
-    const testFiles = {
-        'RFI Documents': [
-            { name: `RFI_${clientName.replace(/\s+/g, '_')}_${inspectionDate}.pdf`, path: `/test/rfi_${inspectionDate}.pdf`, isTest: true },
-            { name: `RFI_Response_${inspectionDate}.pdf`, path: `/test/rfi_response_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Invoices': [
-            { name: `Invoice_${clientName.replace(/\s+/g, '_')}.pdf`, path: `/test/invoice_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Lab Results': [
-            { name: `Lab_Report_${inspectionDate}.pdf`, path: `/test/lab_report_${inspectionDate}.pdf`, isTest: true },
-            { name: `Test_Results_${clientName.replace(/\s+/g, '_')}.pdf`, path: `/test/test_results_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Compliance Documents': [
-            { name: `Compliance_${inspectionDate}.pdf`, path: `/test/compliance_${inspectionDate}.pdf`, isTest: true }
-        ]
-    };
-    
-    let message = serverMessage || '';
-    if (message) {
-        message += '<br><br>';
+    const filesList = document.getElementById('filesList');
+    if (filesList) {
+        let message = serverMessage || 'No files found for this inspection.';
+        filesList.innerHTML = `<div class="empty-category">📂 ${message}</div>`;
     }
-    message += '<strong>📁 Test Files Shown:</strong> Since no real files were found, showing sample files for demonstration. Use the RFI upload button to add actual files.';
-    
-    displayFiles(testFiles, message, true);
 }
 
 // Load inspection files function (original)
