@@ -494,17 +494,22 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         console.log('🔄 Original date:', inspectionDate);
         console.log('🔄 Cleaned date:', cleanDate);
         
-        // Use the working method directly
+        // Use the working method directly with cache-busting
+        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         const response = await fetch('/inspections/files/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
+                'X-CSRFToken': getCSRFToken(),
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             },
             body: JSON.stringify({
                 group_id: groupId,
                 client_name: cleanClientName,
-                inspection_date: cleanDate
+                inspection_date: cleanDate,
+                _cache_bust: cacheBuster
             })
         });
         
@@ -692,7 +697,7 @@ function displayFiles(files, message = null, isTestData = false) {
                         iconColor = '#dc3545';
                     }
                     
-                    html += `<div class="file-item" style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 0.5rem; ${isTest ? 'background-color: #f8f9fa;' : ''}">
+                    html += `<div class="file-item" data-file-path="${filePath}" data-file-name="${fileName}" style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 0.5rem; ${isTest ? 'background-color: #f8f9fa;' : ''}">
                         <i class="fas ${fileIcon}" style="color: ${iconColor}; margin-right: 0.5rem;"></i>
                         <span class="file-name" style="flex: 1; margin-right: 0.5rem; ${isTest ? 'font-style: italic; color: #6c757d;' : ''}">${fileName}</span>
                         <div class="file-actions" style="display: flex; gap: 0.25rem;">`;
@@ -714,7 +719,7 @@ function displayFiles(files, message = null, isTestData = false) {
                         <button class="btn btn-sm" onclick="downloadFile('${filePath}')" title="Download" style="background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
                             <i class="fas fa-download"></i>
                         </button>
-                        ${!filePath.toLowerCase().includes('compliance') ? `<button class="btn btn-sm" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                        ${!filePath.toLowerCase().includes('compliance') ? `<button class="btn btn-sm" data-file-path="${filePath}" data-file-name="${fileName}" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
                             <i class="fas fa-trash"></i>
                         </button>` : ''}
                         `;
@@ -875,16 +880,49 @@ async function deleteFile(filePath, fileName) {
                 documentType = 'invoice';
             }
             
+            // IMMEDIATE UI UPDATE: Remove the file from the current display
+            console.log('🔄 Immediately removing file from UI before server refresh...');
+            const fileElements = document.querySelectorAll(`[data-file-path*="${fileName}"]`);
+            fileElements.forEach(element => {
+                const fileContainer = element.closest('.file-item') || element.closest('.file-entry');
+                if (fileContainer) {
+                    fileContainer.style.opacity = '0.3';
+                    fileContainer.innerHTML = `<div class="file-deleted">📄 ${fileName} - Deleted</div>`;
+                }
+            });
+            
+            // Clear any client-side file cache
+            console.log('🧹 Clearing client-side file cache...');
+            if (window.fileCache) {
+                const cacheKey = `${clientName}_${inspectionDate}`;
+                delete window.fileCache[cacheKey];
+                console.log(`🧹 Cleared cache for key: ${cacheKey}`);
+            }
+            
+            // Clear localStorage cache if it exists
+            const cacheKeys = Object.keys(localStorage).filter(key => 
+                key.includes('files_') && 
+                key.includes(clientName.replace(/\s+/g, '_')) && 
+                key.includes(inspectionDate)
+            );
+            cacheKeys.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🧹 Cleared localStorage key: ${key}`);
+            });
+            
             // Update the corresponding button immediately
             if (documentType !== 'unknown') {
                 console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
                 updateButtonAfterDeletion(clientName, inspectionDate, documentType);
             }
             
-            // Refresh the files list
+            // Refresh the files list with a delay to ensure server-side cleanup is complete
             const groupId = window.currentFilesGroupId;
             if (groupId && clientName && inspectionDate) {
-                loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
+                console.log('🔄 Scheduling fresh file list reload...');
+                setTimeout(() => {
+                    loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
+                }, 500); // Give server time to complete cleanup
                 
                 // For RFI and Invoice deletions, ensure button stays reset and prevent reversion
                 if (documentType === 'rfi' || documentType === 'invoice') {

@@ -6317,7 +6317,7 @@ def get_inspection_files(request):
                 'message': 'Files are being fetched in the background for all 6-month inspections. Check back in a few minutes.'
             })
         
-        return JsonResponse({
+        response = JsonResponse({
             'success': True,
             'files': local_files,
             'client_name': client_name,
@@ -6325,8 +6325,21 @@ def get_inspection_files(request):
             'source': 'local'
         })
         
+        # Add cache-busting headers to prevent browser caching
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        response['Last-Modified'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+        
+        return response
+        
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        response = JsonResponse({'success': False, 'error': str(e)})
+        # Add cache-busting headers to prevent browser caching
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
 
 
 @login_required
@@ -6494,9 +6507,46 @@ def delete_inspection_file(request):
                 print(f"⚠️ Warning: Could not update database records: {db_error}")
                 # Continue with file deletion success even if DB update fails
             
-            # Clear relevant caches
-            cache.delete(f"shipment_list_{request.user.id}_{request.user.role}")
-            cache.delete("filter_options")
+            # Clear relevant caches - comprehensive cache invalidation
+            cache_keys_to_clear = [
+                f"shipment_list_{request.user.id}_{request.user.role}",
+                "filter_options",
+                f"inspection_files_{client_name}_{inspection_date}",
+                f"file_status_{client_name}_{inspection_date}",
+                f"files_cache_{client_name}_{inspection_date}",
+                "file_colors_cache",
+                "inspection_files_cache"
+            ]
+            
+            # Clear all related cache keys
+            for cache_key in cache_keys_to_clear:
+                cache.delete(cache_key)
+                print(f"🧹 Cleared cache key: {cache_key}")
+            
+            # Clear any wildcard cache keys that might contain this client/date
+            try:
+                # Get all cache keys (if using Redis or similar backend that supports this)
+                from django.core.cache import caches
+                default_cache = caches['default']
+                if hasattr(default_cache, 'keys'):
+                    # For Redis backend
+                    all_keys = default_cache.keys('*')
+                    client_normalized = client_name.replace(' ', '_').lower()
+                    date_normalized = inspection_date.replace('-', '_')
+                    
+                    keys_to_delete = [
+                        key for key in all_keys 
+                        if (client_normalized in key.lower() and date_normalized in key) or
+                           ('files' in key.lower() and client_normalized in key.lower())
+                    ]
+                    
+                    for key in keys_to_delete:
+                        default_cache.delete(key)
+                        print(f"🧹 Cleared wildcard cache key: {key}")
+                        
+            except Exception as cache_error:
+                print(f"⚠️ Warning: Could not clear wildcard cache keys: {cache_error}")
+                # Continue without error - basic cache clearing already done
             
             return JsonResponse({
                 'success': True, 
