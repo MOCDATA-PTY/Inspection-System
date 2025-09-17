@@ -6824,10 +6824,10 @@ def get_page_clients_file_status(request):
     cache.delete('page_clients_status_cache')
     print("🧹 [BACKEND] Cleared file status cache to prevent stale data")
     
-    # Add small delay to ensure files are fully written before detection
+    # Add delay to ensure files are fully written before detection
     import time
-    time.sleep(1.0)  # 1 second delay to ensure file system is updated
-    print("⏳ [BACKEND] Added 1 second delay to ensure files are fully written")
+    time.sleep(2.0)  # 2 second delay to ensure file system is updated
+    print("⏳ [BACKEND] Added 2 second delay to ensure files are fully written")
     
     try:
         import json

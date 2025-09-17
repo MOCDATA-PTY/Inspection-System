@@ -194,7 +194,7 @@ function uploadRFI(groupId) {
                             setTimeout(() => {
                                 console.log('🎨 Updating button colors after RFI upload...');
                                 updateAllViewFilesButtonColors();
-                            }, 3000); // Increased to 3 seconds to allow file detection to complete
+                            }, 5000); // Increased to 5 seconds to allow file detection to complete
                             
                             // Don't auto-refresh to avoid resetting button state
                             // The button is already correctly updated to show "Developer"
@@ -326,7 +326,7 @@ function uploadInvoice(groupId) {
                         setTimeout(() => {
                             console.log('🎨 Updating button colors after Invoice upload...');
                             updateAllViewFilesButtonColors();
-                        }, 3000); // Increased to 3 seconds to allow file detection to complete
+                        }, 5000); // Increased to 5 seconds to allow file detection to complete
                         
                         // Don't auto-refresh to avoid resetting button state
                         // The button is already correctly updated to show "Developer"
