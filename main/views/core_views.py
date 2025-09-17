@@ -6826,8 +6826,8 @@ def get_page_clients_file_status(request):
     
     # Add small delay to ensure files are fully written before detection
     import time
-    time.sleep(0.5)  # 500ms delay to ensure file system is updated
-    print("⏳ [BACKEND] Added delay to ensure files are fully written")
+    time.sleep(1.0)  # 1 second delay to ensure file system is updated
+    print("⏳ [BACKEND] Added 1 second delay to ensure files are fully written")
     
     try:
         import json
@@ -6938,6 +6938,13 @@ def get_page_clients_file_status(request):
                         if os.path.exists(test_path):
                             print(f"🔍 [BUTTON] Checking path for {inspection_date}: {test_path}")
                             
+                            # List all contents of the test_path to see what's actually there
+                            try:
+                                contents = os.listdir(test_path)
+                                print(f"📁 [BUTTON] Contents of {test_path}: {contents}")
+                            except Exception as e:
+                                print(f"❌ [BUTTON] Error listing contents of {test_path}: {e}")
+                            
                             # Check for files in each document type folder (not just directory existence)
                             # Check both top-level and nested Inspection-XXXX folders
                             
@@ -6983,6 +6990,13 @@ def get_page_clients_file_status(request):
                                         print(f"✅ [BUTTON] Found Invoice files in lowercase folder: {invoice_path}")
                                     else:
                                         print(f"❌ [BUTTON] No Invoice files in lowercase folder: {invoice_path}")
+                                        # Also check if the folder exists but is empty
+                                        if os.path.exists(invoice_path):
+                                            try:
+                                                files_in_folder = os.listdir(invoice_path)
+                                                print(f"📁 [BUTTON] Invoice folder exists but contains: {files_in_folder}")
+                                            except Exception as e:
+                                                print(f"❌ [BUTTON] Error listing invoice folder contents: {e}")
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_invoice_dir:

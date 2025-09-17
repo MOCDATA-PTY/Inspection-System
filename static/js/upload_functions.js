@@ -190,11 +190,11 @@ function uploadRFI(groupId) {
         console.log('📝 Stored pending RFI button update for when popup closes as fallback');
                             }
                             
-                            // Update button colors immediately after upload
+                            // Update button colors after upload with longer delay to ensure files are detected
                             setTimeout(() => {
                                 console.log('🎨 Updating button colors after RFI upload...');
                                 updateAllViewFilesButtonColors();
-                            }, 1000);
+                            }, 3000); // Increased to 3 seconds to allow file detection to complete
                             
                             // Don't auto-refresh to avoid resetting button state
                             // The button is already correctly updated to show "Developer"
@@ -322,8 +322,11 @@ function uploadInvoice(groupId) {
                             console.log('⚠️ Invoice button not found, will update on page refresh');
                         }
                         
-                        // Update button colors immediately after upload
-                        updateAllViewFilesButtonColors();
+                        // Update button colors after upload with delay to ensure files are detected
+                        setTimeout(() => {
+                            console.log('🎨 Updating button colors after Invoice upload...');
+                            updateAllViewFilesButtonColors();
+                        }, 3000); // Increased to 3 seconds to allow file detection to complete
                         
                         // Don't auto-refresh to avoid resetting button state
                         // The button is already correctly updated to show "Developer"
@@ -517,13 +520,18 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         if (filesContent) filesContent.style.display = 'block';
         
         if (result.success && result.files && filesList) {
+            console.log('🔍 Server returned files object:', result.files);
+            console.log('🔍 Files object keys:', Object.keys(result.files));
+            console.log('🔍 Files object values:', Object.values(result.files));
+            
             const hasFiles = Object.values(result.files).some(fileList => fileList && fileList.length > 0);
+            console.log('🔍 Has files check result:', hasFiles);
             
             if (hasFiles) {
                 console.log('✅ Files found and displaying');
                 displayFiles(result.files, result.message);
             } else {
-                console.log('📁 No files found');
+                console.log('📁 No files found - showing empty message');
                 const filesList = document.getElementById('filesList');
                 if (filesList) {
                     filesList.innerHTML = '<div class="empty-category">📂 No files found for this inspection.</div>';
