@@ -264,6 +264,86 @@ def create_monthly_folder_structure(year, month):
     return month_folder_id
 
 
+def upload_organized_compliance_structure(inspection, inspection_folder_id, uploaded_files, local_files_to_delete):
+    """Upload the organized compliance structure (individual inspection folders) to OneDrive."""
+    try:
+        from django.conf import settings
+        from datetime import datetime
+        
+        # Build the client folder path
+        year_folder = inspection.date_of_inspection.strftime('%Y')
+        month_folder = inspection.date_of_inspection.strftime('%B')
+        client_folder = inspection.client_name or 'Unknown Client'
+        
+        # Base path for the client's compliance folder
+        base_path = os.path.join(
+            settings.MEDIA_ROOT, 
+            'inspection', 
+            year_folder, 
+            month_folder, 
+            client_folder
+        )
+        
+        if not os.path.exists(base_path):
+            print(f"📁 No compliance folder found for {client_folder}")
+            return False
+        
+        uploaded_any = False
+        
+        # Upload main document type folders (rfi, invoice, Compliance)
+        main_folders = ['rfi', 'invoice', 'Compliance']  # Capital C for Compliance
+        for folder_name in main_folders:
+            folder_path = os.path.join(base_path, folder_name)
+            if os.path.exists(folder_path):
+                print(f"📁 Uploading {folder_name} files from {folder_path}")
+                onedrive_folder_id = create_onedrive_folder(folder_name, inspection_folder_id)
+                if onedrive_folder_id:
+                    for root, dirs, files in os.walk(folder_path):
+                        for file in files:
+                            if file.lower().endswith('.pdf'):
+                                file_path = os.path.join(root, file)
+                                file_id = upload_file_to_onedrive(file_path, onedrive_folder_id, file)
+                                if file_id:
+                                    uploaded_files.append(f"{folder_name}/{file}")
+                                    local_files_to_delete.append(file_path)
+                                    uploaded_any = True
+                                    print(f"  📄 Uploaded {folder_name}: {file}")
+        
+        # Upload individual inspection folders
+        for item in os.listdir(base_path):
+            item_path = os.path.join(base_path, item)
+            if os.path.isdir(item_path) and item.startswith('inspection-'):
+                inspection_number = item.replace('inspection-', '')
+                print(f"📁 Uploading individual inspection folder: {item}")
+                
+                # Create inspection folder in OneDrive
+                onedrive_inspection_folder_id = create_onedrive_folder(item, inspection_folder_id)
+                if onedrive_inspection_folder_id:
+                    # Upload all subfolders from this inspection folder (compliance, lab, retest, form)
+                    subfolders = ['compliance', 'lab', 'retest', 'form']
+                    for subfolder in subfolders:
+                        subfolder_path = os.path.join(item_path, subfolder)
+                        if os.path.exists(subfolder_path):
+                            onedrive_subfolder_id = create_onedrive_folder(subfolder, onedrive_inspection_folder_id)
+                            if onedrive_subfolder_id:
+                                for root, dirs, files in os.walk(subfolder_path):
+                                    for file in files:
+                                        if file.lower().endswith('.pdf'):
+                                            file_path = os.path.join(root, file)
+                                            file_id = upload_file_to_onedrive(file_path, onedrive_subfolder_id, file)
+                                            if file_id:
+                                                uploaded_files.append(f"{item}/{subfolder}/{file}")
+                                                local_files_to_delete.append(file_path)
+                                                uploaded_any = True
+                                                print(f"  📄 Uploaded inspection {inspection_number} {subfolder}: {file}")
+        
+        return uploaded_any
+        
+    except Exception as e:
+        print(f"❌ Error uploading organized compliance structure: {e}")
+        return False
+
+
 def upload_inspection_files_to_onedrive(inspection, month_folder_id):
     """Upload all files for a specific inspection to OneDrive and delete local files after successful upload"""
     if not month_folder_id:
@@ -282,9 +362,23 @@ def upload_inspection_files_to_onedrive(inspection, month_folder_id):
     uploaded_files = []
     local_files_to_delete = []  # Track files that were successfully uploaded
     
-    # Upload compliance documents
+    # Upload organized compliance structure first (if it exists)
     try:
-        if hasattr(inspection, 'compliance_documents'):
+        organized_uploaded = upload_organized_compliance_structure(inspection, inspection_folder_id, uploaded_files, local_files_to_delete)
+        if organized_uploaded:
+            print(f"✅ Uploaded organized compliance structure for inspection {inspection.remote_id}")
+    except Exception as e:
+        print(f"⚠️ Error uploading organized compliance structure: {str(e)}")
+    
+    # Continue with original upload logic for other files...
+    
+    # Upload compliance documents (only if organized structure doesn't exist)
+    try:
+        # Check if organized compliance structure was uploaded
+        organized_exists = any('Compliance/' in f or 'inspection-' in f for f in uploaded_files)
+        
+        if not organized_exists and hasattr(inspection, 'compliance_documents'):
+            print("📄 Uploading original compliance documents (no organized structure found)")
             for doc in inspection.compliance_documents.all():
                 if doc.file_path and os.path.exists(doc.file_path):
                     original_filename = os.path.basename(doc.file_path)
@@ -294,6 +388,8 @@ def upload_inspection_files_to_onedrive(inspection, month_folder_id):
                         uploaded_files.append(file_name)
                         local_files_to_delete.append(doc.file_path)
                         print(f"📄 Uploaded compliance: {file_name}")
+        elif organized_exists:
+            print("✅ Skipping original compliance documents (organized structure already uploaded)")
     except Exception as e:
         print(f"⚠️ Error uploading compliance documents: {str(e)}")
     
@@ -320,6 +416,13 @@ def upload_inspection_files_to_onedrive(inspection, month_folder_id):
                 for file in files:
                     file_path = os.path.join(root, file)
                     original_filename = os.path.basename(file)
+                    
+                    # Skip ZIP files if organized structure exists
+                    if file.lower().endswith('.zip'):
+                        organized_exists = any('Compliance/' in f or 'inspection-' in f for f in uploaded_files)
+                        if organized_exists:
+                            print(f"⏭️ Skipping ZIP file (organized structure exists): {file}")
+                            continue
                     
                     # Determine file type based on filename patterns
                     file_lower = file.lower()
@@ -351,6 +454,13 @@ def upload_inspection_files_to_onedrive(inspection, month_folder_id):
                 for file in files:
                     file_path = os.path.join(root, file)
                     original_filename = os.path.basename(file)
+                    
+                    # Skip ZIP files if organized structure exists
+                    if file.lower().endswith('.zip'):
+                        organized_exists = any('Compliance/' in f or 'inspection-' in f for f in uploaded_files)
+                        if organized_exists:
+                            print(f"⏭️ Skipping ZIP file (organized structure exists): {file}")
+                            continue
                     
                     # Determine file type based on filename patterns
                     file_lower = file.lower()

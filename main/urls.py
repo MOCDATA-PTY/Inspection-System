@@ -18,7 +18,10 @@ from .views.core_views import (
     start_scheduled_sync_service, stop_scheduled_sync_service, run_manual_sync, 
     save_system_settings, get_system_settings, start_daily_compliance_sync, stop_daily_compliance_sync, daily_compliance_sync_status, performance_monitor, server_status, 
     check_compliance_documents_batch, populate_six_month_files, pull_six_month_data_from_google_drive, get_client_all_files, get_page_clients_files, get_page_clients_file_status, update_sent_status, client_autocomplete_api, onedrive_callback,
-    scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup
+    scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
+    master_service_control_status, start_all_services, stop_all_services,
+    onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
+    reauthenticate_onedrive, get_onedrive_auth_url
 )
 from .views.data_views import (
     export_shipments, 
@@ -166,4 +169,21 @@ urlpatterns = [
     path('scheduled-backup/start/', start_scheduled_backup_service, name='start_scheduled_backup_service'),
     path('scheduled-backup/stop/', stop_scheduled_backup_service, name='stop_scheduled_backup_service'),
     path('scheduled-backup/manual/', run_manual_backup, name='run_manual_backup'),
+    
+    # =============================================================================
+    # MASTER SERVICE CONTROL URLS
+    # =============================================================================
+    path('master-service/status/', master_service_control_status, name='master_service_control_status'),
+    path('master-service/start-all/', start_all_services, name='start_all_services'),
+    path('master-service/stop-all/', stop_all_services, name='stop_all_services'),
+    
+    # =============================================================================
+    # ONEDRIVE SERVICE CONTROL URLS
+    # =============================================================================
+    path('onedrive-service/status/', onedrive_service_status, name='onedrive_service_status'),
+    path('onedrive-service/start/', start_onedrive_service, name='start_onedrive_service'),
+    path('onedrive-service/stop/', stop_onedrive_service, name='stop_onedrive_service'),
+    path('onedrive-service/test-connection/', test_onedrive_connection, name='test_onedrive_connection'),
+    path('onedrive-service/reauthenticate/', reauthenticate_onedrive, name='reauthenticate_onedrive'),
+    path('onedrive-service/auth-url/', get_onedrive_auth_url, name='get_onedrive_auth_url'),
 ]

@@ -901,17 +901,33 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="form-group">
-                            <label for="auto_sync">Master Service Control</label>
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <label class="switch">
-                                    <input type="checkbox" id="auto_sync" name="auto_sync" {% if settings.auto_sync_enabled %}checked{% endif %}>
-                                    <span class="slider"></span>
-                                </label>
-                                <span>Enable all background services (Sync, Backup, Daily Compliance)</span>
+                            <label>Master Service Control</label>
+                            <div style="margin-top: 0.5rem;">
+                                <span style="color: var(--text); font-size: 0.9rem;">Control all background services (Sync, Backup, Daily Compliance) with individual buttons below.</span>
                             </div>
-                            <small style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
-                                When enabled: Starts all services automatically. When disabled: Stops all services.
-                            </small>
+                        </div>
+                        
+                        <!-- Master Service Control Buttons -->
+                        <div style="margin-top: 1rem;">
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button type="button" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="startAllServices()">
+                                    <i class="fas fa-play"></i>
+                                    Start All Services
+                                </button>
+                                <button type="button" class="btn" style="background-color: #ef4444; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="stopAllServices()">
+                                    <i class="fas fa-stop"></i>
+                                    Stop All Services
+                                </button>
+                                <button type="button" class="btn" style="background-color: #3b82f6; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="refreshServiceStatus()">
+                                    <i class="fas fa-sync"></i>
+                                    Refresh Status
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Master Service Status -->
+                        <div id="masterServiceStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
+                            <div id="masterServiceStatusContent"></div>
                         </div>
                         
                         <div class="form-group">
@@ -969,9 +985,9 @@
                         
                         <!-- System Status -->
                         <div class="sync-status" style="margin-top: 1.5rem;">
-                            <div class="status-item">
-                                <i class="fas fa-power-off" style="color: {% if settings.auto_sync_enabled %}#10b981{% else %}#6b7280{% endif %};"></i>
-                                <span>Master Services: {% if settings.auto_sync_enabled %}All Running{% else %}All Stopped{% endif %}</span>
+                            <div class="status-item" id="masterServiceStatusItem">
+                                <i class="fas fa-power-off" style="color: #6b7280;"></i>
+                                <span>Master Services: <span id="masterServiceStatusText">Loading...</span></span>
                             </div>
                             <div class="status-item">
                                 <i class="fas fa-database" style="color: #10b981;"></i>
@@ -1031,16 +1047,56 @@
                                 </small>
                             </div>
                             
+                            <!-- OneDrive Service Controls -->
+                            <div style="margin-top: 1rem;">
+                                <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                                    <button type="button" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="startOneDriveService()">
+                                        <i class="fas fa-play"></i>
+                                        Start OneDrive Service
+                                    </button>
+                                    <button type="button" class="btn" style="background-color: #ef4444; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="stopOneDriveService()">
+                                        <i class="fas fa-stop"></i>
+                                        Stop OneDrive Service
+                                    </button>
+                                    <button type="button" class="btn" style="background-color: #3b82f6; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="testOneDriveConnection()">
+                                        <i class="fas fa-plug"></i>
+                                        Test Connection
+                                    </button>
+                                    <button type="button" class="btn" style="background-color: #f59e0b; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="reauthenticateOneDrive()">
+                                        <i class="fas fa-key"></i>
+                                        Re-authenticate
+                                    </button>
+                                    <button type="button" class="btn" style="background-color: #6b7280; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="refreshOneDriveStatus()">
+                                        <i class="fas fa-sync"></i>
+                                        Refresh Status
+                                    </button>
+                                </div>
+                                
+                                <!-- OneDrive Authentication Status -->
+                                <div id="onedriveAuthStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
+                                    <div id="onedriveAuthStatusContent"></div>
+                                </div>
+                            </div>
+                            
                             <!-- OneDrive Status Display -->
                             <div class="sync-status" style="margin-top: 1rem;">
-                                <div class="status-item">
-                                    <i class="fas fa-cloud" style="color: #10b981;"></i>
-                                    <span>OneDrive: Active</span>
+                                <div class="status-item" id="onedriveServiceStatusItem">
+                                    <i class="fas fa-cloud" style="color: #6b7280;"></i>
+                                    <span>OneDrive Service: <span id="onedriveServiceStatusText">Loading...</span></span>
+                                </div>
+                                <div class="status-item" id="onedriveConnectionStatusItem">
+                                    <i class="fas fa-plug" style="color: #6b7280;"></i>
+                                    <span>Connection: <span id="onedriveConnectionStatusText">Loading...</span></span>
                                 </div>
                                 <div class="status-item">
                                     <i class="fas fa-clock" style="color: #0078d4;"></i>
                                     <span>Upload Delay: {{ settings.onedrive_upload_delay_days|default:3 }} {{ settings.onedrive_upload_delay_unit|default:'days' }}</span>
                                 </div>
+                            </div>
+                            
+                            <!-- OneDrive Service Status Details -->
+                            <div id="onedriveServiceStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
+                                <div id="onedriveServiceStatusContent"></div>
                             </div>
                         </div>
                         
@@ -1901,7 +1957,29 @@
          }
          
          function getCsrfToken() {
-             return document.querySelector('[name=csrfmiddlewaretoken]').value;
+             const token = document.querySelector('[name=csrfmiddlewaretoken]');
+             if (token) {
+                 return token.value;
+             }
+             
+             // Fallback: try to get from meta tag
+             const metaToken = document.querySelector('meta[name="csrf-token"]');
+             if (metaToken) {
+                 return metaToken.getAttribute('content');
+             }
+             
+             // Fallback: try to get from cookie
+             const cookieValue = document.cookie
+                 .split('; ')
+                 .find(row => row.startsWith('csrftoken='))
+                 ?.split('=')[1];
+             
+             if (cookieValue) {
+                 return cookieValue;
+             }
+             
+             console.error('CSRF token not found!');
+             return '';
          }
          
          function toggleBatchOptions() {
@@ -1916,12 +1994,18 @@
          }
 
          // Initialize theme on page load
-         document.addEventListener('DOMContentLoaded', function() {
-             initTheme();
-             
-             // Daily sync button event listeners
-             document.getElementById('startDailySyncBtn').addEventListener('click', startDailySync);
-             document.getElementById('stopDailySyncBtn').addEventListener('click', stopDailySync);
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            
+            // Initialize master service control
+            refreshServiceStatus();
+            
+            // Initialize OneDrive service control
+            refreshOneDriveStatus();
+            
+            // Daily sync button event listeners
+            document.getElementById('startDailySyncBtn').addEventListener('click', startDailySync);
+            document.getElementById('stopDailySyncBtn').addEventListener('click', stopDailySync);
              
              // Add event listener to theme toggle (only if not already handled by onchange)
              const themeMode = document.getElementById('theme_mode');
@@ -1970,13 +2054,25 @@
              btn.disabled = true;
              
             try {
+                const csrfToken = getCsrfToken();
+                console.log('CSRF Token:', csrfToken ? 'Found' : 'Missing');
+                
                 const response = await fetch('/daily-sync/start/', {
                     method: 'POST',
                     headers: {
-                        'X-CSRFToken': getCsrfToken(),
+                        'X-CSRFToken': csrfToken,
                         'Content-Type': 'application/json',
                     }
                 });
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 100)}...`);
+                }
                 
                 const result = await response.json();
                 
@@ -2813,6 +2909,366 @@
             .catch(error => {
                 showNotification('Error stopping backup service: ' + error.message, 'error');
             });
+        }
+        
+        // Master Service Control Functions
+        function startAllServices() {
+            fetch('/master-service/start-all/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('All services started successfully!', 'success');
+                    refreshServiceStatus();
+                } else {
+                    const errorMsg = data.message || 'Unknown error';
+                    showNotification('Error starting services: ' + errorMsg, 'error');
+                    displayServiceResults(data.results || {});
+                }
+            })
+            .catch(error => {
+                showNotification('Error starting services: ' + error.message, 'error');
+            });
+        }
+        
+        function stopAllServices() {
+            fetch('/master-service/stop-all/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('All services stopped successfully!', 'success');
+                    refreshServiceStatus();
+                } else {
+                    const errorMsg = data.message || 'Unknown error';
+                    showNotification('Error stopping services: ' + errorMsg, 'error');
+                    displayServiceResults(data.results || {});
+                }
+            })
+            .catch(error => {
+                showNotification('Error stopping services: ' + error.message, 'error');
+            });
+        }
+        
+        function refreshServiceStatus() {
+            fetch('/master-service/status/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateMasterServiceStatus(data);
+                } else {
+                    console.error('Error fetching service status:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching service status:', error);
+            });
+        }
+        
+        function updateMasterServiceStatus(data) {
+            const statusText = document.getElementById('masterServiceStatusText');
+            const statusIcon = document.querySelector('#masterServiceStatusItem i');
+            
+            if (data.all_running) {
+                statusText.textContent = 'All Running';
+                statusIcon.style.color = '#10b981';
+            } else if (data.any_running) {
+                statusText.textContent = `${data.running_services}/${data.total_services} Running`;
+                statusIcon.style.color = '#f59e0b';
+            } else {
+                statusText.textContent = 'All Stopped';
+                statusIcon.style.color = '#6b7280';
+            }
+        }
+        
+        function displayServiceResults(results) {
+            const statusDiv = document.getElementById('masterServiceStatus');
+            const contentDiv = document.getElementById('masterServiceStatusContent');
+            
+            if (Object.keys(results).length > 0) {
+                let html = '<h4 style="margin-bottom: 1rem; color: var(--text);">Service Results:</h4>';
+                for (const [service, result] of Object.entries(results)) {
+                    const statusClass = result.includes('Failed') ? 'error' : 'success';
+                    html += `<div style="margin-bottom: 0.5rem;">
+                        <strong>${service.replace(/_/g, ' ').toUpperCase()}:</strong>
+                        <span class="${statusClass}" style="color: ${statusClass === 'error' ? '#ef4444' : '#10b981'};">
+                            ${result}
+                        </span>
+                    </div>`;
+                }
+                contentDiv.innerHTML = html;
+                statusDiv.style.display = 'block';
+            }
+        }
+        
+        // OneDrive Service Control Functions
+        function startOneDriveService() {
+            fetch('/onedrive-service/start/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('OneDrive service started successfully!', 'success');
+                    refreshOneDriveStatus();
+                } else {
+                    const errorMsg = data.message || 'Unknown error';
+                    showNotification('Error starting OneDrive service: ' + errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error starting OneDrive service: ' + error.message, 'error');
+            });
+        }
+        
+        function stopOneDriveService() {
+            fetch('/onedrive-service/stop/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('OneDrive service stopped successfully!', 'success');
+                    refreshOneDriveStatus();
+                } else {
+                    const errorMsg = data.message || 'Unknown error';
+                    showNotification('Error stopping OneDrive service: ' + errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error stopping OneDrive service: ' + error.message, 'error');
+            });
+        }
+        
+        function testOneDriveConnection() {
+            fetch('/onedrive-service/test-connection/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('OneDrive connection test successful!', 'success');
+                    refreshOneDriveStatus();
+                } else {
+                    const errorMsg = data.message || 'Connection test failed';
+                    showNotification('OneDrive connection test failed: ' + errorMsg, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Error testing OneDrive connection: ' + error.message, 'error');
+            });
+        }
+        
+        function refreshOneDriveStatus() {
+            fetch('/onedrive-service/status/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateOneDriveStatus(data);
+                } else {
+                    console.error('Error fetching OneDrive status:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching OneDrive status:', error);
+            });
+        }
+        
+        function updateOneDriveStatus(data) {
+            // Update service status
+            const serviceStatusText = document.getElementById('onedriveServiceStatusText');
+            const serviceStatusIcon = document.querySelector('#onedriveServiceStatusItem i');
+            
+            if (data.service_running) {
+                serviceStatusText.textContent = 'Running';
+                serviceStatusIcon.style.color = '#10b981';
+            } else {
+                serviceStatusText.textContent = 'Stopped';
+                serviceStatusIcon.style.color = '#6b7280';
+            }
+            
+            // Update connection status
+            const connectionStatusText = document.getElementById('onedriveConnectionStatusText');
+            const connectionStatusIcon = document.querySelector('#onedriveConnectionStatusItem i');
+            
+            if (data.connected) {
+                connectionStatusText.textContent = 'Connected';
+                connectionStatusIcon.style.color = '#10b981';
+            } else {
+                connectionStatusText.textContent = 'Disconnected';
+                connectionStatusIcon.style.color = '#ef4444';
+            }
+            
+            // Show detailed status if available
+            if (data.status) {
+                displayOneDriveStatusDetails(data.status);
+            }
+        }
+        
+        function displayOneDriveStatusDetails(status) {
+            const statusDiv = document.getElementById('onedriveServiceStatus');
+            const contentDiv = document.getElementById('onedriveServiceStatusContent');
+            
+            if (status && Object.keys(status).length > 0) {
+                let html = '<h4 style="margin-bottom: 1rem; color: var(--text);">OneDrive Service Details:</h4>';
+                
+                if (status.total_processed !== undefined) {
+                    html += `<div style="margin-bottom: 0.5rem;">
+                        <strong>Total Processed:</strong> ${status.total_processed}
+                    </div>`;
+                }
+                
+                if (status.total_uploaded !== undefined) {
+                    html += `<div style="margin-bottom: 0.5rem;">
+                        <strong>Total Uploaded:</strong> ${status.total_uploaded}
+                    </div>`;
+                }
+                
+                if (status.total_errors !== undefined) {
+                    html += `<div style="margin-bottom: 0.5rem;">
+                        <strong>Total Errors:</strong> ${status.total_errors}
+                    </div>`;
+                }
+                
+                if (status.last_run_time) {
+                    html += `<div style="margin-bottom: 0.5rem;">
+                        <strong>Last Run:</strong> ${new Date(status.last_run_time).toLocaleString()}
+                    </div>`;
+                }
+                
+                if (status.error) {
+                    html += `<div style="margin-bottom: 0.5rem; color: #ef4444;">
+                        <strong>Error:</strong> ${status.error}
+                    </div>`;
+                }
+                
+                contentDiv.innerHTML = html;
+                statusDiv.style.display = 'block';
+            }
+        }
+        
+        function reauthenticateOneDrive() {
+            // Show loading state
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating URL...';
+            button.disabled = true;
+            
+            fetch('/onedrive-service/reauthenticate/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Authorization URL generated! Please follow the instructions below.', 'success');
+                    displayAuthStatus(data);
+                    refreshOneDriveStatus();
+                } else {
+                    const errorMsg = data.message || 'Failed to generate authorization URL';
+                    showNotification('OneDrive re-authentication failed: ' + errorMsg, 'error');
+                    displayAuthStatus(data);
+                }
+            })
+            .catch(error => {
+                showNotification('Error during OneDrive re-authentication: ' + error.message, 'error');
+            })
+            .finally(() => {
+                // Restore button state
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        function displayAuthStatus(data) {
+            const statusDiv = document.getElementById('onedriveAuthStatus');
+            const contentDiv = document.getElementById('onedriveAuthStatusContent');
+            
+            let html = '<h4 style="margin-bottom: 1rem; color: var(--text);">Authentication Status:</h4>';
+            
+            if (data.success) {
+                html += `<div style="margin-bottom: 0.5rem; color: #10b981;">
+                    <i class="fas fa-check-circle"></i> <strong>Success:</strong> ${data.message}
+                </div>`;
+                
+                if (data.auth_url) {
+                    html += `<div style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border);">
+                        <h5 style="margin-bottom: 0.5rem; color: var(--text);">Authorization URL:</h5>
+                        <div style="margin-bottom: 1rem;">
+                            <a href="${data.auth_url}" target="_blank" style="color: var(--primary); text-decoration: none; word-break: break-all; font-size: 0.9rem;">
+                                ${data.auth_url}
+                            </a>
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('${data.auth_url}')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-copy"></i> Copy URL
+                        </button>
+                    </div>`;
+                }
+                
+                if (data.instructions && Array.isArray(data.instructions)) {
+                    html += `<div style="margin-top: 1rem;">
+                        <h5 style="margin-bottom: 0.5rem; color: var(--text);">Instructions:</h5>
+                        <ol style="margin: 0; padding-left: 1.5rem; color: var(--text-light); font-size: 0.9rem;">`;
+                    data.instructions.forEach(instruction => {
+                        html += `<li style="margin-bottom: 0.25rem;">${instruction}</li>`;
+                    });
+                    html += `</ol></div>`;
+                }
+                
+                if (data.auto_refresh_enabled) {
+                    html += `<div style="margin-bottom: 0.5rem; color: #10b981;">
+                        <i class="fas fa-sync"></i> <strong>Auto-refresh:</strong> Enabled - tokens will refresh automatically
+                    </div>`;
+                }
+            } else {
+                html += `<div style="margin-bottom: 0.5rem; color: #ef4444;">
+                    <i class="fas fa-exclamation-circle"></i> <strong>Error:</strong> ${data.message}
+                </div>`;
+                
+                if (data.requires_setup) {
+                    html += `<div style="margin-bottom: 0.5rem; color: #f59e0b;">
+                        <i class="fas fa-tools"></i> <strong>Action Required:</strong> OneDrive setup is required
+                    </div>`;
+                }
+            }
+            
+            if (data.output) {
+                html += `<div style="margin-top: 1rem;">
+                    <details>
+                        <summary style="cursor: pointer; color: var(--text-light);">Show Details</summary>
+                        <pre style="background: var(--background); padding: 0.5rem; border-radius: var(--radius); margin-top: 0.5rem; font-size: 0.8rem; overflow-x: auto;">${data.output}</pre>
+                    </details>
+                </div>`;
+            }
+            
+            contentDiv.innerHTML = html;
+            statusDiv.style.display = 'block';
+            
+            // Don't auto-hide if there's an auth URL (user needs to see it)
+            if (data.success && !data.auth_url) {
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 10000);
+            }
         }
         
         function checkBackupStatus() {

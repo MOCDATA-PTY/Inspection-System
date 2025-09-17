@@ -546,7 +546,7 @@
         .col-inspector { width: 80px; min-width: 80px; max-width: 80px; }
         .col-view-files { width: 60px; min-width: 60px; max-width: 60px; text-align: center; }
         .col-rfi { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
-        .col-invoice { width: 90px; min-width: 90px; max-width: 90px; text-align: center; }
+        .col-invoice { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-km { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-hours { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-send { width: 120px; min-width: 120px; max-width: 120px; text-align: center; }
@@ -968,6 +968,40 @@
         }
         
         .btn-rfi.uploaded:hover {
+            background-color: #c3e6cb;
+        }
+        
+        .btn-invoice {
+            background-color: #28a745;
+            color: white !important;
+            margin: 1px;
+            transition: all 0.3s ease;
+            min-width: 60px !important;
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        .btn-invoice:hover {
+            background-color: #1e7e34;
+        }
+        
+        .btn-invoice.uploaded {
+            background-color: #d4edda;
+            color: #155724 !important;
+            min-width: 60px !important;
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            font-size: 0.7rem !important;
+        }
+        
+        .btn-invoice.uploaded:hover {
             background-color: #c3e6cb;
         }
         
@@ -1443,8 +1477,7 @@
             }
             .col-client-name { min-width: 70px; max-width: 70px; }
             .col-date { min-width: 50px; }
-            .col-rfi, .col-km, .col-hours { min-width: 60px; }
-            .col-invoice { min-width: 70px; }
+            .col-rfi, .col-invoice, .col-km, .col-hours { min-width: 60px; }
             .col-send { min-width: 100px; }
         }
         
@@ -1552,8 +1585,7 @@
         
         /* Keep actions inline on desktop and tablets */
         @media (max-width: 1024px) and (min-width: 769px) {
-            .col-rfi { width: 70px; min-width: 70px; max-width: 70px; }
-            .col-invoice { width: 80px; min-width: 80px; max-width: 80px; }
+            .col-rfi, .col-invoice { width: 70px; min-width: 70px; max-width: 70px; }
             .col-km { width: 70px; min-width: 70px; max-width: 70px; }
             .col-hours { width: 70px; min-width: 70px; max-width: 70px; }
             .col-send { width: 100px; min-width: 100px; max-width: 100px; }
@@ -2059,8 +2091,7 @@
                 min-width: 90px;
             }
             
-            .col-rfi { width: 60px; min-width: 60px; max-width: 60px; }
-            .col-invoice { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-rfi, .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
             .col-km { width: 60px; min-width: 60px; max-width: 60px; }
             .col-hours { width: 60px; min-width: 60px; max-width: 60px; }
             .col-send { width: 90px; min-width: 90px; max-width: 90px; }
@@ -2180,8 +2211,7 @@
             }
             
             /* Make action buttons even smaller but keep inline */
-            .col-rfi { width: 50px; min-width: 50px; max-width: 50px; }
-            .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
+            .col-rfi, .col-invoice { width: 50px; min-width: 50px; max-width: 50px; }
             .col-km { width: 50px; min-width: 50px; max-width: 50px; }
             .col-hours { width: 50px; min-width: 50px; max-width: 50px; }
             .col-send { width: 80px; min-width: 80px; max-width: 80px; }
@@ -2475,10 +2505,6 @@
                 <form method="get" action="">
                     <!-- First Row: Search and Selection Fields -->
                     <div class="form-group" style="display: flex; gap: 15px; margin-bottom: 15px;">
-                        <div class="form-field" style="flex: 1;">
-                            <label class="form-label">Inspection No</label>
-                            <input type="text" class="form-control" name="claim_no" value="{{ request.GET.claim_no }}" placeholder="Enter inspection number">
-                        </div>
                         <div class="form-field" style="flex: 1; position: relative;">
                             <label class="form-label">Client Search</label>
                             <div class="search-input-wrapper" style="position: relative;">
@@ -2645,32 +2671,28 @@
                                 <!-- RFI Column -->
                                 <td class="col-rfi">
                                     {% if request.user.role == 'inspector' %}
-                                        {% if shipment.rfi_uploader %}
-                                        <button class="btn btn-sm" id="rfi-{{ fallback_group_id }}" disabled 
-                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}">
-                                            {{ shipment.rfi_uploader }}
+                                        {% if shipment.rfi_uploaded_by %}
+                                        <button class="btn btn-sm btn-rfi uploaded" id="rfi-{{ fallback_group_id }}" disabled 
+                                                title="RFI uploaded by {{ shipment.rfi_uploaded_by }} on {{ shipment.rfi_uploaded_date|date:'m/d/y' }}">
+                                            {{ shipment.rfi_uploaded_by }}
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-upload" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-rfi" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
                                                 title="Upload RFI" 
                                                 data-client-name="{{ shipment.client_name }}" 
-                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                style="background: #28a745; color: white;">
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
                                             RFI
                                         </button>
                                         {% endif %}
                                     {% elif request.user.role != 'scientist' %}
-                                        {% if shipment.rfi_uploader %}
-                                        <button class="btn btn-sm" disabled 
-                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                title="RFI uploaded by {{ shipment.rfi_uploader }} on {{ shipment.rfi_upload_date|date:'m/d/y' }}">
-                                            {{ shipment.rfi_uploader }}
+                                        {% if shipment.rfi_uploaded_by %}
+                                        <button class="btn btn-sm btn-rfi uploaded" id="rfi-{{ fallback_group_id }}" disabled 
+                                                title="RFI uploaded by {{ shipment.rfi_uploaded_by }} on {{ shipment.rfi_uploaded_date|date:'m/d/y' }}">
+                                            {{ shipment.rfi_uploaded_by }}
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-upload" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
-                                                title="Upload RFI" 
-                                                style="background: #28a745; color: white;">
+                                        <button class="btn btn-sm btn-rfi" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                                title="Upload RFI">
                                             RFI
                                         </button>
                                         {% endif %}
@@ -2682,18 +2704,16 @@
                                 <!-- Invoice Column -->
                                 <td class="col-invoice">
                                     {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-                                        {% if shipment.invoice_uploader %}
-                                        <button class="btn btn-sm" id="invoice-{{ fallback_group_id }}" disabled 
-                                                style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb; cursor: not-allowed;" 
-                                                title="Invoice uploaded by {{ shipment.invoice_uploader }} on {{ shipment.invoice_upload_date|date:'m/d/y' }}">
-                                            {{ shipment.invoice_uploader }}
+                                        {% if shipment.invoice_uploaded_by %}
+                                        <button class="btn btn-sm btn-invoice uploaded" id="invoice-{{ fallback_group_id }}" disabled 
+                                                title="Invoice uploaded by {{ shipment.invoice_uploaded_by }} on {{ shipment.invoice_uploaded_date|date:'m/d/y' }}">
+                                            {{ shipment.invoice_uploaded_by }}
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-upload" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-invoice" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
                                                 title="Upload Invoice"
                                                 data-client-name="{{ shipment.client_name }}" 
-                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                style="background: #28a745; color: white;">
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
                                             Invoice
                                         </button>
                                         {% endif %}
@@ -3387,21 +3407,45 @@
     <script src="{% static 'js/upload_functions.js' %}?v=20250914-fix-file-listing"></script>
     <script>
         // Set global CSRF token for upload functions
-        window.csrfToken = '{{ csrf_token|escapejs }}';
-        console.log('CSRF token set globally for upload functions');
+        try {
+            window.csrfToken = '{{ csrf_token|escapejs }}';
+            console.log('CSRF token set globally for upload functions');
+        } catch (error) {
+            console.error('Error setting CSRF token:', error);
+        }
     </script>
     
     <script>
-        console.log('Main JavaScript started loading...');
+        // Global error handler to catch any uncaught exceptions
+        window.addEventListener('error', function(event) {
+            console.error('Uncaught JavaScript error:', event.error);
+            console.error('Error details:', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error
+            });
+            // Don't let errors break the page functionality
+            return true;
+        });
 
-        // Theme functionality
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
-            const theme = savedTheme || serverTheme;
-            
-            document.documentElement.setAttribute('data-theme', theme);
-        }
+        // Wrap all JavaScript in error handling to prevent uncaught exceptions
+        try {
+            console.log('Main JavaScript started loading...');
+
+            // Theme functionality
+            function initTheme() {
+                try {
+                    const savedTheme = localStorage.getItem('theme');
+                    const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+                    const theme = savedTheme || serverTheme;
+                    
+                    document.documentElement.setAttribute('data-theme', theme);
+                } catch (error) {
+                    console.error('Error initializing theme:', error);
+                }
+            }
         
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -3527,6 +3571,21 @@
             // Setup expand buttons
             setupExpandButtons();
             
+            // Clear any cached data and force immediate file status check on page load
+            setTimeout(() => {
+                console.log('🧹 [PAGE LOAD] Clearing cached data and forcing fresh file status check...');
+                // Clear any local storage cache
+                localStorage.removeItem('file_status_cache');
+                localStorage.removeItem('shipment_data_cache');
+                updateAllViewFilesButtonColors();
+            }, 1000);
+            
+            // Additional file status check after a longer delay to catch any missed files
+            setTimeout(() => {
+                console.log('🔄 [PAGE LOAD] Running secondary file status check...');
+                updateAllViewFilesButtonColors();
+            }, 3000);
+            
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const mobileNav = document.getElementById('mobile-nav');
             const mobileOverlay = document.getElementById('mobile-overlay');
@@ -3649,16 +3708,25 @@
                     
                     // Reset button to upload state
                     button.disabled = false;
+                    button.classList.remove('uploaded');
+                    
+                    // Add appropriate CSS classes based on button type
+                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
+                    if (docType === 'RFI') {
+                        button.classList.add('btn-rfi', 'btn-sm');
+                    } else {
+                        button.classList.add('btn-invoice', 'btn-sm');
+                    }
+                    
                     button.style.background = '#28a745'; // Same green color for both RFI and Invoice
                     button.style.color = 'white';
                     button.style.border = '1px solid #1e7e34'; // Same border color for both
                     button.style.cursor = 'pointer';
                     
-                    // Reset button content
-                    button.innerHTML = '<i class="fas fa-upload"></i>';
+                    // Reset button content to original text
+                    button.innerHTML = docType;
                     
                     // Reset button title
-                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
                     button.title = 'Upload ' + docType;
                     
                     // Remove from localStorage
@@ -6881,7 +6949,11 @@
                 window.location.reload();
             }
         
-        console.log('JavaScript finished loading successfully!');
+            console.log('JavaScript finished loading successfully!');
+        } catch (error) {
+            console.error('JavaScript error in main script:', error);
+            // Don't let JavaScript errors break the page
+        }
     </script>
 </body>
 </html>

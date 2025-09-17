@@ -424,22 +424,29 @@
                     <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">System Status</h3>
                     <div class="space-y-2 lg:space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">Database</span>
-                            <span class="flex items-center gap-2 text-green-600">
+                            <span class="text-gray-600 text-sm lg:text-base">PostgreSQL</span>
+                            <span class="flex items-center gap-2 {% if system_status.postgresql_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span class="text-sm lg:text-base">Online</span>
+                                <span class="text-sm lg:text-base">{% if system_status.postgresql_online %}Online{% else %}Offline{% endif %}</span>
                             </span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">API Status</span>
-                            <span class="flex items-center gap-2 text-green-600">
+                            <span class="text-gray-600 text-sm lg:text-base">SQL Server</span>
+                            <span class="flex items-center gap-2 {% if system_status.sql_server_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span class="text-sm lg:text-base">Connected</span>
+                                <span class="text-sm lg:text-base">{% if system_status.sql_server_online %}Online{% else %}Offline{% endif %}</span>
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 text-sm lg:text-base">Google Sheets</span>
+                            <span class="flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
+                                <i class="fas fa-circle text-xs"></i>
+                                <span class="text-sm lg:text-base">{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif %}</span>
                             </span>
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-gray-600 text-sm lg:text-base">Last Sync</span>
-                            <span class="text-gray-500 text-xs lg:text-sm">Just now</span>
+                            <span class="text-gray-500 text-xs lg:text-sm">{{ system_status.last_sync }}</span>
                         </div>
                     </div>
                 </div>
@@ -447,18 +454,61 @@
                 <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
                     <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Recent Activity</h3>
                     <div class="space-y-2 lg:space-y-3">
-                        <div class="text-xs lg:text-sm text-gray-600">
-                            <i class="fas fa-sync-alt text-primary mr-2"></i>
-                            Inspection data synced successfully
-                        </div>
-                        <div class="text-xs lg:text-sm text-gray-600">
-                            <i class="fas fa-user-plus text-green-500 mr-2"></i>
-                            New client added to system
-                        </div>
-                        <div class="text-xs lg:text-sm text-gray-600">
-                            <i class="fas fa-file-alt text-blue-500 mr-2"></i>
-                            Report generated and sent
-                        </div>
+                        {% if recent_activities %}
+                            {% for activity in recent_activities %}
+                                <div class="text-xs lg:text-sm text-gray-600">
+                                    {% if activity.action == 'SYNC' %}
+                                        <i class="fas fa-sync text-green-500 mr-2"></i>
+                                        Data synced successfully
+                                    {% elif activity.action == 'CREATE' %}
+                                        {% if 'client' in activity.description|lower or 'client' in activity.object_type|lower %}
+                                            <i class="fas fa-user-plus text-green-500 mr-2"></i>
+                                            New client added to system
+                                        {% elif 'inspection' in activity.description|lower or 'inspection' in activity.object_type|lower %}
+                                            <i class="fas fa-clipboard-check text-blue-500 mr-2"></i>
+                                            New inspection created
+                                        {% else %}
+                                            <i class="fas fa-plus text-green-500 mr-2"></i>
+                                            New record created
+                                        {% endif %}
+                                    {% elif activity.action == 'LOGIN' %}
+                                        <i class="fas fa-sign-in-alt text-blue-500 mr-2"></i>
+                                        User logged in
+                                    {% elif activity.action == 'LOGOUT' %}
+                                        <i class="fas fa-sign-out-alt text-gray-500 mr-2"></i>
+                                        User logged out
+                                    {% elif activity.action == 'UPDATE' %}
+                                        <i class="fas fa-edit text-yellow-500 mr-2"></i>
+                                        Record updated
+                                    {% elif activity.action == 'DELETE' %}
+                                        <i class="fas fa-trash text-red-500 mr-2"></i>
+                                        Record deleted
+                                    {% elif activity.action == 'EXPORT' %}
+                                        <i class="fas fa-download text-blue-500 mr-2"></i>
+                                        Data exported
+                                    {% elif activity.action == 'IMPORT' %}
+                                        <i class="fas fa-upload text-green-500 mr-2"></i>
+                                        Data imported
+                                    {% elif activity.action == 'FILE_UPLOAD' %}
+                                        <i class="fas fa-file-upload text-blue-500 mr-2"></i>
+                                        File uploaded
+                                    {% elif activity.action == 'SETTINGS' %}
+                                        <i class="fas fa-cog text-gray-500 mr-2"></i>
+                                        Settings updated
+                                    {% else %}
+                                        <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+                                        {{ activity.action|title }}
+                                    {% endif %}
+                                    <span class="text-gray-400 text-xs ml-2">
+                                        {{ activity.timestamp|timesince }} ago
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-xs lg:text-sm text-gray-500 italic">
+                                No recent activity
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

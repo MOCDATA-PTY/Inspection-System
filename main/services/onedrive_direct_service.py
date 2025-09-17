@@ -68,10 +68,10 @@ class OneDriveDirectUploadService:
             # Check if token is expired or will expire soon (within 10 minutes)
             current_time = datetime.now().timestamp()
             if current_time > expires_at:
-                print("⚠️ Access token is expired, attempting refresh...")
+                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return self._refresh_token(token_data)
             elif expires_at - current_time < 600:  # 10 minutes
-                print("⚠️ Access token expires soon, attempting refresh...")
+                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return self._refresh_token(token_data)
             
             # Test the token
@@ -92,11 +92,11 @@ class OneDriveDirectUploadService:
                 print("⚠️ Access token is invalid, attempting refresh...")
                 return self._refresh_token(token_data)
             else:
-                print(f"❌ OneDrive authentication failed: {response.status_code}")
+                print(f"🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return False
                 
         except Exception as e:
-            print(f"❌ OneDrive authentication failed: {e}")
+            print(f"🔑 OneDrive authentication required - please re-authenticate in Settings")
             return False
     
     def _refresh_token(self, token_data):
@@ -104,8 +104,7 @@ class OneDriveDirectUploadService:
         try:
             refresh_token = token_data.get('refresh_token')
             if not refresh_token or refresh_token == 'null':
-                print("⚠️ No refresh token available")
-                print("🔑 You'll need to re-authenticate when the token expires")
+                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return False
             
             # For business accounts, use the common endpoint instead of consumers
@@ -183,10 +182,8 @@ class OneDriveDirectUploadService:
     def _auto_reauthenticate(self):
         """Automatically re-authenticate with OneDrive for personal accounts."""
         try:
-            print("🔄 Starting automatic re-authentication...")
-            print("📋 For personal accounts, manual re-authentication is required")
-            print("🔗 Please run: python setup_onedrive_auth.py")
-            print("⏰ Service will wait for new tokens to be available...")
+            print("🔑 OneDrive authentication required - please re-authenticate in Settings")
+            print("   Go to Settings → OneDrive Auto-Upload → Re-authenticate")
             
             # Wait for new tokens to be available (check every 30 seconds for 5 minutes)
             token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
@@ -207,11 +204,11 @@ class OneDriveDirectUploadService:
                         print("✅ New tokens detected! Re-authenticating...")
                         return self.authenticate_onedrive()
                 
-                print(f"⏳ Waiting for new tokens... ({waited_time}/{max_wait_time}s)")
+                print(f"⏳ Waiting for OneDrive authentication... ({waited_time}/{max_wait_time}s)")
                 time.sleep(check_interval)
                 waited_time += check_interval
             
-            print("❌ Auto-reauthentication timeout - manual intervention required")
+            print("🔑 OneDrive authentication required - please re-authenticate in Settings")
             return False
                 
         except Exception as e:
@@ -421,7 +418,129 @@ class OneDriveDirectUploadService:
         except Exception as e:
             print(f"❌ Error creating specific folder structure: {e}")
             return False
-
+    
+    def download_zip_for_organization(self, file_content, file_name, client_name, date_of_inspection, commodity):
+        """Download ZIP file locally for organization purposes."""
+        try:
+            import os
+            from django.conf import settings
+            from datetime import datetime
+            
+            # Build local path similar to the compliance structure
+            year_folder = date_of_inspection.strftime("%Y")
+            month_folder = date_of_inspection.strftime("%B")
+            
+            # Use original client name for folder structure
+            client_folder = client_name or 'Unknown Client'
+            
+            # Build local path
+            local_base_path = os.path.join(
+                settings.MEDIA_ROOT, 
+                'inspection', 
+                year_folder, 
+                month_folder, 
+                client_folder,
+                'Compliance',
+                commodity.upper()
+            )
+            os.makedirs(local_base_path, exist_ok=True)
+            
+            # Save ZIP file locally
+            local_zip_path = os.path.join(local_base_path, file_name)
+            with open(local_zip_path, 'wb') as f:
+                f.write(file_content)
+            
+            print(f"📥 Downloaded ZIP for organization: {local_zip_path}")
+            return local_zip_path
+            
+        except Exception as e:
+            print(f"❌ Error downloading ZIP for organization: {e}")
+            return None
+    
+    def upload_organized_structure_to_onedrive(self, client_name, date_of_inspection, commodity):
+        """Upload the organized compliance structure to OneDrive."""
+        try:
+            import os
+            from django.conf import settings
+            from datetime import datetime
+            
+            # Build the client folder path
+            year_folder = date_of_inspection.strftime('%Y')
+            month_folder = date_of_inspection.strftime('%B')
+            client_folder = client_name or 'Unknown Client'
+            
+            # Base path for the client's compliance folder
+            base_path = os.path.join(
+                settings.MEDIA_ROOT, 
+                'inspection', 
+                year_folder, 
+                month_folder, 
+                client_folder
+            )
+            
+            if not os.path.exists(base_path):
+                print(f"📁 No compliance folder found for {client_folder}")
+                return False
+            
+            # Build OneDrive base path
+            onedrive_base = getattr(settings, 'ONEDRIVE_FOLDER', 'FoodSafety Agency Inspections')
+            onedrive_client_path = f"{onedrive_base}/inspection/{year_folder}/{month_folder}/{client_folder}"
+            
+            # Upload main document type folders (rfi, invoice, Compliance)
+            main_folders = ['rfi', 'invoice', 'Compliance']  # Capital C for Compliance
+            for folder_name in main_folders:
+                folder_path = os.path.join(base_path, folder_name)
+                if os.path.exists(folder_path):
+                    print(f"📁 Uploading {folder_name} files to OneDrive")
+                    onedrive_folder_path = f"{onedrive_client_path}/{folder_name}"
+                    self.create_onedrive_folder(onedrive_folder_path)
+                    
+                    for root, dirs, files in os.walk(folder_path):
+                        for file in files:
+                            if file.lower().endswith('.pdf'):
+                                file_path = os.path.join(root, file)
+                                onedrive_file_path = f"{onedrive_folder_path}/{file}"
+                                with open(file_path, 'rb') as f:
+                                    file_content = f.read()
+                                self.upload_to_onedrive_direct(file_content, onedrive_file_path)
+                                print(f"  📄 Uploaded {folder_name}: {file}")
+            
+            # Upload individual inspection folders
+            for item in os.listdir(base_path):
+                item_path = os.path.join(base_path, item)
+                if os.path.isdir(item_path) and item.startswith('inspection-'):
+                    inspection_number = item.replace('inspection-', '')
+                    print(f"📁 Uploading individual inspection folder to OneDrive: {item}")
+                    
+                    # Create inspection folder in OneDrive
+                    onedrive_inspection_path = f"{onedrive_client_path}/{item}"
+                    self.create_onedrive_folder(onedrive_inspection_path)
+                    
+                    # Upload all subfolders from this inspection folder (compliance, lab, retest, form)
+                    subfolders = ['compliance', 'lab', 'retest', 'form']
+                    for subfolder in subfolders:
+                        subfolder_path = os.path.join(item_path, subfolder)
+                        if os.path.exists(subfolder_path):
+                            onedrive_subfolder_path = f"{onedrive_inspection_path}/{subfolder}"
+                            self.create_onedrive_folder(onedrive_subfolder_path)
+                            
+                            for root, dirs, files in os.walk(subfolder_path):
+                                for file in files:
+                                    if file.lower().endswith('.pdf'):
+                                        file_path = os.path.join(root, file)
+                                        onedrive_file_path = f"{onedrive_subfolder_path}/{file}"
+                                        with open(file_path, 'rb') as f:
+                                            file_content = f.read()
+                                        self.upload_to_onedrive_direct(file_content, onedrive_file_path)
+                                        print(f"  📄 Uploaded inspection {inspection_number} {subfolder}: {file}")
+            
+            print(f"✅ Successfully uploaded organized structure to OneDrive for {client_name}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error uploading organized structure to OneDrive: {e}")
+            return False
+    
     def create_complete_compliance_structure(self, year_folder, month_folder, client_folder):
         """Create the complete compliance folder structure for all document types."""
         try:
@@ -501,13 +620,29 @@ class OneDriveDirectUploadService:
             success = self.upload_to_onedrive_direct(file_content, onedrive_path)
             
             if success:
-                print(f"✅ Successfully uploaded to OneDrive: {onedrive_path}")
+                print(f"✅ Uploaded to OneDrive: {file_name}")
                 
-                # Also save locally for the latest 60 days
-                self._save_file_locally(file_content, year_folder, month_folder, client_folder, commodity, file_name)
-                
-                # Cache file metadata in Redis
-                self._cache_file_metadata(onedrive_path, year_folder, month_folder, client_folder, commodity, file_name, len(file_content))
+                # Check if uploaded file is a ZIP and organize it automatically
+                if file_name.lower().endswith('.zip'):
+                    # Check if auto-organization is enabled
+                    auto_organize_enabled = getattr(settings, 'AUTO_ORGANIZE_ZIP_FILES', True)
+                    if auto_organize_enabled:
+                        print(f"🗂️ Auto-organizing ZIP file: {file_name}")
+                        try:
+                            # Download the ZIP file locally to organize it
+                            local_zip_path = self.download_zip_for_organization(file_content, file_name, client_name, date_of_inspection, commodity)
+                            if local_zip_path:
+                                from ..views.core_views import organize_zip_file_automatically
+                                organize_zip_file_automatically(local_zip_path, client_name, date_of_inspection, commodity)
+                                
+                                # Upload the organized structure to OneDrive instead of the ZIP
+                                print(f"📁 Uploading organized structure to OneDrive for {file_name}")
+                                self.upload_organized_structure_to_onedrive(client_name, date_of_inspection, commodity)
+                        except Exception as e:
+                            print(f"⚠️ Auto-organization failed for {file_name}: {e}")
+                            # Continue anyway - the ZIP file is still uploaded to OneDrive
+                    else:
+                        print(f"📦 ZIP file uploaded to OneDrive but auto-organization is disabled: {file_name}")
                 
                 return True
             else:
@@ -673,7 +808,7 @@ class OneDriveDirectUploadService:
             
             # Authenticate with OneDrive
             if not self.authenticate_onedrive():
-                print("❌ OneDrive authentication failed")
+                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return
             
             # Get ALL inspections from 2025 onwards
@@ -917,12 +1052,12 @@ class OneDriveDirectUploadService:
                         # Warn when token expires in less than 30 minutes
                         if 0 < time_until_expiry < 1800:  # 30 minutes
                             minutes_left = int(time_until_expiry / 60)
-                            print(f"⚠️ OneDrive token expires in {minutes_left} minutes!")
-                            print("🔗 Run: python setup_onedrive_auth.py to refresh")
+                            print(f"🔑 OneDrive authentication required in {minutes_left} minutes")
+                            print("   Go to Settings → OneDrive Auto-Upload → Re-authenticate")
                         
                         # Auto-reauth when token expires in less than 5 minutes
                         elif time_until_expiry < 300:  # 5 minutes
-                            print("🔄 Token expiring soon, initiating auto-reauthentication...")
+                            print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                             self._auto_reauthenticate()
                     
                     # Check every 5 minutes
