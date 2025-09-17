@@ -536,17 +536,26 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
                 console.log('✅ Files found and displaying');
                 displayFiles(result.files, result.message);
             } else {
-                console.log('📁 No files found, showing test data');
-                showTestFiles(clientName, inspectionDate, result.message);
+                console.log('📁 No files found');
+                const filesList = document.getElementById('filesList');
+                if (filesList) {
+                    filesList.innerHTML = '<div class="empty-category">📂 No files found for this inspection.</div>';
+                }
             }
         } else if (filesList) {
-            console.log('❌ Server returned error, showing test data');
-            showTestFiles(clientName, inspectionDate, 'Server error - showing test data');
+            console.log('❌ Server returned error');
+            const filesList = document.getElementById('filesList');
+            if (filesList) {
+                filesList.innerHTML = '<div class="empty-category">❌ Error loading files. Please try again.</div>';
+            }
         }
         
     } catch (error) {
-        console.log('❌ File fetch error, showing test data:', error);
-        showTestFiles(clientName, inspectionDate, 'Network error - showing test data');
+        console.log('❌ File fetch error:', error);
+        const filesList = document.getElementById('filesList');
+        if (filesList) {
+            filesList.innerHTML = '<div class="empty-category">❌ Network error. Please try again.</div>';
+        }
     }
 }
 
