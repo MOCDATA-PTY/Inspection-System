@@ -5933,8 +5933,10 @@ def get_inspection_files_local(client_name, inspection_date):
         
         # Scan for files in each category (optimized with error handling)
         # Use only one folder structure to avoid duplicates
+        # Check both uppercase and lowercase folder names
         folder_structures = [
-            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'}
+            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'},
+            {'rfi': 'RFI', 'invoice': 'Invoice', 'lab': 'Lab', 'retest': 'Retest', 'compliance': 'Compliance'}
         ]
         
         # First check top-level folders
