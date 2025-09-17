@@ -196,14 +196,9 @@ function uploadRFI(groupId) {
                                 updateAllViewFilesButtonColors();
                             }, 1000);
                             
-                            // Refresh inspection data after upload to update button state
-                            setTimeout(async () => {
-                                console.log('🔄 Refreshing inspection data after RFI upload...');
-                                // Get client name and date from groupId or use current context
-                                const clientName = window.currentFilesClient || groupId.split('_').slice(0, -1).join(' ').replace(/_/g, ' ');
-                                const inspectionDate = window.currentFilesDate || groupId.split('_').slice(-1)[0];
-                                await refreshInspectionData(groupId, clientName, inspectionDate);
-                            }, 1500);
+                            // Don't auto-refresh to avoid resetting button state
+                            // The button is already correctly updated to show "Developer"
+                            console.log('🔄 Skipping auto-refresh to prevent button reset loop');
                     } else {
                         alert('Upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Upload failed:', data);
@@ -330,14 +325,9 @@ function uploadInvoice(groupId) {
                         // Update button colors immediately after upload
                         updateAllViewFilesButtonColors();
                         
-                        // Refresh inspection data after upload to update button state
-                        setTimeout(async () => {
-                            console.log('🔄 Refreshing inspection data after Invoice upload...');
-                            // Get client name and date from groupId or use current context
-                            const clientName = window.currentFilesClient || groupId.split('_').slice(0, -1).join(' ').replace(/_/g, ' ');
-                            const inspectionDate = window.currentFilesDate || groupId.split('_').slice(-1)[0];
-                            await refreshInspectionData(groupId, clientName, inspectionDate);
-                        }, 1500);
+                        // Don't auto-refresh to avoid resetting button state
+                        // The button is already correctly updated to show "Developer"
+                        console.log('🔄 Skipping auto-refresh to prevent button reset loop');
                     } else {
                         alert('Invoice upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Invoice upload failed:', data);
