@@ -5941,7 +5941,9 @@ def get_inspection_files_local(client_name, inspection_date):
         
         # First check top-level folders
         for structure in folder_structures:
+            print(f"🔍 [FILES] Checking folder structure: {structure}")
             for category_key, folder_name in structure.items():
+                print(f"🔍 [FILES] Checking {category_key} in folder: {folder_name}")
                 if category_key == 'compliance':
                     # Check compliance subfolders for all commodities
                     compliance_base = os.path.join(actual_client_path, 'Compliance')
@@ -5970,6 +5972,7 @@ def get_inspection_files_local(client_name, inspection_date):
                                 if os.path.isfile(file_path):
                                     file_info = get_file_info(file_path, folder_name)
                                     files_by_category[category_key].append(file_info)
+                                    print(f"✅ [FILES] Found {category_key} file: {filename} in {folder_name}")
                         except (OSError, PermissionError):
                             print(f"⚠️ Error accessing category folder: {category_path}")
                             continue
