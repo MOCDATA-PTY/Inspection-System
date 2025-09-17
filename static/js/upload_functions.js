@@ -932,8 +932,39 @@ async function deleteFile(filePath, fileName) {
                 }
             }
         } else {
-            alert('Error deleting file: ' + (result.error || 'Unknown error'));
-            console.error('Delete failed:', result);
+            // Handle "File not found" as a special case - file was already deleted
+            if (result.error && result.error.includes('File not found')) {
+                console.log('File already deleted from server, updating UI...');
+                
+                // Determine document type from file path
+                let documentType = 'unknown';
+                if (filePath.includes('/rfi/')) {
+                    documentType = 'rfi';
+                } else if (filePath.includes('/invoice/')) {
+                    documentType = 'invoice';
+                }
+                
+                // Update the corresponding button immediately
+                if (documentType !== 'unknown') {
+                    console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
+                    updateButtonAfterDeletion(clientName, inspectionDate, documentType);
+                }
+                
+                // Clear any cached file data for this client/date
+                console.log('🧹 Clearing file cache for updated state...');
+                
+                // Refresh the files list to show updated state
+                const groupId = window.currentFilesGroupId;
+                if (groupId && clientName && inspectionDate) {
+                    console.log('🔄 Refreshing View Files popup to show updated file count');
+                    setTimeout(() => {
+                        openFilesPopup(groupId, clientName, inspectionDate);
+                    }, 100);
+                }
+            } else {
+                alert('Error deleting file: ' + (result.error || 'Unknown error'));
+                console.error('Delete failed:', result);
+            }
         }
         
     } catch (error) {
