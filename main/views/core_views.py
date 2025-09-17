@@ -6824,6 +6824,11 @@ def get_page_clients_file_status(request):
     cache.delete('page_clients_status_cache')
     print("🧹 [BACKEND] Cleared file status cache to prevent stale data")
     
+    # Add small delay to ensure files are fully written before detection
+    import time
+    time.sleep(0.5)  # 500ms delay to ensure file system is updated
+    print("⏳ [BACKEND] Added delay to ensure files are fully written")
+    
     try:
         import json
         import os
@@ -6946,6 +6951,10 @@ def get_page_clients_file_status(request):
                                 if not has_rfi_dir:
                                     rfi_path = os.path.join(test_path, 'rfi')
                                     has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
+                                    if has_rfi_dir:
+                                        print(f"✅ [BUTTON] Found RFI files in lowercase folder: {rfi_path}")
+                                    else:
+                                        print(f"❌ [BUTTON] No RFI files in lowercase folder: {rfi_path}")
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_rfi_dir:
@@ -6970,6 +6979,10 @@ def get_page_clients_file_status(request):
                                 if not has_invoice_dir:
                                     invoice_path = os.path.join(test_path, 'invoice')
                                     has_invoice_dir = os.path.exists(invoice_path) and any(os.path.isfile(os.path.join(invoice_path, f)) for f in os.listdir(invoice_path)) if os.path.exists(invoice_path) else False
+                                    if has_invoice_dir:
+                                        print(f"✅ [BUTTON] Found Invoice files in lowercase folder: {invoice_path}")
+                                    else:
+                                        print(f"❌ [BUTTON] No Invoice files in lowercase folder: {invoice_path}")
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_invoice_dir:
