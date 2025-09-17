@@ -37,7 +37,7 @@ class SessionTimeoutMiddleware:
                     if current_time > timeout_threshold:
                         # Session expired - log out user
                         logout(request)
-                        messages.warning(request, f"Your session expired due to {session_timeout_minutes} minutes of inactivity. Please log in again.")
+                        # messages.warning(request, f"Your session expired due to {session_timeout_minutes} minutes of inactivity. Please log in again.")
                         return redirect('login')
                 
                 # Update last activity timestamp only if not in sync operation
