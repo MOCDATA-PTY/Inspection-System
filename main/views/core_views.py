@@ -6387,6 +6387,12 @@ def delete_inspection_file(request):
             if os.path.exists(potential_path):
                 full_file_path = potential_path
                 print(f"🗑️ Found file using exact path: {full_file_path}")
+            else:
+                # Try alternative path construction (same as file display)
+                alternative_path = os.path.join(media_root, 'inspection', year, month, client_folder_pattern, file_path.split('/')[-2], file_path.split('/')[-1])
+                if os.path.exists(alternative_path):
+                    full_file_path = alternative_path
+                    print(f"🗑️ Found file using alternative path: {full_file_path}")
         
         # If not found, search for the file using client name and date
         if not full_file_path:
@@ -6930,65 +6936,104 @@ def get_page_clients_file_status(request):
                             # Check for files in each document type folder (not just directory existence)
                             # Check both top-level and nested Inspection-XXXX folders
                             
-                            # Check RFI files
+                            # Check RFI files (check both uppercase and lowercase)
                             if not has_rfi_dir:
-                                # Check top-level RFI folder
+                                # Check top-level RFI folder (uppercase)
                                 rfi_path = os.path.join(test_path, 'RFI')
                                 has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
+                                
+                                # Check top-level rfi folder (lowercase)
+                                if not has_rfi_dir:
+                                    rfi_path = os.path.join(test_path, 'rfi')
+                                    has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_rfi_dir:
                                     for item in os.listdir(test_path):
                                         if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            # Check both uppercase and lowercase
                                             nested_rfi_path = os.path.join(test_path, item, 'RFI')
+                                            if not os.path.exists(nested_rfi_path):
+                                                nested_rfi_path = os.path.join(test_path, item, 'rfi')
                                             if os.path.exists(nested_rfi_path) and any(os.path.isfile(os.path.join(nested_rfi_path, f)) for f in os.listdir(nested_rfi_path)):
                                                 has_rfi_dir = True
                                                 print(f"✅ [BUTTON] Found RFI files in nested folder {item}")
                                                 break
                             
-                            # Check Invoice files
+                            # Check Invoice files (check both uppercase and lowercase)
                             if not has_invoice_dir:
-                                # Check top-level Invoice folder
+                                # Check top-level Invoice folder (uppercase)
                                 invoice_path = os.path.join(test_path, 'Invoice')
                                 has_invoice_dir = os.path.exists(invoice_path) and any(os.path.isfile(os.path.join(invoice_path, f)) for f in os.listdir(invoice_path)) if os.path.exists(invoice_path) else False
+                                
+                                # Check top-level invoice folder (lowercase)
+                                if not has_invoice_dir:
+                                    invoice_path = os.path.join(test_path, 'invoice')
+                                    has_invoice_dir = os.path.exists(invoice_path) and any(os.path.isfile(os.path.join(invoice_path, f)) for f in os.listdir(invoice_path)) if os.path.exists(invoice_path) else False
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_invoice_dir:
                                     for item in os.listdir(test_path):
                                         if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            # Check both uppercase and lowercase
                                             nested_invoice_path = os.path.join(test_path, item, 'Invoice')
+                                            if not os.path.exists(nested_invoice_path):
+                                                nested_invoice_path = os.path.join(test_path, item, 'invoice')
                                             if os.path.exists(nested_invoice_path) and any(os.path.isfile(os.path.join(nested_invoice_path, f)) for f in os.listdir(nested_invoice_path)):
                                                 has_invoice_dir = True
                                                 print(f"✅ [BUTTON] Found Invoice files in nested folder {item}")
                                                 break
                             
-                            # Check Lab files
+                            # Check Lab files (check multiple folder name variations)
                             if not has_lab_dir:
-                                # Check top-level Lab folder
+                                # Check top-level Lab folder (uppercase)
                                 lab_path = os.path.join(test_path, 'Lab')
                                 has_lab_dir = os.path.exists(lab_path) and any(os.path.isfile(os.path.join(lab_path, f)) for f in os.listdir(lab_path)) if os.path.exists(lab_path) else False
+                                
+                                # Check top-level lab results folder (with space)
+                                if not has_lab_dir:
+                                    lab_path = os.path.join(test_path, 'lab results')
+                                    has_lab_dir = os.path.exists(lab_path) and any(os.path.isfile(os.path.join(lab_path, f)) for f in os.listdir(lab_path)) if os.path.exists(lab_path) else False
+                                
+                                # Check top-level lab folder (lowercase)
+                                if not has_lab_dir:
+                                    lab_path = os.path.join(test_path, 'lab')
+                                    has_lab_dir = os.path.exists(lab_path) and any(os.path.isfile(os.path.join(lab_path, f)) for f in os.listdir(lab_path)) if os.path.exists(lab_path) else False
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_lab_dir:
                                     for item in os.listdir(test_path):
                                         if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            # Check multiple variations
                                             nested_lab_path = os.path.join(test_path, item, 'Lab')
+                                            if not os.path.exists(nested_lab_path):
+                                                nested_lab_path = os.path.join(test_path, item, 'lab results')
+                                            if not os.path.exists(nested_lab_path):
+                                                nested_lab_path = os.path.join(test_path, item, 'lab')
                                             if os.path.exists(nested_lab_path) and any(os.path.isfile(os.path.join(nested_lab_path, f)) for f in os.listdir(nested_lab_path)):
                                                 has_lab_dir = True
                                                 print(f"✅ [BUTTON] Found Lab files in nested folder {item}")
                                                 break
                             
-                            # Check Retest files
+                            # Check Retest files (check both uppercase and lowercase)
                             if not has_retest_dir:
-                                # Check top-level Retest folder
+                                # Check top-level Retest folder (uppercase)
                                 retest_path = os.path.join(test_path, 'Retest')
                                 has_retest_dir = os.path.exists(retest_path) and any(os.path.isfile(os.path.join(retest_path, f)) for f in os.listdir(retest_path)) if os.path.exists(retest_path) else False
+                                
+                                # Check top-level retest folder (lowercase)
+                                if not has_retest_dir:
+                                    retest_path = os.path.join(test_path, 'retest')
+                                    has_retest_dir = os.path.exists(retest_path) and any(os.path.isfile(os.path.join(retest_path, f)) for f in os.listdir(retest_path)) if os.path.exists(retest_path) else False
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_retest_dir:
                                     for item in os.listdir(test_path):
                                         if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            # Check both uppercase and lowercase
                                             nested_retest_path = os.path.join(test_path, item, 'Retest')
+                                            if not os.path.exists(nested_retest_path):
+                                                nested_retest_path = os.path.join(test_path, item, 'retest')
                                             if os.path.exists(nested_retest_path) and any(os.path.isfile(os.path.join(nested_retest_path, f)) for f in os.listdir(nested_retest_path)):
                                                 has_retest_dir = True
                                                 print(f"✅ [BUTTON] Found Retest files in nested folder {item}")

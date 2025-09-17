@@ -2659,7 +2659,7 @@
                                            data-group-id="{{ fallback_group_id|escapejs }}" 
                                            data-client-name="{{ shipment.client_name|escapejs }}" 
                                            data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d"|escapejs }}" 
-                                           onclick="openFilesPopup(this.dataset.groupId, this.dataset.clientName, this.dataset.inspectionDate)" 
+                                           onclick="if(typeof openFilesPopup === 'function') { openFilesPopup(this.dataset.groupId, this.dataset.clientName, this.dataset.inspectionDate); } else { console.warn('openFilesPopup not loaded yet'); }" 
                                            title="View Files - 
                                            {% if shipment.compliance_status == 'complete' %}All required files present
                                            {% elif shipment.compliance_status == 'partial' %}Some files present
@@ -3404,7 +3404,7 @@
     <!-- Load sent status functionality from external file -->
     <script src="{% static 'js/sent_status.js' %}"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20250917-fix-button-reset-loop"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20250917-fix-all-issues"></script>
     <script>
         // Set global CSRF token for upload functions
         try {

@@ -429,16 +429,13 @@ function closeFilesPopup() {
         downloadBtn.style.display = 'none';
     }
     
-    // Refresh the specific inspection when popup closes (like a page refresh but only for this inspection)
+    // Don't refresh inspection data when popup closes to prevent button reset loop
     if (window.currentFilesGroupId && window.currentFilesClient && window.currentFilesDate) {
-        console.log(`🔄 Popup closed - refreshing inspection data for: ${window.currentFilesClient} on ${window.currentFilesDate}`);
+        console.log(`🔄 Popup closed - skipping inspection refresh to prevent button reset`);
         console.log(`🔍 Group ID: ${window.currentFilesGroupId}`);
         
-        // Add delay to ensure DOM is fully updated after popup closes
-        setTimeout(async () => {
-            console.log('🔄 Triggering targeted inspection refresh after popup close...');
-            await refreshInspectionData(window.currentFilesGroupId, window.currentFilesClient, window.currentFilesDate);
-        }, 1000);
+        // Skip refresh to prevent button reset loop
+        console.log('🔄 Skipping inspection refresh to prevent button reset loop');
     }
     
     // Process any pending button updates now that popup is closed
