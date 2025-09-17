@@ -7010,9 +7010,12 @@ def get_page_clients_file_status(request):
                                 # Also check nested Inspection-XXXX folders for compliance files
                                 if not has_compliance_dir:
                                     for item in os.listdir(test_path):
-                                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
                                             inspection_folder = os.path.join(test_path, item)
+                                            # Check both uppercase and lowercase compliance folders
                                             nested_compliance_path = os.path.join(inspection_folder, 'Compliance')
+                                            if not os.path.exists(nested_compliance_path):
+                                                nested_compliance_path = os.path.join(inspection_folder, 'compliance')
                                             if os.path.exists(nested_compliance_path):
                                                 # Check for files in commodity subfolders
                                                 for commodity_folder in os.listdir(nested_compliance_path):
