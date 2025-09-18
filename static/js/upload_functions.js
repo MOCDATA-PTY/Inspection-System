@@ -2014,6 +2014,15 @@ async function updateAllViewFilesButtonColors() {
         
         console.log('🔄 [FRONTEND] Checking file status for ' + clientDateCombinations.length + ' client+date combinations...');
         
+        // Debug: Check if New Poultry Retailer is in the combinations
+        const newPoultryCombinations = clientDateCombinations.filter(c => c.client_name === 'New Poultry Retailer');
+        if (newPoultryCombinations.length > 0) {
+            console.log('🔍 [DEBUG] Found New Poultry Retailer combinations:', newPoultryCombinations);
+        } else {
+            console.log('❌ [DEBUG] New Poultry Retailer NOT found in combinations');
+            console.log('🔍 [DEBUG] Available client names:', clientDateCombinations.map(c => c.client_name));
+        }
+        
         const response = await fetch('/page-clients-status/', {
             method: 'POST',
             headers: {
@@ -2029,6 +2038,27 @@ async function updateAllViewFilesButtonColors() {
         
         if (result.success) {
             console.log('✅ Received file status data for all client+date combinations');
+            
+            // Debug: Check if New Poultry Retailer is in the response
+            const newPoultryStatuses = Object.entries(result.combination_statuses).filter(([key, data]) => data.client_name === 'New Poultry Retailer');
+            if (newPoultryStatuses.length > 0) {
+                console.log('🔍 [DEBUG] Found New Poultry Retailer in response:', newPoultryStatuses);
+                newPoultryStatuses.forEach(([key, data]) => {
+                    console.log(`🔍 [DEBUG] New Poultry Retailer ${key}:`, {
+                        client_name: data.client_name,
+                        inspection_date: data.inspection_date,
+                        file_status: data.file_status,
+                        has_rfi: data.has_rfi,
+                        has_invoice: data.has_invoice,
+                        has_lab: data.has_lab,
+                        has_retest: data.has_retest,
+                        has_compliance: data.has_compliance
+                    });
+                });
+            } else {
+                console.log('❌ [DEBUG] New Poultry Retailer NOT found in response');
+                console.log('🔍 [DEBUG] Available clients in response:', Object.values(result.combination_statuses).map(d => d.client_name));
+            }
             
             // Update button colors for each client+date combination
             Object.entries(result.combination_statuses).forEach(([uniqueKey, statusData]) => {

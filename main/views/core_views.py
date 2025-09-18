@@ -60,7 +60,7 @@ from django.db.models import Q
 from ..forms import LoginForm, RegisterForm, ClientForm, InspectionForm, InspectorMappingForm
 from ..models import Client, Inspection, Shipment, Settings, FoodSafetyAgencyInspection, SystemLog, InspectorMapping
 from django.views.decorators.csrf import csrf_exempt
-from ..decorators import role_required, inspector_restricted, financial_only, scientist_only, inspector_only_inspections
+from ..decorators import role_required, inspector_restricted, financial_only, scientist_only, inspector_only_inspections, no_inspector_scientist
 @login_required
 @role_required(['admin', 'super_admin', 'developer'])
 def save_manual_client_email(request):
@@ -313,7 +313,6 @@ def register(request):
 def user_logout(request):
     """Handle user logout."""
     logout(request)
-    messages.success(request, "You have been successfully logged out.")
     return redirect('login')
 
 
@@ -1911,8 +1910,53 @@ def upload_document(request):
             if group_id:
                 parts = group_id.split('_')
                 if len(parts) >= 2:
-                    # Convert underscores back to spaces for client name
-                    client_name = '_'.join(parts[:-1]).replace('_', ' ')
+                    # Get the date from group_id
+                    date_str = parts[-1]
+                    if len(date_str) == 8:
+                        try:
+                            # Convert date string to date object for lookup
+                            date_obj = datetime.strptime(date_str, '%Y%m%d').date()
+                            
+                            # Find the inspection to get the original client name
+                            # This ensures we use the exact client name from the database
+                            reconstructed_name = '_'.join(parts[:-1]).replace('_', ' ')
+                            
+                            # Try to find a matching inspection by date and similar client name
+                            inspections_on_date = FoodSafetyAgencyInspection.objects.filter(
+                                date_of_inspection=date_obj
+                            )
+                            
+                            # Look for exact or similar client name match
+                            matched_inspection = None
+                            for inspection in inspections_on_date:
+                                if inspection.client_name:
+                                    # Try exact match first
+                                    if inspection.client_name == reconstructed_name:
+                                        matched_inspection = inspection
+                                        break
+                                    # Try normalized comparison (remove special chars for comparison)
+                                    import re
+                                    normalized_db = re.sub(r'[^a-zA-Z0-9\s]', '', inspection.client_name.lower())
+                                    normalized_reconstructed = re.sub(r'[^a-zA-Z0-9\s]', '', reconstructed_name.lower())
+                                    if normalized_db == normalized_reconstructed:
+                                        matched_inspection = inspection
+                                        break
+                            
+                            if matched_inspection and matched_inspection.client_name:
+                                client_name = matched_inspection.client_name
+                                print(f"🔍 [UPLOAD] Found original client name from database: '{client_name}'")
+                            else:
+                                # Fallback: Convert underscores back to spaces
+                                client_name = reconstructed_name
+                                print(f"🔍 [UPLOAD] Using fallback client name: '{client_name}'")
+                        except ValueError:
+                            # Fallback: Convert underscores back to spaces
+                            client_name = '_'.join(parts[:-1]).replace('_', ' ')
+                            print(f"🔍 [UPLOAD] Using fallback client name (date parse error): '{client_name}'")
+                    else:
+                        # Fallback: Convert underscores back to spaces
+                        client_name = '_'.join(parts[:-1]).replace('_', ' ')
+                        print(f"🔍 [UPLOAD] Using fallback client name (invalid date): '{client_name}'")
             
             client_folder = create_folder_name(client_name)
             
@@ -1997,6 +2041,15 @@ def upload_document(request):
             with open(file_path, 'wb+') as destination:
                 for chunk in uploaded_file.chunks():
                     destination.write(chunk)
+            
+            # Clear file cache for this client to ensure immediate visibility
+            from django.core.cache import cache
+            date_obj_for_cache = datetime.strptime(date_str, '%Y%m%d') if len(date_str) == 8 else datetime.now()
+            year_folder_cache = date_obj_for_cache.strftime('%Y')
+            month_folder_cache = date_obj_for_cache.strftime('%B')
+            cache_key = f"local_files:{client_name}:{year_folder_cache}:{month_folder_cache}"
+            cache.delete(cache_key)
+            print(f"🧹 [UPLOAD] Cleared cache for: {cache_key}")
             
             # Update upload tracking in database
             from django.utils import timezone
@@ -2745,7 +2798,6 @@ def refresh_inspections(request):
     try:
         # Block administrators from accessing sync functionality
         if request.user.role == 'admin':
-            messages.error(request, "Access denied. Administrators cannot sync inspections.")
             return redirect('home')
         
         clear_messages(request)
@@ -3317,7 +3369,6 @@ def analytics_dashboard(request):
     """Display the Power BI analytics dashboard with basic analytics data."""
     # Block administrators from accessing analytics dashboard
     if request.user.role == 'admin':
-        messages.error(request, "Access denied. Administrators cannot access the Analytics Dashboard.")
         return redirect('home')
     from ..models import Client, Inspection, FoodSafetyAgencyInspection
     from django.db.models import Count, Q
@@ -7220,6 +7271,14 @@ def get_page_clients_file_status(request):
         print(f"🔍 [TERMINAL] Checking file status for {len(client_date_combinations)} client+date combinations")
         print(f"📋 [TERMINAL] Combinations: {[c.get('unique_key', 'unknown') for c in client_date_combinations[:5]]}...")  # Show first 5
         
+        # Debug: Check if New Poultry Retailer is in the combinations
+        new_poultry_combinations = [c for c in client_date_combinations if 'New Poultry Retailer' in c.get('client_name', '')]
+        if new_poultry_combinations:
+            print(f"🔍 [DEBUG] Found New Poultry Retailer combinations: {new_poultry_combinations}")
+        else:
+            print(f"❌ [DEBUG] New Poultry Retailer NOT found in combinations")
+            print(f"🔍 [DEBUG] Available client names: {[c.get('client_name', 'unknown') for c in client_date_combinations[:10]]}")
+        
         # Check cache first for bulk results (updated for new format)
         from django.core.cache import cache
         combination_keys = [c.get('unique_key', '') for c in client_date_combinations]
@@ -7299,32 +7358,34 @@ def get_page_clients_file_status(request):
                             # Check for files in each document type folder (not just directory existence)
                             # Check both top-level and nested Inspection-XXXX folders
                             
-                            # Check RFI files (check both uppercase and lowercase)
+                            # Check RFI files (check multiple variations)
                             if not has_rfi_dir:
-                                # Check top-level RFI folder (uppercase)
-                                rfi_path = os.path.join(test_path, 'RFI')
-                                has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
+                                rfi_variations = ['RFI', 'rfi', 'Request For Invoice', 'request for invoice']
                                 
-                                # Check top-level rfi folder (lowercase)
-                                if not has_rfi_dir:
-                                    rfi_path = os.path.join(test_path, 'rfi')
-                                    has_rfi_dir = os.path.exists(rfi_path) and any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path)) if os.path.exists(rfi_path) else False
-                                    if has_rfi_dir:
-                                        print(f"✅ [BUTTON] Found RFI files in lowercase folder: {rfi_path}")
+                                for rfi_variant in rfi_variations:
+                                    rfi_path = os.path.join(test_path, rfi_variant)
+                                    if os.path.exists(rfi_path):
+                                        has_rfi_dir = any(os.path.isfile(os.path.join(rfi_path, f)) for f in os.listdir(rfi_path))
+                                        if has_rfi_dir:
+                                            print(f"✅ [BUTTON] Found RFI files in '{rfi_variant}' folder: {rfi_path}")
+                                            break
+                                        else:
+                                            print(f"❌ [BUTTON] '{rfi_variant}' folder exists but no files: {rfi_path}")
                                     else:
-                                        print(f"❌ [BUTTON] No RFI files in lowercase folder: {rfi_path}")
+                                        print(f"❌ [BUTTON] '{rfi_variant}' folder does not exist: {rfi_path}")
                                 
                                 # Also check nested Inspection-XXXX folders
                                 if not has_rfi_dir:
                                     for item in os.listdir(test_path):
                                         if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
-                                            # Check both uppercase and lowercase
-                                            nested_rfi_path = os.path.join(test_path, item, 'RFI')
-                                            if not os.path.exists(nested_rfi_path):
-                                                nested_rfi_path = os.path.join(test_path, item, 'rfi')
-                                            if os.path.exists(nested_rfi_path) and any(os.path.isfile(os.path.join(nested_rfi_path, f)) for f in os.listdir(nested_rfi_path)):
-                                                has_rfi_dir = True
-                                                print(f"✅ [BUTTON] Found RFI files in nested folder {item}")
+                                            # Check all RFI folder variations in nested folder
+                                            for rfi_variant in rfi_variations:
+                                                nested_rfi_path = os.path.join(test_path, item, rfi_variant)
+                                                if os.path.exists(nested_rfi_path) and any(os.path.isfile(os.path.join(nested_rfi_path, f)) for f in os.listdir(nested_rfi_path)):
+                                                    has_rfi_dir = True
+                                                    print(f"✅ [BUTTON] Found RFI files in nested folder {item}/{rfi_variant}")
+                                                    break
+                                            if has_rfi_dir:
                                                 break
                             
                             # Check Invoice files (check both uppercase and lowercase)
@@ -7516,6 +7577,19 @@ def get_page_clients_file_status(request):
                 
                 print(f"📊 [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk)")
                 print(f"🎯 [BUTTON] Final status for {unique_key}: {file_status} (based on actual files only)")
+                
+                # Debug: Special logging for New Poultry Retailer
+                if 'New Poultry Retailer' in client_name:
+                    print(f"🔍 [DEBUG] NEW POULTRY RETAILER DEBUG:")
+                    print(f"  - Client name: {client_name}")
+                    print(f"  - Inspection date: {inspection_date}")
+                    print(f"  - Unique key: {unique_key}")
+                    print(f"  - Has RFI: {has_rfi}")
+                    print(f"  - Has Invoice: {has_invoice}")
+                    print(f"  - Has Lab: {has_lab}")
+                    print(f"  - Has Retest: {has_retest}")
+                    print(f"  - Has Compliance: {has_compliance}")
+                    print(f"  - Final file status: {file_status}")
                         
             except ValueError:
                 print(f"⚠️ Invalid date format for {unique_key}: {inspection_date}")
@@ -7835,10 +7909,12 @@ def download_all_inspection_files(request):
 
 
 @login_required
+@no_inspector_scientist
 def update_sent_status(request):
     """Update sent status for inspection group and mark as complete if sent."""
     print(f"🔄 UPDATE_SENT_STATUS called - Method: {request.method}")
     print(f"📋 POST data: {dict(request.POST)}")
+    print(f"👤 User: {request.user.username} (Role: {getattr(request.user, 'role', 'unknown')})")
     
     if request.method != 'POST':
         print(f"❌ Invalid method: {request.method}")

@@ -24,7 +24,6 @@ def role_required(allowed_roles):
             if user_role in allowed_roles:
                 return view_func(request, *args, **kwargs)
             else:
-                messages.error(request, f"Access denied. Your role '{user_role}' does not have permission to access this feature.")
                 return redirect('home')
         
         return _wrapped_view
@@ -44,7 +43,6 @@ def inspector_restricted(view_func):
         
         # If user is an inspector, deny access
         if user_role == 'inspector':
-            messages.error(request, "Access denied. Inspectors cannot upload invoicing or lab results.")
             return redirect('home')
         
         # Allow access for all other roles
@@ -68,7 +66,6 @@ def financial_only(view_func):
         if user_role in allowed_roles:
             return view_func(request, *args, **kwargs)
         else:
-            messages.error(request, f"Access denied. Your role '{user_role}' does not have permission to access financial features.")
             return redirect('home')
     
     return _wrapped_view
@@ -89,7 +86,6 @@ def inspector_only_inspections(view_func):
         # If user is an inspector or scientist (lab technician), redirect to inspections page
         if user_role == 'inspector' or user_role == 'scientist':
             role_display = "Inspector" if user_role == 'inspector' else "Lab Technician"
-            messages.error(request, f"Access denied. {role_display}s can only access the inspections page.")
             return redirect('shipment_list')
         
         # Allow access for all other roles
@@ -114,7 +110,32 @@ def scientist_only(view_func):
         if user_role in allowed_roles:
             return view_func(request, *args, **kwargs)
         else:
-            messages.error(request, f"Access denied. Your role '{user_role}' does not have permission to access scientist features.")
             return redirect('home')
+    
+    return _wrapped_view
+
+
+def no_inspector_scientist(view_func):
+    """
+    Decorator to block inspector and scientist access to specific functions.
+    Used for functions that should only be accessible by admin, super_admin, developer, and financial roles.
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        
+        user_role = getattr(request.user, 'role', 'inspector')
+        
+        # Block inspectors and scientists from accessing this function
+        if user_role in ['inspector', 'scientist']:
+            from django.http import JsonResponse
+            return JsonResponse({
+                'success': False, 
+                'error': f'Access denied: {user_role.title()}s cannot perform this action'
+            })
+        
+        # Allow access for all other roles
+        return view_func(request, *args, **kwargs)
     
     return _wrapped_view

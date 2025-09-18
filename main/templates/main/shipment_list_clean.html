@@ -547,6 +547,9 @@
         .col-view-files { width: 60px; min-width: 60px; max-width: 60px; text-align: center; }
         .col-rfi { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-invoice { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
+        
+        /* Hide invoice column for inspectors */
+        .hide-invoice .col-invoice { display: none !important; }
         .col-km { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-hours { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-send { width: 120px; min-width: 120px; max-width: 120px; text-align: center; }
@@ -1404,6 +1407,36 @@
             background-color: transparent !important;
         }
         
+        /* Read-only sent status styling for inspectors */
+        .sent-status-readonly {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+        }
+        
+        .sent-status-readonly .badge {
+            font-weight: 500;
+            text-align: center;
+            white-space: nowrap;
+        }
+        
+        .sent-status-readonly .badge-success {
+            background-color: #10b981 !important;
+            color: white !important;
+        }
+        
+        .sent-status-readonly .badge-danger {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+        
+        .sent-status-readonly .badge-secondary {
+            background-color: #6b7280 !important;
+            color: white !important;
+        }
+        
         /* Sampled badges */
         .sampled-badge {
             padding: 2px 6px;
@@ -1518,6 +1551,7 @@
         
         .detail-row {
             background-color: #f8f9fa;
+            width: 100%;
         }
         
         [data-theme="dark"] .detail-row {
@@ -1527,6 +1561,7 @@
         .detail-cell {
             padding: 0;
             border: none;
+            width: 100%;
         }
         
         .detail-content {
@@ -1535,6 +1570,8 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             margin: 8px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .detail-content h4 {
@@ -1576,6 +1613,12 @@
         .detail-table th:nth-child(14) { width: 80px; } /* Bought Sample */
         .detail-table th:nth-child(15) { width: 80px; } /* Lab */
         .detail-table th:nth-child(16) { width: 220px; } /* Actions - Edit, Lab, Lab Form, Retest - increased for full visibility */
+        
+        /* Hide actions column for inspectors */
+        .hide-actions .detail-table th:nth-child(16),
+        .hide-actions .detail-table td:nth-child(16) { 
+            display: none !important; 
+        }
         
         .detail-table-wrapper {
             overflow-x: auto;
@@ -2408,25 +2451,7 @@
         </div>
         
 
-        <!-- Messages Section -->
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="message {{ message.tags }}">
-                {% if message.tags == 'success' %}
-                <i class="fas fa-check-circle"></i>
-                {% elif message.tags == 'error' %}
-                <i class="fas fa-exclamation-circle"></i>
-                {% elif message.tags == 'warning' %}
-                <i class="fas fa-exclamation-triangle"></i>
-                {% else %}
-                <i class="fas fa-info-circle"></i>
-                {% endif %}
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+        <!-- Messages Section - Disabled -->
         
         <!-- User Context Message -->
         {% if user_message %}
@@ -2606,7 +2631,9 @@
                                 <th class="col-inspector">Inspector</th>
                                 <th class="col-view-files">View Files</th>
                                 <th class="col-rfi">RFI</th>
+                                {% if user.role != 'inspector' %}
                                 <th class="col-invoice">Invoice</th>
+                                {% endif %}
                                 <th class="col-km">Km</th>
                                 <th class="col-hours">Hours</th>
                                 <th class="col-send">Sent Status</th>
@@ -2702,6 +2729,7 @@
                                 </td>
                                 
                                 <!-- Invoice Column -->
+                                {% if user.role != 'inspector' %}
                                 <td class="col-invoice">
                                     {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
                                         {% if shipment.invoice_uploaded %}
@@ -2721,6 +2749,7 @@
                                         -
                                     {% endif %}
                                 </td>
+                                {% endif %}
                                 
                                 <!-- Km Column -->
                                 <td class="col-km">
@@ -2774,7 +2803,7 @@
                                 
                                 <!-- Sent Status Column -->
                                 <td class="col-send">
-                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+                                    {% if user_role != 'inspector' and user_role != 'scientist' %}
                                         <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}" 
                                                 data-group-id="{{ fallback_group_id }}" 
                                                 data-delay-days="{{ onedrive_delay_days }}" 
@@ -2799,14 +2828,35 @@
                                         <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">Status</small>
                                         {% endif %}
                                     {% else %}
-                                        -
+                                        <!-- Read-only sent status display for inspectors -->
+                                        <div class="sent-status-readonly">
+                                            {% if shipment.is_sent == True %}
+                                                <span class="badge badge-success" style="background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                                    Sent ✓
+                                                </span>
+                                                {% if shipment.sent_date %}
+                                                <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">
+                                                    {{ shipment.sent_date|date:"M d, Y H:i" }}
+                                                </small>
+                                                {% endif %}
+                                            {% elif shipment.is_sent == False %}
+                                                <span class="badge badge-danger" style="background-color: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                                    Not Sent
+                                                </span>
+                                            {% else %}
+                                                <!-- Fallback for when is_sent is None or not set -->
+                                                <span class="badge badge-secondary" style="background-color: #6b7280; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                                    Not Sent
+                                                </span>
+                                            {% endif %}
+                                        </div>
                                     {% endif %}
                                 </td>
                             </tr>
                             
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
-                                <td colspan="12" class="detail-cell">
+                                <td colspan="{% if user.role == 'inspector' %}11{% else %}12{% endif %}" class="detail-cell">
                                     <div class="detail-content">
                                         <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"m/d/y" }} 
                                             <small style="color: #666; font-size: 0.8em;">
@@ -2833,7 +2883,9 @@
                                                     <th class="col-test">DNA</th>
                                                     <th class="col-bought-sample">Bought Sample (R)</th>
                                                     <th class="col-lab-dropdown">Lab</th>
+                                                    {% if user.role != 'inspector' %}
                                                     <th>Actions</th>
+                                                    {% endif %}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -2860,17 +2912,19 @@
                                                             <option value="NO" {% if product.needs_retest == 'NO' or not product.is_sample_taken %}selected{% endif %}>No</option>
                                                         </select>
                                                     </td>
-                                                    <td class="col-km">
+                                                    <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
                                                         <input type="text" class="km-input" 
                                                                data-inspection-id="{{ product.remote_id }}" 
                                                                value="{{ product.product_name|default:'' }}"
                                                                placeholder="Enter product name"
-                                                               onchange="updateProductName(this)">
+                                                               onchange="updateProductName(this)"
+                                                               {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - Product name entry disabled"{% endif %}>
                                                     </td>
-                                                    <td class="col-km">
+                                                    <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
                                                         <select class="km-input" 
                                                                 data-inspection-id="{{ product.remote_id }}"
-                                                                onchange="updateProductClass(this)">
+                                                                onchange="updateProductClass(this)"
+                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - Product class selection disabled"{% endif %}>
                                                             <option value="">Select Class...</option>
                                                             <option {% if product.product_class == 'Extra Lean Mince' %}selected{% endif %}>Extra Lean Mince</option>
                                                             <option {% if product.product_class == 'Regular Mince' %}selected{% endif %}>Regular Mince</option>
@@ -2958,8 +3012,8 @@
                                                             <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                         </select>
                                                     </td>
+                                                    {% if user.role != 'inspector' %}
                                                     <td>
-                                                        {% if request.user.role != 'inspector' %}
                                                         <!-- Other roles can upload lab documents -->
                                                         <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
@@ -2988,13 +3042,13 @@
                                                                 title="{% if not product.is_sample_taken %}No sample taken - Retest upload disabled{% elif product.is_sample_taken and product.needs_retest == 'YES' %}Retest required - Please upload retest document{% elif product.needs_retest == 'NO' %}No retest required - Upload disabled{% else %}Select retest status first{% endif %}">
                                                             <i class="fas fa-redo"></i> Retest
                                                         </button>
-                                                        {% endif %}
                                                     </td>
+                                                    {% endif %}
                                                 </tr>
                                                     {% endfor %}
                                                 {% else %}
                                                     <tr>
-                                                        <td colspan="16" style="text-align: center; padding: 20px; color: #666; font-style: italic;">
+                                                        <td colspan="{% if user.role == 'inspector' %}15{% else %}16{% endif %}" style="text-align: center; padding: 20px; color: #666; font-style: italic;">
                                                             <i class="fas fa-info-circle" style="margin-right: 8px; color: #ffc107;"></i>
                                                             No detailed inspection records found for this group.
                                                             <br><small style="color: #999; margin-top: 10px; display: block;">
@@ -3431,8 +3485,24 @@
         });
 
         // Wrap all JavaScript in error handling to prevent uncaught exceptions
-        try {
-            console.log('Main JavaScript started loading...');
+        console.log('Main JavaScript started loading...');
+        
+        // Hide invoice column for inspectors
+        document.addEventListener('DOMContentLoaded', function() {
+            const userRole = '{{ user.role|default:"admin" }}';
+            if (userRole === 'inspector') {
+                const table = document.getElementById('shipmentsTable');
+                if (table) {
+                    table.classList.add('hide-invoice');
+                }
+                
+                // Hide actions column in detail tables for inspectors
+                const detailTables = document.querySelectorAll('.detail-table');
+                detailTables.forEach(table => {
+                    table.classList.add('hide-actions');
+                });
+            }
+        });
 
             // Theme functionality
             function initTheme() {
@@ -4527,6 +4597,15 @@
                 console.log('📋 [FRONTEND] Client names:', clientNames);
                 console.log('📅 [FRONTEND] Inspection dates:', clientData);
                 
+                // Debug: Check if New Poultry Retailer is in the list
+                if (clientNames.includes('New Poultry Retailer')) {
+                    console.log('🔍 [DEBUG] Found New Poultry Retailer in client list');
+                    console.log('🔍 [DEBUG] Inspection date for New Poultry Retailer:', clientData['New Poultry Retailer']);
+                } else {
+                    console.log('❌ [DEBUG] New Poultry Retailer NOT found in client list');
+                    console.log('🔍 [DEBUG] Available client names:', clientNames);
+                }
+                
                 // Debug: Check if buttons are available
                 const testButtons = document.querySelectorAll('button.btn-view-files, button[class*="btn-view-files"]');
                 const allButtons = document.querySelectorAll('button');
@@ -4563,6 +4642,14 @@
                 if (result.success) {
                     console.log('✅ File status check completed for all clients');
                     console.log('📊 Client statuses received:', result.client_statuses);
+                    
+                    // Debug: Check specific client status
+                    if (result.client_statuses['New Poultry Retailer']) {
+                        console.log('🔍 [DEBUG] New Poultry Retailer status:', result.client_statuses['New Poultry Retailer']);
+                    } else {
+                        console.log('❌ [DEBUG] New Poultry Retailer NOT found in response');
+                        console.log('🔍 [DEBUG] Available clients in response:', Object.keys(result.client_statuses));
+                    }
                     
                     // Update all button colors
                     const clientStatuses = result.client_statuses;
@@ -6517,6 +6604,12 @@
         
         // Update Product Name
         function updateProductName(input) {
+            // Check if field is disabled (no sample taken)
+            if (input.disabled) {
+                console.log('Product name update blocked - no sample taken');
+                return;
+            }
+            
             const inspectionId = input.getAttribute('data-inspection-id');
             const value = input.value;
             const formData = new FormData();
@@ -6536,6 +6629,12 @@
 
         // Update Product Class
         function updateProductClass(dropdown) {
+            // Check if field is disabled (no sample taken)
+            if (dropdown.disabled) {
+                console.log('Product class update blocked - no sample taken');
+                return;
+            }
+            
             const inspectionId = dropdown.getAttribute('data-inspection-id');
             const value = dropdown.value;
             const formData = new FormData();
@@ -7042,9 +7141,6 @@
             }
         
             console.log('JavaScript finished loading successfully!');
-        } catch (error) {
-            console.error('JavaScript error in main script:', error);
-            // Don't let JavaScript errors break the page
         }
     </script>
 </body>

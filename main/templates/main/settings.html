@@ -869,19 +869,7 @@
             </div>
             
             <!-- Messages Section -->
-            {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                <div class="message {{ message.tags }}">
-                    {% if message.tags == 'success' %}
-                    <i class="fas fa-check-circle" style="color: var(--secondary);"></i>
-                    {% elif message.tags == 'error' %}
-                    <i class="fas fa-exclamation-circle" style="color: var(--danger);"></i>
-                    {% elif message.tags == 'warning' %}
-                    <i class="fas fa-exclamation-triangle" style="color: var(--warning);"></i>
-                    {% else %}
-                    <i class="fas fa-info-circle" style="color: var(--primary);"></i>
-                    {% endif %}
+            <!-- Messages - Disabled -->
                     {{ message }}
                 </div>
                 {% endfor %}
