@@ -382,19 +382,35 @@ class GoogleSheetsService:
         }
     
     def _sync_with_full_replacement(self, request=None):
-        """Full replacement sync (original logic)"""
+        """Full replacement sync (original logic) - SINGLE RUN ONLY"""
         from ..models import Client
         from django.db import transaction
+        from django.core.cache import cache
         import uuid
         
-        # Wrap the entire operation in a transaction to ensure atomicity
-        with transaction.atomic():
-            print("   🗑️  Step 2.1: Clearing existing clients from database...")
-            # Clear all existing Food Safety Agency clients
-            deleted_count = Client.objects.count()
-            print(f"      📊 Found {deleted_count} existing clients to delete")
-            Client.objects.all().delete()
-            print(f"      ✅ Successfully deleted {deleted_count} existing clients")
+        # Check if sync is already running
+        if cache.get('client_sync_running'):
+            print("   ⚠️  Client sync already running - skipping duplicate request")
+            return {
+                'success': False,
+                'error': 'Client sync is already running',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+        
+        # Set sync lock
+        cache.set('client_sync_running', True, 300)  # 5 minutes timeout
+        
+        try:
+            # Wrap the entire operation in a transaction to ensure atomicity
+            with transaction.atomic():
+                print("   🗑️  Step 2.1: Clearing existing clients from database...")
+                # Clear all existing Food Safety Agency clients
+                deleted_count = Client.objects.count()
+                print(f"      📊 Found {deleted_count} existing clients to delete")
+                Client.objects.all().delete()
+                print(f"      ✅ Successfully deleted {deleted_count} existing clients")
             
             print("\n   📥 Step 2.2: Fetching fresh data from Google Sheets...")
             # Fetch fresh data from Google Sheets including emails
@@ -464,7 +480,7 @@ class GoogleSheetsService:
                     batch = client_objects[i:i + batch_size]
                     batch_num = i // batch_size + 1
                     try:
-                        Client.objects.bulk_create(batch, ignore_conflicts=True)
+                        Client.objects.bulk_create(batch)
                         individual_created += len(batch)
                         print(f"      ✅ Batch {batch_num}/{total_batches}: {len(batch)} clients ({individual_created}/{len(client_objects)} total)")
                     except Exception as batch_error:
@@ -481,11 +497,26 @@ class GoogleSheetsService:
             
             print(f"      📈 Summary: Created {clients_created} new clients, skipped {skipped_rows} empty rows")
             
+            # Clear sync lock
+            cache.delete('client_sync_running')
+            
             return {
                 'success': True,
                 'deleted_count': deleted_count,
                 'clients_created': clients_created,
                 'total_processed': total_processed
+            }
+            
+        except Exception as e:
+            # Clear sync lock on error
+            cache.delete('client_sync_running')
+            print(f"      ❌ Exception during client sync: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e),
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
             }
 
     def populate_inspections_table(self, request=None):

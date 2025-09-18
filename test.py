@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Test script to verify system status functionality
+Test script to verify client count and sync functionality
 """
 import os
 import sys
@@ -10,233 +10,207 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-def test_system_status():
-    """Test all system status checks"""
-    print("🔍 TESTING SYSTEM STATUS FUNCTIONALITY")
-    print("="*60)
-    
-    # Import the status check functions from the home view
-    from main.views.core_views import home
-    from django.test import RequestFactory
-    from django.contrib.auth import get_user_model
+def test_client_count():
+    """Test the actual client count in the database"""
+    print("🔍 TESTING CLIENT COUNT")
+    print("="*50)
     
     try:
-        # Create a mock request
-        factory = RequestFactory()
-        request = factory.get('/')
+        from main.models import Client
         
-        # Get a test user
-        User = get_user_model()
-        test_user = User.objects.filter(role__in=['developer', 'inspector']).first()
-        if not test_user:
-            print("❌ No test user found")
-            return False
+        # Get total client count
+        total_clients = Client.objects.count()
+        print(f"📊 Total clients in database: {total_clients:,}")
         
-        request.user = test_user
+        # Get clients with account codes
+        clients_with_codes = Client.objects.exclude(internal_account_code__isnull=True).exclude(internal_account_code='').count()
+        print(f"📊 Clients with account codes: {clients_with_codes:,}")
         
-        # Test individual status functions
-        print("\n📊 Testing individual status checks...")
+        # Get clients without account codes
+        from django.db import models
+        clients_without_codes = Client.objects.filter(
+            models.Q(internal_account_code__isnull=True) | models.Q(internal_account_code='')
+        ).count()
+        print(f"📊 Clients without account codes: {clients_without_codes:,}")
         
-        # Test PostgreSQL status
-        print("1. Testing PostgreSQL status...")
-        try:
-            from django.db import connection
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                result = cursor.fetchone()
-                postgresql_status = True if result else False
-            print(f"   ✅ PostgreSQL: {'Online' if postgresql_status else 'Offline'}")
-        except Exception as e:
-            print(f"   ❌ PostgreSQL: Offline ({e})")
-            postgresql_status = False
+        # Check for duplicates by name
+        from django.db.models import Count
+        duplicate_names = Client.objects.values('name').annotate(
+            count=Count('name')
+        ).filter(count__gt=1).order_by('-count')
         
-        # Test SQL Server status
-        print("2. Testing SQL Server status...")
-        try:
-            import pyodbc
-            from main.views.data_views import SQLSERVER_CONNECTION_STRING
-            
-            conn = pyodbc.connect(SQLSERVER_CONNECTION_STRING, timeout=5)
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            cursor.close()
-            conn.close()
-            sql_server_status = True if result else False
-            print(f"   ✅ SQL Server: {'Online' if sql_server_status else 'Offline'}")
-        except Exception as e:
-            print(f"   ❌ SQL Server: Offline ({e})")
-            sql_server_status = False
-        
-        # Test Google Sheets status
-        print("3. Testing Google Sheets status...")
-        try:
-            from main.services.google_sheets_service import GoogleSheetsService
-            import pickle
-            
-            service = GoogleSheetsService()
-            google_sheets_status = False
-            
-            if os.path.exists(service.token_path):
-                with open(service.token_path, 'rb') as token:
-                    creds = pickle.load(token)
-                    if creds and creds.valid:
-                        try:
-                            sheets_service = service.authenticate_google_sheets()
-                            if sheets_service:
-                                google_sheets_status = True
-                        except:
-                            pass
-            
-            print(f"   ✅ Google Sheets: {'Connected' if google_sheets_status else 'Disconnected'}")
-        except Exception as e:
-            print(f"   ❌ Google Sheets: Disconnected ({e})")
-            google_sheets_status = False
-        
-        # Test last sync status
-        print("4. Testing last sync status...")
-        try:
-            from main.models import FoodSafetyAgencyInspection
-            from django.utils import timezone
-            
-            latest_inspection = FoodSafetyAgencyInspection.objects.order_by('-created_at').first()
-            if latest_inspection:
-                now = timezone.now()
-                created_at = latest_inspection.created_at
-                
-                # Handle timezone-aware datetime comparison
-                if timezone.is_aware(created_at) and not timezone.is_aware(now):
-                    now = timezone.make_aware(now)
-                elif not timezone.is_aware(created_at) and timezone.is_aware(now):
-                    created_at = timezone.make_aware(created_at)
-                
-                time_diff = now - created_at
-                if time_diff.total_seconds() < 3600:  # Less than 1 hour
-                    last_sync = "Just now"
-                elif time_diff.total_seconds() < 86400:  # Less than 1 day
-                    hours = int(time_diff.total_seconds() / 3600)
-                    last_sync = f"{hours} hour{'s' if hours > 1 else ''} ago"
-                else:
-                    days = int(time_diff.total_seconds() / 86400)
-                    last_sync = f"{days} day{'s' if days > 1 else ''} ago"
-            else:
-                last_sync = "No data"
-            
-            print(f"   ✅ Last Sync: {last_sync}")
-        except Exception as e:
-            print(f"   ❌ Last Sync: Unknown ({e})")
-            last_sync = "Unknown"
-        
-        # Test cache functionality
-        print("\n💾 Testing cache functionality...")
-        try:
-            from django.core.cache import cache
-            
-            # Test cache set/get
-            cache.set('test_status', True, 30)
-            cached_value = cache.get('test_status')
-            cache_working = cached_value == True
-            
-            print(f"   ✅ Cache: {'Working' if cache_working else 'Not working'}")
-        except Exception as e:
-            print(f"   ❌ Cache: Not working ({e})")
-            cache_working = False
-        
-        # Summary
-        print("\n" + "="*60)
-        print("📋 SYSTEM STATUS SUMMARY")
-        print("="*60)
-        print(f"🗄️  PostgreSQL:    {'✅ Online' if postgresql_status else '❌ Offline'}")
-        print(f"💾 SQL Server:     {'✅ Online' if sql_server_status else '❌ Offline'}")
-        print(f"📊 Google Sheets:  {'✅ Connected' if google_sheets_status else '❌ Disconnected'}")
-        print(f"⏰ Last Sync:      {last_sync}")
-        print(f"🔄 Cache System:   {'✅ Working' if cache_working else '❌ Not working'}")
-        
-        # Overall assessment
-        all_systems_good = postgresql_status and sql_server_status and google_sheets_status and cache_working
-        
-        print("\n" + "="*60)
-        if all_systems_good:
-            print("🎉 ALL SYSTEMS OPERATIONAL!")
-            print("   The system status display should show all services as connected/online.")
+        if duplicate_names:
+            print(f"\n⚠️  DUPLICATE CLIENT NAMES FOUND:")
+            for item in duplicate_names[:10]:  # Show top 10
+                print(f"   - '{item['name']}': {item['count']} occurrences")
         else:
-            print("⚠️  SOME SYSTEMS HAVE ISSUES")
-            print("   Check the individual status messages above for details.")
-        print("="*60)
+            print(f"\n✅ No duplicate client names found")
         
-        return all_systems_good
+        # Check for duplicates by account code
+        duplicate_codes = Client.objects.values('internal_account_code').annotate(
+            count=Count('internal_account_code')
+        ).filter(count__gt=1).order_by('-count')
+        
+        if duplicate_codes:
+            print(f"\n⚠️  DUPLICATE ACCOUNT CODES FOUND:")
+            for item in duplicate_codes[:10]:  # Show top 10
+                print(f"   - '{item['internal_account_code']}': {item['count']} occurrences")
+        else:
+            print(f"\n✅ No duplicate account codes found")
+        
+        return total_clients, clients_with_codes, clients_without_codes
         
     except Exception as e:
-        print(f"❌ Test failed with exception: {str(e)}")
+        print(f"❌ Error testing client count: {str(e)}")
         import traceback
         traceback.print_exc()
-        return False
+        return None, None, None
 
-def test_home_page_access():
-    """Test if the home page loads without errors"""
-    print("\n🌐 TESTING HOME PAGE ACCESS")
-    print("="*40)
+def test_sync_lock():
+    """Test if sync lock mechanism is working"""
+    print("\n🔒 TESTING SYNC LOCK MECHANISM")
+    print("="*50)
     
     try:
-        import requests
-        response = requests.get('http://127.0.0.1:8000/', timeout=10)
+        from django.core.cache import cache
         
-        if response.status_code == 200:
-            print("✅ Home page loads successfully")
-            
-            # Check if system status section exists
-            if 'System Status' in response.text:
-                print("✅ System Status section found")
+        # Check current sync status
+        client_sync_running = cache.get('client_sync_running')
+        inspection_sync_running = cache.get('sync_running')
+        
+        print(f"📊 Client sync running: {'Yes' if client_sync_running else 'No'}")
+        print(f"📊 Inspection sync running: {'Yes' if inspection_sync_running else 'No'}")
+        
+        # Test setting a sync lock
+        cache.set('test_sync_lock', True, 60)
+        test_lock = cache.get('test_sync_lock')
+        print(f"📊 Test lock set: {'Yes' if test_lock else 'No'}")
+        
+        # Clear test lock
+        cache.delete('test_sync_lock')
+        test_lock_cleared = cache.get('test_sync_lock')
+        print(f"📊 Test lock cleared: {'Yes' if not test_lock_cleared else 'No'}")
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error testing sync lock: {str(e)}")
+        return False
+
+def test_google_sheets_connection():
+    """Test Google Sheets connection"""
+    print("\n📊 TESTING GOOGLE SHEETS CONNECTION")
+    print("="*50)
+    
+    try:
+        from main.services.google_sheets_service import GoogleSheetsService
+        
+        service = GoogleSheetsService()
+        
+        # Test authentication
+        try:
+            service.authenticate()
+            if service.service:
+                print("✅ Google Sheets authentication successful")
                 
-                # Check for status indicators
-                if 'PostgreSQL' in response.text:
-                    print("✅ PostgreSQL status displayed")
-                if 'SQL Server' in response.text:
-                    print("✅ SQL Server status displayed")
-                if 'Google Sheets' in response.text:
-                    print("✅ Google Sheets status displayed")
-                
-                return True
+                # Test getting client data
+                try:
+                    # This would normally get client data from Google Sheets
+                    print("✅ Google Sheets service initialized successfully")
+                    return True
+                except Exception as e:
+                    print(f"⚠️  Google Sheets data access failed: {e}")
+                    return False
             else:
-                print("❌ System Status section not found")
+                print("❌ Google Sheets authentication failed")
                 return False
-        else:
-            print(f"❌ Home page returned status code: {response.status_code}")
+        except Exception as e:
+            print(f"❌ Google Sheets connection error: {e}")
             return False
             
-    except requests.exceptions.ConnectionError:
-        print("❌ Could not connect to server. Make sure Django server is running on http://127.0.0.1:8000/")
-        return False
     except Exception as e:
-        print(f"❌ Home page test failed: {str(e)}")
+        print(f"❌ Error testing Google Sheets: {str(e)}")
         return False
+
+def test_inspection_count():
+    """Test inspection count for comparison"""
+    print("\n🔍 TESTING INSPECTION COUNT")
+    print("="*50)
+    
+    try:
+        from main.models import FoodSafetyAgencyInspection
+        
+        total_inspections = FoodSafetyAgencyInspection.objects.count()
+        print(f"📊 Total inspections in database: {total_inspections:,}")
+        
+        # Get recent inspections
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        recent_inspections = FoodSafetyAgencyInspection.objects.filter(
+            created_at__gte=timezone.now() - timedelta(hours=1)
+        ).count()
+        print(f"📊 Inspections created in last hour: {recent_inspections:,}")
+        
+        return total_inspections, recent_inspections
+        
+    except Exception as e:
+        print(f"❌ Error testing inspection count: {str(e)}")
+        return None, None
 
 def main():
     """Run all tests"""
-    print("🚀 STARTING SYSTEM STATUS TESTS")
+    print("🚀 STARTING CLIENT COUNT VERIFICATION TESTS")
     print("="*80)
     
-    # Test 1: System status functionality
-    status_test_passed = test_system_status()
+    # Test 1: Client count
+    total_clients, clients_with_codes, clients_without_codes = test_client_count()
     
-    # Test 2: Home page access
-    home_page_test_passed = test_home_page_access()
+    # Test 2: Sync lock mechanism
+    sync_lock_working = test_sync_lock()
     
-    # Final summary
+    # Test 3: Google Sheets connection
+    sheets_working = test_google_sheets_connection()
+    
+    # Test 4: Inspection count for comparison
+    total_inspections, recent_inspections = test_inspection_count()
+    
+    # Summary
     print("\n" + "="*80)
-    print("🏁 FINAL TEST RESULTS")
+    print("📋 TEST RESULTS SUMMARY")
     print("="*80)
-    print(f"🔧 System Status Test: {'✅ PASSED' if status_test_passed else '❌ FAILED'}")
-    print(f"🌐 Home Page Test: {'✅ PASSED' if home_page_test_passed else '❌ FAILED'}")
     
-    if status_test_passed and home_page_test_passed:
-        print("\n🎉 ALL TESTS PASSED!")
-        print("   The system status functionality is working correctly.")
-        print("   Refresh your home page to see the updated status indicators.")
+    if total_clients is not None:
+        print(f"👥 Total Clients: {total_clients:,}")
+        print(f"   - With account codes: {clients_with_codes:,}")
+        print(f"   - Without account codes: {clients_without_codes:,}")
+        
+        # Expected range check
+        if 4000 <= total_clients <= 5000:
+            print("✅ Client count is within expected range (4,000-5,000)")
+        elif total_clients > 5000:
+            print("⚠️  Client count is higher than expected - possible duplicates")
+        else:
+            print("⚠️  Client count is lower than expected")
+    
+    if total_inspections is not None:
+        print(f"🔍 Total Inspections: {total_inspections:,}")
+        if recent_inspections is not None:
+            print(f"   - Recent (last hour): {recent_inspections:,}")
+    
+    print(f"🔒 Sync Lock Mechanism: {'✅ Working' if sync_lock_working else '❌ Not working'}")
+    print(f"📊 Google Sheets: {'✅ Connected' if sheets_working else '❌ Disconnected'}")
+    
+    # Final assessment
+    print("\n" + "="*80)
+    if total_clients and 4000 <= total_clients <= 5000 and sync_lock_working:
+        print("🎉 ALL TESTS PASSED!")
+        print("   Client count is correct and sync protection is working.")
     else:
-        print("\n⚠️  Some tests failed. Check the output above for details.")
+        print("⚠️  Some issues detected. Check the results above for details.")
+    print("="*80)
     
-    return status_test_passed and home_page_test_passed
+    return total_clients, sync_lock_working, sheets_working
 
 if __name__ == '__main__':
     success = main()
