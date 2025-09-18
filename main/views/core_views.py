@@ -2648,6 +2648,17 @@ def refresh_clients(request):
     clear_messages(request)
     
     if request.method == 'POST':
+        # Check if client sync is already running
+        from django.core.cache import cache
+        if cache.get('client_sync_running'):
+            return JsonResponse({
+                'success': False,
+                'error': 'Client sync is already running. Please wait for it to complete.'
+            })
+        
+        # Set sync lock
+        cache.set('client_sync_running', True, 300)  # 5 minutes timeout
+        
         print("\n" + "="*60)
         print("🔄 STARTING CLIENT SYNC OPERATION")
         print("="*60)
@@ -2674,6 +2685,9 @@ def refresh_clients(request):
                 print(f"   📈 Deleted: {refresh_result['deleted_count']} old clients")
                 print(f"   📈 Created: {refresh_result['clients_created']} new clients")
                 print(f"   📈 Processed: {refresh_result['total_processed']} total rows from Google Sheets")
+                
+                # Clear sync lock
+                cache.delete('client_sync_running')
 
                 if is_ajax:
                     from django.http import JsonResponse
@@ -2688,6 +2702,9 @@ def refresh_clients(request):
             else:
                 print(f"❌ CLIENT SYNC FAILED!")
                 print(f"   Error: {refresh_result.get('error', 'Unknown error')}")
+                
+                # Clear sync lock on error too
+                cache.delete('client_sync_running')
 
                 if is_ajax:
                     from django.http import JsonResponse
@@ -2703,6 +2720,9 @@ def refresh_clients(request):
         except Exception as e:
             print(f"❌ CLIENT SYNC EXCEPTION!")
             print(f"   Exception: {str(e)}")
+            
+            # Clear sync lock on exception too
+            cache.delete('client_sync_running')
             
             # Return JSON response for AJAX
             from django.http import JsonResponse
