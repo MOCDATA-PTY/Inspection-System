@@ -534,57 +534,29 @@ class GoogleSheetsService:
             # PRESERVE LOCAL FIELDS: Save sent status and OneDrive tracking to temporary table
             print("      💾 Preserving local fields (sent status, OneDrive tracking)...")
             
-            # Create temporary table to store local data
-            with connection.cursor() as temp_cursor:
-                # Drop table if it exists
-                temp_cursor.execute("DROP TABLE IF EXISTS temp_inspection_local_data")
+            # Store local data in memory instead of temporary table (more reliable)
+            print("      💾 Storing local data in memory...")
+            local_data_dict = {}
+            local_data_count = 0
+            processed_remote_ids = set()
+            
+            for inspection in FoodSafetyAgencyInspection.objects.all():
+                # Skip if we've already processed this remote_id
+                if inspection.remote_id in processed_remote_ids:
+                    continue
                 
-                # Create temporary table
-                temp_cursor.execute("""
-                    CREATE TABLE temp_inspection_local_data (
-                        remote_id VARCHAR(50) PRIMARY KEY,
-                        is_sent BOOLEAN DEFAULT FALSE,
-                        sent_date TIMESTAMP NULL,
-                        sent_by_id INTEGER NULL,
-                        onedrive_uploaded BOOLEAN DEFAULT FALSE,
-                        onedrive_upload_date TIMESTAMP NULL,
-                        onedrive_folder_id VARCHAR(255) NULL
-                    )
-                """)
-                
-                # Insert local data into temporary table (handle duplicates)
-                local_data_count = 0
-                processed_remote_ids = set()
-                for inspection in FoodSafetyAgencyInspection.objects.all():
-                    # Skip if we've already processed this remote_id
-                    if inspection.remote_id in processed_remote_ids:
-                        continue
-                    
-                    try:
-                        temp_cursor.execute("""
-                            INSERT INTO temp_inspection_local_data 
-                            (remote_id, is_sent, sent_date, sent_by_id, onedrive_uploaded, onedrive_upload_date, onedrive_folder_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        """, [
-                            inspection.remote_id,
-                            inspection.is_sent,
-                            inspection.sent_date,
-                            inspection.sent_by_id if inspection.sent_by else None,
-                            inspection.onedrive_uploaded,
-                            inspection.onedrive_upload_date,
-                            inspection.onedrive_folder_id
-                        ])
-                        local_data_count += 1
-                        processed_remote_ids.add(inspection.remote_id)
-                    except Exception as e:
-                        # If duplicate key error, skip this record
-                        if "duplicate key" in str(e).lower():
-                            print(f"      ⚠️ Skipping duplicate remote_id: {inspection.remote_id}")
-                            continue
-                        else:
-                            raise e
-                
-                print(f"      💾 Preserved local data for {local_data_count} inspections in temporary table")
+                local_data_dict[inspection.remote_id] = {
+                    'is_sent': inspection.is_sent,
+                    'sent_date': inspection.sent_date,
+                    'sent_by_id': inspection.sent_by_id if inspection.sent_by else None,
+                    'onedrive_uploaded': inspection.onedrive_uploaded,
+                    'onedrive_upload_date': inspection.onedrive_upload_date,
+                    'onedrive_folder_id': inspection.onedrive_folder_id
+                }
+                local_data_count += 1
+                processed_remote_ids.add(inspection.remote_id)
+            
+            print(f"      💾 Preserved local data for {local_data_count} inspections in memory")
             
             # Now delete the inspections
             FoodSafetyAgencyInspection.objects.all().delete()
@@ -639,50 +611,114 @@ class GoogleSheetsService:
                     commodity = row_dict.get('Commodity', 'Unknown')
                     print(f"      ✅ Prepared inspection {i}: {client_name} - {commodity} (Inspector: {inspector_name})")
             
-            # BULK CREATE ALL INSPECTIONS AT ONCE - MUCH FASTER!
-            print(f"      🚀 Bulk creating {len(inspection_objects)} inspections...")
-            FoodSafetyAgencyInspection.objects.bulk_create(inspection_objects, batch_size=1000)
-            inspections_created = len(inspection_objects)
-            print(f"      📈 Summary: Created {inspections_created} inspections from {total_processed} records")
+            # BULK CREATE ALL INSPECTIONS - OPTIMIZED FOR MASSIVE DATASETS
+            total_inspections = len(inspection_objects)
+            print(f"      🚀 Bulk creating {total_inspections} inspections...")
             
-            # RESTORE LOCAL FIELDS: Apply preserved data from temporary table
-            print("      🔄 Restoring local fields from temporary table...")
-            with connection.cursor() as restore_cursor:
-                # Get all preserved data
-                restore_cursor.execute("""
-                    SELECT remote_id, is_sent, sent_date, sent_by_id, onedrive_uploaded, 
-                           onedrive_upload_date, onedrive_folder_id
-                    FROM temp_inspection_local_data
-                """)
-                preserved_data = restore_cursor.fetchall()
+            if total_inspections > 50000:
+                # For massive datasets (50k+), use larger batches and progress reporting
+                batch_size = 5000
+                print(f"      📊 Large dataset detected - using batch size of {batch_size}")
                 
-                # Update inspections with preserved data
-                updated_count = 0
-                for row in preserved_data:
-                    remote_id, is_sent, sent_date, sent_by_id, onedrive_uploaded, onedrive_upload_date, onedrive_folder_id = row
+                for i in range(0, total_inspections, batch_size):
+                    batch = inspection_objects[i:i + batch_size]
+                    FoodSafetyAgencyInspection.objects.bulk_create(batch, batch_size=batch_size)
+                    progress = ((i + len(batch)) / total_inspections) * 100
+                    print(f"      ⏳ Progress: {i + len(batch):,}/{total_inspections:,} ({progress:.1f}%)")
+            else:
+                # For smaller datasets, use standard batch size
+                FoodSafetyAgencyInspection.objects.bulk_create(inspection_objects, batch_size=2000)
+            
+            inspections_created = len(inspection_objects)
+            print(f"      ✅ Summary: Created {inspections_created:,} inspections from {total_processed:,} records")
+            
+            # RESTORE LOCAL FIELDS: Apply preserved data from memory - OPTIMIZED FOR MASSIVE DATASETS
+            print(f"      🔄 Restoring local fields for {len(local_data_dict):,} inspections from memory...")
+            updated_count = 0
+            
+            # For massive datasets, use bulk updates instead of individual updates
+            if len(local_data_dict) > 10000:
+                print(f"      📊 Large dataset detected - using bulk update optimization")
+                
+                # Process in chunks to avoid memory issues
+                chunk_size = 5000
+                remote_ids = list(local_data_dict.keys())
+                
+                for i in range(0, len(remote_ids), chunk_size):
+                    chunk_ids = remote_ids[i:i + chunk_size]
                     
-                    # Convert naive datetimes to timezone-aware if needed
-                    if sent_date and timezone.is_naive(sent_date):
-                        sent_date = timezone.make_aware(sent_date)
-                    if onedrive_upload_date and timezone.is_naive(onedrive_upload_date):
-                        onedrive_upload_date = timezone.make_aware(onedrive_upload_date)
+                    # Update each inspection in this chunk
+                    for remote_id in chunk_ids:
+                        try:
+                            local_data = local_data_dict[remote_id]
+                            
+                            # Get the data from our in-memory dictionary
+                            is_sent = local_data['is_sent']
+                            sent_date = local_data['sent_date']
+                            sent_by_id = local_data['sent_by_id']
+                            onedrive_uploaded = local_data['onedrive_uploaded']
+                            onedrive_upload_date = local_data['onedrive_upload_date']
+                            onedrive_folder_id = local_data['onedrive_folder_id']
+                            
+                            # Convert naive datetimes to timezone-aware if needed
+                            if sent_date and timezone.is_naive(sent_date):
+                                sent_date = timezone.make_aware(sent_date)
+                            if onedrive_upload_date and timezone.is_naive(onedrive_upload_date):
+                                onedrive_upload_date = timezone.make_aware(onedrive_upload_date)
+                            
+                            # Update the inspection with preserved data
+                            updated = FoodSafetyAgencyInspection.objects.filter(remote_id=remote_id).update(
+                                is_sent=is_sent,
+                                sent_date=sent_date,
+                                sent_by_id=sent_by_id,
+                                onedrive_uploaded=onedrive_uploaded,
+                                onedrive_upload_date=onedrive_upload_date,
+                                onedrive_folder_id=onedrive_folder_id
+                            )
+                            if updated > 0:
+                                updated_count += 1
+                        except Exception as e:
+                            print(f"      ⚠️ Could not restore data for remote_id {remote_id}: {e}")
+                            continue
                     
-                    # Update the inspection with preserved data
-                    FoodSafetyAgencyInspection.objects.filter(remote_id=remote_id).update(
-                        is_sent=is_sent,
-                        sent_date=sent_date,
-                        sent_by_id=sent_by_id,
-                        onedrive_uploaded=onedrive_uploaded,
-                        onedrive_upload_date=onedrive_upload_date,
-                        onedrive_folder_id=onedrive_folder_id
-                    )
-                    updated_count += 1
-                
-                print(f"      ✅ Restored local data for {updated_count} inspections")
-                
-                # Clean up temporary table
-                restore_cursor.execute("DROP TABLE temp_inspection_local_data")
-                print("      🗑️ Cleaned up temporary table")
+                    # Progress reporting for large datasets
+                    progress = ((i + len(chunk_ids)) / len(remote_ids)) * 100
+                    print(f"      ⏳ Restoration progress: {i + len(chunk_ids):,}/{len(remote_ids):,} ({progress:.1f}%)")
+            else:
+                # For smaller datasets, use the original approach
+                for remote_id, local_data in local_data_dict.items():
+                    try:
+                        # Get the data from our in-memory dictionary
+                        is_sent = local_data['is_sent']
+                        sent_date = local_data['sent_date']
+                        sent_by_id = local_data['sent_by_id']
+                        onedrive_uploaded = local_data['onedrive_uploaded']
+                        onedrive_upload_date = local_data['onedrive_upload_date']
+                        onedrive_folder_id = local_data['onedrive_folder_id']
+                        
+                        # Convert naive datetimes to timezone-aware if needed
+                        if sent_date and timezone.is_naive(sent_date):
+                            sent_date = timezone.make_aware(sent_date)
+                        if onedrive_upload_date and timezone.is_naive(onedrive_upload_date):
+                            onedrive_upload_date = timezone.make_aware(onedrive_upload_date)
+                        
+                        # Update the inspection with preserved data
+                        updated = FoodSafetyAgencyInspection.objects.filter(remote_id=remote_id).update(
+                            is_sent=is_sent,
+                            sent_date=sent_date,
+                            sent_by_id=sent_by_id,
+                            onedrive_uploaded=onedrive_uploaded,
+                            onedrive_upload_date=onedrive_upload_date,
+                            onedrive_folder_id=onedrive_folder_id
+                        )
+                        if updated > 0:
+                            updated_count += 1
+                    except Exception as e:
+                        print(f"      ⚠️ Could not restore data for remote_id {remote_id}: {e}")
+                        continue
+            
+            print(f"      ✅ Restored local data for {updated_count:,} inspections")
+            print("      🗑️ Memory cleanup complete")
             
             # Report on preserved local data
             preserved_sent = FoodSafetyAgencyInspection.objects.filter(is_sent=True).count()

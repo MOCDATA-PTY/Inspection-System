@@ -1,227 +1,243 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
-Test script to debug file listing and create test files for Canonbury Eggs
+Test script to verify system status functionality
 """
-
 import os
 import sys
 import django
-from datetime import datetime
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-from django.conf import settings
-from main.models import FoodSafetyAgencyInspection
-
-def create_test_files():
-    """Create test files for Canonbury Eggs to demonstrate the system working"""
+def test_system_status():
+    """Test all system status checks"""
+    print("🔍 TESTING SYSTEM STATUS FUNCTIONALITY")
+    print("="*60)
     
-    # Define the path structure
-    media_root = settings.MEDIA_ROOT
-    year_folder = "2025"
-    month_folder = "September"
-    client_folder = "CanonburyEggs"  # This matches the folder naming convention
-    
-    base_path = os.path.join(media_root, 'inspection', year_folder, month_folder, client_folder)
-    
-    print(f"🔧 Creating test files in: {base_path}")
-    
-    # Create directories
-    folders = ['rfi', 'invoice', 'lab', 'lab_form', 'retest']
-    for folder in folders:
-        folder_path = os.path.join(base_path, folder)
-        os.makedirs(folder_path, exist_ok=True)
-        print(f"✅ Created directory: {folder_path}")
-    
-    # Create test PDF content (simple text files for testing)
-    test_files = {
-        'rfi': [
-            'Canonbury_Eggs_20250912_rfi_20250914_142552.pdf',
-            'Canonbury_Eggs_20250912_rfi_response_20250914_143000.pdf'
-        ],
-        'invoice': [
-            'Canonbury_Eggs_20250912_invoice_20250914_142600.pdf'
-        ],
-        'lab': [
-            'Canonbury_Eggs_20250912_lab_report_20250914_150000.pdf'
-        ],
-        'lab_form': [
-            'Canonbury_Eggs_20250912_lab_form_20250914_150500.pdf'
-        ],
-        'retest': []  # No retest files for this example
-    }
-    
-    # Create the actual files
-    for folder, files in test_files.items():
-        for filename in files:
-            file_path = os.path.join(base_path, folder, filename)
-            with open(file_path, 'w') as f:
-                f.write(f"""TEST PDF CONTENT FOR {filename}
-                
-This is a test file created to demonstrate the file listing system.
-File: {filename}
-Created: {datetime.now()}
-Path: {file_path}
-
-This would normally be a PDF file with inspection data.
-""")
-            print(f"✅ Created test file: {file_path}")
-    
-    # Also create compliance files
-    compliance_path = os.path.join(base_path, 'Compliance', 'Eggs')
-    os.makedirs(compliance_path, exist_ok=True)
-    
-    compliance_files = [
-        'Canonbury_Eggs_compliance_certificate_20250912.pdf',
-        'Canonbury_Eggs_compliance_audit_20250912.pdf'
-    ]
-    
-    for filename in compliance_files:
-        file_path = os.path.join(compliance_path, filename)
-        with open(file_path, 'w') as f:
-            f.write(f"""COMPLIANCE DOCUMENT: {filename}
-            
-This is a test compliance document.
-Created: {datetime.now()}
-Client: Canonbury Eggs
-""")
-        print(f"✅ Created compliance file: {file_path}")
-    
-    return base_path
-
-def test_file_listing():
-    """Test the file listing function directly"""
-    
-    print("\n🧪 Testing file listing function...")
-    
-    # Import the function
-    from main.views.core_views import list_uploaded_files
-    from django.http import HttpRequest
-    
-    # Create a mock request
-    request = HttpRequest()
-    request.method = 'GET'
-    request.GET = {'group_id': 'Canonbury_Eggs_20250912'}
+    # Import the status check functions from the home view
+    from main.views.core_views import home
+    from django.test import RequestFactory
+    from django.contrib.auth import get_user_model
     
     try:
-        response = list_uploaded_files(request)
-        print(f"✅ Function executed successfully")
-        print(f"📄 Response status: {response.status_code}")
-        print(f"📄 Response content: {response.content.decode()[:500]}...")
+        # Create a mock request
+        factory = RequestFactory()
+        request = factory.get('/')
         
-        # Parse JSON response
-        import json
-        data = json.loads(response.content.decode())
-        print(f"📊 Response data keys: {list(data.keys())}")
+        # Get a test user
+        User = get_user_model()
+        test_user = User.objects.filter(role__in=['developer', 'inspector']).first()
+        if not test_user:
+            print("❌ No test user found")
+            return False
         
-        if 'files' in data:
-            files = data['files']
-            print(f"📁 Files found: {list(files.keys())}")
-            for category, file_list in files.items():
-                print(f"  - {category}: {len(file_list)} files")
+        request.user = test_user
         
-        return data
+        # Test individual status functions
+        print("\n📊 Testing individual status checks...")
+        
+        # Test PostgreSQL status
+        print("1. Testing PostgreSQL status...")
+        try:
+            from django.db import connection
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                result = cursor.fetchone()
+                postgresql_status = True if result else False
+            print(f"   ✅ PostgreSQL: {'Online' if postgresql_status else 'Offline'}")
+        except Exception as e:
+            print(f"   ❌ PostgreSQL: Offline ({e})")
+            postgresql_status = False
+        
+        # Test SQL Server status
+        print("2. Testing SQL Server status...")
+        try:
+            import pyodbc
+            from main.views.data_views import SQLSERVER_CONNECTION_STRING
+            
+            conn = pyodbc.connect(SQLSERVER_CONNECTION_STRING, timeout=5)
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            sql_server_status = True if result else False
+            print(f"   ✅ SQL Server: {'Online' if sql_server_status else 'Offline'}")
+        except Exception as e:
+            print(f"   ❌ SQL Server: Offline ({e})")
+            sql_server_status = False
+        
+        # Test Google Sheets status
+        print("3. Testing Google Sheets status...")
+        try:
+            from main.services.google_sheets_service import GoogleSheetsService
+            import pickle
+            
+            service = GoogleSheetsService()
+            google_sheets_status = False
+            
+            if os.path.exists(service.token_path):
+                with open(service.token_path, 'rb') as token:
+                    creds = pickle.load(token)
+                    if creds and creds.valid:
+                        try:
+                            sheets_service = service.authenticate_google_sheets()
+                            if sheets_service:
+                                google_sheets_status = True
+                        except:
+                            pass
+            
+            print(f"   ✅ Google Sheets: {'Connected' if google_sheets_status else 'Disconnected'}")
+        except Exception as e:
+            print(f"   ❌ Google Sheets: Disconnected ({e})")
+            google_sheets_status = False
+        
+        # Test last sync status
+        print("4. Testing last sync status...")
+        try:
+            from main.models import FoodSafetyAgencyInspection
+            from django.utils import timezone
+            
+            latest_inspection = FoodSafetyAgencyInspection.objects.order_by('-created_at').first()
+            if latest_inspection:
+                now = timezone.now()
+                created_at = latest_inspection.created_at
+                
+                # Handle timezone-aware datetime comparison
+                if timezone.is_aware(created_at) and not timezone.is_aware(now):
+                    now = timezone.make_aware(now)
+                elif not timezone.is_aware(created_at) and timezone.is_aware(now):
+                    created_at = timezone.make_aware(created_at)
+                
+                time_diff = now - created_at
+                if time_diff.total_seconds() < 3600:  # Less than 1 hour
+                    last_sync = "Just now"
+                elif time_diff.total_seconds() < 86400:  # Less than 1 day
+                    hours = int(time_diff.total_seconds() / 3600)
+                    last_sync = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                else:
+                    days = int(time_diff.total_seconds() / 86400)
+                    last_sync = f"{days} day{'s' if days > 1 else ''} ago"
+            else:
+                last_sync = "No data"
+            
+            print(f"   ✅ Last Sync: {last_sync}")
+        except Exception as e:
+            print(f"   ❌ Last Sync: Unknown ({e})")
+            last_sync = "Unknown"
+        
+        # Test cache functionality
+        print("\n💾 Testing cache functionality...")
+        try:
+            from django.core.cache import cache
+            
+            # Test cache set/get
+            cache.set('test_status', True, 30)
+            cached_value = cache.get('test_status')
+            cache_working = cached_value == True
+            
+            print(f"   ✅ Cache: {'Working' if cache_working else 'Not working'}")
+        except Exception as e:
+            print(f"   ❌ Cache: Not working ({e})")
+            cache_working = False
+        
+        # Summary
+        print("\n" + "="*60)
+        print("📋 SYSTEM STATUS SUMMARY")
+        print("="*60)
+        print(f"🗄️  PostgreSQL:    {'✅ Online' if postgresql_status else '❌ Offline'}")
+        print(f"💾 SQL Server:     {'✅ Online' if sql_server_status else '❌ Offline'}")
+        print(f"📊 Google Sheets:  {'✅ Connected' if google_sheets_status else '❌ Disconnected'}")
+        print(f"⏰ Last Sync:      {last_sync}")
+        print(f"🔄 Cache System:   {'✅ Working' if cache_working else '❌ Not working'}")
+        
+        # Overall assessment
+        all_systems_good = postgresql_status and sql_server_status and google_sheets_status and cache_working
+        
+        print("\n" + "="*60)
+        if all_systems_good:
+            print("🎉 ALL SYSTEMS OPERATIONAL!")
+            print("   The system status display should show all services as connected/online.")
+        else:
+            print("⚠️  SOME SYSTEMS HAVE ISSUES")
+            print("   Check the individual status messages above for details.")
+        print("="*60)
+        
+        return all_systems_good
         
     except Exception as e:
-        print(f"❌ Error testing file listing: {e}")
+        print(f"❌ Test failed with exception: {str(e)}")
         import traceback
         traceback.print_exc()
-        return None
+        return False
 
-def check_existing_files():
-    """Check what files already exist"""
+def test_home_page_access():
+    """Test if the home page loads without errors"""
+    print("\n🌐 TESTING HOME PAGE ACCESS")
+    print("="*40)
     
-    print("\n🔍 Checking existing files...")
-    
-    media_root = settings.MEDIA_ROOT
-    inspection_path = os.path.join(media_root, 'inspection')
-    
-    if not os.path.exists(inspection_path):
-        print(f"❌ Inspection path doesn't exist: {inspection_path}")
-        return
-    
-    print(f"📁 Inspection base path: {inspection_path}")
-    
-    # Check 2025/September structure
-    september_path = os.path.join(inspection_path, '2025', 'September')
-    if os.path.exists(september_path):
-        print(f"📁 September path exists: {september_path}")
+    try:
+        import requests
+        response = requests.get('http://127.0.0.1:8000/', timeout=10)
         
-        # List all client folders
-        try:
-            clients = [d for d in os.listdir(september_path) if os.path.isdir(os.path.join(september_path, d))]
-            print(f"👥 Client folders found: {clients}")
+        if response.status_code == 200:
+            print("✅ Home page loads successfully")
             
-            # Check Canonbury variations
-            canonbury_variations = [
-                'CanonburyEggs',
-                'Canonbury_Eggs',
-                'canonburyeggs',
-                'Canonbury Eggs'
-            ]
+            # Check if system status section exists
+            if 'System Status' in response.text:
+                print("✅ System Status section found")
+                
+                # Check for status indicators
+                if 'PostgreSQL' in response.text:
+                    print("✅ PostgreSQL status displayed")
+                if 'SQL Server' in response.text:
+                    print("✅ SQL Server status displayed")
+                if 'Google Sheets' in response.text:
+                    print("✅ Google Sheets status displayed")
+                
+                return True
+            else:
+                print("❌ System Status section not found")
+                return False
+        else:
+            print(f"❌ Home page returned status code: {response.status_code}")
+            return False
             
-            for variation in canonbury_variations:
-                path = os.path.join(september_path, variation)
-                if os.path.exists(path):
-                    print(f"✅ Found Canonbury folder: {path}")
-                    
-                    # List contents
-                    contents = os.listdir(path)
-                    print(f"   Contents: {contents}")
-                    
-                    # Check for document folders
-                    for doc_type in ['rfi', 'invoice', 'lab', 'lab_form', 'retest']:
-                        doc_path = os.path.join(path, doc_type)
-                        if os.path.exists(doc_path):
-                            files = [f for f in os.listdir(doc_path) if os.path.isfile(os.path.join(doc_path, f))]
-                            print(f"   📄 {doc_type}: {len(files)} files - {files}")
-                else:
-                    print(f"❌ Not found: {path}")
-        
-        except Exception as e:
-            print(f"❌ Error listing client folders: {e}")
-    else:
-        print(f"❌ September path doesn't exist: {september_path}")
+    except requests.exceptions.ConnectionError:
+        print("❌ Could not connect to server. Make sure Django server is running on http://127.0.0.1:8000/")
+        return False
+    except Exception as e:
+        print(f"❌ Home page test failed: {str(e)}")
+        return False
 
 def main():
-    """Main test function"""
+    """Run all tests"""
+    print("🚀 STARTING SYSTEM STATUS TESTS")
+    print("="*80)
     
-    print("🚀 Starting file system test and setup...")
-    print("=" * 60)
+    # Test 1: System status functionality
+    status_test_passed = test_system_status()
     
-    # Check existing files first
-    check_existing_files()
+    # Test 2: Home page access
+    home_page_test_passed = test_home_page_access()
     
-    # Create test files
-    print("\n" + "=" * 60)
-    base_path = create_test_files()
+    # Final summary
+    print("\n" + "="*80)
+    print("🏁 FINAL TEST RESULTS")
+    print("="*80)
+    print(f"🔧 System Status Test: {'✅ PASSED' if status_test_passed else '❌ FAILED'}")
+    print(f"🌐 Home Page Test: {'✅ PASSED' if home_page_test_passed else '❌ FAILED'}")
     
-    # Test the file listing function
-    print("\n" + "=" * 60)
-    result = test_file_listing()
-    
-    print("\n" + "=" * 60)
-    print("🎯 Test Summary:")
-    print(f"✅ Test files created in: {base_path}")
-    
-    if result:
-        if result.get('success'):
-            print("✅ File listing function works correctly")
-            files = result.get('files', {})
-            total_files = sum(len(file_list) for file_list in files.values())
-            print(f"📊 Total files found: {total_files}")
-        else:
-            print(f"❌ File listing returned error: {result.get('error', 'Unknown error')}")
+    if status_test_passed and home_page_test_passed:
+        print("\n🎉 ALL TESTS PASSED!")
+        print("   The system status functionality is working correctly.")
+        print("   Refresh your home page to see the updated status indicators.")
     else:
-        print("❌ File listing function failed")
+        print("\n⚠️  Some tests failed. Check the output above for details.")
     
-    print("\n🧪 Now test in browser:")
-    print("1. Refresh the page")
-    print("2. Click 'View Files' on Canonbury Eggs")
-    print("3. Should see real files instead of test data")
-    print("4. Button should be BLUE (partial files)")
+    return status_test_passed and home_page_test_passed
 
 if __name__ == '__main__':
-    main()
+    success = main()
+    sys.exit(0 if success else 1)

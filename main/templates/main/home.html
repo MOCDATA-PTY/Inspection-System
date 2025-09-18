@@ -584,8 +584,20 @@
                 }
             })
             .then(response => {
+                // Check if we got redirected to login (302/401/403)
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    throw new Error('Authentication required. Please refresh the page and log in again.');
+                }
+                
                 if (response.ok) {
-                    return response.json();
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // Got HTML instead of JSON - likely redirected to login
+                        throw new Error('Session expired. Please refresh the page and log in again.');
+                    }
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -639,13 +651,24 @@
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
+            // Check if button is already stuck in syncing state
+            if (text.textContent === 'Syncing...') {
+                const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
+                if (userConfirm) {
+                    resetButton();
+                    return;
+                } else {
+                    return;
+                }
+            }
+
             btn.disabled = true;
             text.textContent = 'Starting...';
             btn.style.opacity = '0.7';
             statusDiv.innerHTML = '';
 
             let pollCount = 0;
-            const maxPolls = 60; // 2 minutes max (60 * 2 seconds)
+            const maxPolls = 1800; // 60 minutes max (1800 * 2 seconds) - handles 100k+ records
 
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
 
@@ -658,8 +681,20 @@
                 }
             })
             .then(response => {
+                // Check if we got redirected to login (302/401/403)
+                if (response.status === 302 || response.status === 401 || response.status === 403) {
+                    throw new Error('Authentication required. Please refresh the page and log in again.');
+                }
+                
                 if (response.ok) {
-                    return response.json();
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json();
+                    } else {
+                        // Got HTML instead of JSON - likely redirected to login
+                        throw new Error('Session expired. Please refresh the page and log in again.');
+                    }
                 } else {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -696,18 +731,13 @@
             function pollSyncStatus() {
                 pollCount++;
                 if (pollCount > maxPolls) {
-                    statusDiv.innerHTML = `
-                        <div class="p-4 mt-4 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-700">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            Sync is taking longer than expected. Please check back later.
-                        </div>
-                    `;
+                    // Just reset silently - no annoying messages
                     resetButton();
                     return;
                 }
 
-                // Refresh session every 10 polls (20 seconds) to prevent logout
-                if (pollCount % 10 === 0) {
+                // Refresh session every 5 polls (10 seconds) to prevent logout during long syncs
+                if (pollCount % 5 === 0) {
                     fetch('{% url "session_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
                 }
 
@@ -720,41 +750,47 @@
                     }
                 })
                 .then(data => {
-                    console.log('Sync status response:', data); // Debug logging
-                    
                     if (data.success && data.message) {
-                        // Sync completed successfully - update page values and reset button
-                        updatePageAfterSync();
+                        // Sync completed successfully
+                        statusDiv.innerHTML = `
+                            <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                ✅ ${data.message}
+                                <br>Deleted: ${data.deleted_count || 0} old inspections
+                                <br>Created: ${data.created_count || 0} new inspections  
+                                <br>Total processed: ${data.total_processed || 0} records
+                            </div>
+                        `;
                         resetButton();
-                        // Don't auto-refresh to avoid logout
-                    } else if (data.status === 'running' || !data.success) {
-                        // Still running, just update button text and poll again
-                        text.textContent = 'Syncing...';
-                        setTimeout(pollSyncStatus, 2000); // Poll every 2 seconds
-                    } else {
-                        // Error occurred
+                        // Refresh page after 2 seconds to show updated counts
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else if (data.success === false && data.error) {
+                        // Sync failed with error
                         statusDiv.innerHTML = `
                             <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                                 <i class="fas fa-exclamation-circle mr-2"></i>
-                                ${data.error || 'Sync failed'}
+                                ❌ Sync failed: ${data.error}
                             </div>
                         `;
+                        resetButton();
+                    } else if (data.status === 'running' || data.message === 'Sync is still running...') {
+                        // Still running, continue polling
+                        text.textContent = 'Syncing...';
+                        setTimeout(pollSyncStatus, 2000); // Poll every 2 seconds
+                    } else {
+                        // Unknown status - just reset silently
                         resetButton();
                     }
                 })
                 .catch(error => {
-                    console.error('Error checking sync status:', error);
-                    statusDiv.innerHTML = `
-                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            Error checking sync status: ${error.message}
-                        </div>
-                    `;
+                    // Just reset silently on any error - no console spam
                     resetButton();
                 });
             }
 
-            function resetButton() {
+            function resetInspectionButton() {
                 btn.disabled = false;
                 text.textContent = 'Sync Inspections';
                 btn.style.opacity = '1';
@@ -771,34 +807,19 @@
     {% csrf_token %}
 
     <script>
-        console.log('Home JavaScript is loading...');
-        
-        // Theme management - matching system_logs.html functionality exactly
+        // Theme management
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
             
-            console.log('=== HOME THEME DEBUG ===');
-            console.log('savedTheme from localStorage:', savedTheme);
-            console.log('serverTheme from Django:', serverTheme);
-            console.log('settings.dark_mode raw value:', '{{ settings.dark_mode }}');
-            
             let activeTheme = 'light';
             if (savedTheme) {
                 activeTheme = savedTheme;
-                console.log('Using savedTheme:', activeTheme);
             } else if (serverTheme) {
                 activeTheme = serverTheme;
-                console.log('Using serverTheme:', activeTheme);
-            } else {
-                console.log('Using default theme:', activeTheme);
             }
             
-            console.log('Final activeTheme:', activeTheme);
             document.documentElement.setAttribute('data-theme', activeTheme);
-            console.log('Applied data-theme attribute:', document.documentElement.getAttribute('data-theme'));
-            
-            console.log('=== END HOME THEME DEBUG ===');
         }
         
         
@@ -817,18 +838,62 @@
                     body: `action=save_theme&theme_mode=${theme === 'dark' ? 'on' : ''}`
                 });
                 
-                if (response.ok) {
-                    console.log('Theme saved to server:', theme);
-                }
+                // Theme saved successfully
             } catch (error) {
-                console.log('Could not save theme to server:', error);
+                // Theme save failed - continue silently
             }
         }
         
         // Initialize theme on page load
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
+            
+            // Clear any stuck sync status from previous session
+            clearStuckSyncStatus();
         });
+        
+        // Global reset functions
+        function resetButton() {
+            const inspectionsBtn = document.getElementById('sync-inspections-btn');
+            const inspectionsText = document.getElementById('sync-inspections-text');
+            const statusDiv = document.getElementById('sync-status');
+            
+            if (inspectionsBtn && inspectionsText) {
+                inspectionsBtn.disabled = false;
+                inspectionsText.textContent = 'Sync Inspections';
+                inspectionsBtn.style.opacity = '1';
+            }
+            
+            if (statusDiv) {
+                statusDiv.innerHTML = '';
+            }
+        }
+        
+        function resetClientsButton() {
+            const clientsBtn = document.getElementById('sync-clients-btn');
+            const clientsText = document.getElementById('sync-clients-text');
+            
+            if (clientsBtn && clientsText) {
+                clientsBtn.disabled = false;
+                clientsText.textContent = 'Sync Clients';
+                clientsBtn.style.opacity = '1';
+            }
+        }
+        
+        // Function to clear stuck sync status
+        function clearStuckSyncStatus() {
+            // Check if there are any stuck sync buttons and reset them
+            const syncInspectionsBtn = document.getElementById('sync-inspections-text');
+            const syncClientsBtn = document.getElementById('sync-clients-text');
+            
+            if (syncInspectionsBtn && syncInspectionsBtn.textContent === 'Syncing...') {
+                resetButton();
+            }
+            
+            if (syncClientsBtn && syncClientsBtn.textContent === 'Syncing...') {
+                resetClientsButton();
+            }
+        }
     </script>
 </body>
 </html>

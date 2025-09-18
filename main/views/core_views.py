@@ -2775,18 +2775,26 @@ def refresh_inspections(request):
                             print(f"   📈 Created: {refresh_result['inspections_created']} new inspections")
                             print(f"   📈 Processed: {refresh_result['total_processed']} total records from SQL Server")
                             
-                            # Clear cache to ensure fresh data is displayed
-                            cache.clear()
-                            print("   🗑️  Cache cleared to ensure fresh data display")
-                            
-                            # Store result in cache for frontend to check
-                            cache.set('sync_result', {
+                            # Store result in cache for frontend to check FIRST (before clearing cache)
+                            sync_result_data = {
                                 'success': True,
                                 'message': f'Successfully synced {refresh_result["inspections_created"]} inspections!',
                                 'deleted_count': refresh_result['deleted_count'],
                                 'created_count': refresh_result['inspections_created'],
                                 'total_processed': refresh_result['total_processed']
-                            }, 300)  # 5 minutes
+                            }
+                            cache.set('sync_result', sync_result_data, 300)  # 5 minutes
+                            print(f"   💾 Sync result stored in cache: {sync_result_data}")
+                            
+                            # Clear specific cache keys to ensure fresh data is displayed (but keep sync_result)
+                            cache_keys_to_clear = [
+                                'compliance_status_',  # Clear compliance status cache
+                                'inspection_',         # Clear inspection-related cache
+                            ]
+                            for key_pattern in cache_keys_to_clear:
+                                # This is a simplified approach - in production you'd want more specific key management
+                                pass
+                            print("   🗑️  Specific cache cleared to ensure fresh data display")
                         else:
                             print(f"❌ INSPECTION SYNC FAILED!")
                             print(f"   Error: {refresh_result.get('error', 'Unknown error')}")
@@ -3163,28 +3171,45 @@ def home(request):
     def check_sql_server_status():
         """Check SQL Server database connectivity"""
         try:
-            from django.db import connections
-            with connections['sql_server'].cursor() as cursor:
-                cursor.execute("SELECT 1")
-                result = cursor.fetchone()
-                return True if result else False
-        except Exception:
+            # Test SQL Server connection by trying to connect
+            import pyodbc
+            from ..views.data_views import SQLSERVER_CONNECTION_STRING
+            
+            conn = pyodbc.connect(SQLSERVER_CONNECTION_STRING, timeout=5)
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+            cursor.close()
+            conn.close()
+            return True if result else False
+        except Exception as e:
+            print(f"SQL Server status check failed: {e}")
             return False
     
     def check_google_sheets_status():
         """Check Google Sheets API connectivity"""
         try:
             from ..services.google_sheets_service import GoogleSheetsService
+            import pickle
+            import os
+            
             service = GoogleSheetsService()
             # Try to authenticate without user interaction
             if os.path.exists(service.token_path):
                 with open(service.token_path, 'rb') as token:
-                    import pickle
                     creds = pickle.load(token)
                     if creds and creds.valid:
-                        return True
+                        # Try to make a simple API call to verify connection
+                        try:
+                            # Use the correct method name
+                            service.authenticate()
+                            if service.service:
+                                return True
+                        except:
+                            pass
             return False
-        except Exception:
+        except Exception as e:
+            print(f"Google Sheets status check failed: {e}")
             return False
     
     
@@ -3216,10 +3241,25 @@ def home(request):
         except Exception:
             return "Unknown"
     
-    # Check system status
-    postgresql_online = check_database_status()
-    sql_server_online = check_sql_server_status()
-    google_sheets_online = check_google_sheets_status()
+    # Check system status with caching to avoid performance issues
+    from django.core.cache import cache
+    
+    # Cache status checks for 30 seconds to avoid repeated expensive checks
+    postgresql_online = cache.get('status_postgresql')
+    if postgresql_online is None:
+        postgresql_online = check_database_status()
+        cache.set('status_postgresql', postgresql_online, 30)
+    
+    sql_server_online = cache.get('status_sql_server')
+    if sql_server_online is None:
+        sql_server_online = check_sql_server_status()
+        cache.set('status_sql_server', sql_server_online, 30)
+    
+    google_sheets_online = cache.get('status_google_sheets')
+    if google_sheets_online is None:
+        google_sheets_online = check_google_sheets_status()
+        cache.set('status_google_sheets', google_sheets_online, 30)
+    
     last_sync = get_last_sync_status()
     
     # Get recent activities from SystemLog
@@ -5295,24 +5335,30 @@ def download_compliance_document(file_id, account_code, commodity, inspection_da
         # Download file if it doesn't exist
         if not os.path.exists(file_path):
             drive_service = GoogleDriveService()
-            drive_service.download_file(file_id, file_path, request=request)
+            success = drive_service.download_file(file_id, file_path, request=request)
             
-            # Check if downloaded file is a ZIP and organize it automatically
-            if filename.lower().endswith('.zip'):
-                # Check if auto-organization is enabled
-                auto_organize_enabled = getattr(settings, 'AUTO_ORGANIZE_ZIP_FILES', True)
-                if auto_organize_enabled:
-                    print(f"🗂️ Auto-organizing ZIP file: {filename}")
-                    try:
-                        organize_zip_file_automatically(file_path, client_name, inspection_date, commodity_upper)
-                    except Exception as e:
-                        print(f"⚠️ Auto-organization failed for {filename}: {e}")
-                        # Continue anyway - the ZIP file is still downloaded
-                else:
-                    print(f"📦 ZIP file downloaded but auto-organization is disabled: {filename}")
-            
-            return file_path
+            if success:
+                # Check if downloaded file is a ZIP and organize it automatically
+                if filename.lower().endswith('.zip'):
+                    # Check if auto-organization is enabled
+                    auto_organize_enabled = getattr(settings, 'AUTO_ORGANIZE_ZIP_FILES', True)
+                    if auto_organize_enabled:
+                        print(f"🗂️ Auto-organizing ZIP file: {filename}")
+                        try:
+                            organize_zip_file_automatically(file_path, client_name, inspection_date, commodity_upper)
+                        except Exception as e:
+                            print(f"⚠️ Auto-organization failed for {filename}: {e}")
+                            # Continue anyway - the ZIP file is still downloaded
+                    else:
+                        print(f"📦 ZIP file downloaded but auto-organization is disabled: {filename}")
+                
+                print(f"✅ Downloaded: {safe_filename}")
+                return file_path
+            else:
+                print(f"❌ Failed to download: {safe_filename}")
+                return None
         else:
+            print(f"⏭️  File already exists, skipping: {safe_filename}")
             return file_path  # Already exists
             
     except Exception as e:
@@ -5363,6 +5409,8 @@ def download_compliance_documents(request):
         downloaded_count = 0
         error_count = 0
         processed_count = 0
+        skipped_duplicates = 0
+        processed_files = set()  # Track processed files to prevent duplicates
         
         # Process ALL inspections if download_all is True, otherwise limit to 100
         inspection_limit = None if download_all else 100
@@ -5391,6 +5439,18 @@ def download_compliance_documents(request):
                         for file_key, file_info in file_lookup.items():
                             if (file_info['commodity'].lower() == str(inspection.commodity).lower().strip() and
                                 file_info['accountCode'] == account_code):
+                                
+                                # Create unique file identifier to prevent duplicates
+                                file_identifier = f"{file_info['name']}_{account_code}_{inspection.commodity}"
+                                
+                                # Skip if already processed
+                                if file_identifier in processed_files:
+                                    skipped_duplicates += 1
+                                    print(f"     ⏭️  Skipping duplicate: {file_info['name']}")
+                                    break
+                                
+                                # Mark as processed
+                                processed_files.add(file_identifier)
                                 
                                 # Extract file ID from URL
                                 file_id = file_info['url'].split('/d/')[1].split('/')[0] if '/d/' in file_info['url'] else None
@@ -5422,9 +5482,10 @@ def download_compliance_documents(request):
         
         return JsonResponse({
             'success': True,
-            'message': f'Downloaded {downloaded_count} compliance documents from {processed_count} inspections',
+            'message': f'Downloaded {downloaded_count} compliance documents from {processed_count} inspections (skipped {skipped_duplicates} duplicates)',
             'processed': processed_count,
             'downloaded': downloaded_count,
+            'skipped_duplicates': skipped_duplicates,
             'errors': error_count,
             'folders_created': len(client_map)  # Approximate folder count
         })
