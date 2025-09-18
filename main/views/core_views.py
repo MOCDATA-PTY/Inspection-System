@@ -2949,8 +2949,8 @@ def check_sync_status(request):
     if request.method == 'GET':
         sync_result = cache.get('sync_result')
         if sync_result:
-            # Clear the result after retrieving it
-            cache.delete('sync_result')
+            # Don't clear the result immediately - let it expire naturally
+            # This ensures the frontend can retrieve it even if there's a delay
             return JsonResponse(sync_result)
         else:
             return JsonResponse({

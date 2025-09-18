@@ -669,6 +669,12 @@
 
             let pollCount = 0;
             const maxPolls = 1800; // 60 minutes max (1800 * 2 seconds) - handles 100k+ records
+            
+            // Set a maximum timeout to ensure button resets even if something goes wrong
+            const maxTimeout = setTimeout(() => {
+                console.log('Sync timeout reached - resetting button');
+                resetButton();
+            }, 3600000); // 60 minutes max timeout
 
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
 
@@ -761,6 +767,8 @@
                                 <br>Total processed: ${data.total_processed || 0} records
                             </div>
                         `;
+                        // Clear timeout and reset button immediately
+                        clearTimeout(maxTimeout);
                         resetButton();
                         // Refresh page after 2 seconds to show updated counts
                         setTimeout(() => {
@@ -774,13 +782,15 @@
                                 ❌ Sync failed: ${data.error}
                             </div>
                         `;
+                        // Clear timeout and reset button immediately
+                        clearTimeout(maxTimeout);
                         resetButton();
                     } else if (data.status === 'running' || data.message === 'Sync is still running...') {
                         // Still running, continue polling
                         text.textContent = 'Syncing...';
                         setTimeout(pollSyncStatus, 2000); // Poll every 2 seconds
                     } else {
-                        // Unknown status - just reset silently
+                        // Unknown status - reset button and stop polling
                         resetButton();
                     }
                 })
