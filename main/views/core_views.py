@@ -1233,33 +1233,68 @@ def shipment_list(request):
         group_hours = None
         group_is_sent = False
         
-        # Get upload tracking information
+        # IGNORE DATABASE - CHECK ACTUAL FILES ON DISK ONLY
         rfi_uploader = None
-        rfi_upload_date = None
         invoice_uploader = None
+        rfi_upload_date = None
         invoice_upload_date = None
+        
+        # Check for actual RFI and Invoice files on disk
+        import os
+        from datetime import datetime
+        from django.conf import settings
+        
+        # Build file paths
+        date_obj = datetime.strptime(date_of_inspection.strftime('%Y-%m-%d'), '%Y-%m-%d')
+        year_folder = date_obj.strftime('%Y')
+        month_folder = date_obj.strftime('%B')
+        
+        client_base_path = os.path.join(
+            settings.MEDIA_ROOT,
+            'inspection',
+            year_folder,
+            month_folder,
+            client_name
+        )
+        
+        print(f"🔍 [FILE CHECK] Checking files for {client_name} at: {client_base_path}")
+        
+        # Check for RFI files in "Request For Invoice" folder
+        rfi_folders = [
+            os.path.join(client_base_path, 'Request For Invoice'),
+            os.path.join(client_base_path, 'request for invoice'),
+            os.path.join(client_base_path, 'Request for Invoice')
+        ]
+        
+        for rfi_folder in rfi_folders:
+            if os.path.exists(rfi_folder):
+                rfi_files = [f for f in os.listdir(rfi_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
+                if rfi_files:
+                    rfi_uploader = "File"  # Simple indicator that file exists
+                    print(f"🔍 [FILE CHECK] Found RFI files in '{rfi_folder}': {rfi_files}")
+                    break
+        
+        # Check for Invoice files  
+        invoice_folders = [
+            os.path.join(client_base_path, 'invoice'),
+            os.path.join(client_base_path, 'Invoice')
+        ]
+        
+        for invoice_folder in invoice_folders:
+            if os.path.exists(invoice_folder):
+                invoice_files = [f for f in os.listdir(invoice_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
+                if invoice_files:
+                    invoice_uploader = "File"  # Simple indicator that file exists
+                    print(f"🔍 [FILE CHECK] Found Invoice files: {invoice_files}")
+                    break
+        
+        print(f"🔍 [FILE CHECK] Final result - RFI: {rfi_uploader is not None}, Invoice: {invoice_uploader is not None}")
         
         if sample_inspection:
             group_km_traveled = sample_inspection.km_traveled
             group_hours = sample_inspection.hours
             # Check if ANY inspection in the group is marked as sent
             group_is_sent = any(inspection.is_sent for inspection in group_inspections)
-            
-            
-            # Get upload information from ANY inspection in group that has uploads
-            # Check for RFI uploads across all inspections in the group
-            for inspection in group_inspections:
-                if inspection.rfi_uploaded_by:
-                    rfi_uploader = inspection.rfi_uploaded_by.first_name or inspection.rfi_uploaded_by.username
-                    rfi_upload_date = inspection.rfi_uploaded_date
-                    break  # Use the first one found
-            
-            # Check for Invoice uploads across all inspections in the group
-            for inspection in group_inspections:
-                if inspection.invoice_uploaded_by:
-                    invoice_uploader = inspection.invoice_uploaded_by.first_name or inspection.invoice_uploaded_by.username
-                    invoice_upload_date = inspection.invoice_uploaded_date
-                    break  # Use the first one found
         
         # Get all products for this group (simplified)
         products = []
@@ -1329,7 +1364,7 @@ def shipment_list(request):
         # Check compliance documents status for color coding
         compliance_status_result = check_compliance_documents_status(group_inspections, client_name, date_of_inspection)
         
-        # Also check for RFI and Invoice files to determine partial status
+        # File status is now based on actual files on disk
         has_rfi = rfi_uploader is not None
         has_invoice = invoice_uploader is not None
         has_compliance = compliance_status_result.get('has_any_compliance', False)
@@ -1375,8 +1410,8 @@ def shipment_list(request):
             'is_sent': group_is_sent,  # From actual inspection data
             'sent_by': next((inspection.sent_by for inspection in group_inspections if inspection.is_sent), None),  # Who marked as sent
             'sent_date': next((inspection.sent_date for inspection in group_inspections if inspection.is_sent), None),  # When marked as sent
-            'rfi_uploaded': _cached_status.get('has_rfi', False),
-            'invoice_uploaded': _cached_status.get('has_invoice', False),
+            'rfi_uploaded': rfi_uploader is not None,  # Use database info directly
+            'invoice_uploaded': invoice_uploader is not None,  # Use database info directly
             'rfi_uploaded_by': rfi_uploader,  # Who uploaded RFI
             'rfi_uploaded_date': rfi_upload_date,  # When RFI was uploaded
             'invoice_uploaded_by': invoice_uploader,  # Who uploaded Invoice
@@ -1929,6 +1964,9 @@ def upload_document(request):
             elif document_type == 'compliance':
                 # For compliance documents, create Compliance folder directly in client directory
                 document_dir = os.path.join(client_dir, 'Compliance')
+            elif document_type == 'rfi':
+                # For RFI documents, use "Request For Invoice" folder
+                document_dir = os.path.join(client_dir, 'Request For Invoice')
             else:
                 # For other document types, use the standard structure
                 document_dir = os.path.join(client_dir, document_type)
@@ -2015,18 +2053,35 @@ def upload_document(request):
                                 
                                 print(f"✅ Updated upload tracking for {updated_count} inspections in group {group_id}")
                                 
-                                # Clear only shipment list cache to ensure updated data is shown
+                                # Clear ALL relevant caches to ensure updated data is shown
                                 from django.core.cache import cache
-                                # Clear specific cache keys instead of all cache to avoid session issues
-                                cache.delete(f"shipment_list_{request.user.id}_{request.user.role}")
-                                cache.delete("filter_options")
-                                # Clear file status cache for this client
+                                
                                 # Construct inspection_date from group_id for cache clearing
+                                inspection_date = None
                                 if len(parts) >= 2 and len(parts[-1]) == 8:
                                     date_str = parts[-1]
                                     inspection_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-                                    cache.delete(f"file_status_{client_name}_{inspection_date}")
-                                print(f"🧹 Cleared shipment list cache after upload tracking update")
+                                
+                                # Clear all cache keys that could affect file detection
+                                cache_keys_to_clear = [
+                                    f"shipment_list_{request.user.id}_{request.user.role}",
+                                    "filter_options",
+                                    "inspection_files_cache",
+                                    "page_clients_status_cache"
+                                ]
+                                
+                                if inspection_date:
+                                    cache_keys_to_clear.extend([
+                                        f"file_status_{client_name_from_group}_{inspection_date}",
+                                        f"local_files:{client_name_from_group}:{current_time.year}:{current_time.strftime('%B')}",
+                                        f"files_cache_{client_name_from_group}_{inspection_date}"
+                                    ])
+                                
+                                for cache_key in cache_keys_to_clear:
+                                    cache.delete(cache_key)
+                                    print(f"🧹 Cleared cache key: {cache_key}")
+                                
+                                print(f"🧹 Cleared ALL relevant caches after group upload")
                                 
                             else:
                                 print(f"⚠️ No matching inspections found for group {group_id}")
@@ -2053,13 +2108,25 @@ def upload_document(request):
                         inspection.save(update_fields=['invoice_uploaded_by', 'invoice_uploaded_date'])
                         print(f"✅ DEBUG: Updated Invoice tracking for individual inspection {inspection_id}")
                     
-                    # Clear cache after individual upload
+                    # Clear cache after individual upload - CLEAR ALL RELEVANT CACHES
                     from django.core.cache import cache
-                    cache.delete(f"shipment_list_{request.user.id}_{request.user.role}")
-                    cache.delete("filter_options")
-                    # Clear file status cache for this client
-                    cache.delete(f"file_status_{client_name}_{inspection_date}")
-                    print(f"🧹 Cleared cache after individual upload tracking update")
+                    
+                    # Clear all cache keys that could affect file detection
+                    cache_keys_to_clear = [
+                        f"shipment_list_{request.user.id}_{request.user.role}",
+                        "filter_options",
+                        f"file_status_{client_name}_{inspection_date}",
+                        "inspection_files_cache",
+                        f"local_files:{client_name}:{current_time.year}:{current_time.strftime('%B')}",
+                        "page_clients_status_cache",
+                        f"files_cache_{client_name}_{inspection_date}"
+                    ]
+                    
+                    for cache_key in cache_keys_to_clear:
+                        cache.delete(cache_key)
+                        print(f"🧹 Cleared cache key: {cache_key}")
+                    
+                    print(f"🧹 Cleared ALL relevant caches after upload")
             
             # Note: OneDrive sync is handled by the scheduled sync service after the configured delay period
             # Files are only uploaded to OneDrive after inspections are marked as "sent" and the delay period has passed
@@ -5733,7 +5800,14 @@ def organize_cached_files(cached_files):
         
     except Exception as e:
         print(f"❌ Error organizing cached files: {e}")
-        return {}
+        # Return empty files object with proper structure instead of empty dict
+        return {
+            'rfi': [],
+            'invoice': [],
+            'lab': [],
+            'retest': [],
+            'compliance': []
+        }
 
 
 def get_inspection_files_onedrive_api(client_name, inspection_date):
@@ -5844,6 +5918,38 @@ def get_inspection_files_onedrive_api(client_name, inspection_date):
 
 def get_inspection_files_local(client_name, inspection_date):
     """Get inspection files from local media folder using optimized structure with caching."""
+    print(f"🔍 [BACKEND] get_inspection_files_local called with:")
+    print(f"  - client_name: '{client_name}'")
+    print(f"  - inspection_date: '{inspection_date}'")
+    
+    # IMMEDIATE FILE CHECK - Debug the exact issue
+    import os
+    from django.conf import settings
+    
+    # Quick test for Ccchickens abattoir specifically
+    if client_name == 'Ccchickens abattoir':
+        test_path = os.path.join(settings.MEDIA_ROOT, 'inspection', '2025', 'September', 'Ccchickens abattoir')
+        print(f"🔍 [DEBUG] QUICK TEST for Ccchickens abattoir:")
+        print(f"  - Test path: {test_path}")
+        print(f"  - Path exists: {os.path.exists(test_path)}")
+        
+        if os.path.exists(test_path):
+            print(f"  - Contents: {os.listdir(test_path)}")
+            
+            invoice_path = os.path.join(test_path, 'invoice')
+            print(f"  - Invoice path: {invoice_path}")
+            print(f"  - Invoice path exists: {os.path.exists(invoice_path)}")
+            
+            if os.path.exists(invoice_path):
+                invoice_files = os.listdir(invoice_path)
+                print(f"  - Invoice files: {invoice_files}")
+                print(f"  - Invoice files count: {len(invoice_files)}")
+                
+                for file in invoice_files:
+                    file_path = os.path.join(invoice_path, file)
+                    print(f"    - File: {file} (size: {os.path.getsize(file_path)})")
+        print(f"🔍 [DEBUG] END QUICK TEST")
+    
     # FORCE CACHE CLEAR to prevent stale file data
     from django.core.cache import cache
     cache.delete('inspection_files_cache')
@@ -5861,8 +5967,14 @@ def get_inspection_files_local(client_name, inspection_date):
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
         
+        print(f"🔍 [BACKEND] Parsed date in get_inspection_files_local:")
+        print(f"  - date_obj: {date_obj}")
+        print(f"  - year_folder: '{year_folder}'")
+        print(f"  - month_folder: '{month_folder}'")
+        
         # Use original client name for folder matching (folders now use original names)
         client_folder = client_name or 'Unknown Client'
+        print(f"🔍 [BACKEND] Using client_folder: '{client_folder}'")
         
         # Create cache key for this specific client/date combination
         cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
@@ -5885,9 +5997,38 @@ def get_inspection_files_local(client_name, inspection_date):
                 client_folder
             )
         
-        # Define file categories
+        print(f"🔍 [BACKEND] Folder scanning details:")
+        print(f"  - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+        print(f"  - client_base_path: {client_base_path}")
+        print(f"  - client_base_path exists: {os.path.exists(client_base_path)}")
+        
+        # Check if the path exists and list contents
+        if os.path.exists(client_base_path):
+            print(f"🔍 [BACKEND] Client folder exists, listing contents:")
+            try:
+                contents = os.listdir(client_base_path)
+                print(f"  - Contents: {contents}")
+                for item in contents:
+                    item_path = os.path.join(client_base_path, item)
+                    print(f"  - {item}: {'DIR' if os.path.isdir(item_path) else 'FILE'}")
+            except Exception as e:
+                print(f"  - Error listing contents: {e}")
+        else:
+            print(f"🔍 [BACKEND] Client folder does not exist")
+            # Check if parent folders exist
+            parent_path = os.path.dirname(client_base_path)
+            print(f"  - Parent path: {parent_path}")
+            print(f"  - Parent exists: {os.path.exists(parent_path)}")
+            if os.path.exists(parent_path):
+                try:
+                    parent_contents = os.listdir(parent_path)
+                    print(f"  - Parent contents: {parent_contents}")
+                except Exception as e:
+                    print(f"  - Error listing parent contents: {e}")
+        
+        # Define file categories with correct folder names
         categories = {
-            'rfi': 'rfi',
+            'rfi': 'Request For Invoice',  # RFI files go in "Request For Invoice" folder
             'invoice': 'invoice',
             'lab': 'lab results',
             'retest': 'retest',
@@ -5932,11 +6073,13 @@ def get_inspection_files_local(client_name, inspection_date):
             return files_by_category
         
         # Scan for files in each category (optimized with error handling)
-        # Use only one folder structure to avoid duplicates
-        # Check both uppercase and lowercase folder names
+        # Use deduplication to avoid duplicates from multiple folder structures
+        added_files = set()  # Track added files by name to avoid duplicates
+        
+        # Check different folder name variations
         folder_structures = [
-            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'},
-            {'rfi': 'RFI', 'invoice': 'Invoice', 'lab': 'Lab', 'retest': 'Retest', 'compliance': 'Compliance'}
+            {'rfi': 'Request For Invoice', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance'},
+            {'rfi': 'request for invoice', 'invoice': 'Invoice', 'lab': 'Lab', 'retest': 'Retest', 'compliance': 'Compliance'}
         ]
         
         # First check top-level folders
@@ -5970,9 +6113,15 @@ def get_inspection_files_local(client_name, inspection_date):
                             for filename in os.listdir(category_path):
                                 file_path = os.path.join(category_path, filename)
                                 if os.path.isfile(file_path):
-                                    file_info = get_file_info(file_path, folder_name)
-                                    files_by_category[category_key].append(file_info)
-                                    print(f"✅ [FILES] Found {category_key} file: {filename} in {folder_name}")
+                                    # Check for duplicates before adding
+                                    file_key = f"{filename}_{os.path.getsize(file_path)}"
+                                    if file_key not in added_files:
+                                        file_info = get_file_info(file_path, folder_name)
+                                        files_by_category[category_key].append(file_info)
+                                        added_files.add(file_key)
+                                        print(f"✅ [FILES] Found {category_key} file: {filename} in {folder_name}")
+                                    else:
+                                        print(f"⚠️ [FILES] Skipping duplicate {category_key} file: {filename}")
                         except (OSError, PermissionError):
                             print(f"⚠️ Error accessing category folder: {category_path}")
                             continue
@@ -6013,9 +6162,15 @@ def get_inspection_files_local(client_name, inspection_date):
                                         for filename in os.listdir(nested_category_path):
                                             file_path = os.path.join(nested_category_path, filename)
                                             if os.path.isfile(file_path):
-                                                file_info = get_file_info(file_path, f'{item}/{folder_name}')
-                                                files_by_category[category_key].append(file_info)
-                                                print(f"✅ [FILES] Found {category_key} file in nested folder: {filename}")
+                                                # Check for duplicates before adding
+                                                file_key = f"{filename}_{os.path.getsize(file_path)}"
+                                                if file_key not in added_files:
+                                                    file_info = get_file_info(file_path, f'{item}/{folder_name}')
+                                                    files_by_category[category_key].append(file_info)
+                                                    added_files.add(file_key)
+                                                    print(f"✅ [FILES] Found {category_key} file in nested folder: {filename}")
+                                                else:
+                                                    print(f"⚠️ [FILES] Skipping duplicate {category_key} file in nested folder: {filename}")
                                     except (OSError, PermissionError):
                                         print(f"⚠️ Error accessing nested category folder: {nested_category_path}")
                                         continue
@@ -6029,11 +6184,26 @@ def get_inspection_files_local(client_name, inspection_date):
         total_files = sum(len(files) for files in files_by_category.values())
         print(f"📊 Total files found: {total_files} (cached for 10 minutes)")
         
+        print(f"🔍 [BACKEND] Final files_by_category result in get_inspection_files_local:")
+        print(f"  - Type: {type(files_by_category)}")
+        print(f"  - Keys: {list(files_by_category.keys())}")
+        for key, value in files_by_category.items():
+            print(f"  - {key}: {len(value)} files")
+            if value:
+                print(f"    - First file: {value[0] if value else 'N/A'}")
+        
         return files_by_category
         
     except Exception as e:
         print(f"❌ Error in get_inspection_files_local: {e}")
-        return {}
+        # Return empty files object with proper structure instead of empty dict
+        return {
+            'rfi': [],
+            'invoice': [],
+            'lab': [],
+            'retest': [],
+            'compliance': []
+        }
 
 
 @login_required
@@ -6279,6 +6449,12 @@ def get_inspection_files(request):
         client_name = data.get('client_name', '')
         inspection_date = data.get('inspection_date', '')
         
+        print(f"🔍 [BACKEND] get_inspection_files called with:")
+        print(f"  - group_id: '{group_id}'")
+        print(f"  - client_name: '{client_name}'")
+        print(f"  - inspection_date: '{inspection_date}'")
+        print(f"  - Full request data: {data}")
+        
         # Create media folder structure for this inspection using correct format
         from datetime import datetime
         import re
@@ -6287,6 +6463,11 @@ def get_inspection_files(request):
         date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
+        
+        print(f"🔍 [BACKEND] Parsed date info:")
+        print(f"  - date_obj: {date_obj}")
+        print(f"  - year_folder: '{year_folder}'")
+        print(f"  - month_folder: '{month_folder}'")
         
         # Use original client name for folder structure (folders now use original names)
         client_folder = client_name or 'Unknown Client'
@@ -6298,32 +6479,66 @@ def get_inspection_files(request):
             month_folder, 
             client_folder
         )
+        
+        print(f"🔍 [BACKEND] Folder paths:")
+        print(f"  - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+        print(f"  - inspection_folder: {inspection_folder}")
+        print(f"  - inspection_folder exists: {os.path.exists(inspection_folder)}")
+        
         os.makedirs(inspection_folder, exist_ok=True)
         
         # Get files from local storage
+        print(f"🔍 [BACKEND] Calling get_inspection_files_local...")
         local_files = get_inspection_files_local(client_name, inspection_date)
+        print(f"🔍 [BACKEND] get_inspection_files_local returned:")
+        print(f"  - Type: {type(local_files)}")
+        print(f"  - Value: {local_files}")
+        print(f"  - Keys: {list(local_files.keys()) if local_files else 'N/A'}")
+        if local_files:
+            for key, value in local_files.items():
+                print(f"  - {key}: {len(value) if isinstance(value, list) else 'N/A'} items")
         
         # Since files are now fetched in the background when the inspections page loads,
         # we just return the local files that are already available
         # Check if there are actually any files (not just empty arrays)
         has_files = local_files and any(file_list for file_list in local_files.values() if file_list)
+        
+        print(f"🔍 [BACKEND] File check results:")
+        print(f"  - has_files: {has_files}")
+        print(f"  - local_files exists: {local_files is not None}")
+        print(f"  - local_files type: {type(local_files)}")
+        if local_files:
+            print(f"  - local_files keys: {list(local_files.keys())}")
+            for key, value in local_files.items():
+                print(f"  - {key}: {value} (type: {type(value)}, length: {len(value) if isinstance(value, list) else 'N/A'})")
+        
         if not has_files:
-            return JsonResponse({
+            print(f"🔍 [BACKEND] No files found - returning empty files object")
+            # Return empty files object with proper structure instead of empty array
+            empty_files = {
+                'rfi': [],
+                'invoice': [],
+                'lab': [],
+                'retest': [],
+                'compliance': []
+            }
+            response = JsonResponse({
                 'success': True,
-                'files': [],
+                'files': empty_files,
                 'client_name': client_name,
                 'inspection_date': inspection_date,
                 'source': 'local',
                 'message': 'Files are being fetched in the background for all 6-month inspections. Check back in a few minutes.'
             })
-        
-        response = JsonResponse({
-            'success': True,
-            'files': local_files,
-            'client_name': client_name,
-            'inspection_date': inspection_date,
-            'source': 'local'
-        })
+        else:
+            print(f"🔍 [BACKEND] Files found - returning files response")
+            response = JsonResponse({
+                'success': True,
+                'files': local_files,
+                'client_name': client_name,
+                'inspection_date': inspection_date,
+                'source': 'local'
+            })
         
         # Add cache-busting headers to prevent browser caching
         response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
@@ -7247,10 +7462,26 @@ def get_page_clients_file_status(request):
         
         print(f"📊 Completed status check for {len(combination_statuses)} combinations")
         
-        # Prepare optimized response
+        # Prepare optimized response - convert combination_statuses to client_statuses format
+        client_statuses = {}
+        for unique_key, status_data in combination_statuses.items():
+            client_name = status_data['client_name']
+            if client_name not in client_statuses:
+                client_statuses[client_name] = status_data
+            else:
+                # If multiple dates for same client, use the most complete status
+                current_status = client_statuses[client_name]['file_status']
+                new_status = status_data['file_status']
+                
+                # Priority: all_files > partial_files > compliance_only > no_files
+                status_priority = {'all_files': 4, 'partial_files': 3, 'compliance_only': 2, 'no_files': 1}
+                if status_priority.get(new_status, 0) > status_priority.get(current_status, 0):
+                    client_statuses[client_name] = status_data
+        
         result_data = {
             'success': True,
-            'combination_statuses': combination_statuses,
+            'client_statuses': client_statuses,  # Frontend expects this key
+            'combination_statuses': combination_statuses,  # Keep for debugging
             'total_checked': len(client_date_combinations),
             'source': 'local',
             'optimized': True

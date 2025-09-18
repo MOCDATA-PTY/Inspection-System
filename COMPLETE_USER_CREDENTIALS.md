@@ -27,7 +27,7 @@ This file contains ALL login credentials for the Food Safety Agency system, incl
 
 #### 2. Armand (SUPER_ADMIN)
 - **Username**: `armand`
-- **Password**: `Armand2025!`
+- **Password**: `yes !`
 - **Full Name**: Armand
 - **Role**: super_admin
 - **Staff Access**: Yes

@@ -1,5 +1,9 @@
 6987// Clean Upload Functions - No Syntax Errors
-console.log('Upload functions JavaScript loaded');
+try {
+    console.log('Upload functions JavaScript loaded');
+} catch (error) {
+    console.error('Error loading upload functions:', error);
+}
 
 // Get CSRF token function
 function getCSRFToken() {
@@ -68,50 +72,56 @@ function uploadRFI(groupId) {
                             alert(data.message || 'RFI document uploaded successfully!');
                             console.log('Upload successful:', data);
                             
-                            // Update button to show username directly
+                            // Update button directly to show username
                             const buttonId = 'rfi-' + groupId;
                             console.log('🔍 Updating RFI button to show username for:', buttonId);
                             
-                            // Get the username from the server response
-                            const username = data.message ? data.message.match(/by (\w+) for group/)?.[1] : 'User';
-                            console.log('🔍 Extracted username from server response:', username);
-                            
-                            // Update the button directly
-                            const button = document.getElementById(buttonId);
-                            if (button) {
-                                console.log('🔍 Found button, updating to show username');
+                                // Find and update the button - simplified approach
+                                let button = document.getElementById(buttonId);
                                 
-                                // Clear the file-deleted flag since a new file has been uploaded
-                                button.removeAttribute('data-file-deleted');
-                                
-                                // Update button to show uploaded state with user's name
-                                button.disabled = true;
-                                button.style.background = '#d4edda';
-                                button.style.color = '#155724';
-                                button.style.border = '1px solid #c3e6cb';
-                                button.style.cursor = 'not-allowed';
-                                button.innerHTML = username;
-                                
-                                const currentDate = new Date().toLocaleDateString('en-US', { 
-                                    month: 'numeric', 
-                                    day: 'numeric', 
-                                    year: '2-digit' 
-                                });
-                                button.title = `RFI uploaded by ${username} on ${currentDate}`;
-                                
-                                // Remove the onclick handler since button is now disabled
-                                button.onclick = null;
-                                
-                                console.log('✅ Updated RFI button to show username:', username);
-                            } else {
-                                console.error('❌ Button not found:', buttonId);
-                            }
-                            
-                            // Update button colors immediately after upload
-                            setTimeout(() => {
-                                console.log('🎨 Updating button colors after RFI upload...');
-                                updateAllViewFilesButtonColors();
-                            }, 1000);
+                                if (button) {
+                                    console.log('✅ Found RFI button, updating to green success state');
+                                    
+                                    // Update button to green success state
+                                    button.disabled = true;
+                                    button.className = 'btn btn-sm btn-success';
+                                    button.style.backgroundColor = '#28a745';
+                                    button.style.borderColor = '#28a745';
+                                    button.style.cursor = 'not-allowed';
+                                    button.innerHTML = 'RFI ✓';
+                                    button.title = 'RFI file exists';
+                                    
+                                    // Remove the onclick handler since button is now disabled
+                                    button.onclick = null;
+                                    
+                                    console.log('✅ Updated RFI button to green success state');
+                                    
+                                    // Check if View Files popup is open - if so, auto-refresh it
+                                    const modal = document.getElementById('filesModal');
+                                    if (modal && modal.style.display === 'block') {
+                                        console.log('🔄 View Files popup is open - auto-refreshing after RFI upload...');
+                                        
+                                        // Wait 2 seconds for file to be saved, then refresh the popup
+                                        setTimeout(() => {
+                                            console.log('🔄 Auto-refreshing View Files popup with new RFI file...');
+                                            
+                                            // Get the current popup data from the groupId
+                                            const dateStr = groupId.match(/\d{8}$/);
+                                            if (dateStr) {
+                                                const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                                const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+                                                
+                                                console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                                loadInspectionFiles(groupId, clientName, formattedDate);
+                                            }
+                                        }, 2000);
+                                    }
+                                } else {
+                                    console.log('⚠️ RFI button not found, refreshing page to show updated state');
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1000);
+                                }
                     } else {
                         alert('Upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Upload failed:', data);
@@ -184,45 +194,66 @@ function uploadInvoice(groupId) {
                         alert(data.message || 'Invoice uploaded successfully!');
                         console.log('Invoice upload successful:', data);
                         
-                        // Update button to show username directly
+                        // Update button directly to green success state
                         const buttonId = 'invoice-' + groupId;
-                        console.log('🔍 Updating Invoice button to show username for:', buttonId);
+                        console.log('🔍 Updating Invoice button to green success state for:', buttonId);
                         
-                        // Get the username from the server response
-                        const username = data.message ? data.message.match(/by (\w+) for group/)?.[1] : 'User';
-                        console.log('🔍 Extracted username from server response:', username);
+                        // Find and update the button
+                        let button = document.getElementById(buttonId);
+                        if (!button) {
+                            // Try to find button by pattern search
+                            const allButtons = document.querySelectorAll(`button[id^="invoice-"]`);
+                            for (let btn of allButtons) {
+                                if (btn.id === buttonId) {
+                                    button = btn;
+                                    break;
+                                }
+                            }
+                        }
                         
-                        // Update the button directly
-                        const button = document.getElementById(buttonId);
                         if (button) {
-                            console.log('🔍 Found button, updating to show username');
+                            console.log('✅ Found Invoice button, updating to green success state');
                             
-                            // Clear the file-deleted flag since a new file has been uploaded
-                            button.removeAttribute('data-file-deleted');
-                            
-                            // Update button to show uploaded state with user's name
+                            // Update button to green success state
                             button.disabled = true;
-                            button.style.background = '#d4edda';
-                            button.style.color = '#155724';
-                            button.style.border = '1px solid #c3e6cb';
+                            button.className = 'btn btn-sm btn-success';
+                            button.style.backgroundColor = '#28a745';
+                            button.style.borderColor = '#28a745';
                             button.style.cursor = 'not-allowed';
-                            button.innerHTML = username;
-                            
-                            const currentDate = new Date().toLocaleDateString('en-US', { 
-                                month: 'numeric', 
-                                day: 'numeric', 
-                                year: '2-digit' 
-                            });
-                            button.title = `Invoice uploaded by ${username} on ${currentDate}`;
+                            button.innerHTML = 'Invoice ✓';
+                            button.title = 'Invoice file exists';
                             
                             // Remove the onclick handler since button is now disabled
                             button.onclick = null;
                             
-                            console.log('✅ Updated Invoice button to show username:', username);
+                            console.log('✅ Updated Invoice button to green success state');
+                            
+                            // Check if View Files popup is open - if so, auto-refresh it
+                            const modal = document.getElementById('filesModal');
+                            if (modal && modal.style.display === 'block') {
+                                console.log('🔄 View Files popup is open - auto-refreshing after Invoice upload...');
+                                
+                                // Wait 2 seconds for file to be saved, then refresh the popup
+                                setTimeout(() => {
+                                    console.log('🔄 Auto-refreshing View Files popup with new Invoice file...');
+                                    
+                                    // Get the current popup data from the groupId
+                                    const dateStr = groupId.match(/\d{8}$/);
+                                    if (dateStr) {
+                                        const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                        const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+                                        
+                                        console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                        loadInspectionFiles(groupId, clientName, formattedDate);
+                                    }
+                                }, 2000);
+                            }
                         } else {
-                            console.error('❌ Button not found:', buttonId);
+                            console.log('⚠️ Invoice button not found, refreshing page to show updated state');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
                         }
-                        updateAllViewFilesButtonColors();
                     } else {
                         alert('Invoice upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Invoice upload failed:', data);
@@ -323,12 +354,29 @@ function closeFilesPopup() {
     if (downloadBtn) {
         downloadBtn.style.display = 'none';
     }
+    
+    // Don't refresh inspection data when popup closes to prevent button reset loop
+    if (window.currentFilesGroupId && window.currentFilesClient && window.currentFilesDate) {
+        console.log(`🔄 Popup closed - skipping inspection refresh to prevent button reset`);
+        console.log(`🔍 Group ID: ${window.currentFilesGroupId}`);
+        
+        // Skip refresh to prevent button reset loop
+        console.log('🔄 Skipping inspection refresh to prevent button reset loop');
+    }
+    
+    // Process any pending button updates now that popup is closed
+    setTimeout(() => {
+        processPendingButtonUpdates();
+    }, 100);
+    
+    // Also try to process updates immediately
+    processPendingButtonUpdates();
 }
 
-// Load inspection files with fallback to test data
+// Load inspection files with direct working method (removed unreliable first attempt)
 async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDate) {
     try {
-        console.log('🔄 File fetch: Starting file fetch request...');
+        console.log('🔄 File fetch: Starting direct file fetch (using working method)...');
         
         // Fix client name - decode any Unicode escapes
         let cleanClientName = clientName;
@@ -369,7 +417,24 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         console.log('🔄 Original date:', inspectionDate);
         console.log('🔄 Cleaned date:', cleanDate);
         
-        const response = await fetch(`/list-uploaded-files/?group_id=${encodeURIComponent(groupId)}`);
+        // Use the working method directly with cache-busting
+        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const response = await fetch('/inspections/files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken(),
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            body: JSON.stringify({
+                group_id: groupId,
+                client_name: cleanClientName,
+                inspection_date: cleanDate,
+                _cache_bust: cacheBuster
+            })
+        });
         
         const result = await response.json();
         console.log('🔄 File fetch: File fetch completed:', result.success);
@@ -382,66 +447,48 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         if (filesLoading) filesLoading.style.display = 'none';
         if (filesContent) filesContent.style.display = 'block';
         
-        if (result.success && filesList) {
-            // Check if we got actual files or just empty array
-            if (result.files && typeof result.files === 'object' && !Array.isArray(result.files)) {
-                // We got a proper files object with categories
-                console.log('✅ Got real files from server');
-                console.log('🔍 Server files object:', result.files);
-                console.log('🔍 Server files keys:', Object.keys(result.files));
-                for (const [key, value] of Object.entries(result.files)) {
-                    console.log(`🔍 ${key}:`, value);
-                }
+        if (result.success && result.files && filesList) {
+            console.log('🔍 Server returned files object:', result.files);
+            console.log('🔍 Files object keys:', Object.keys(result.files));
+            console.log('🔍 Files object values:', Object.values(result.files));
+            
+            const hasFiles = Object.values(result.files).some(fileList => fileList && fileList.length > 0);
+            console.log('🔍 Has files check result:', hasFiles);
+            
+            if (hasFiles) {
+                console.log('✅ Files found and displaying');
                 displayFiles(result.files, result.message);
-            } else if (result.files && Array.isArray(result.files) && result.files.length > 0) {
-                // We got an array of files - convert to categories
-                console.log('✅ Got file array from server, converting to categories');
-                const categorizedFiles = {
-                    'Server Files': result.files
-                };
-                displayFiles(categorizedFiles, result.message);
             } else {
-                // No files found - show test data
-                console.log('📁 No files found, showing test data');
-                showTestFiles(clientName, inspectionDate, result.message);
+                console.log('📁 No files found - showing empty message');
+                const filesList = document.getElementById('filesList');
+                if (filesList) {
+                    filesList.innerHTML = '<div class="empty-category">📂 No files found for this inspection.</div>';
+                }
             }
         } else if (filesList) {
-            console.log('❌ Server returned error, showing test data');
-            showTestFiles(clientName, inspectionDate, 'Server error - showing test data');
+            console.log('❌ Server returned error');
+            const filesList = document.getElementById('filesList');
+            if (filesList) {
+                filesList.innerHTML = '<div class="empty-category">❌ Error loading files. Please try again.</div>';
+            }
         }
         
     } catch (error) {
-        console.log('❌ File fetch error, showing test data:', error);
-        showTestFiles(clientName, inspectionDate, 'Network error - showing test data');
+        console.log('❌ File fetch error:', error);
+        const filesList = document.getElementById('filesList');
+        if (filesList) {
+            filesList.innerHTML = '<div class="empty-category">❌ Network error. Please try again.</div>';
+        }
     }
 }
 
-// Show test files when no real files are available
+// Show no files message when no real files are available
 function showTestFiles(clientName, inspectionDate, serverMessage) {
-    const testFiles = {
-        'RFI Documents': [
-            { name: `RFI_${clientName.replace(/\s+/g, '_')}_${inspectionDate}.pdf`, path: `/test/rfi_${inspectionDate}.pdf`, isTest: true },
-            { name: `RFI_Response_${inspectionDate}.pdf`, path: `/test/rfi_response_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Invoices': [
-            { name: `Invoice_${clientName.replace(/\s+/g, '_')}.pdf`, path: `/test/invoice_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Lab Results': [
-            { name: `Lab_Report_${inspectionDate}.pdf`, path: `/test/lab_report_${inspectionDate}.pdf`, isTest: true },
-            { name: `Test_Results_${clientName.replace(/\s+/g, '_')}.pdf`, path: `/test/test_results_${inspectionDate}.pdf`, isTest: true }
-        ],
-        'Compliance Documents': [
-            { name: `Compliance_${inspectionDate}.pdf`, path: `/test/compliance_${inspectionDate}.pdf`, isTest: true }
-        ]
-    };
-    
-    let message = serverMessage || '';
-    if (message) {
-        message += '<br><br>';
+    const filesList = document.getElementById('filesList');
+    if (filesList) {
+        let message = serverMessage || 'No files found for this inspection.';
+        filesList.innerHTML = `<div class="empty-category">📂 ${message}</div>`;
     }
-    message += '<strong>📁 Test Files Shown:</strong> Since no real files were found, showing sample files for demonstration. Use the RFI upload button to add actual files.';
-    
-    displayFiles(testFiles, message, true);
 }
 
 // Load inspection files function (original)
@@ -476,6 +523,7 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
         const result = await response.json();
         console.log('🔄 File fetch: File fetch completed:', result.success);
         console.log('🔄 File fetch: Full server response:', result);
+        console.log('🔄 File fetch: Response text length:', JSON.stringify(result).length);
         console.log('🔄 File fetch: Files data:', result.files);
         console.log('🔄 File fetch: Message:', result.message);
         
@@ -532,7 +580,10 @@ function displayFiles(files, message = null, isTestData = false) {
         </div>`;
     }
     
-    if (!files || Object.keys(files).length === 0) {
+    // Check if there are actually any files (not just empty arrays)
+    const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
+    
+    if (!hasFiles) {
         html += '<div class="empty-category">📂 No files found for this inspection.</div>';
     } else {
         html += '<div class="files-grid">';
@@ -556,9 +607,21 @@ function displayFiles(files, message = null, isTestData = false) {
                     const fileName = file.name || file.filename || file.file_name || file;
                     const filePath = file.path || file.url || file.file_path || file;
                     const isTest = file.isTest || isTestData;
+                    const isZipFile = fileName.toLowerCase().endsWith('.zip');
                     
-                    html += `<div class="file-item" style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 0.5rem; ${isTest ? 'background-color: #f8f9fa;' : ''}">
-                        <i class="fas fa-file-pdf" style="color: #dc3545; margin-right: 0.5rem;"></i>
+                    // Choose appropriate icon based on file type
+                    let fileIcon = 'fa-file';
+                    let iconColor = '#6c757d';
+                    if (isZipFile) {
+                        fileIcon = 'fa-file-archive';
+                        iconColor = '#fd7e14';
+                    } else if (fileName.toLowerCase().endsWith('.pdf')) {
+                        fileIcon = 'fa-file-pdf';
+                        iconColor = '#dc3545';
+                    }
+                    
+                    html += `<div class="file-item" data-file-path="${filePath}" data-file-name="${fileName}" style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #e9ecef; border-radius: 4px; margin-bottom: 0.5rem; ${isTest ? 'background-color: #f8f9fa;' : ''}">
+                        <i class="fas ${fileIcon}" style="color: ${iconColor}; margin-right: 0.5rem;"></i>
                         <span class="file-name" style="flex: 1; margin-right: 0.5rem; ${isTest ? 'font-style: italic; color: #6c757d;' : ''}">${fileName}</span>
                         <div class="file-actions" style="display: flex; gap: 0.25rem;">`;
                     
@@ -567,13 +630,19 @@ function displayFiles(files, message = null, isTestData = false) {
                             <i class="fas fa-eye"></i> Preview
                         </span>`;
                     } else {
-                        html += `                        <button class="btn btn-sm" onclick="viewFile('${filePath}', '${fileName}')" title="View" style="background: #17a2b8; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
-                            <i class="fas fa-eye"></i>
+                        // Use eye icon for both regular files and ZIP files
+                        const viewFunction = isZipFile ? 'viewZipContents' : 'viewFile';
+                        const viewTitle = isZipFile ? 'View ZIP Contents' : 'View';
+                        const viewIcon = isZipFile ? 'fa-eye' : 'fa-eye';
+                        const viewColor = isZipFile ? '#fd7e14' : '#17a2b8';
+                        
+                        html += `                        <button class="btn btn-sm" onclick="${viewFunction}('${filePath}', '${fileName}')" title="${viewTitle}" style="background: ${viewColor}; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
+                            <i class="fas ${viewIcon}"></i>
                         </button>
                         <button class="btn btn-sm" onclick="downloadFile('${filePath}')" title="Download" style="background: #28a745; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; margin-right: 0.25rem;">
                             <i class="fas fa-download"></i>
                         </button>
-                        ${!filePath.toLowerCase().includes('compliance') ? `<button class="btn btn-sm" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
+                        ${!filePath.toLowerCase().includes('compliance') ? `<button class="btn btn-sm" data-file-path="${filePath}" data-file-name="${fileName}" onclick="deleteFile('${filePath}', '${fileName}')" title="Delete" style="background: #dc3545; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px;">
                             <i class="fas fa-trash"></i>
                         </button>` : ''}
                         `;
@@ -734,16 +803,49 @@ async function deleteFile(filePath, fileName) {
                 documentType = 'invoice';
             }
             
+            // IMMEDIATE UI UPDATE: Remove the file from the current display
+            console.log('🔄 Immediately removing file from UI before server refresh...');
+            const fileElements = document.querySelectorAll(`[data-file-path*="${fileName}"]`);
+            fileElements.forEach(element => {
+                const fileContainer = element.closest('.file-item') || element.closest('.file-entry');
+                if (fileContainer) {
+                    fileContainer.style.opacity = '0.3';
+                    fileContainer.innerHTML = `<div class="file-deleted">📄 ${fileName} - Deleted</div>`;
+                }
+            });
+            
+            // Clear any client-side file cache
+            console.log('🧹 Clearing client-side file cache...');
+            if (window.fileCache) {
+                const cacheKey = `${clientName}_${inspectionDate}`;
+                delete window.fileCache[cacheKey];
+                console.log(`🧹 Cleared cache for key: ${cacheKey}`);
+            }
+            
+            // Clear localStorage cache if it exists
+            const cacheKeys = Object.keys(localStorage).filter(key => 
+                key.includes('files_') && 
+                key.includes(clientName.replace(/\s+/g, '_')) && 
+                key.includes(inspectionDate)
+            );
+            cacheKeys.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`🧹 Cleared localStorage key: ${key}`);
+            });
+            
             // Update the corresponding button immediately
             if (documentType !== 'unknown') {
                 console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
                 updateButtonAfterDeletion(clientName, inspectionDate, documentType);
             }
             
-            // Refresh the files list
+            // Refresh the files list with a delay to ensure server-side cleanup is complete
             const groupId = window.currentFilesGroupId;
             if (groupId && clientName && inspectionDate) {
-                loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
+                console.log('🔄 Scheduling fresh file list reload...');
+                setTimeout(() => {
+                    loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
+                }, 500); // Give server time to complete cleanup
                 
                 // For RFI and Invoice deletions, ensure button stays reset and prevent reversion
                 if (documentType === 'rfi' || documentType === 'invoice') {
@@ -791,8 +893,39 @@ async function deleteFile(filePath, fileName) {
                 }
             }
         } else {
-            alert('Error deleting file: ' + (result.error || 'Unknown error'));
-            console.error('Delete failed:', result);
+            // Handle "File not found" as a special case - file was already deleted
+            if (result.error && result.error.includes('File not found')) {
+                console.log('File already deleted from server, updating UI...');
+                
+                // Determine document type from file path
+                let documentType = 'unknown';
+                if (filePath.includes('/rfi/')) {
+                    documentType = 'rfi';
+                } else if (filePath.includes('/invoice/')) {
+                    documentType = 'invoice';
+                }
+                
+                // Update the corresponding button immediately
+                if (documentType !== 'unknown') {
+                    console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
+                    updateButtonAfterDeletion(clientName, inspectionDate, documentType);
+                }
+                
+                // Clear any cached file data for this client/date
+                console.log('🧹 Clearing file cache for updated state...');
+                
+                // Refresh the files list to show updated state
+                const groupId = window.currentFilesGroupId;
+                if (groupId && clientName && inspectionDate) {
+                    console.log('🔄 Refreshing View Files popup to show updated file count');
+                    setTimeout(() => {
+                        openFilesPopup(groupId, clientName, inspectionDate);
+                    }, 100);
+                }
+            } else {
+                alert('Error deleting file: ' + (result.error || 'Unknown error'));
+                console.error('Delete failed:', result);
+            }
         }
         
     } catch (error) {
@@ -1182,6 +1315,497 @@ window.testCanonburyFiles = async function() {
     }
 };
 
+// ZIP File Viewer
+async function viewZipContents(filePath, fileName) {
+    console.log('🗂️ Viewing ZIP contents:', filePath, fileName);
+    
+    try {
+        // Show loading message
+        const filesList = document.getElementById('filesList');
+        if (!filesList) {
+            console.error('filesList element not found');
+            return;
+        }
+        
+        // Create a temporary loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'zipLoadingOverlay';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        loadingOverlay.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; max-width: 400px;">
+                <div style="margin-bottom: 1rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #007bff;"></i>
+                </div>
+                <h3 style="margin: 0 0 1rem 0; color: #333;">Loading ZIP Contents</h3>
+                <p style="margin: 0; color: #666;">Reading ${fileName}...</p>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+        
+        // Clean the file path
+        let cleanFilePath = filePath;
+        if (cleanFilePath.startsWith('/media/')) {
+            cleanFilePath = cleanFilePath.substring(7);
+        }
+        
+        // Fetch the ZIP file
+        const response = await fetch('/media/' + cleanFilePath);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch ZIP file: ${response.status} ${response.statusText}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Load JSZip library dynamically if not already loaded
+        if (typeof JSZip === 'undefined') {
+            await loadJSZipLibrary();
+        }
+        
+        // Read ZIP contents
+        const zip = new JSZip();
+        const zipContents = await zip.loadAsync(arrayBuffer);
+        
+        // Remove loading overlay
+        document.body.removeChild(loadingOverlay);
+        
+        // Display ZIP contents
+        displayZipContents(zipContents, fileName);
+        
+    } catch (error) {
+        console.error('Error viewing ZIP contents:', error);
+        
+        // Remove loading overlay if it exists
+        const loadingOverlay = document.getElementById('zipLoadingOverlay');
+        if (loadingOverlay) {
+            document.body.removeChild(loadingOverlay);
+        }
+        
+        alert('Error loading ZIP file: ' + error.message);
+    }
+}
+
+// Load JSZip library dynamically
+function loadJSZipLibrary() {
+    return new Promise((resolve, reject) => {
+        if (typeof JSZip !== 'undefined') {
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        script.onload = () => {
+            console.log('✅ JSZip library loaded successfully');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('❌ Failed to load JSZip library');
+            reject(new Error('Failed to load JSZip library'));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Display ZIP contents in a modal
+function displayZipContents(zipContents, fileName) {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'zipViewerModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+    
+    // Get file list from ZIP
+    const fileList = Object.keys(zipContents.files);
+    const folders = new Set();
+    const files = [];
+    
+    fileList.forEach(fileName => {
+        const file = zipContents.files[fileName];
+        if (file.dir) {
+            // It's a directory
+            folders.add(fileName);
+        } else {
+            // It's a file
+            files.push({
+                name: fileName,
+                size: file._data ? file._data.uncompressedSize : 0,
+                compressedSize: file._data ? file._data.compressedSize : 0,
+                date: file.date,
+                fileData: file
+            });
+        }
+    });
+    
+    // Sort files and folders
+    const sortedFolders = Array.from(folders).sort();
+    const sortedFiles = files.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Analyze files for inspection matching
+    const analysis = analyzeZipFiles(sortedFiles);
+    
+    // Create modal content
+    modal.innerHTML = `
+        <div style="background: white; border-radius: 8px; max-width: 90%; max-height: 90%; overflow: hidden; display: flex; flex-direction: column;">
+            <div style="padding: 1rem; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #333;">
+                    <i class="fas fa-file-archive" style="color: #fd7e14; margin-right: 0.5rem;"></i>
+                    ${fileName}
+                </h3>
+                <button onclick="closeZipViewer()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div style="padding: 1rem; overflow-y: auto; flex: 1;">
+                <div style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="color: #666; font-size: 0.9rem;">
+                        ${sortedFiles.length} files, ${sortedFolders.length} folders
+                    </div>
+                    <button onclick="extractAndOrganizeZip('${fileName}')" style="background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: 500;">
+                        <i class="fas fa-folder-open" style="margin-right: 0.5rem;"></i>
+                        Extract & Organize
+                    </button>
+                </div>
+                <div id="zipContentsList">
+                    ${generateZipContentsHTML(sortedFolders, sortedFiles, analysis)}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Store zip contents and analysis for later use
+    window.currentZipContents = zipContents;
+    window.currentZipAnalysis = analysis;
+    window.currentZipFileName = fileName;
+    
+    document.body.appendChild(modal);
+}
+
+// Analyze ZIP files to identify inspection numbers
+function analyzeZipFiles(files) {
+    const analysis = {
+        matchedFiles: [],
+        unmatchedFiles: [],
+        inspectionNumbers: new Set()
+    };
+    
+    files.forEach(file => {
+        // Extract inspection number from filename (look for 4-digit numbers)
+        const inspectionMatch = file.name.match(/(\d{4})/);
+        if (inspectionMatch) {
+            const inspectionNumber = inspectionMatch[1];
+            analysis.inspectionNumbers.add(inspectionNumber);
+            analysis.matchedFiles.push({
+                ...file,
+                inspectionNumber: inspectionNumber
+            });
+        } else {
+            analysis.unmatchedFiles.push(file);
+        }
+    });
+    
+    return analysis;
+}
+
+// Generate HTML for ZIP contents with analysis
+function generateZipContentsHTML(folders, files, analysis) {
+    let html = '<div class="zip-contents">';
+    
+    // Show analysis summary
+    if (analysis.matchedFiles.length > 0 || analysis.unmatchedFiles.length > 0) {
+        html += `
+            <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+                <h4 style="margin: 0 0 0.5rem 0; color: #1976d2;">
+                    <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+                    File Organization Analysis
+                </h4>
+                <div style="font-size: 0.9rem; color: #1976d2;">
+                    <div style="margin-bottom: 0.25rem;">
+                        <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 0.5rem;"></i>
+                        ${analysis.matchedFiles.length} files can be matched to inspections: ${Array.from(analysis.inspectionNumbers).join(', ')}
+                    </div>
+                    <div>
+                        <i class="fas fa-folder" style="color: #ff9800; margin-right: 0.5rem;"></i>
+                        ${analysis.unmatchedFiles.length} files will go to general compliance folder
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Display folders first
+    folders.forEach(folderName => {
+        html += `
+            <div style="display: flex; align-items: center; padding: 0.5rem; border-bottom: 1px solid #f8f9fa;">
+                <i class="fas fa-folder" style="color: #ffc107; margin-right: 0.5rem;"></i>
+                <span style="color: #333; font-weight: 500;">${folderName}</span>
+            </div>
+        `;
+    });
+    
+    // Display matched files (with inspection numbers)
+    if (analysis.matchedFiles.length > 0) {
+        html += `
+            <div style="margin: 1rem 0 0.5rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                <h5 style="margin: 0; color: #495057; font-size: 0.9rem;">
+                    <i class="fas fa-check-circle" style="color: #4caf50; margin-right: 0.5rem;"></i>
+                    Files for Individual Inspections
+                </h5>
+            </div>
+        `;
+        
+        analysis.matchedFiles.forEach(file => {
+            const sizeKB = Math.round(file.size / 1024 * 100) / 100;
+            const compressionRatio = file.compressedSize > 0 ? Math.round((1 - file.compressedSize / file.size) * 100) : 0;
+            
+            html += `
+                <div style="padding: 0.75rem; border-bottom: 1px solid #f8f9fa; background: #f8fff8;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.25rem;">
+                        <i class="fas fa-file" style="color: #4caf50; margin-right: 0.5rem;"></i>
+                        <span style="color: #333; font-weight: 500;">${file.name}</span>
+                        <span style="background: #4caf50; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.8rem; margin-left: 0.5rem;">
+                            Inspection ${file.inspectionNumber}
+                        </span>
+                    </div>
+                    <div style="color: #666; font-size: 0.9rem; margin-left: 1.5rem;">
+                        ${sizeKB} KB ${compressionRatio > 0 ? `(${compressionRatio}% compressed)` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    // Display unmatched files (for general compliance folder)
+    if (analysis.unmatchedFiles.length > 0) {
+        html += `
+            <div style="margin: 1rem 0 0.5rem 0; padding: 0.5rem; background: #f8f9fa; border-radius: 4px;">
+                <h5 style="margin: 0; color: #495057; font-size: 0.9rem;">
+                    <i class="fas fa-folder" style="color: #ff9800; margin-right: 0.5rem;"></i>
+                    Files for General Compliance Folder
+                </h5>
+            </div>
+        `;
+        
+        analysis.unmatchedFiles.forEach(file => {
+            const sizeKB = Math.round(file.size / 1024 * 100) / 100;
+            const compressionRatio = file.compressedSize > 0 ? Math.round((1 - file.compressedSize / file.size) * 100) : 0;
+            
+            html += `
+                <div style="padding: 0.75rem; border-bottom: 1px solid #f8f9fa; background: #fff8f0;">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.25rem;">
+                        <i class="fas fa-file" style="color: #ff9800; margin-right: 0.5rem;"></i>
+                        <span style="color: #333; font-weight: 500;">${file.name}</span>
+                    </div>
+                    <div style="color: #666; font-size: 0.9rem; margin-left: 1.5rem;">
+                        ${sizeKB} KB ${compressionRatio > 0 ? `(${compressionRatio}% compressed)` : ''}
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    html += '</div>';
+    return html;
+}
+
+// Extract and organize ZIP files
+async function extractAndOrganizeZip(fileName) {
+    console.log('🗂️ Extracting and organizing ZIP:', fileName);
+    
+    if (!window.currentZipContents || !window.currentZipAnalysis) {
+        alert('Error: ZIP contents not available. Please close and reopen the ZIP viewer.');
+        return;
+    }
+    
+    try {
+        // Show loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'zipExtractOverlay';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        `;
+        loadingOverlay.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; max-width: 500px;">
+                <div style="margin-bottom: 1rem;">
+                    <i class="fas fa-cogs fa-spin" style="font-size: 2rem; color: #007bff;"></i>
+                </div>
+                <h3 style="margin: 0 0 1rem 0; color: #333;">Extracting & Organizing Files</h3>
+                <p style="margin: 0 0 1rem 0; color: #666;">Processing ${window.currentZipAnalysis.matchedFiles.length} matched files and ${window.currentZipAnalysis.unmatchedFiles.length} general files...</p>
+                <div id="extractProgress" style="background: #f8f9fa; border-radius: 4px; padding: 0.5rem; font-size: 0.9rem; color: #666;">
+                    Starting extraction...
+                </div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+        
+        const progressDiv = document.getElementById('extractProgress');
+        
+        // Get current inspection context
+        const groupId = window.currentFilesGroupId;
+        const clientName = window.currentFilesClient;
+        const inspectionDate = window.currentFilesDate;
+        
+        if (!groupId || !clientName || !inspectionDate) {
+            throw new Error('Missing inspection context. Please close and reopen the files popup.');
+        }
+        
+        // Process matched files (for individual inspections)
+        let processedCount = 0;
+        const totalFiles = window.currentZipAnalysis.matchedFiles.length + window.currentZipAnalysis.unmatchedFiles.length;
+        
+        for (const file of window.currentZipAnalysis.matchedFiles) {
+            progressDiv.textContent = `Processing ${file.name} for inspection ${file.inspectionNumber}...`;
+            
+            // Extract file data
+            const fileData = await file.fileData.async('blob');
+            
+            // Upload to specific inspection folder
+            await uploadFileToInspection(fileData, file.name, file.inspectionNumber, groupId, clientName, inspectionDate);
+            
+            processedCount++;
+            progressDiv.textContent = `Processed ${processedCount}/${totalFiles} files...`;
+        }
+        
+        // Process unmatched files (for general compliance folder)
+        for (const file of window.currentZipAnalysis.unmatchedFiles) {
+            progressDiv.textContent = `Processing ${file.name} for general compliance folder...`;
+            
+            // Extract file data
+            const fileData = await file.fileData.async('blob');
+            
+            // Upload to general compliance folder
+            await uploadFileToGeneralCompliance(fileData, file.name, groupId, clientName, inspectionDate);
+            
+            processedCount++;
+            progressDiv.textContent = `Processed ${processedCount}/${totalFiles} files...`;
+        }
+        
+        // Remove loading overlay
+        document.body.removeChild(loadingOverlay);
+        
+        // Close ZIP viewer
+        closeZipViewer();
+        
+        // Show success message
+        alert(`✅ Successfully extracted and organized ${totalFiles} files!\n\n- ${window.currentZipAnalysis.matchedFiles.length} files placed in individual inspection folders\n- ${window.currentZipAnalysis.unmatchedFiles.length} files placed in general compliance folder`);
+        
+        // Refresh the files popup to show new files
+        setTimeout(() => {
+            if (window.currentFilesGroupId && window.currentFilesClient && window.currentFilesDate) {
+                openFilesPopup(window.currentFilesGroupId, window.currentFilesClient, window.currentFilesDate);
+            }
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Error extracting ZIP:', error);
+        
+        // Remove loading overlay if it exists
+        const loadingOverlay = document.getElementById('zipExtractOverlay');
+        if (loadingOverlay) {
+            document.body.removeChild(loadingOverlay);
+        }
+        
+        alert('Error extracting ZIP file: ' + error.message);
+    }
+}
+
+// Upload file to specific inspection folder
+async function uploadFileToInspection(fileData, fileName, inspectionNumber, groupId, clientName, inspectionDate) {
+    const formData = new FormData();
+    formData.append('file', fileData, fileName);
+    formData.append('group_id', groupId);
+    formData.append('client_name', clientName);
+    formData.append('inspection_date', inspectionDate);
+    formData.append('inspection_number', inspectionNumber);
+    formData.append('document_type', 'compliance');
+    formData.append('csrfmiddlewaretoken', getCSRFToken());
+    
+    const response = await fetch('/upload-document/', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to upload ${fileName} to inspection ${inspectionNumber}: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(`Failed to upload ${fileName}: ${result.error}`);
+    }
+    
+    console.log(`✅ Uploaded ${fileName} to inspection ${inspectionNumber}`);
+}
+
+// Upload file to general compliance folder
+async function uploadFileToGeneralCompliance(fileData, fileName, groupId, clientName, inspectionDate) {
+    const formData = new FormData();
+    formData.append('file', fileData, fileName);
+    formData.append('group_id', groupId);
+    formData.append('client_name', clientName);
+    formData.append('inspection_date', inspectionDate);
+    formData.append('document_type', 'compliance');
+    formData.append('csrfmiddlewaretoken', getCSRFToken());
+    
+    const response = await fetch('/upload-document/', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to upload ${fileName} to general compliance: ${response.statusText}`);
+    }
+    
+    const result = await response.json();
+    if (!result.success) {
+        throw new Error(`Failed to upload ${fileName}: ${result.error}`);
+    }
+    
+    console.log(`✅ Uploaded ${fileName} to general compliance folder`);
+}
+
+// Close ZIP viewer modal
+function closeZipViewer() {
+    const modal = document.getElementById('zipViewerModal');
+    if (modal) {
+        document.body.removeChild(modal);
+    }
+    
+    // Clear stored data
+    window.currentZipContents = null;
+    window.currentZipAnalysis = null;
+    window.currentZipFileName = null;
+}
+
 // View Files Button Color Management
 function updateViewFilesButtonColor(clientName, fileStatus) {
     console.log('🎨 Updating button color for client: "' + clientName + '"');
@@ -1568,44 +2192,77 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
 // Update button state after file deletion
 function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     console.log(`🔄 Updating ${documentType} button after deletion for ${clientName}`);
-    console.log(`🔍 Looking for buttons with id starting with "${documentType}-"`);
     
-    // Find the button for this client and document type
-    const buttons = document.querySelectorAll(`button[id^="${documentType}-"]`);
-    console.log(`🔍 Found ${buttons.length} buttons with id starting with "${documentType}-"`);
+    // Use the current group ID from the popup context
+    const groupId = window.currentFilesGroupId;
+    if (!groupId) {
+        console.log(`⚠️ No group ID available for button update`);
+        return;
+    }
     
-    buttons.forEach((button, index) => {
-        console.log(`🔍 Button ${index + 1}: id="${button.id}", data-client-name="${button.getAttribute('data-client-name')}", data-inspection-date="${button.getAttribute('data-inspection-date')}"`);
-        const buttonClientName = button.getAttribute('data-client-name');
-        const buttonInspectionDate = button.getAttribute('data-inspection-date');
+    const buttonId = `${documentType}-${groupId}`;
+    console.log(`🔍 Looking for button with ID: ${buttonId}`);
+    
+    // Try multiple methods to find the button
+    let button = null;
+    
+    // Method 1: Direct ID lookup
+    button = document.getElementById(buttonId);
+    if (button) {
+        console.log(`✅ Found button by direct ID: ${buttonId}`);
+    } else {
+        // Method 2: Search all buttons with pattern
+        console.log(`🔍 Button not found by ID, searching by pattern...`);
+        const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
+        console.log(`🔍 Found ${allButtons.length} buttons with pattern "${documentType}-"`);
         
-        // Clean the button's inspection date for comparison
-        let cleanButtonDate = buttonInspectionDate;
-        if (typeof cleanButtonDate === 'string') {
-            cleanButtonDate = cleanButtonDate.replace(/\\u002D/g, '-');
-            try {
-                cleanButtonDate = JSON.parse('"' + cleanButtonDate + '"');
-            } catch (e) {
-                // Use as-is if parsing fails
+        for (let btn of allButtons) {
+            if (btn.id === buttonId) {
+                button = btn;
+                console.log(`✅ Found button by pattern search: ${btn.id}`);
+                break;
             }
         }
-        
-        // Check if this is the button for the deleted file
-        if (buttonClientName === clientName && cleanButtonDate === inspectionDate) {
-            console.log(`🔧 Found ${documentType} button to check for ${clientName}`);
-            
-            // Check if there are still files of this type remaining
-            const groupId = button.getAttribute('data-debug-group-id') || button.id.replace(`${documentType}-`, '');
-            
-            // Immediately reset button to uploadable state since we know the file was deleted
-            console.log(`🔧 Resetting ${documentType} button to uploadable state for ${clientName}`);
+    }
+    
+    // Method 3: Search in all tables and modals
+    if (!button) {
+        console.log(`🔍 Button still not found, searching in all containers...`);
+        const containers = document.querySelectorAll('table, .modal, .popup, [id*="detail"]');
+        for (let container of containers) {
+            const foundButton = container.querySelector(`#${buttonId}`);
+            if (foundButton) {
+                button = foundButton;
+                console.log(`✅ Found button in container: ${container.tagName} ${container.className || container.id}`);
+                break;
+            }
+        }
+    }
+    
+    // Method 4: Search by data attributes
+    if (!button) {
+        console.log(`🔍 Searching by data attributes...`);
+        const buttonsWithData = document.querySelectorAll(`button[data-client-name="${clientName}"], button[data-inspection-date*="${inspectionDate}"]`);
+        for (let btn of buttonsWithData) {
+            if (btn.id.includes(documentType) && btn.id.includes(groupId.split('_')[0])) {
+                button = btn;
+                console.log(`✅ Found button by data attributes: ${btn.id}`);
+                break;
+            }
+        }
+    }
+    
+    if (button) {
+        console.log(`✅ Found ${documentType} button: ${buttonId}`);
             
             // Reset button to uploadable state
             button.disabled = false;
+        button.classList.remove('uploaded');
+        button.classList.add(`btn-${documentType}`, 'btn-sm');
             button.style.background = '#28a745';
             button.style.color = 'white';
             button.style.cursor = 'pointer';
-            button.innerHTML = `<i class="fas fa-upload"></i> ${documentType.toUpperCase()}`;
+        button.innerHTML = documentType.toUpperCase();
             button.title = `Upload ${documentType.toUpperCase()}`;
             
             // Mark button as file-deleted to prevent UI updates from overriding this state
@@ -1618,9 +2275,614 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
                 button.onclick = function() { uploadInvoice(groupId); };
             }
             
-            console.log(`✅ Reset ${documentType} button to uploadable state for ${clientName} - marked as file-deleted`);
+        console.log(`✅ ${documentType.toUpperCase()} button reset to uploadable state for ${clientName}`);
+    } else {
+        console.log(`⚠️ Button still not found: ${buttonId}`);
+        console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
+        
+        // Store the update for when the popup closes
+        if (!window.pendingButtonUpdates) {
+            window.pendingButtonUpdates = [];
         }
-    });
+        window.pendingButtonUpdates.push({
+            buttonId: buttonId,
+            documentType: documentType,
+            groupId: groupId,
+            action: 'reset'
+        });
+        console.log(`📝 Stored pending button update for when popup closes`);
+    }
+    
+    // Clear localStorage for this button
+    const uploadStatus = JSON.parse(localStorage.getItem('uploadStatus') || '{}');
+    delete uploadStatus[buttonId];
+    localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
+    
+    // Force refresh the View Files popup to show updated file count
+    if (window.currentFilesClient && window.currentFilesDate) {
+        console.log(`🔄 Refreshing View Files popup to show updated file count`);
+        setTimeout(() => {
+            openFilesPopup(groupId, window.currentFilesClient, window.currentFilesDate);
+        }, 500);
+    }
+}
+
+// Refresh inspection data for a specific inspection (like page refresh but targeted)
+async function refreshInspectionData(groupId, clientName, inspectionDate) {
+    try {
+        console.log(`🔄 Refreshing inspection data for: ${clientName} on ${inspectionDate}`);
+        
+        // Clean the client name and date
+        const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+        const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        
+        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        
+        // Make API call to get fresh file data for this inspection
+        const response = await fetch('/inspections/files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                group_id: groupId,
+                client_name: cleanClientName,
+                inspection_date: cleanDate
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('❌ Failed to refresh inspection files:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        console.log(`🔄 Fresh inspection data received:`, data);
+        
+        if (data.success && data.files) {
+            const rfiFiles = data.files.rfi || [];
+            const invoiceFiles = data.files.invoice || [];
+            
+            console.log(`🔄 Found ${rfiFiles.length} RFI files and ${invoiceFiles.length} Invoice files`);
+            
+            // Update RFI button based on file count
+            await updateButtonForInspection(groupId, 'rfi', rfiFiles.length > 0, clientName);
+            
+            // Update Invoice button based on file count
+            await updateButtonForInspection(groupId, 'invoice', invoiceFiles.length > 0, clientName);
+            
+            console.log(`✅ Inspection data refreshed for ${clientName}`);
+        }
+    } catch (error) {
+        console.error('❌ Error refreshing inspection data:', error);
+    }
+}
+
+// Update a specific button for an inspection based on file existence
+async function updateButtonForInspection(groupId, buttonType, hasFiles, clientName) {
+    const buttonId = `${buttonType}-${groupId}`;
+    console.log(`🔄 Updating ${buttonType} button: ${buttonId}, hasFiles: ${hasFiles}`);
+    
+    // Try multiple methods to find the button with retries
+    let button = null;
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    while (!button && attempts < maxAttempts) {
+        attempts++;
+        console.log(`🔍 Attempt ${attempts} to find ${buttonType} button: ${buttonId}`);
+        
+        // Method 1: Direct ID search
+        button = document.getElementById(buttonId);
+        if (button) {
+            console.log(`✅ Found ${buttonType} button by direct ID on attempt ${attempts}`);
+            break;
+        }
+        
+        // Method 2: Search all buttons by ID
+        const allButtons = Array.from(document.querySelectorAll('button'));
+        button = allButtons.find(b => b.id === buttonId);
+        if (button) {
+            console.log(`✅ Found ${buttonType} button by searching all buttons on attempt ${attempts}`);
+            break;
+        }
+        
+        // Method 3: Search by group ID and button type
+        button = allButtons.find(b => 
+            b.id.includes(groupId) && 
+            (b.id.includes(buttonType) || b.innerHTML.toLowerCase().includes(buttonType))
+        );
+        if (button) {
+            console.log(`✅ Found ${buttonType} button by group ID pattern on attempt ${attempts}`);
+            break;
+        }
+        
+        // Method 4: Search for buttons showing "Developer" (if it's the RFI button)
+        if (buttonType === 'rfi') {
+            button = allButtons.find(b => 
+                b.innerHTML.toLowerCase().includes('developer') && 
+                b.id.includes(groupId)
+            );
+            if (button) {
+                console.log(`✅ Found ${buttonType} button by Developer text search on attempt ${attempts}`);
+                break;
+            }
+        }
+        
+        // Method 5: Search for any button with the group ID
+        button = allButtons.find(b => b.id.includes(groupId));
+        if (button) {
+            console.log(`✅ Found button with group ID on attempt ${attempts}: ${button.id}`);
+            // Check if this might be the right button type
+            if (button.id.includes(buttonType) || button.innerHTML.toLowerCase().includes(buttonType)) {
+                console.log(`✅ This appears to be the ${buttonType} button`);
+                break;
+            } else {
+                console.log(`⚠️ Found group button but not ${buttonType} type: ${button.id}`);
+                button = null; // Continue searching
+            }
+        }
+        
+        if (!button && attempts < maxAttempts) {
+            console.log(`⏳ Button not found on attempt ${attempts}, waiting 500ms before retry...`);
+            // Wait before next attempt
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+    
+    if (button) {
+        console.log(`✅ Found ${buttonType} button: ${button.id}`);
+        
+        if (hasFiles) {
+            // Files exist - button should show uploader's name (or stay as is if already showing name)
+            console.log(`🔍 Button current innerHTML: "${button.innerHTML}", expected: "${buttonType.toUpperCase()}"`);
+            if (button.innerHTML === buttonType.toUpperCase()) {
+                // Button is still showing "RFI" or "Invoice" - update to show uploader
+                button.disabled = true;
+                button.classList.add('uploaded');
+                button.style.background = '#d4edda';
+                button.style.color = '#155724';
+                button.style.border = '1px solid #c3e6cb';
+                button.style.cursor = 'not-allowed';
+                button.innerHTML = 'Developer'; // Or get actual uploader name
+                button.title = `${buttonType.toUpperCase()} uploaded by Developer`;
+                button.onclick = null;
+                console.log(`✅ Updated ${buttonType} button to show uploaded state`);
+            } else {
+                console.log(`ℹ️ ${buttonType} button already shows uploader name: "${button.innerHTML}"`);
+            }
+        } else {
+            // No files - reset button to uploadable state
+            button.disabled = false;
+            button.classList.remove('uploaded');
+            button.classList.add(`btn-${buttonType}`, 'btn-sm');
+            button.style.background = '#28a745';
+            button.style.color = 'white';
+            button.style.border = '1px solid #1e7e34';
+            button.style.cursor = 'pointer';
+            button.innerHTML = buttonType.toUpperCase();
+            button.title = `Upload ${buttonType.toUpperCase()}`;
+            
+            // Re-enable onclick functionality
+            if (buttonType === 'rfi') {
+                button.onclick = function() { uploadRFI(groupId); };
+            } else if (buttonType === 'invoice') {
+                button.onclick = function() { uploadInvoice(groupId); };
+            }
+            
+            console.log(`✅ Reset ${buttonType} button to uploadable state`);
+        }
+    } else {
+        console.log(`⚠️ ${buttonType} button not found: ${buttonId}`);
+        
+        // Enhanced debugging - show all available buttons
+        const allButtons = Array.from(document.querySelectorAll('button'));
+        console.log(`🔍 All available buttons:`, allButtons.map(b => ({
+            id: b.id,
+            text: b.innerHTML.trim(),
+            classes: b.className,
+            disabled: b.disabled,
+            parent: b.parentElement?.tagName,
+            parentId: b.parentElement?.id
+        })));
+        
+        // Show buttons in the shipments table specifically
+        const shipmentsTable = document.getElementById('shipmentsTable');
+        if (shipmentsTable) {
+            const tableButtons = Array.from(shipmentsTable.querySelectorAll('button'));
+            console.log(`🔍 Buttons in shipments table:`, tableButtons.map(b => ({
+                id: b.id,
+                text: b.innerHTML.trim(),
+                classes: b.className,
+                disabled: b.disabled
+            })));
+        } else {
+            console.log(`⚠️ Shipments table not found`);
+        }
+        
+        // Look for buttons with similar IDs
+        const similarButtons = allButtons.filter(b => 
+            b.id.includes(groupId) || 
+            b.id.includes(buttonType) ||
+            b.innerHTML.toLowerCase().includes(buttonType)
+        );
+        console.log(`🔍 Similar buttons found:`, similarButtons.map(b => ({
+            id: b.id,
+            text: b.innerHTML.trim(),
+            classes: b.className
+        })));
+        
+        // Look specifically for any RFI buttons
+        const rfiButtons = allButtons.filter(b => b.id.toLowerCase().includes('rfi'));
+        console.log(`🔍 All RFI buttons found:`, rfiButtons.map(b => ({
+            id: b.id,
+            text: b.innerHTML.trim(),
+            classes: b.className,
+            parent: b.parentElement?.tagName
+        })));
+    }
+}
+
+// Check specific inspection for RFI files and update button accordingly
+async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionDate) {
+    try {
+        console.log(`🔍 Checking RFI status for specific inspection: ${clientName} on ${inspectionDate}`);
+        
+        // Clean the client name and date
+        const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+        const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        
+        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        
+        // Make API call to check files for this specific inspection
+        const response = await fetch('/inspections/files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                group_id: groupId,
+                client_name: cleanClientName,
+                inspection_date: cleanDate
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('❌ Failed to check inspection files:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        console.log(`🔍 File check response for ${clientName}:`, data);
+        console.log(`🔍 Full API response:`, JSON.stringify(data, null, 2));
+        
+        if (data.success && data.files) {
+            const rfiFiles = data.files.rfi || [];
+            console.log(`🔍 Found ${rfiFiles.length} RFI files for ${clientName}`);
+            console.log(`🔍 RFI files:`, rfiFiles);
+            console.log(`🔍 All files object:`, data.files);
+            
+            // Find the RFI button for this specific inspection
+            const buttonId = `rfi-${groupId}`;
+            console.log(`🔍 Looking for RFI button with ID: ${buttonId}`);
+            const button = document.getElementById(buttonId);
+            
+            if (button) {
+                console.log(`✅ Found RFI button: ${buttonId}`);
+                console.log(`🔍 Current button state - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
+                
+                if (rfiFiles.length === 0) {
+                    // No RFI files - reset button to "RFI"
+                    console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                    button.disabled = false;
+                    button.classList.remove('uploaded');
+                    button.classList.add('btn-rfi', 'btn-sm');
+                    button.style.background = '#28a745';
+                    button.style.color = 'white';
+                    button.style.border = '1px solid #1e7e34';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'RFI';
+                    button.title = 'Upload RFI';
+                    
+                    // Re-enable onclick functionality
+                    button.onclick = function() { uploadRFI(groupId); };
+                    
+                    console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                    console.log(`🔍 Button after reset - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
+                } else {
+                    // RFI files exist - button should show uploader's name
+                    console.log(`ℹ️ RFI files exist - button should already show uploader's name for ${clientName}`);
+                }
+            } else {
+                console.log(`⚠️ RFI button not found for ${clientName}: ${buttonId}`);
+                console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes('rfi')));
+                console.log(`🔍 All buttons with 'rfi' in ID:`, Array.from(document.querySelectorAll('button[id*="rfi"]')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                
+                // Try to find button by searching in the main table
+                console.log(`🔍 Trying to find button in main table...`);
+                const mainTable = document.querySelector('table.table');
+                if (mainTable) {
+                    console.log(`🔍 Main table found, searching for button...`);
+                    const tableButton = mainTable.querySelector(`#${buttonId}`);
+                    if (tableButton) {
+                        console.log(`✅ Found RFI button in main table: ${buttonId}`);
+                        const button = tableButton;
+                        
+                        if (rfiFiles.length === 0) {
+                            console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                            button.disabled = false;
+                            button.classList.remove('uploaded');
+                            button.classList.add('btn-rfi', 'btn-sm');
+                            button.style.background = '#28a745';
+                            button.style.color = 'white';
+                            button.style.border = '1px solid #1e7e34';
+                            button.style.cursor = 'pointer';
+                            button.innerHTML = 'RFI';
+                            button.title = 'Upload RFI';
+                            button.onclick = function() { uploadRFI(groupId); };
+                            console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                        }
+                    } else {
+                        console.log(`⚠️ Button still not found in main table`);
+                        console.log(`🔍 All buttons in main table:`, Array.from(mainTable.querySelectorAll('button')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                    }
+                } else {
+                    console.log(`⚠️ Main table not found`);
+                }
+                
+                // Try to find button by searching for any button with the group ID
+                console.log(`🔍 Trying to find button by group ID pattern...`);
+                const groupButtons = Array.from(document.querySelectorAll('button')).filter(b => b.id.includes(groupId));
+                console.log(`🔍 Buttons containing group ID ${groupId}:`, groupButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                
+                // Check if any of these group buttons is the RFI button
+                const rfiGroupButton = groupButtons.find(b => b.id.includes('rfi'));
+                if (rfiGroupButton) {
+                    console.log(`✅ Found RFI button in group buttons:`, rfiGroupButton.id);
+                    const button = rfiGroupButton;
+                    
+                    if (rfiFiles.length === 0) {
+                        console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                        button.disabled = false;
+                        button.classList.remove('uploaded');
+                        button.classList.add('btn-rfi', 'btn-sm');
+                        button.style.background = '#28a745';
+                        button.style.color = 'white';
+                        button.style.border = '1px solid #1e7e34';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'RFI';
+                        button.title = 'Upload RFI';
+                        button.onclick = function() { uploadRFI(groupId); };
+                        console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                    }
+                }
+                
+                // Try to find button by searching for buttons with 'rfi' in the text
+                console.log(`🔍 Trying to find button by text content...`);
+                const rfiButtons = Array.from(document.querySelectorAll('button')).filter(b => 
+                    b.innerHTML.toLowerCase().includes('rfi') || 
+                    b.innerHTML.toLowerCase().includes('developer') ||
+                    b.innerHTML.toLowerCase().includes('upload')
+                );
+                console.log(`🔍 Buttons with RFI-related text:`, rfiButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                
+                // Check if any of these text-based buttons is the RFI button
+                const rfiTextButton = rfiButtons.find(b => b.id.includes('rfi') || b.innerHTML.toLowerCase().includes('developer'));
+                if (rfiTextButton) {
+                    console.log(`✅ Found RFI button by text search:`, rfiTextButton.id);
+                    const button = rfiTextButton;
+                    
+                    if (rfiFiles.length === 0) {
+                        console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                        button.disabled = false;
+                        button.classList.remove('uploaded');
+                        button.classList.add('btn-rfi', 'btn-sm');
+                        button.style.background = '#28a745';
+                        button.style.color = 'white';
+                        button.style.border = '1px solid #1e7e34';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'RFI';
+                        button.title = 'Upload RFI';
+                        button.onclick = function() { uploadRFI(groupId); };
+                        console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                    }
+                }
+                
+                // Last resort: Try to find any button that might be the RFI button
+                console.log(`🔍 Last resort: Searching for any button that might be RFI...`);
+                const allButtons = Array.from(document.querySelectorAll('button'));
+                console.log(`🔍 Total buttons found: ${allButtons.length}`);
+                
+                // Look for buttons that might be RFI buttons (containing group ID or showing "Developer")
+                const potentialRfiButtons = allButtons.filter(b => 
+                    b.id.includes(groupId) || 
+                    b.innerHTML.toLowerCase().includes('developer') ||
+                    b.innerHTML.toLowerCase().includes('rfi') ||
+                    b.innerHTML.toLowerCase().includes('upload')
+                );
+                
+                console.log(`🔍 Potential RFI buttons found: ${potentialRfiButtons.length}`);
+                potentialRfiButtons.forEach((btn, index) => {
+                    console.log(`🔍 Button ${index + 1}:`, {
+                        id: btn.id,
+                        text: btn.innerHTML,
+                        disabled: btn.disabled,
+                        classes: btn.className,
+                        parent: btn.parentElement?.tagName
+                    });
+                });
+                
+                // Try to find the RFI button by looking for buttons with "Developer" text
+                const developerButton = potentialRfiButtons.find(b => 
+                    b.innerHTML.toLowerCase().includes('developer') && 
+                    (b.id.includes(groupId) || b.id.includes('rfi'))
+                );
+                
+                if (developerButton) {
+                    console.log(`✅ Found Developer button that might be RFI:`, developerButton.id);
+                    const button = developerButton;
+                    
+                    if (rfiFiles.length === 0) {
+                        console.log(`🔄 No RFI files found - resetting Developer button to "RFI" for ${clientName}`);
+                        button.disabled = false;
+                        button.classList.remove('uploaded');
+                        button.classList.add('btn-rfi', 'btn-sm');
+                        button.style.background = '#28a745';
+                        button.style.color = 'white';
+                        button.style.border = '1px solid #1e7e34';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'RFI';
+                        button.title = 'Upload RFI';
+                        button.onclick = function() { uploadRFI(groupId); };
+                        console.log(`✅ Reset Developer button to "RFI" for ${clientName}`);
+                    }
+                }
+            }
+        } else {
+            console.log(`❌ API call failed or no files data:`, data);
+        }
+    } catch (error) {
+        console.error('❌ Error checking specific inspection RFI status:', error);
+    }
+}
+
+// Check specific inspection for Invoice files and update button accordingly
+async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspectionDate) {
+    try {
+        console.log(`🔍 Checking Invoice status for specific inspection: ${clientName} on ${inspectionDate}`);
+        
+        // Clean the client name and date
+        const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+        const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        
+        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        
+        // Make API call to check files for this specific inspection
+        const response = await fetch('/inspections/files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                group_id: groupId,
+                client_name: cleanClientName,
+                inspection_date: cleanDate
+            })
+        });
+        
+        if (!response.ok) {
+            console.error('❌ Failed to check inspection files:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        console.log(`🔍 File check response for ${clientName}:`, data);
+        console.log(`🔍 Full API response:`, JSON.stringify(data, null, 2));
+        
+        if (data.success && data.files) {
+            const invoiceFiles = data.files.invoice || [];
+            console.log(`🔍 Found ${invoiceFiles.length} Invoice files for ${clientName}`);
+            console.log(`🔍 Invoice files:`, invoiceFiles);
+            console.log(`🔍 All files object:`, data.files);
+            
+            // Find the Invoice button for this specific inspection
+            const buttonId = `invoice-${groupId}`;
+            const button = document.getElementById(buttonId);
+            
+            if (button) {
+                if (invoiceFiles.length === 0) {
+                    // No Invoice files - reset button to "Invoice"
+                    console.log(`🔄 No Invoice files found - resetting button to "Invoice" for ${clientName}`);
+                    button.disabled = false;
+                    button.classList.remove('uploaded');
+                    button.classList.add('btn-invoice', 'btn-sm');
+                    button.style.background = '#28a745';
+                    button.style.color = 'white';
+                    button.style.border = '1px solid #1e7e34';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'Invoice';
+                    button.title = 'Upload Invoice';
+                    
+                    // Re-enable onclick functionality
+                    button.onclick = function() { uploadInvoice(groupId); };
+                    
+                    console.log(`✅ Reset Invoice button to "Invoice" for ${clientName}`);
+                } else {
+                    // Invoice files exist - button should show uploader's name
+                    console.log(`ℹ️ Invoice files exist - button should already show uploader's name for ${clientName}`);
+                }
+            } else {
+                console.log(`⚠️ Invoice button not found for ${clientName}: ${buttonId}`);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error checking specific inspection Invoice status:', error);
+    }
+}
+
+// Process pending button updates when popup closes
+function processPendingButtonUpdates() {
+    if (window.pendingButtonUpdates && window.pendingButtonUpdates.length > 0) {
+        console.log(`🔄 Processing ${window.pendingButtonUpdates.length} pending button updates`);
+        
+        window.pendingButtonUpdates.forEach(update => {
+            const button = document.getElementById(update.buttonId);
+            if (button) {
+                console.log(`✅ Processing pending update for: ${update.buttonId}`);
+                
+                if (update.action === 'reset') {
+                    // Reset button to uploadable state
+                    button.disabled = false;
+                    button.classList.remove('uploaded');
+                    button.classList.add(`btn-${update.documentType}`, 'btn-sm');
+                    button.style.background = '#28a745';
+                    button.style.color = 'white';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = update.documentType.toUpperCase();
+                    button.title = `Upload ${update.documentType.toUpperCase()}`;
+                    
+                    // Re-enable onclick functionality
+                    if (update.documentType === 'rfi') {
+                        button.onclick = function() { uploadRFI(update.groupId); };
+                    } else if (update.documentType === 'invoice') {
+                        button.onclick = function() { uploadInvoice(update.groupId); };
+                    }
+                    
+                    console.log(`✅ Processed pending reset update for: ${update.buttonId}`);
+                } else if (update.action === 'upload') {
+                    // Update button to show uploaded state with username
+                    button.disabled = true;
+                    button.classList.add('uploaded');
+                    button.style.background = '#d4edda';
+                    button.style.color = '#155724';
+                    button.style.border = '1px solid #c3e6cb';
+                    button.style.cursor = 'not-allowed';
+                    button.innerHTML = update.username;
+                    
+                    const currentDate = new Date().toLocaleDateString('en-US', { 
+                        month: 'numeric', 
+                        day: 'numeric', 
+                        year: '2-digit' 
+                    });
+                    button.title = `${update.documentType.toUpperCase()} uploaded by ${update.username} on ${currentDate}`;
+                    
+                    // Remove the onclick handler since button is now disabled
+                    button.onclick = null;
+                    
+                    console.log(`✅ Processed pending upload update for: ${update.buttonId} with username: ${update.username}`);
+                }
+            } else {
+                console.log(`⚠️ Button still not found for pending update: ${update.buttonId}`);
+            }
+        });
+        
+        // Clear pending updates
+        window.pendingButtonUpdates = [];
+        console.log(`✅ Cleared all pending button updates`);
+    }
 }
 
 // updateButtonAfterUpload function removed - we now use markAsUploaded to show username instead
@@ -1797,3 +3059,42 @@ function updateNeedsRetest(dropdown) {
 
 console.log('All functions ready: uploadRFI, uploadInvoice, openFilesPopup, expandAll, collapseAll, toggleGroup, updateProductName, updateProductClass, updateLab, loadInspectionFiles, displayFiles, downloadFile, deleteFile, viewFile, downloadAllFiles, updateViewFilesButtonColor, updateAllViewFilesButtonColors, validateUploadButtonStates, updateButtonAfterDeletion, updateNeedsRetest, updateButtonStates');
 console.log('🧪 Debug: Type testFileDisplay() in console to test file display with sample data');
+
+// Function validation - ensure all required functions are available
+function validateRequiredFunctions() {
+    try {
+        const requiredFunctions = [
+            'uploadRFI', 'uploadInvoice', 'openFilesPopup', 'expandAll', 'collapseAll', 
+            'toggleGroup', 'updateProductName', 'updateProductClass', 'updateLab', 
+            'loadInspectionFiles', 'displayFiles', 'downloadFile', 'deleteFile', 
+            'viewFile', 'downloadAllFiles', 'updateViewFilesButtonColor', 
+            'updateAllViewFilesButtonColors', 'validateUploadButtonStates', 
+            'updateButtonAfterDeletion', 'updateNeedsRetest', 'updateButtonStates'
+        ];
+        
+        const missingFunctions = [];
+        requiredFunctions.forEach(funcName => {
+            if (typeof window[funcName] !== 'function') {
+                missingFunctions.push(funcName);
+            }
+        });
+        
+        if (missingFunctions.length > 0) {
+            console.error('Missing required functions:', missingFunctions);
+            return false;
+        }
+        
+        console.log('✅ All functions validated successfully');
+        return true;
+    } catch (error) {
+        console.error('Error validating functions:', error);
+        return false;
+    }
+}
+
+// Validate functions when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', validateRequiredFunctions);
+} else {
+    validateRequiredFunctions();
+}

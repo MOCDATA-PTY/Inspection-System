@@ -76,129 +76,52 @@ function uploadRFI(groupId) {
                             const buttonId = 'rfi-' + groupId;
                             console.log('🔍 Updating RFI button to show username for:', buttonId);
                             
-                            // Get the username from the server response
-                            const username = data.message ? data.message.match(/by (\w+) for group/)?.[1] : 'User';
-                            console.log('🔍 Extracted username from server response:', username);
-                            
-    // Find and update the button - try multiple methods
-    let button = null;
-    
-    // Method 1: Direct ID lookup
-    button = document.getElementById(buttonId);
-                            if (button) {
-        console.log('✅ Found RFI button by direct ID');
-    } else {
-        // Method 2: Search all buttons with pattern
-        console.log('🔍 RFI button not found by ID, searching by pattern...');
-        const allButtons = document.querySelectorAll(`button[id^="rfi-"]`);
-        console.log(`🔍 Found ${allButtons.length} RFI buttons`);
-        
-        for (let btn of allButtons) {
-            if (btn.id === buttonId) {
-                button = btn;
-                console.log('✅ Found RFI button by pattern search');
-                break;
-            }
-        }
-    }
-    
-    // Method 3: Search in all containers (including hidden elements)
-    if (!button) {
-        console.log('🔍 RFI button still not found, searching in all containers...');
-        const containers = document.querySelectorAll('table, .modal, .popup, [id*="detail"], body');
-        for (let container of containers) {
-            const foundButton = container.querySelector(`#${buttonId}`);
-            if (foundButton) {
-                button = foundButton;
-                console.log('✅ Found RFI button in container');
-                break;
-            }
-        }
-    }
-    
-    // Method 4: Force search by making elements visible temporarily
-    if (!button) {
-        console.log('🔍 RFI button still not found, trying force search...');
-        
-        // Try to temporarily make the main table visible to find the button
-        const mainTable = document.querySelector('table.table');
-        let wasHidden = false;
-        if (mainTable && mainTable.style.display === 'none') {
-            console.log('🔍 Main table is hidden, temporarily showing it...');
-            mainTable.style.display = 'table';
-            wasHidden = true;
-        }
-        
-        // Now search for the button
-        const allElements = document.querySelectorAll('*');
-        for (let element of allElements) {
-            if (element.id === buttonId && element.tagName === 'BUTTON') {
-                button = element;
-                console.log('✅ Found RFI button by force search');
-                break;
-            }
-        }
-        
-        // Restore table visibility if it was hidden
-        if (wasHidden) {
-            console.log('🔍 Restoring main table visibility...');
-            mainTable.style.display = 'none';
-        }
-    }
-    
-    if (button) {
-        console.log('✅ Found RFI button, updating to show username');
+                                // Find and update the button - simplified approach
+                                let button = document.getElementById(buttonId);
                                 
-                                // Clear the file-deleted flag since a new file has been uploaded
-                                button.removeAttribute('data-file-deleted');
-                                
-                                // Update button to show uploaded state with user's name
-                                button.disabled = true;
-        button.classList.add('uploaded');
-                                button.style.background = '#d4edda';
-                                button.style.color = '#155724';
-                                button.style.border = '1px solid #c3e6cb';
-                                button.style.cursor = 'not-allowed';
-                                button.innerHTML = username;
-                                
-                                const currentDate = new Date().toLocaleDateString('en-US', { 
-                                    month: 'numeric', 
-                                    day: 'numeric', 
-                                    year: '2-digit' 
-                                });
-                                button.title = `RFI uploaded by ${username} on ${currentDate}`;
-                                
-                                // Remove the onclick handler since button is now disabled
-                                button.onclick = null;
-                                
-                                console.log('✅ Updated RFI button to show username:', username);
-                            } else {
-        console.log('⚠️ RFI button still not found after all search methods');
-        console.log('🔍 Available RFI buttons:', Array.from(document.querySelectorAll('button[id^="rfi-"]')).map(b => b.id));
-        
-        // Store the update for when the popup closes as fallback
-        if (!window.pendingButtonUpdates) {
-            window.pendingButtonUpdates = [];
-        }
-        window.pendingButtonUpdates.push({
-            buttonId: buttonId,
-            documentType: 'rfi',
-            groupId: groupId,
-            action: 'upload',
-            username: username
-        });
-        console.log('📝 Stored pending RFI button update for when popup closes as fallback');
-                            }
-                            
-                            // Update button colors after upload with longer delay to ensure files are detected
-                            setTimeout(() => {
-                                console.log('🎨 Updating button colors after RFI upload...');
-                                updateAllViewFilesButtonColors();
-                            }, 5000); // Increased to 5 seconds to allow file detection to complete
-                            
-                            // Don't auto-refresh to avoid resetting button state
-                            // The button is already correctly updated to show "Developer"
-                            console.log('🔄 Skipping auto-refresh to prevent button reset loop');
+                                if (button) {
+                                    console.log('✅ Found RFI button, updating to green success state');
+                                    
+                                    // Update button to green success state
+                                    button.disabled = true;
+                                    button.className = 'btn btn-sm btn-success';
+                                    button.style.backgroundColor = '#28a745';
+                                    button.style.borderColor = '#28a745';
+                                    button.style.cursor = 'not-allowed';
+                                    button.innerHTML = 'RFI ✓';
+                                    button.title = 'RFI file exists';
+                                    
+                                    // Remove the onclick handler since button is now disabled
+                                    button.onclick = null;
+                                    
+                                    console.log('✅ Updated RFI button to green success state');
+                                    
+                                    // Check if View Files popup is open - if so, auto-refresh it
+                                    const modal = document.getElementById('filesModal');
+                                    if (modal && modal.style.display === 'block') {
+                                        console.log('🔄 View Files popup is open - auto-refreshing after RFI upload...');
+                                        
+                                        // Wait 2 seconds for file to be saved, then refresh the popup
+                                        setTimeout(() => {
+                                            console.log('🔄 Auto-refreshing View Files popup with new RFI file...');
+                                            
+                                            // Get the current popup data from the groupId
+                                            const dateStr = groupId.match(/\d{8}$/);
+                                            if (dateStr) {
+                                                const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                                const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+                                                
+                                                console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                                loadInspectionFiles(groupId, clientName, formattedDate);
+                                            }
+                                        }, 2000);
+                                    }
+                                } else {
+                                    console.log('⚠️ RFI button not found, refreshing page to show updated state');
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1000);
+                                }
                     } else {
                         alert('Upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Upload failed:', data);
@@ -271,13 +194,9 @@ function uploadInvoice(groupId) {
                         alert(data.message || 'Invoice uploaded successfully!');
                         console.log('Invoice upload successful:', data);
                         
-                        // Update button directly to show username
+                        // Update button directly to green success state
                         const buttonId = 'invoice-' + groupId;
-                        console.log('🔍 Updating Invoice button to show username for:', buttonId);
-                        
-                        // Get the username from the server response
-                        const username = data.message ? data.message.match(/by (\w+) for group/)?.[1] : 'User';
-                        console.log('🔍 Extracted username from server response:', username);
+                        console.log('🔍 Updating Invoice button to green success state for:', buttonId);
                         
                         // Find and update the button
                         let button = document.getElementById(buttonId);
@@ -293,44 +212,48 @@ function uploadInvoice(groupId) {
                         }
                         
                         if (button) {
-                            console.log('✅ Found Invoice button, updating to show username');
+                            console.log('✅ Found Invoice button, updating to green success state');
                             
-                            // Clear the file-deleted flag since a new file has been uploaded
-                            button.removeAttribute('data-file-deleted');
-                            
-                            // Update button to show uploaded state with user's name
+                            // Update button to green success state
                             button.disabled = true;
-                            button.classList.add('uploaded');
-                            button.style.background = '#d4edda';
-                            button.style.color = '#155724';
-                            button.style.border = '1px solid #c3e6cb';
+                            button.className = 'btn btn-sm btn-success';
+                            button.style.backgroundColor = '#28a745';
+                            button.style.borderColor = '#28a745';
                             button.style.cursor = 'not-allowed';
-                            button.innerHTML = username;
-                            
-                            const currentDate = new Date().toLocaleDateString('en-US', { 
-                                month: 'numeric', 
-                                day: 'numeric', 
-                                year: '2-digit' 
-                            });
-                            button.title = `Invoice uploaded by ${username} on ${currentDate}`;
+                            button.innerHTML = 'Invoice ✓';
+                            button.title = 'Invoice file exists';
                             
                             // Remove the onclick handler since button is now disabled
                             button.onclick = null;
                             
-                            console.log('✅ Updated Invoice button to show username:', username);
+                            console.log('✅ Updated Invoice button to green success state');
+                            
+                            // Check if View Files popup is open - if so, auto-refresh it
+                            const modal = document.getElementById('filesModal');
+                            if (modal && modal.style.display === 'block') {
+                                console.log('🔄 View Files popup is open - auto-refreshing after Invoice upload...');
+                                
+                                // Wait 2 seconds for file to be saved, then refresh the popup
+                                setTimeout(() => {
+                                    console.log('🔄 Auto-refreshing View Files popup with new Invoice file...');
+                                    
+                                    // Get the current popup data from the groupId
+                                    const dateStr = groupId.match(/\d{8}$/);
+                                    if (dateStr) {
+                                        const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                        const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+                                        
+                                        console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                        loadInspectionFiles(groupId, clientName, formattedDate);
+                                    }
+                                }, 2000);
+                            }
                         } else {
-                            console.log('⚠️ Invoice button not found, will update on page refresh');
+                            console.log('⚠️ Invoice button not found, refreshing page to show updated state');
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
                         }
-                        
-                        // Update button colors after upload with delay to ensure files are detected
-                        setTimeout(() => {
-                            console.log('🎨 Updating button colors after Invoice upload...');
-                            updateAllViewFilesButtonColors();
-                        }, 5000); // Increased to 5 seconds to allow file detection to complete
-                        
-                        // Don't auto-refresh to avoid resetting button state
-                        // The button is already correctly updated to show "Developer"
-                        console.log('🔄 Skipping auto-refresh to prevent button reset loop');
                     } else {
                         alert('Invoice upload failed: ' + (data.error || 'Unknown error'));
                         console.error('Invoice upload failed:', data);

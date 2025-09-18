@@ -2671,13 +2671,13 @@
                                 <!-- RFI Column -->
                                 <td class="col-rfi">
                                     {% if request.user.role == 'inspector' %}
-                                        {% if shipment.rfi_uploaded_by %}
-                                        <button class="btn btn-sm btn-rfi uploaded" id="rfi-{{ fallback_group_id }}" disabled 
-                                                title="RFI uploaded by {{ shipment.rfi_uploaded_by }} on {{ shipment.rfi_uploaded_date|date:'m/d/y' }}">
-                                            {{ shipment.rfi_uploaded_by }}
+                                        {% if shipment.rfi_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled 
+                                                title="RFI file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            RFI ✓
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-rfi" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
                                                 title="Upload RFI" 
                                                 data-client-name="{{ shipment.client_name }}" 
                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
@@ -2685,13 +2685,13 @@
                                         </button>
                                         {% endif %}
                                     {% elif request.user.role != 'scientist' %}
-                                        {% if shipment.rfi_uploaded_by %}
-                                        <button class="btn btn-sm btn-rfi uploaded" id="rfi-{{ fallback_group_id }}" disabled 
-                                                title="RFI uploaded by {{ shipment.rfi_uploaded_by }} on {{ shipment.rfi_uploaded_date|date:'m/d/y' }}">
-                                            {{ shipment.rfi_uploaded_by }}
+                                        {% if shipment.rfi_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled 
+                                                title="RFI file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            RFI ✓
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-rfi" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
                                                 title="Upload RFI">
                                             RFI
                                         </button>
@@ -2704,13 +2704,13 @@
                                 <!-- Invoice Column -->
                                 <td class="col-invoice">
                                     {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-                                        {% if shipment.invoice_uploaded_by %}
-                                        <button class="btn btn-sm btn-invoice uploaded" id="invoice-{{ fallback_group_id }}" disabled 
-                                                title="Invoice uploaded by {{ shipment.invoice_uploaded_by }} on {{ shipment.invoice_uploaded_date|date:'m/d/y' }}">
-                                            {{ shipment.invoice_uploaded_by }}
+                                        {% if shipment.invoice_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="invoice-{{ fallback_group_id }}" disabled 
+                                                title="Invoice file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            Invoice ✓
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-invoice" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-secondary" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
                                                 title="Upload Invoice"
                                                 data-client-name="{{ shipment.client_name }}" 
                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
@@ -4175,6 +4175,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadUploadStatus();
             
+            // RFI status is now handled by file-based checking in the backend
+            // No need to call loadRFIStatus since template uses shipment.rfi_uploaded
+            
             // Load sent status immediately and then with delays
             console.log('🚀 [SENT STATUS] Calling loadSentStatus immediately');
             console.log('🚀 [SENT STATUS] ===========================================');
@@ -4374,6 +4377,16 @@
         async function loadInspectionFiles(groupId, clientName, inspectionDate) {
             try {
                 console.log('🔄 File fetch: Starting file fetch request...');
+                console.log('🔍 DEBUG: Group ID:', groupId);
+                console.log('🔍 DEBUG: Client Name:', clientName);
+                console.log('🔍 DEBUG: Inspection Date:', inspectionDate);
+                
+                const requestData = {
+                    group_id: groupId,
+                    client_name: clientName,
+                    inspection_date: inspectionDate
+                };
+                console.log('🔍 DEBUG: Request data being sent:', JSON.stringify(requestData, null, 2));
                 
                 const response = await fetch('/inspections/files/', {
                     method: 'POST',
@@ -4381,15 +4394,15 @@
                         'Content-Type': 'application/json',
                         'X-CSRFToken': getCSRFToken()
                     },
-                    body: JSON.stringify({
-                        group_id: groupId,
-                        client_name: clientName,
-                        inspection_date: inspectionDate
-                    })
+                    body: JSON.stringify(requestData)
                 });
+                
+                console.log('🔍 DEBUG: Response status:', response.status);
+                console.log('🔍 DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
                 
                 const result = await response.json();
                 console.log('🔄 File fetch: File fetch completed:', result.success);
+                console.log('🔍 DEBUG: Full server response:', JSON.stringify(result, null, 2));
                 
                 const filesLoading = document.getElementById('filesLoading');
                 const filesContent = document.getElementById('filesContent');
@@ -4399,9 +4412,48 @@
                 filesContent.style.display = 'block';
                 
                 if (result.success) {
-                    displayFiles(result.files, result.message);
+                    console.log('🔄 File fetch: Success - processing files...');
+                    console.log('🔍 DEBUG: Files object type:', typeof result.files);
+                    console.log('🔍 DEBUG: Files object:', result.files);
+                    console.log('🔍 DEBUG: Files object keys:', Object.keys(result.files || {}));
+                    console.log('🔍 DEBUG: Files object values:', Object.values(result.files || {}));
+                    console.log('🔍 DEBUG: Files object length:', result.files ? Object.keys(result.files).length : 'N/A');
+                    console.log('🔍 DEBUG: Message:', result.message);
+                    
+                    // Check if files exist
+                    const hasFiles = result.files && Object.keys(result.files).length > 0;
+                    console.log('🔍 DEBUG: Has files check result:', hasFiles);
+                    console.log('🔍 DEBUG: Files check breakdown:');
+                    console.log('  - result.files exists:', !!result.files);
+                    console.log('  - result.files is object:', typeof result.files === 'object');
+                    console.log('  - Object.keys(result.files).length:', result.files ? Object.keys(result.files).length : 'N/A');
+                    console.log('  - Object.keys(result.files).length > 0:', result.files ? Object.keys(result.files).length > 0 : 'N/A');
+                    
+                    if (hasFiles) {
+                        console.log('📁 Files found - displaying file list');
+                        console.log('🔍 DEBUG: About to call displayFiles with:', {
+                            files: result.files,
+                            message: result.message
+                        });
+                        displayFiles(result.files, result.message);
+                    } else {
+                        console.log('📁 No files found - showing empty message');
+                        console.log('🔍 DEBUG: Files object details for empty case:', {
+                            files: result.files,
+                            filesType: typeof result.files,
+                            filesKeys: result.files ? Object.keys(result.files) : 'N/A',
+                            filesLength: result.files ? Object.keys(result.files).length : 'N/A'
+                        });
+                        filesList.innerHTML = '<div class="no-files-message">No files found for this inspection.</div>';
+                    }
                 } else {
-                    filesList.innerHTML = '<div class="empty-category">Error loading files: ' + result.error + '</div>';
+                    console.error('❌ File fetch failed:', result.error);
+                    console.log('🔍 DEBUG: Error details:', {
+                        success: result.success,
+                        error: result.error,
+                        fullResult: result
+                    });
+                    filesList.innerHTML = '<div class="error-message">Error loading files: ' + (result.error || 'Unknown error') + '</div>';
                 }
                 
             } catch (error) {
@@ -4921,13 +4973,41 @@
         function displayFiles(files, message = null) {
             const filesList = document.getElementById('filesList');
             
-            // Debug logging
+            // EXTENSIVE DEBUG LOGGING
             console.log('🔍 displayFiles called with files:', files);
-            console.log('🔍 files type:', typeof files);
-            console.log('🔍 files keys:', Object.keys(files || {}));
+            console.log('🔍 DEBUG: files type:', typeof files);
+            console.log('🔍 DEBUG: files keys:', Object.keys(files || {}));
+            console.log('🔍 DEBUG: files values:', Object.values(files || {}));
+            console.log('🔍 DEBUG: message:', message);
+            console.log('🔍 DEBUG: filesList element:', filesList);
+            
+            // Detailed analysis of files object
+            if (files) {
+                console.log('🔍 DEBUG: Files object analysis:');
+                console.log('  - Is array:', Array.isArray(files));
+                console.log('  - Is object:', typeof files === 'object');
+                console.log('  - Has length property:', 'length' in files);
+                console.log('  - Length value:', files.length);
+                console.log('  - Object.keys length:', Object.keys(files).length);
+                console.log('  - Object.values length:', Object.values(files).length);
+                
+                // Check each category
+                Object.keys(files).forEach(category => {
+                    const fileList = files[category];
+                    console.log(`🔍 DEBUG: Category "${category}":`, {
+                        type: typeof fileList,
+                        isArray: Array.isArray(fileList),
+                        length: fileList ? fileList.length : 'N/A',
+                        content: fileList
+                    });
+                });
+            } else {
+                console.log('🔍 DEBUG: Files is null/undefined');
+            }
             
             // Show success message if provided
             if (message) {
+                console.log('🔍 DEBUG: Adding success message:', message);
                 filesList.innerHTML = `<div class="success-message" style="background: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border: 1px solid #c3e6cb;">
                     <i class="fas fa-check-circle"></i> ${message}
                 </div>`;
@@ -4935,8 +5015,14 @@
             
             // Check if there are actually any files (not just empty arrays)
             const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
+            console.log('🔍 DEBUG: hasFiles check result:', hasFiles);
+            console.log('🔍 DEBUG: hasFiles breakdown:');
+            console.log('  - files exists:', !!files);
+            console.log('  - Object.values(files):', files ? Object.values(files) : 'N/A');
+            console.log('  - some() result:', files ? Object.values(files).some(fileList => fileList && fileList.length > 0) : 'N/A');
             
             if (!hasFiles) {
+                console.log('🔍 DEBUG: No files found - showing empty message');
                 filesList.innerHTML += '<div class="empty-category">No files found for this inspection</div>';
                 return;
             }
@@ -5255,6 +5341,9 @@
                 });
             }, 1000); // Small delay to let page fully load
         }
+        
+        // RFI status is now handled by file-based checking in the backend
+        // No need for separate loadRFIStatus function since template uses shipment.rfi_uploaded
         
         // Load sent status from database on page load
         function loadSentStatus() {
