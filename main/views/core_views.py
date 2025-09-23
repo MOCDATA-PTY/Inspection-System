@@ -31,6 +31,19 @@ def update_product_class(request):
             inspection = inspections.first()
             if not inspection:
                 return JsonResponse({'success': False, 'error': f'Inspection {inspection_id} not found'})
+            # Enforce rule: if commodity is egg or poultry, product_class must be unset and unselectable
+            try:
+                commodity_value = (inspection.commodity or '').strip().lower()
+            except Exception:
+                commodity_value = ''
+            is_egg_or_poultry = commodity_value in ['egg', 'eggs', 'poultry', 'chicken']
+            if is_egg_or_poultry:
+                # Force clear and signal back that class is not applicable
+                if inspection.product_class:
+                    inspection.product_class = None
+                inspection.save(update_fields=['product_class'])
+                return JsonResponse({'success': True, 'ignored': True, 'message': 'Product class not applicable for egg/poultry commodities'})
+
             inspection.product_class = value.strip() or None
             inspection.save()
             return JsonResponse({'success': True})
@@ -38,6 +51,7 @@ def update_product_class(request):
             return JsonResponse({'success': False, 'error': str(e)})
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate, login, logout
@@ -48,6 +62,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta, date, datetime
+import time
 from decimal import Decimal
 import calendar
 import json
@@ -591,7 +606,7 @@ def check_compliance_documents_status(inspections, client_name, date_of_inspecti
     try:
         # First try to check OneDrive (since files are now uploaded there)
         onedrive_status = check_compliance_documents_status_onedrive(inspections, client_name, date_of_inspection)
-        if onedrive_status:
+        if onedrive_status and onedrive_status.get('has_any_compliance', False):
             # Cache the result for 10 minutes
             cache.set(cache_key, onedrive_status, 600)
             return onedrive_status
@@ -775,8 +790,10 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
                     print(f"   ❌ {commodity}: Folder not found")
             
             # Return results since we found the folder
+            all_commodities_have_compliance = all(commodity_status.values()) if commodity_status else False
             return {
                 'has_any_compliance': has_any_compliance,
+                'all_commodities_have_compliance': all_commodities_have_compliance,
                 'commodity_status': commodity_status,
                 'client_folder_found': True
             }
@@ -902,7 +919,7 @@ def shipment_list(request):
         'commodity', 'remote_id', 'is_sample_taken', 'needs_retest', 
         'product_name', 'product_class', 'fat', 'protein', 'calcium', 
         'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'is_sent', 'sent_date', 'sent_by',
-        'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date',
+        'is_direction_present_for_this_inspection', 'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date',
         'rfi_uploaded_by__username', 'rfi_uploaded_by__first_name', 'rfi_uploaded_by__last_name',
         'invoice_uploaded_by__username', 'invoice_uploaded_by__first_name', 'invoice_uploaded_by__last_name',
         'sent_by__username', 'sent_by__first_name', 'sent_by__last_name'
@@ -1115,12 +1132,13 @@ def shipment_list(request):
     
     if not client_data:
         try:
-            from ..models import Client as _Client
+            from ..models import Client as _Client, ClientEmail
             _client_map = {}
             _client_id_map = {}
+            _client_email_map = {}
             
-            # Simplified client loading - only get essential data
-            for _c in _Client.objects.only('client_id', 'name', 'internal_account_code'):
+            # Load client data including emails
+            for _c in _Client.objects.select_related().prefetch_related('additional_emails'):
                 key_id = _norm(_c.client_id)
                 key_name = _norm(_c.name)
                 
@@ -1128,6 +1146,25 @@ def shipment_list(request):
                     if _c.internal_account_code:
                         _client_map[key_id] = _c.internal_account_code
                     _client_id_map[key_id] = _c.client_id
+                    
+                    # Collect all emails for this client
+                    emails = []
+                    if _c.email:
+                        emails.append({'email': _c.email, 'type': 'primary', 'removable': False})
+                    if _c.manual_email:
+                        emails.append({'email': _c.manual_email, 'type': 'manual', 'removable': True})
+                    
+                    # Add additional emails
+                    for additional_email in _c.additional_emails.all():
+                        emails.append({
+                            'email': additional_email.email, 
+                            'type': 'additional', 
+                            'removable': True,
+                            'label': additional_email.label
+                        })
+                    
+                    if emails:
+                        _client_email_map[key_id] = emails
                 
                 # Also map by name as fallback
                 if key_name and key_name != key_id:
@@ -1135,11 +1172,13 @@ def shipment_list(request):
                         _client_map[key_name] = _c.internal_account_code
                     if key_name not in _client_id_map:
                         _client_id_map[key_name] = _c.client_id
+                    if key_name not in _client_email_map and emails:
+                        _client_email_map[key_name] = emails
             
             client_data = {
                 'client_map': _client_map,
                 'client_id_map': _client_id_map,
-                'client_email_map': {}  # Simplified - no email processing for now
+                'client_email_map': _client_email_map
             }
             # Cache for 30 minutes (longer cache for better performance)
             cache.set(client_cache_key, client_data, 1800)
@@ -1173,6 +1212,38 @@ def shipment_list(request):
         except Exception:
             pass
         return None
+
+    # Helper to fetch client emails
+    def _get_client_emails(raw_name):
+        try:
+            # Prefer fast map by normalized key
+            emails = _client_email_map.get(_norm(raw_name))
+            if emails:
+                return emails
+            # Fallback: direct DB lookup
+            client = _Client.objects.filter(client_id__iexact=raw_name).prefetch_related('additional_emails').first()
+            if not client:
+                client = _Client.objects.filter(name__iexact=raw_name).prefetch_related('additional_emails').first()
+            
+            if client:
+                emails = []
+                if client.email:
+                    emails.append({'email': client.email, 'type': 'primary', 'removable': False})
+                if client.manual_email:
+                    emails.append({'email': client.manual_email, 'type': 'manual', 'removable': True})
+                
+                # Add additional emails
+                for additional_email in client.additional_emails.all():
+                    emails.append({
+                        'email': additional_email.email, 
+                        'type': 'additional', 
+                        'removable': True,
+                        'label': additional_email.label
+                    })
+                return emails
+        except Exception:
+            pass
+        return []
 
     # Helper: normalize names for matching (case-insensitive, collapse spaces, remove punctuation)
     def _norm(text):
@@ -1289,6 +1360,7 @@ def shipment_list(request):
         
         print(f"🔍 [FILE CHECK] Final result - RFI: {rfi_uploader is not None}, Invoice: {invoice_uploader is not None}")
         
+        
         if sample_inspection:
             group_km_traveled = sample_inspection.km_traveled
             group_hours = sample_inspection.hours
@@ -1369,6 +1441,7 @@ def shipment_list(request):
         has_compliance = compliance_status_result.get('has_any_compliance', False)
         
         # Determine compliance status for button coloring
+        # Match sent status logic: only require RFI, Invoice, and Compliance
         # Complete = has RFI + Invoice + Compliance docs
         # Partial = has any files but not all required
         # None = no files at all
@@ -1380,10 +1453,12 @@ def shipment_list(request):
             compliance_status = 'no_compliance'  # Red - no files found
             
         print(f"🎨 COMPLIANCE STATUS DEBUG for {client_name}:")
-        print(f"    RFI: {has_rfi} (uploader: {rfi_uploader})")
-        print(f"    Invoice: {has_invoice} (uploader: {invoice_uploader})")
+        print(f"    RFI: {has_rfi} (file detected: {rfi_uploader is not None})")
+        print(f"    Invoice: {has_invoice} (file detected: {invoice_uploader is not None})")
         print(f"    Compliance: {has_compliance}")
         print(f"    Final status: {compliance_status}")
+        print(f"    UI will show 'RFI ✓': {rfi_uploader is not None}")
+        print(f"    UI will show 'Invoice ✓': {invoice_uploader is not None}")
         
         # Generate group_id
         sanitized_client = sanitize_group_id(client_name) if client_name else ""
@@ -1398,7 +1473,7 @@ def shipment_list(request):
             'date_of_inspection': date_of_inspection,
             'inspection_count': inspection_count,
             'internal_account_code': _get_internal_account_code(client_name),
-            'client_emails': _client_email_map.get(_norm(client_name), []),
+            'client_emails': _get_client_emails(client_name),
             'is_complete': False,  # Default to False - will be checked on-demand
             'group_id': group_id,
             'inspector_name': inspector_name,
@@ -1409,16 +1484,16 @@ def shipment_list(request):
             'is_sent': group_is_sent,  # From actual inspection data
             'sent_by': next((inspection.sent_by for inspection in group_inspections if inspection.is_sent), None),  # Who marked as sent
             'sent_date': next((inspection.sent_date for inspection in group_inspections if inspection.is_sent), None),  # When marked as sent
-            'rfi_uploaded': rfi_uploader is not None,  # Use database info directly
-            'invoice_uploaded': invoice_uploader is not None,  # Use database info directly
+            'rfi_uploaded': rfi_uploader is not None,  # Use file detection results
+            'invoice_uploaded': invoice_uploader is not None,  # Use file detection results
             'rfi_uploaded_by': rfi_uploader,  # Who uploaded RFI
             'rfi_uploaded_date': rfi_upload_date,  # When RFI was uploaded
             'invoice_uploaded_by': invoice_uploader,  # Who uploaded Invoice
             'invoice_uploaded_date': invoice_upload_date,  # When Invoice was uploaded
             'compliance_status': compliance_status,  # For View Files button color coding
             'compliance_documents_status': {
-                'all_commodities_have_compliance': bool(compliance_status_result['all_commodities_have_compliance']),
-                'has_any_compliance': bool(compliance_status_result['has_any_compliance'])
+                'all_commodities_have_compliance': bool(compliance_status_result.get('all_commodities_have_compliance', False)) if compliance_status_result else False,
+                'has_any_compliance': bool(compliance_status_result.get('has_any_compliance', False)) if compliance_status_result else False
             },
             'products': products  # Now populated with actual inspection data
         }
@@ -1877,7 +1952,9 @@ def upload_document(request):
                     try:
                         inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
                         if inspection:
-                            client_name = inspection.client_name or "Unknown_Client"
+                            client_name = inspection.client_name or "Unknown Client"
+                            # Keep original client name for folder structure (don't sanitize)
+                            
                             if inspection.date_of_inspection:
                                 year_folder = inspection.date_of_inspection.strftime("%Y")
                                 month_folder = inspection.date_of_inspection.strftime("%B")
@@ -1885,11 +1962,11 @@ def upload_document(request):
                                 year_folder = datetime.now().strftime("%Y")
                                 month_folder = datetime.now().strftime("%B")
                         else:
-                            client_name = "Unknown_Client"
+                            client_name = "Unknown Client"
                             year_folder = datetime.now().strftime("%Y")
                             month_folder = datetime.now().strftime("%B")
                     except:
-                        client_name = "Unknown_Client"
+                        client_name = "Unknown Client"
                         year_folder = datetime.now().strftime("%Y")
                         month_folder = datetime.now().strftime("%B")
                 
@@ -1957,6 +2034,13 @@ def upload_document(request):
                         # Fallback: Convert underscores back to spaces
                         client_name = '_'.join(parts[:-1]).replace('_', ' ')
                         print(f"🔍 [UPLOAD] Using fallback client name (invalid date): '{client_name}'")
+                else:
+                    # Fallback: Use group_id as client name
+                    client_name = group_id
+                    print(f"🔍 [UPLOAD] Using group_id as client name: '{client_name}'")
+            else:
+                # No group_id provided, client_name should already be set from earlier logic
+                print(f"🔍 [UPLOAD] No group_id provided, using client_name: '{client_name}'")
             
             client_folder = create_folder_name(client_name)
             
@@ -1966,53 +2050,24 @@ def upload_document(request):
             month_dir = os.path.join(year_dir, month_folder)
             client_dir = os.path.join(month_dir, client_folder)
             
-            # For lab results and lab forms, create commodity-based subfolders
-            if document_type in ['lab', 'lab_form'] and inspection_id:
-                # Get the inspection by ID and date to ensure we get the correct one
-                if group_id:
-                    # Parse the date from group_id to get the correct inspection
-                    parts = group_id.split('_')
-                    if len(parts) >= 2:
-                        date_str = parts[-1]
-                        if len(date_str) == 8:
-                            year = int(date_str[:4])
-                            month = int(date_str[4:6])
-                            day = int(date_str[6:8])
-                            from datetime import date
-                            group_date = date(year, month, day)
-                            # Get inspection with matching remote_id AND date
-                            inspection = FoodSafetyAgencyInspection.objects.filter(
-                                remote_id=inspection_id,
-                                date_of_inspection=group_date
-                            ).first()
-                        else:
-                            inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
-                    else:
-                        inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
+            # Enforce unified directory scheme
+            # - Grouped (unmatched): client-level rfi, invoice, compliance
+            # - Individual (matched): inspection-<id>/{rfi,invoice,compliance,lab,retest,form}
+            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'retest', 'form']:
+                if upload_type == 'individual' and inspection_id:
+                    document_dir = os.path.join(client_dir, f"inspection-{inspection_id}", document_type)
                 else:
-                    inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
-                
-                print(f"Debug - Inspection ID: {inspection_id}")
-                print(f"Debug - Found inspection: {inspection}")
-                if inspection:
-                    print(f"Debug - Inspection client: {inspection.client_name}")
-                    print(f"Debug - Inspection commodity: {inspection.commodity}")
-                if inspection and inspection.commodity:
-                    commodity = inspection.commodity.lower()
-                    # Create lab results folder with commodity subfolder
-                    lab_dir = os.path.join(client_dir, 'lab results')
-                    document_dir = os.path.join(lab_dir, commodity)
-                else:
-                    # Fallback to default lab folder
-                    document_dir = os.path.join(client_dir, 'lab results')
-            elif document_type == 'compliance':
-                # For compliance documents, create Compliance folder directly in client directory
-                document_dir = os.path.join(client_dir, 'Compliance')
-            elif document_type == 'rfi':
-                # For RFI documents, use "Request For Invoice" folder
-                document_dir = os.path.join(client_dir, 'Request For Invoice')
+                    top_map = {
+                        'rfi': 'rfi',
+                        'invoice': 'invoice',
+                        'compliance': 'compliance',
+                        'lab': 'lab',
+                        'retest': 'retest',
+                        'form': 'form',
+                    }
+                    document_dir = os.path.join(client_dir, top_map.get(document_type, document_type))
             else:
-                # For other document types, use the standard structure
+                # Default fallback
                 document_dir = os.path.join(client_dir, document_type)
             
             # Create all directories
@@ -2044,10 +2099,8 @@ def upload_document(request):
             
             # Clear file cache for this client to ensure immediate visibility
             from django.core.cache import cache
-            date_obj_for_cache = datetime.strptime(date_str, '%Y%m%d') if len(date_str) == 8 else datetime.now()
-            year_folder_cache = date_obj_for_cache.strftime('%Y')
-            month_folder_cache = date_obj_for_cache.strftime('%B')
-            cache_key = f"local_files:{client_name}:{year_folder_cache}:{month_folder_cache}"
+            # Use the already defined year_folder and month_folder for cache clearing
+            cache_key = f"local_files:{client_name}:{year_folder}:{month_folder}"
             cache.delete(cache_key)
             print(f"🧹 [UPLOAD] Cleared cache for: {cache_key}")
             
@@ -2339,31 +2392,63 @@ def list_uploaded_files(request):
                 print(f"🔍 [DEBUG] Checking folder: {test_path}")
                 
                 # Check traditional document folders first (where files are actually uploaded)
-                traditional_docs = ['rfi', 'invoice', 'lab', 'lab_form', 'retest']
+                traditional_docs = ['Request For Invoice', 'invoice', 'lab results', 'retest']
                 for doc_type in traditional_docs:
                     doc_path = os.path.join(test_path, doc_type)
                     if os.path.exists(doc_path):
                         print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
                         files = []
-                        for filename in os.listdir(doc_path):
-                            if os.path.isfile(os.path.join(doc_path, filename)):
-                                file_path = os.path.join(doc_path, filename)
-                                file_size = os.path.getsize(file_path)
-                                
-                                # Create unique key to avoid duplicates
-                                unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                if unique_key not in seen_files:
-                                    seen_files.add(unique_key)
-                                    file_info = get_file_info(file_path, doc_type)
-                                    files.append(file_info)
-                                    print(f"✅ Added unique file: {filename}")
-                                else:
-                                    print(f"⚠️ Skipped duplicate file: {filename}")
+                        
+                        # Check both the main folder and any subfolders (for lab results with commodity subfolders)
+                        paths_to_check = [doc_path]
+                        if doc_type == 'lab results':
+                            # Also check subfolders for lab results (commodity folders)
+                            try:
+                                for item in os.listdir(doc_path):
+                                    item_path = os.path.join(doc_path, item)
+                                    if os.path.isdir(item_path):
+                                        paths_to_check.append(item_path)
+                                        print(f"🔍 [DEBUG] Also checking subfolder: {item_path}")
+                            except Exception as e:
+                                print(f"⚠️ Error checking subfolders: {e}")
+                        
+                        for check_path in paths_to_check:
+                            try:
+                                for filename in os.listdir(check_path):
+                                    if os.path.isfile(os.path.join(check_path, filename)):
+                                        file_path = os.path.join(check_path, filename)
+                                        file_size = os.path.getsize(file_path)
+                                        
+                                        # Create unique key to avoid duplicates
+                                        unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                        if unique_key not in seen_files:
+                                            seen_files.add(unique_key)
+                                            
+                                            # Determine the actual document type based on filename
+                                            actual_doc_type = doc_type
+                                            if doc_type == 'Request For Invoice':
+                                                actual_doc_type = 'rfi'
+                                            elif doc_type == 'lab results':
+                                                if 'lab_form' in filename.lower():
+                                                    actual_doc_type = 'lab_form'
+                                                else:
+                                                    actual_doc_type = 'lab'
+                                            
+                                            file_info = get_file_info(file_path, actual_doc_type)
+                                            files.append(file_info)
+                                            print(f"✅ Added unique file: {filename} as {actual_doc_type}")
+                                        else:
+                                            print(f"⚠️ Skipped duplicate file: {filename}")
+                            except Exception as e:
+                                print(f"⚠️ Error processing {check_path}: {e}")
                         
                         if files:
-                            if doc_type not in files_list:
-                                files_list[doc_type] = []
-                            files_list[doc_type].extend(files)
+                            # Group files by their actual document type
+                            for file_info in files:
+                                actual_doc_type = file_info.get('document_type', doc_type)
+                                if actual_doc_type not in files_list:
+                                    files_list[actual_doc_type] = []
+                                files_list[actual_doc_type].append(file_info)
                 
                 # Also check nested Inspection-XXXX folders for files
                 try:
@@ -2498,6 +2583,165 @@ def list_uploaded_files(request):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
     
+    elif request.method == 'POST':
+        try:
+            import json
+            from ..models import FoodSafetyAgencyInspection
+            import os
+            from django.conf import settings
+            from datetime import datetime
+            
+            data = json.loads(request.body)
+            client_name = data.get('client_name')
+            inspection_date = data.get('inspection_date')
+            inspection_id = data.get('inspection_id')
+            
+            if not client_name or not inspection_date:
+                return JsonResponse({'success': False, 'error': 'Client name and inspection date are required'})
+            
+            # Parse date
+            try:
+                date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+                year_folder = date_obj.strftime('%Y')
+                month_folder = date_obj.strftime('%B')
+            except ValueError:
+                return JsonResponse({'success': False, 'error': 'Invalid date format'})
+            
+            # Use exact client name since folders now use original names
+            parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
+            client_folder_variations = [client_name]
+            
+            # List files in document type folders (checking multiple folder variations)
+            files_list = {}
+            seen_files = set()  # Track files to avoid duplicates
+            
+            # Check all folder variations for files
+            for folder_variation in client_folder_variations:
+                test_path = os.path.join(parent_path, folder_variation)
+                if not os.path.exists(test_path):
+                    continue
+                
+                print(f"🔍 [DEBUG] Checking folder: {test_path}")
+                
+                # Check traditional document folders first (where files are actually uploaded)
+                traditional_docs = ['Request For Invoice', 'invoice', 'lab results', 'retest']
+                for doc_type in traditional_docs:
+                    doc_path = os.path.join(test_path, doc_type)
+                    if os.path.exists(doc_path):
+                        print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
+                        files = []
+                        
+                        # Check both the main folder and any subfolders (for lab results with commodity subfolders)
+                        paths_to_check = [doc_path]
+                        if doc_type == 'lab results':
+                            # Also check subfolders for lab results (commodity folders)
+                            try:
+                                for item in os.listdir(doc_path):
+                                    item_path = os.path.join(doc_path, item)
+                                    if os.path.isdir(item_path):
+                                        paths_to_check.append(item_path)
+                                        print(f"🔍 [DEBUG] Also checking subfolder: {item_path}")
+                            except Exception as e:
+                                print(f"⚠️ Error checking subfolders: {e}")
+                        
+                        for check_path in paths_to_check:
+                            try:
+                                for filename in os.listdir(check_path):
+                                    if os.path.isfile(os.path.join(check_path, filename)):
+                                        file_path = os.path.join(check_path, filename)
+                                        file_size = os.path.getsize(file_path)
+                                        
+                                        # Create unique key to avoid duplicates
+                                        unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                        if unique_key not in seen_files:
+                                            seen_files.add(unique_key)
+                                            
+                                            # Determine the actual document type based on filename
+                                            actual_doc_type = doc_type
+                                            if doc_type == 'Request For Invoice':
+                                                actual_doc_type = 'rfi'
+                                            elif doc_type == 'lab results':
+                                                if 'lab_form' in filename.lower():
+                                                    actual_doc_type = 'lab_form'
+                                                else:
+                                                    actual_doc_type = 'lab'
+                                            
+                                            file_info = get_file_info(file_path, actual_doc_type)
+                                            files.append(file_info)
+                                            print(f"✅ Added unique file: {filename} as {actual_doc_type}")
+                                        else:
+                                            print(f"⚠️ Skipped duplicate file: {filename}")
+                            except Exception as e:
+                                print(f"⚠️ Error processing {check_path}: {e}")
+                        
+                        if files:
+                            # Group files by their actual document type
+                            for file_info in files:
+                                actual_doc_type = file_info.get('document_type', doc_type)
+                                if actual_doc_type not in files_list:
+                                    files_list[actual_doc_type] = []
+                                files_list[actual_doc_type].append(file_info)
+            
+            # Also check for compliance documents in the new folder structure
+            for folder_variation in client_folder_variations:
+                test_path = os.path.join(parent_path, folder_variation)
+                if not os.path.exists(test_path):
+                    continue
+                
+                compliance_path = os.path.join(test_path, 'Compliance')
+                if os.path.exists(compliance_path):
+                    print(f"🔍 [DEBUG] Found compliance folder at: {compliance_path}")
+                    
+                    # Get all commodity subfolders
+                    for commodity_folder in os.listdir(compliance_path):
+                        commodity_path = os.path.join(compliance_path, commodity_folder)
+                        
+                        if os.path.isdir(commodity_path):
+                            print(f"Checking commodity folder: {commodity_folder}")
+                            
+                            # List all files in this commodity folder
+                            files = []
+                            for filename in os.listdir(commodity_path):
+                                if os.path.isfile(os.path.join(commodity_path, filename)):
+                                    file_path = os.path.join(commodity_path, filename)
+                                    file_size = os.path.getsize(file_path)
+                                    
+                                    # Create unique key to avoid duplicates
+                                    unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                    if unique_key not in seen_files:
+                                        seen_files.add(unique_key)
+                                        
+                                        # Determine document type based on filename or folder
+                                        doc_type = 'compliance'
+                                        if 'rfi' in filename.lower():
+                                            doc_type = 'rfi'
+                                        elif 'invoice' in filename.lower():
+                                            doc_type = 'invoice'
+                                        elif 'lab' in filename.lower():
+                                            doc_type = 'lab'
+                                        elif 'retest' in filename.lower():
+                                            doc_type = 'retest'
+                                        
+                                        file_info = get_file_info(file_path, doc_type)
+                                        file_info['commodity'] = commodity_folder
+                                        files.append(file_info)
+                                        print(f"✅ Added compliance file: {filename}")
+                            
+                            if files:
+                                if 'compliance' not in files_list:
+                                    files_list['compliance'] = []
+                                files_list['compliance'].extend(files)
+                                print(f"Found {len(files)} compliance files in {commodity_folder}")
+            
+            return JsonResponse({
+                'success': True,
+                'files': files_list,
+                'base_path': parent_path
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
@@ -2585,6 +2829,28 @@ def apply_fsa_inspection_filters(request, inspections):
     inspection_date_to = request.GET.get('inspection_date_to')
     if inspection_date_to:
         inspections = inspections.filter(date_of_inspection__lte=inspection_date_to)
+    
+    # Filter by sample status - same approach as scientist role filtering
+    sample_status = request.GET.get('sample_status')
+    if sample_status:
+        if sample_status == 'SAMPLED':
+            # Show only inspections where samples were taken
+            inspections = inspections.filter(is_sample_taken=True)
+        elif sample_status == 'NOT_SAMPLED':
+            # Show only inspections where no samples were taken
+            inspections = inspections.filter(is_sample_taken=False)
+        # If sample_status is anything else or empty, show all (no filter)
+    
+    # Filter by compliance status - based on direction present field
+    compliance_status = request.GET.get('compliance_status')
+    if compliance_status:
+        if compliance_status == 'COMPLIANT':
+            # Show only compliant inspections (no direction present)
+            inspections = inspections.filter(is_direction_present_for_this_inspection=False)
+        elif compliance_status == 'NON_COMPLIANT':
+            # Show only non-compliant inspections (direction present)
+            inspections = inspections.filter(is_direction_present_for_this_inspection=True)
+        # If compliance_status is anything else or empty, show all (no filter)
     
     # Note: Sent status filtering is now handled at the group level in shipment_list view
     # to properly show groups that contain sent/unsent inspections
@@ -3962,6 +4228,15 @@ def settings_view(request):
             # Daily compliance sync settings
             system_settings.compliance_daily_sync_enabled = 'compliance_daily_sync_enabled' in request.POST
             system_settings.compliance_skip_processed = 'compliance_skip_processed' in request.POST
+            
+            # Compliance sync interval settings (save to Settings model)
+            if 'compliance_sync_interval' in request.POST:
+                try:
+                    settings.compliance_sync_interval = int(request.POST.get('compliance_sync_interval', 5))
+                    settings.compliance_sync_unit = request.POST.get('compliance_sync_interval_unit', 'days')
+                    settings.save()
+                except Exception as e:
+                    print(f"Error saving compliance sync interval: {e}")
             
             system_settings.save()
             
@@ -6048,7 +6323,7 @@ def get_inspection_files_onedrive_api(client_name, inspection_date):
         return None
 
 
-def get_inspection_files_local(client_name, inspection_date):
+def get_inspection_files_local(client_name, inspection_date, force_refresh=False):
     """Get inspection files from local media folder using optimized structure with caching."""
     print(f"🔍 [BACKEND] get_inspection_files_local called with:")
     print(f"  - client_name: '{client_name}'")
@@ -6089,6 +6364,7 @@ def get_inspection_files_local(client_name, inspection_date):
     
     try:
         import os
+        import time
         from datetime import datetime
         from django.conf import settings
         from django.core.cache import cache
@@ -6112,11 +6388,27 @@ def get_inspection_files_local(client_name, inspection_date):
         cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
         
         # Try to get from cache first (fastest - 10 minute cache)
-        cached_files = cache.get(cache_key)
-        if cached_files:
-            total_cached = sum(len(files) for files in cached_files.values())
-            print(f"🚀 Using cached local files for {client_name} ({total_cached} files)")
-            return cached_files
+        # But skip cache if force_refresh is True or cache was recently cleared
+        if force_refresh:
+            print(f"🔄 Force refresh enabled for {client_name}, skipping cache")
+        else:
+            # Check if cache was recently cleared (within last 30 seconds)
+            # Check both client_name and client_folder formats
+            cache_clear_time_key1 = f"cache_cleared:{client_name}:{year_folder}:{month_folder}"
+            cache_clear_time_key2 = f"cache_cleared:{client_folder}:{year_folder}:{month_folder}"
+            cache_clear_time1 = cache.get(cache_clear_time_key1)
+            cache_clear_time2 = cache.get(cache_clear_time_key2)
+            current_time = time.time()
+            
+            if ((cache_clear_time1 and (current_time - cache_clear_time1) < 30) or 
+                (cache_clear_time2 and (current_time - cache_clear_time2) < 30)):
+                print(f"🔄 Cache was recently cleared for {client_name}, skipping cache")
+            else:
+                cached_files = cache.get(cache_key)
+                if cached_files:
+                    total_cached = sum(len(files) for files in cached_files.values())
+                    print(f"🚀 Using cached local files for {client_name} ({total_cached} files)")
+                    return cached_files
         
         print(f"🔍 Scanning files for: {client_name} ({inspection_date})")
         
@@ -6580,11 +6872,13 @@ def get_inspection_files(request):
         group_id = data.get('group_id', '')
         client_name = data.get('client_name', '')
         inspection_date = data.get('inspection_date', '')
+        force_refresh = data.get('_force_refresh', False)
         
         print(f"🔍 [BACKEND] get_inspection_files called with:")
         print(f"  - group_id: '{group_id}'")
         print(f"  - client_name: '{client_name}'")
         print(f"  - inspection_date: '{inspection_date}'")
+        print(f"  - force_refresh: {force_refresh}")
         print(f"  - Full request data: {data}")
         
         # Create media folder structure for this inspection using correct format
@@ -6621,7 +6915,7 @@ def get_inspection_files(request):
         
         # Get files from local storage
         print(f"🔍 [BACKEND] Calling get_inspection_files_local...")
-        local_files = get_inspection_files_local(client_name, inspection_date)
+        local_files = get_inspection_files_local(client_name, inspection_date, force_refresh)
         print(f"🔍 [BACKEND] get_inspection_files_local returned:")
         print(f"  - Type: {type(local_files)}")
         print(f"  - Value: {local_files}")
@@ -6855,6 +7149,12 @@ def delete_inspection_file(request):
                 # Continue with file deletion success even if DB update fails
             
             # Clear relevant caches - comprehensive cache invalidation
+            # Parse date to get year and month for cache key
+            from datetime import datetime
+            date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+            year_folder = date_obj.strftime('%Y')
+            month_folder = date_obj.strftime('%B')
+            
             cache_keys_to_clear = [
                 f"shipment_list_{request.user.id}_{request.user.role}",
                 "filter_options",
@@ -6862,13 +7162,61 @@ def delete_inspection_file(request):
                 f"file_status_{client_name}_{inspection_date}",
                 f"files_cache_{client_name}_{inspection_date}",
                 "file_colors_cache",
-                "inspection_files_cache"
+                "inspection_files_cache",
+                f"local_files:{client_name}:{year_folder}:{month_folder}"  # Clear the specific cache key used by get_inspection_files_local
             ]
             
             # Clear all related cache keys
             for cache_key in cache_keys_to_clear:
                 cache.delete(cache_key)
                 print(f"🧹 Cleared cache key: {cache_key}")
+            
+            # Force clear the specific cache used by get_inspection_files_local
+            # This is the most important cache to clear for immediate UI updates
+            specific_cache_key = f"local_files:{client_name}:{year_folder}:{month_folder}"
+            cache.delete(specific_cache_key)
+            print(f"🧹 FORCE cleared specific cache key: {specific_cache_key}")
+            
+            # Also try clearing with the client_folder format used by get_inspection_files_local
+            client_folder = client_name or 'Unknown Client'
+            client_folder_cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
+            cache.delete(client_folder_cache_key)
+            print(f"🧹 FORCE cleared client_folder cache key: {client_folder_cache_key}")
+            
+            # Clear all possible cache variations for this client/date
+            cache_variations = [
+                f"local_files:{client_name}:{year_folder}:{month_folder}",
+                f"local_files:{client_folder}:{year_folder}:{month_folder}",
+                f"local_files:{client_name.replace(' ', '_')}:{year_folder}:{month_folder}",
+                f"local_files:{client_folder.replace(' ', '_')}:{year_folder}:{month_folder}",
+                f"inspection_files_{client_name}_{inspection_date}",
+                f"inspection_files_{client_folder}_{inspection_date}",
+                f"file_status_{client_name}_{inspection_date}",
+                f"file_status_{client_folder}_{inspection_date}",
+                f"files_cache_{client_name}_{inspection_date}",
+                f"files_cache_{client_folder}_{inspection_date}"
+            ]
+            
+            for cache_key in cache_variations:
+                cache.delete(cache_key)
+                print(f"🧹 Cleared cache variation: {cache_key}")
+            
+            # Set a cache clear time marker to prevent stale cache usage
+            import time
+            cache_clear_time_key = f"cache_cleared:{client_name}:{year_folder}:{month_folder}"
+            cache.set(cache_clear_time_key, time.time(), 60)  # Expire in 60 seconds
+            
+            # Also set cache clear time marker for client_folder format
+            client_folder_clear_time_key = f"cache_cleared:{client_folder}:{year_folder}:{month_folder}"
+            cache.set(client_folder_clear_time_key, time.time(), 60)  # Expire in 60 seconds
+            
+            # Nuclear option: Clear all cache if the above doesn't work
+            try:
+                cache.clear()
+                print("🧹 NUCLEAR: Cleared entire cache")
+            except Exception as e:
+                print(f"⚠️ Could not clear entire cache: {e}")
+            print(f"🧹 Set cache clear time marker: {cache_clear_time_key}")
             
             # Clear any wildcard cache keys that might contain this client/date
             try:
@@ -6884,7 +7232,8 @@ def delete_inspection_file(request):
                     keys_to_delete = [
                         key for key in all_keys 
                         if (client_normalized in key.lower() and date_normalized in key) or
-                           ('files' in key.lower() and client_normalized in key.lower())
+                           ('files' in key.lower() and client_normalized in key.lower()) or
+                           ('local_files' in key.lower() and client_normalized in key.lower())
                     ]
                     
                     for key in keys_to_delete:
@@ -7226,10 +7575,12 @@ def get_page_clients_file_status(request):
     cache.delete('page_clients_status_cache')
     print("🧹 [BACKEND] Cleared file status cache to prevent stale data")
     
-    # Add delay to ensure files are fully written before detection
-    import time
-    time.sleep(2.0)  # 2 second delay to ensure file system is updated
-    print("⏳ [BACKEND] Added 2 second delay to ensure files are fully written")
+    # Also clear any combination-specific caches that might exist
+    cache.clear()  # Clear all caches to ensure fresh data
+    print("🧹 [BACKEND] Cleared ALL caches to ensure fresh file status data")
+    
+    # No delay needed - file operations are synchronous
+    print("⚡ [BACKEND] No delay needed - checking file status immediately")
     
     try:
         import json
@@ -7271,12 +7622,24 @@ def get_page_clients_file_status(request):
         print(f"🔍 [TERMINAL] Checking file status for {len(client_date_combinations)} client+date combinations")
         print(f"📋 [TERMINAL] Combinations: {[c.get('unique_key', 'unknown') for c in client_date_combinations[:5]]}...")  # Show first 5
         
+        # Debug: Check if this is a delayed update after upload
+        print(f"🕐 [DEBUG] Server-side file status check called at: {datetime.now()}")
+        print(f"🕐 [DEBUG] This might be a delayed update after file upload")
+        
         # Debug: Check if New Poultry Retailer is in the combinations
         new_poultry_combinations = [c for c in client_date_combinations if 'New Poultry Retailer' in c.get('client_name', '')]
         if new_poultry_combinations:
             print(f"🔍 [DEBUG] Found New Poultry Retailer combinations: {new_poultry_combinations}")
         else:
             print(f"❌ [DEBUG] New Poultry Retailer NOT found in combinations")
+            print(f"🔍 [DEBUG] Available client names: {[c.get('client_name', 'unknown') for c in client_date_combinations[:10]]}")
+        
+        # Debug: Check if Jusmar Farm Eggs is in the combinations
+        jusmar_combinations = [c for c in client_date_combinations if 'Jusmar Farm Eggs' in c.get('client_name', '')]
+        if jusmar_combinations:
+            print(f"🔍 [DEBUG] Found Jusmar Farm Eggs combinations: {jusmar_combinations}")
+        else:
+            print(f"❌ [DEBUG] Jusmar Farm Eggs NOT found in combinations")
             print(f"🔍 [DEBUG] Available client names: {[c.get('client_name', 'unknown') for c in client_date_combinations[:10]]}")
         
         # Check cache first for bulk results (updated for new format)
@@ -7566,7 +7929,8 @@ def get_page_clients_file_status(request):
                 has_compliance = has_compliance_dir
                 
                 # Determine status for this specific client+date combination
-                if has_rfi and has_invoice and has_lab and has_compliance:
+                # Match sent status logic: only require RFI, Invoice, and Compliance
+                if has_rfi and has_invoice and has_compliance:
                     file_status = 'all_files'  # Green
                 elif has_compliance:
                     file_status = 'compliance_only'  # Orange
@@ -7590,6 +7954,72 @@ def get_page_clients_file_status(request):
                     print(f"  - Has Retest: {has_retest}")
                     print(f"  - Has Compliance: {has_compliance}")
                     print(f"  - Final file status: {file_status}")
+                
+                # Debug: Special logging for Jusmar Farm Eggs
+                if 'Jusmar Farm Eggs' in client_name:
+                    print(f"🔍 [DEBUG] JUSMAR FARM EGGS DEBUG:")
+                    print(f"  - Client name: {client_name}")
+                    print(f"  - Inspection date: {inspection_date}")
+                    print(f"  - Unique key: {unique_key}")
+                    print(f"  - Has RFI: {has_rfi}")
+                    print(f"  - Has Invoice: {has_invoice}")
+                    print(f"  - Has Lab: {has_lab}")
+                    print(f"  - Has Retest: {has_retest}")
+                    print(f"  - Has Compliance: {has_compliance}")
+                    print(f"  - Final file status: {file_status}")
+                    print(f"  - Parent path: {parent_path}")
+                    print(f"  - Test path: {test_path}")
+                    print(f"  - RFI variations checked: {rfi_variations}")
+                    
+                    # Check if the folder actually exists
+                    if os.path.exists(test_path):
+                        print(f"  - Folder exists: YES")
+                        try:
+                            contents = os.listdir(test_path)
+                            print(f"  - Folder contents: {contents}")
+                            
+                            # Check each RFI variation specifically
+                            for rfi_variant in rfi_variations:
+                                rfi_path = os.path.join(test_path, rfi_variant)
+                                exists = os.path.exists(rfi_path)
+                                print(f"  - {rfi_variant} folder exists: {exists}")
+                                if exists:
+                                    try:
+                                        files = os.listdir(rfi_path)
+                                        print(f"  - {rfi_variant} folder files: {files}")
+                                        has_files = any(os.path.isfile(os.path.join(rfi_path, f)) for f in files)
+                                        print(f"  - {rfi_variant} has files: {has_files}")
+                                    except Exception as e:
+                                        print(f"  - Error listing {rfi_variant}: {e}")
+                        except Exception as e:
+                            print(f"  - Error listing folder contents: {e}")
+                    else:
+                        print(f"  - Folder exists: NO")
+                        
+                    # Also check what the actual RFI upload path would be
+                    print(f"  - Checking actual RFI upload path...")
+                    from datetime import datetime
+                    try:
+                        date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+                        year_folder = str(date_obj.year)
+                        month_folder = date_obj.strftime('%B')
+                        
+                        # This is how the RFI upload constructs the path
+                        rfi_upload_base = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_name)
+                        rfi_upload_path = os.path.join(rfi_upload_base, 'Request For Invoice')
+                        
+                        print(f"  - RFI upload base path: {rfi_upload_base}")
+                        print(f"  - RFI upload folder exists: {os.path.exists(rfi_upload_base)}")
+                        print(f"  - RFI upload Request For Invoice exists: {os.path.exists(rfi_upload_path)}")
+                        
+                        if os.path.exists(rfi_upload_path):
+                            try:
+                                rfi_files = os.listdir(rfi_upload_path)
+                                print(f"  - RFI upload folder files: {rfi_files}")
+                            except Exception as e:
+                                print(f"  - Error listing RFI upload folder: {e}")
+                    except Exception as e:
+                        print(f"  - Error constructing RFI upload path: {e}")
                         
             except ValueError:
                 print(f"⚠️ Invalid date format for {unique_key}: {inspection_date}")
@@ -7751,8 +8181,12 @@ def download_all_inspection_files(request):
                     normalized_folder = re.sub(r'[^a-zA-Z0-9_]', '_', folder_name)
                     normalized_folder = re.sub(r'_+', '_', normalized_folder).strip('_')
                     
-                    # Use exact matching since folders now use original client names
-                    is_match = (folder_name == client_folder_pattern)
+                    # Use flexible matching to handle variations in client names
+                    # Remove common variations that might cause mismatches
+                    normalized_client = client_folder_pattern.replace('.', '').strip()
+                    normalized_folder = folder_name.replace('.', '').strip()
+                    
+                    is_match = (normalized_folder == normalized_client)
                     
                     if is_match:
                         print(f"   ✅ Exact match: {folder_name} in {year_folder_search}/{month_folder_search}")
@@ -7784,8 +8218,8 @@ def download_all_inspection_files(request):
                         folder_contents = os.listdir(base_path)
                         print(f"📁 Folder contents: {folder_contents}")
                     
-                    # Define categories to check
-                    categories = ['rfi', 'invoice', 'lab', 'retest']
+                    # Define categories to check (using actual folder names)
+                    categories = ['Request For Invoice', 'invoice', 'lab results', 'retest']
                     
                     # Check each category folder
                     for category in categories:
@@ -7797,7 +8231,15 @@ def download_all_inspection_files(request):
                                 if os.path.isfile(file_path):
                                     # Filter files by inspection date to avoid mixing different dates
                                     if is_file_for_inspection_date(filename, inspection_date):
-                                        arcname = f"{category}/{filename}"
+                                        # Map folder names to proper display names in ZIP
+                                        folder_mapping = {
+                                            'Request For Invoice': 'Request For Invoice',
+                                            'invoice': 'Invoice',
+                                            'lab results': 'Lab Results',
+                                            'retest': 'Retest'
+                                        }
+                                        display_folder = folder_mapping.get(category, category)
+                                        arcname = f"{display_folder}/{filename}"
                                         
                                         # Get file stats for duplicate detection
                                         try:
@@ -7970,6 +8412,55 @@ def update_sent_status(request):
         
         if not matching_inspections:
             return JsonResponse({'success': False, 'error': 'No inspections found for this group'})
+        
+        # VALIDATION: Check compliance status before allowing "Sent" status
+        if sent_status == 'YES':
+            print(f"🔍 Validating compliance status before allowing 'Sent' status for group {group_id}")
+            
+            # Get the first inspection to extract client info
+            first_inspection = matching_inspections[0]
+            client_name = first_inspection.client_name
+            inspection_date = first_inspection.date_of_inspection
+            
+            # Check compliance status for this group
+            compliance_result = check_compliance_documents_status(
+                matching_inspections, client_name, inspection_date
+            )
+            
+            # Determine compliance status
+            has_rfi = any(insp.rfi_uploaded_by for insp in matching_inspections)
+            has_invoice = any(insp.invoice_uploaded_by for insp in matching_inspections)
+            has_compliance = compliance_result.get('has_any_compliance', False)
+            
+            # Complete = has RFI + Invoice + Compliance docs
+            is_complete = has_rfi and has_invoice and has_compliance
+            
+            print(f"🎨 COMPLIANCE VALIDATION for {client_name}:")
+            print(f"    RFI: {has_rfi}")
+            print(f"    Invoice: {has_invoice}")
+            print(f"    Compliance: {has_compliance}")
+            print(f"    Is Complete: {is_complete}")
+            
+            if not is_complete:
+                missing_files = []
+                if not has_rfi:
+                    missing_files.append("RFI document")
+                if not has_invoice:
+                    missing_files.append("Invoice document")
+                if not has_compliance:
+                    missing_files.append("Compliance documents")
+                
+                error_message = f"Cannot mark as 'Sent' - Missing required files: {', '.join(missing_files)}"
+                print(f"❌ {error_message}")
+                
+                return JsonResponse({
+                    'success': False,
+                    'error': error_message,
+                    'missing_files': missing_files,
+                    'compliance_status': 'incomplete'
+                })
+            
+            print(f"✅ All required files present - allowing 'Sent' status")
         
         # Update sent status for all inspections in the group
         is_sent = sent_status == 'YES' if sent_status else False
@@ -8555,6 +9046,7 @@ def get_file_info(file_path, category):
             'url': file_url,
             'download_url': download_url,
             'category': category,
+            'document_type': category,  # Add document_type field
             'relative_path': relative_path
         }
     except Exception as e:
@@ -9447,15 +9939,15 @@ def user_management(request):
         else:
             user.inspector_id = None
     
-            # Role choices for the form
-        role_choices = [
-            ('inspector', 'Inspector'),
-            ('admin', 'HR/Admin Staff'),
-            ('super_admin', 'Super Admin'),
-            ('financial', 'Financial'),
-            ('scientist', 'Scientist'),
-            ('developer', 'Developer'),  # Hidden role
-        ]
+    # Role choices for the form
+    role_choices = [
+        ('admin', 'HR/Admin Staff'),
+        ('super_admin', 'Super Admin'),
+        ('financial', 'Financial'),
+        ('scientist', 'Scientist'),
+        ('inspector', 'Inspector'),
+        ('developer', 'Developer'),  # Hidden role
+    ]
     
     # Get theme settings
     try:
@@ -10322,12 +10814,17 @@ def stop_all_services(request):
 def onedrive_service_status(request):
     """Get OneDrive service status and connection info."""
     try:
-        from ..services.onedrive_direct_service import OneDriveDirectUploadService, get_onedrive_direct_service_status
+        from ..services.onedrive_direct_service import (
+            OneDriveDirectUploadService,
+            get_onedrive_direct_service_status,
+        )
         
-        onedrive_service = OneDriveDirectUploadService()
+        # Read status from the shared status provider (cache-backed)
         service_status = get_onedrive_direct_service_status()
+        service_running = bool(service_status.get('is_running'))
         
-        # Check OneDrive connection status
+        # Use a transient instance only to check connection/auth health
+        onedrive_service = OneDriveDirectUploadService()
         connection_status = onedrive_service.authenticate_onedrive()
         
         # Get OneDrive settings
@@ -10338,11 +10835,11 @@ def onedrive_service_status(request):
         
         return JsonResponse({
             'success': True,
-            'service_running': onedrive_service.is_running,
+            'service_running': service_running,
             'connected': connection_status,
             'enabled': onedrive_enabled,
             'upload_delay_days': upload_delay,
-            'status': service_status
+            'status': service_status,
         })
         
     except Exception as e:

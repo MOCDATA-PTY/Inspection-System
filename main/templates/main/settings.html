@@ -869,9 +869,12 @@
             </div>
             
             <!-- Messages Section -->
-            <!-- Messages - Disabled -->
-                    {{ message }}
-                </div>
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
             {% endif %}
@@ -1275,9 +1278,6 @@
                                         <span>Last compliance sync: <span id="lastComplianceSyncTime">Never</span></span>
                                     </div>
                                 </div>
-                                <small style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
-                                    💡 <strong>Tip:</strong> This service runs independently and can operate alongside backup and sync services.
-                                </small>
                             </div>
                         </div>
                     </form>
@@ -2328,6 +2328,28 @@
                 });
             }
             
+            // Add event listeners for compliance sync frequency
+            const complianceSyncInterval = document.getElementById('compliance_sync_interval');
+            const complianceSyncUnit = document.getElementById('compliance_sync_interval_unit');
+            
+            if (complianceSyncInterval) {
+                complianceSyncInterval.addEventListener('change', function() {
+                    // Auto-save after a short delay to avoid too many requests
+                    setTimeout(autoSaveComplianceSettings, 1000);
+                });
+                complianceSyncInterval.addEventListener('input', function() {
+                    // Auto-save on input for immediate feedback
+                    setTimeout(autoSaveComplianceSettings, 1000);
+                });
+            }
+            
+            if (complianceSyncUnit) {
+                complianceSyncUnit.addEventListener('change', function() {
+                    // Auto-save after a short delay to avoid too many requests
+                    setTimeout(autoSaveComplianceSettings, 1000);
+                });
+            }
+            
             // Add event listeners for OneDrive settings
             const onedriveDelayDays = document.getElementById('onedrive_upload_delay_days');
             const onedriveDelayUnit = document.getElementById('onedrive_upload_delay_unit');
@@ -2421,7 +2443,7 @@
                 } else {
                     console.log('API response missing sync_interval_hours');
                     // Fallback to template value
-                    const hours = {{ settings.sync_interval_hours|default:24 }};
+                    const hours = parseFloat('{{ settings.sync_interval_hours|default:24 }}') || 24;
                     let displayValue, unit;
                     
                     if (hours < 1) {
@@ -2445,7 +2467,7 @@
             .catch(error => {
                 console.log('Error loading sync interval:', error);
                 // Fallback to template value
-                const hours = {{ settings.sync_interval_hours|default:24 }};
+                const hours = parseFloat('{{ settings.sync_interval_hours|default:24 }}') || 24;
                 let displayValue, unit;
                 
                 if (hours < 1) {
@@ -2563,6 +2585,50 @@
                 })
                 .catch(error => {
                     console.log('Auto-save error:', error);
+                });
+            }
+        }
+
+        // Auto-save compliance settings when user changes values
+        function autoSaveComplianceSettings() {
+            const complianceSyncInterval = document.getElementById('compliance_sync_interval');
+            const complianceSyncUnit = document.getElementById('compliance_sync_interval_unit');
+            
+            if (complianceSyncInterval && complianceSyncUnit) {
+                const intervalValue = parseInt(complianceSyncInterval.value) || 5;
+                const unitValue = complianceSyncUnit.value || 'days';
+                
+                // Prepare data for backend
+                const data = {
+                    'compliance_sync_interval': intervalValue,
+                    'compliance_sync_interval_unit': unitValue,
+                    'compliance_daily_sync_enabled': document.getElementById('compliance_daily_sync_enabled')?.checked || false,
+                    'compliance_skip_processed': document.getElementById('compliance_skip_processed')?.checked || false
+                };
+                
+                // Send to backend via form submission (to match existing Settings model)
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+                formData.append('compliance_sync_interval', intervalValue);
+                formData.append('compliance_sync_interval_unit', unitValue);
+                if (data.compliance_daily_sync_enabled) formData.append('compliance_daily_sync_enabled', 'on');
+                if (data.compliance_skip_processed) formData.append('compliance_skip_processed', 'on');
+                formData.append('onedrive_sync_interval_hours', '2'); // Required field
+                formData.append('onedrive_upload_delay_days', '3'); // Required field
+                formData.append('onedrive_upload_delay_unit', 'days'); // Required field
+                
+                fetch('/settings/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Compliance settings saved automatically');
+                        showNotification(`Compliance sync frequency saved: ${intervalValue} ${unitValue}`, 'success');
+                    }
+                })
+                .catch(error => {
+                    console.log('Auto-save compliance settings error:', error);
                 });
             }
         }
@@ -3206,7 +3272,7 @@
                                 ${data.auth_url}
                             </a>
                         </div>
-                        <button onclick="navigator.clipboard.writeText('${data.auth_url}')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;">
+                        <button type="button" onclick="event.preventDefault(); navigator.clipboard.writeText('${data.auth_url}')" style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;">
                             <i class="fas fa-copy"></i> Copy URL
                         </button>
                     </div>`;

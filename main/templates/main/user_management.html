@@ -985,11 +985,6 @@
 
             <!-- Messages Section -->
             <!-- Messages - Disabled -->
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
          
             <div class="action-bar">
                 <!-- Add New User Button -->
@@ -1119,11 +1114,23 @@
                                                 <i class="fas fa-key"></i>
                                             </button>
                                             
-                                            <button onclick="showEditUserModal('{{ user.id }}', '{{ user.username|escapejs }}', '{{ user.email|escapejs }}', '{{ user.first_name|escapejs }}', '{{ user.last_name|escapejs }}', '{{ user.role|default:"inspector" }}', '{{ user.inspector_id|default:"" }}')" class="btn btn-xs btn-info" title="Edit User">
+                                            <button class="btn btn-xs btn-info edit-user-btn" 
+                                                    data-user-id="{{ user.id }}" 
+                                                    data-username="{{ user.username|escapejs }}" 
+                                                    data-email="{{ user.email|escapejs }}" 
+                                                    data-first-name="{{ user.first_name|escapejs }}" 
+                                                    data-last-name="{{ user.last_name|escapejs }}" 
+                                                    data-role="{{ user.role|default:"inspector"|escapejs }}" 
+                                                    data-inspector-id="{{ user.inspector_id|default:""|escapejs }}" 
+                                                    title="Edit User">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             
-                                            <button onclick="showChangeRoleModal('{{ user.id }}', '{{ user.username|escapejs }}', '{{ user.role|default:"inspector" }}')" class="btn btn-xs btn-primary" title="Change Role">
+                                            <button class="btn btn-xs btn-primary change-role-btn" 
+                                                    data-user-id="{{ user.id }}" 
+                                                    data-username="{{ user.username|escapejs }}" 
+                                                    data-role="{{ user.role|default:"inspector"|escapejs }}" 
+                                                    title="Change Role">
                                                 <i class="fas fa-user-edit"></i>
                                             </button>
                                             
@@ -1134,7 +1141,7 @@
                                                 <input type="hidden" name="user_id" value="{{ user.id }}">
                                                 <button type="submit" class="btn btn-xs btn-danger" 
                                                         title="Delete User"
-                                                        onclick="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')">
+                                                        onclick="return confirm('Are you sure you want to delete user {{ user.username|escapejs }}? This action cannot be undone.')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -1279,11 +1286,12 @@
                         <div class="form-field">
                             <label class="form-label">Role *</label>
                             <select name="new_role" class="form-control" required onchange="toggleInspectorIdField()">
+                                <option value="">Select a role...</option>
                                 {% for value, label in role_choices %}
                                     {% if value == 'developer' and request.user.role != 'developer' %}
                                         <!-- Hide developer option for non-developers -->
                                     {% else %}
-                                        <option value="{{ value }}" {% if value == 'inspector' %}selected{% endif %}>{{ label }}</option>
+                                        <option value="{{ value }}">{{ label }}</option>
                                     {% endif %}
                                 {% endfor %}
                             </select>
@@ -1293,8 +1301,8 @@
                     <div class="form-group" id="inspectorIdGroup" style="display: none;">
                         <div class="form-field">
                             <label class="form-label">Server Inspector ID</label>
-                            <input type="number" name="new_inspector_id" class="form-control" placeholder="e.g., 1234567" min="1">
-                            <small class="form-text">Enter the unique server ID for this inspector (e.g., 1234567 for Ethan)</small>
+                            <input type="number" name="new_inspector_id" class="form-control" placeholder="Enter inspector ID number" min="1">
+                            <small class="form-text">Enter the unique server ID number for this inspector</small>
                         </div>
                     </div>
                 </form>
@@ -1359,11 +1367,11 @@
                         </div>
                     </div>
                     
-                    <div class="form-group" id="editInspectorIdGroup">
+                    <div class="form-group" id="editInspectorIdGroup" style="display: none;">
                         <div class="form-field">
                             <label class="form-label">Server Inspector ID</label>
-                            <input type="number" name="edit_inspector_id" id="editInspectorId" class="form-control" placeholder="e.g., 1234567" min="1">
-                            <small class="form-text">Enter the unique server ID for this inspector (e.g., 1234567 for Ethan)</small>
+                            <input type="number" name="edit_inspector_id" id="editInspectorId" class="form-control" placeholder="Enter inspector ID number" min="1">
+                            <small class="form-text">Enter the unique server ID number for this inspector</small>
                         </div>
                     </div>
                     
@@ -1417,17 +1425,51 @@
             const roleSelect = document.querySelector('select[name="new_role"]');
             const inspectorIdGroup = document.getElementById('inspectorIdGroup');
             
-            if (roleSelect.value === 'inspector') {
-                inspectorIdGroup.style.display = 'block';
-            } else {
-                inspectorIdGroup.style.display = 'none';
+            if (roleSelect && inspectorIdGroup) {
+                // Simple if statement: if inspector role selected, show field; otherwise hide it
+                if (roleSelect.value === 'inspector') {
+                    inspectorIdGroup.style.display = 'block';
+                } else {
+                    inspectorIdGroup.style.display = 'none';
+                }
             }
         }
         
         // Initialize theme and other functions on page load
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
-            toggleInspectorIdField();
+            
+            // Hide inspector ID field initially
+            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
+            if (inspectorIdGroup) {
+                inspectorIdGroup.style.display = 'none';
+            }
+            
+            // Add event listeners for edit user buttons
+            document.querySelectorAll('.edit-user-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    const email = this.getAttribute('data-email');
+                    const firstName = this.getAttribute('data-first-name');
+                    const lastName = this.getAttribute('data-last-name');
+                    const role = this.getAttribute('data-role');
+                    const inspectorId = this.getAttribute('data-inspector-id');
+                    
+                    showEditUserModal(userId, username, email, firstName, lastName, role, inspectorId);
+                });
+            });
+            
+            // Add event listeners for change role buttons
+            document.querySelectorAll('.change-role-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    const role = this.getAttribute('data-role');
+                    
+                    showChangeRoleModal(userId, username, role);
+                });
+            });
         });
         
         // Close sidebar when clicking outside on mobile
@@ -1464,6 +1506,16 @@
         }
         
         function showAddUserModal() {
+            // Reset form
+            document.getElementById('addUserForm').reset();
+            
+            // Hide inspector ID field initially
+            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
+            if (inspectorIdGroup) {
+                inspectorIdGroup.style.display = 'none';
+            }
+            
+            // Show modal
             document.getElementById('addUserModal').style.display = 'block';
             document.querySelector('#addUserForm input[name="new_username"]').focus();
         }
@@ -1511,10 +1563,17 @@
             const roleSelect = document.getElementById('editRole');
             const inspectorIdGroup = document.getElementById('editInspectorIdGroup');
             
-            if (roleSelect.value === 'inspector') {
-                inspectorIdGroup.style.display = 'block';
-            } else {
-                inspectorIdGroup.style.display = 'none';
+            console.log('toggleEditInspectorIdField called - Role selected:', roleSelect ? roleSelect.value : 'roleSelect not found');
+            console.log('editInspectorIdGroup found:', !!inspectorIdGroup);
+            
+            if (roleSelect && inspectorIdGroup) {
+                if (roleSelect.value === 'inspector') {
+                    inspectorIdGroup.style.display = 'block';
+                    console.log('Showing Edit Inspector ID field');
+                } else {
+                    inspectorIdGroup.style.display = 'none';
+                    console.log('Hiding Edit Inspector ID field');
+                }
             }
         }
         

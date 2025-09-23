@@ -3335,6 +3335,7 @@
                 window.location.reload();
             }
         
-        console.log('JavaScript finished loading successfully!');
+            console.log('JavaScript finished loading successfully!');
+        }
     
 // === END SCRIPT BLOCK 3 ===

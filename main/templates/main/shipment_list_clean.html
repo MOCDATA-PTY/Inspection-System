@@ -543,6 +543,7 @@
         .col-account-code { width: 75px; min-width: 75px; max-width: 75px; text-align: center; }
         .col-date { width: 65px; min-width: 65px; max-width: 65px; }
         .col-email { width: 120px; min-width: 120px; max-width: 120px; }
+        .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
         .col-inspector { width: 80px; min-width: 80px; max-width: 80px; }
         .col-view-files { width: 60px; min-width: 60px; max-width: 60px; text-align: center; }
         .col-rfi { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
@@ -552,7 +553,7 @@
         .hide-invoice .col-invoice { display: none !important; }
         .col-km { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
         .col-hours { width: 80px; min-width: 80px; max-width: 80px; text-align: center; }
-        .col-send { width: 120px; min-width: 120px; max-width: 120px; text-align: center; }
+        .col-send { width: 200px; min-width: 200px; max-width: 200px; text-align: center; }
         
         /* Ensure text doesn't wrap unnecessarily */
         #shipmentsTable td {
@@ -566,6 +567,43 @@
         .col-client-name {
             white-space: normal;
             word-wrap: break-word;
+        }
+        
+        /* Compliance status styling */
+        .compliance-status {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            white-space: nowrap;
+            display: inline-block;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .compliance-status.compliant {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .compliance-status.non-compliant {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Dark mode compliance status */
+        [data-theme="dark"] .compliance-status.compliant {
+            background-color: #1e4d2b;
+            color: #d4edda;
+            border: 1px solid #2d5a3d;
+        }
+        
+        [data-theme="dark"] .compliance-status.non-compliant {
+            background-color: #4d1a1a;
+            color: #f8d7da;
+            border: 1px solid #5c2a2a;
         }
         
         /* Action columns specific styling */
@@ -1242,7 +1280,9 @@
         
         /* Sent status dropdown styling */
         .sent-status-dropdown {
-            width: 80px;
+            width: 250px !important;
+            min-width: 250px !important;
+            max-width: 300px !important;
             font-size: 0.7rem;
             padding: 4px 8px;
             border: 2px solid #e5e7eb;
@@ -1315,8 +1355,8 @@
             }
             
             .sent-status-dropdown {
-                width: 70px;
-                font-size: 0.65rem;
+                width: 120px;
+                font-size: 0.6rem;
             }
             
             .input-label {
@@ -1350,9 +1390,9 @@
         
         /* Ensure all Sent status dropdowns stay aligned inline with RFI buttons */
         .sent-status-dropdown {
-            min-width: 80px !important;
-            width: 80px !important;
-            max-width: 80px !important;
+            min-width: 180px !important;
+            width: 180px !important;
+            max-width: 180px !important;
             height: 28px !important;
             margin: 8px 0 0 12px !important;
             text-align: center !important;
@@ -1377,6 +1417,33 @@
         
         .sent-status-dropdown option:hover {
             background-color: #f8f9fa !important;
+        }
+        
+        /* Style for disabled Sent option when files incomplete */
+        .sent-status-dropdown option:disabled {
+            color: #9ca3af !important;
+            background-color: #f3f4f6 !important;
+            cursor: not-allowed !important;
+        }
+        
+        /* Visual indicator for incomplete files */
+        .sent-status-dropdown.incomplete-files {
+            border-color: #f59e0b !important;
+            background-color: #fef3c7 !important;
+        }
+        
+        /* Disabled dropdown styling */
+        .sent-status-dropdown.disabled-dropdown,
+        .sent-status-dropdown:disabled {
+            background-color: #f3f4f6 !important;
+            color: #9ca3af !important;
+            border-color: #d1d5db !important;
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
+        }
+        
+        .sent-status-dropdown:disabled:hover {
+            border-color: #d1d5db !important;
         }
         
         /* Prevent duplicate styling issues */
@@ -1438,6 +1505,70 @@
         }
         
         /* Sampled badges */
+        
+        /* Disabled row styling for sent items */
+        .shipment-row.disabled-row {
+            opacity: 0.4 !important;
+            pointer-events: none !important;
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+        }
+        
+        .shipment-row.disabled-row td {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+        }
+        
+        .shipment-row.disabled-row .btn,
+        .shipment-row.disabled-row .form-control,
+        .shipment-row.disabled-row .expand-btn {
+            opacity: 0.5 !important;
+            cursor: not-allowed !important;
+        }
+        
+        .shipment-row.disabled-row .expand-btn {
+            pointer-events: none !important;
+        }
+        
+        /* Dark mode disabled row styling */
+        [data-theme="dark"] .shipment-row.disabled-row {
+            background-color: #2d2d2d !important;
+            color: #6b7280 !important;
+        }
+        
+        [data-theme="dark"] .shipment-row.disabled-row td {
+            background-color: #2d2d2d !important;
+            color: #6b7280 !important;
+        }
+        
+        /* 15-minute countdown styling */
+        .fifteen-minute-countdown {
+            font-size: 0.6rem !important;
+            margin-top: 2px !important;
+            text-align: center !important;
+            color: #f59e0b !important;
+            font-weight: bold !important;
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            padding: 2px 4px !important;
+            border-radius: 3px !important;
+            border: 1px solid rgba(245, 158, 11, 0.3) !important;
+        }
+        
+        .fifteen-minute-countdown[style*="color: #ef4444"] {
+            background-color: rgba(239, 68, 68, 0.1) !important;
+            border-color: rgba(239, 68, 68, 0.3) !important;
+        }
+        
+        /* Dark mode countdown styling */
+        [data-theme="dark"] .fifteen-minute-countdown {
+            background-color: rgba(245, 158, 11, 0.2) !important;
+            border-color: rgba(245, 158, 11, 0.4) !important;
+        }
+        
+        [data-theme="dark"] .fifteen-minute-countdown[style*="color: #ef4444"] {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: rgba(239, 68, 68, 0.4) !important;
+        }
         .sampled-badge {
             padding: 2px 6px;
             border-radius: 12px;
@@ -1471,6 +1602,77 @@
         .btn-retest:disabled:hover {
             background-color: #9ca3af !important;
             color: #6b7280 !important;
+        }
+        
+        /* Override disabled styling for uploaded buttons - they should be green when disabled */
+        .btn-lab.uploaded:disabled,
+        .btn-lab-form.uploaded:disabled,
+        .btn-retest.uploaded:disabled {
+            background-color: #059669 !important;
+            color: #ffffff !important;
+            opacity: 1 !important;
+            cursor: not-allowed !important;
+        }
+        
+        .btn-lab.uploaded:disabled:hover,
+        .btn-lab-form.uploaded:disabled:hover,
+        .btn-retest.uploaded:disabled:hover {
+            background-color: #047857 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Success state for disabled buttons - override the disabled styling */
+        .btn-success.success:disabled {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+            opacity: 1 !important;
+        }
+        
+        .btn-success.success:disabled:hover {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+        }
+        
+        /* Also target buttons with specific IDs for lab, lab-form, and retest */
+        button[id^="lab-"].success:disabled,
+        button[id^="lab-form-"].success:disabled,
+        button[id^="retest-"].success:disabled {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+            opacity: 1 !important;
+        }
+        
+        button[id^="lab-"].success:disabled:hover,
+        button[id^="lab-form-"].success:disabled:hover,
+        button[id^="retest-"].success:disabled:hover {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+        }
+        
+        /* Override any default disabled button styling with higher specificity */
+        button.btn-success.success:disabled,
+        button[id^="lab-"].btn-success.success:disabled,
+        button[id^="lab-form-"].btn-success.success:disabled,
+        button[id^="retest-"].btn-success.success:disabled {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+            opacity: 1 !important;
+            cursor: not-allowed !important;
+        }
+        
+        button.btn-success.success:disabled:hover,
+        button[id^="lab-"].btn-success.success:disabled:hover,
+        button[id^="lab-form-"].btn-success.success:disabled:hover,
+        button[id^="retest-"].btn-success.success:disabled:hover {
+            background-color: #28a745 !important;
+            color: #ffffff !important;
+            border-color: #28a745 !important;
+            opacity: 1 !important;
         }
         
         .fa-check-circle {
@@ -1509,9 +1711,17 @@
                 font-size: 0.65rem;
             }
             .col-client-name { min-width: 70px; max-width: 70px; }
+            .col-compliance { min-width: 80px; max-width: 80px; }
+            
+            /* Mobile compliance status adjustments */
+            .compliance-status {
+                font-size: 0.6rem;
+                padding: 1px 4px;
+                min-width: 60px;
+            }
             .col-date { min-width: 50px; }
             .col-rfi, .col-invoice, .col-km, .col-hours { min-width: 60px; }
-            .col-send { min-width: 100px; }
+            .col-send { min-width: 180px; }
         }
         
         /* Expandable table styles */
@@ -1631,7 +1841,7 @@
             .col-rfi, .col-invoice { width: 70px; min-width: 70px; max-width: 70px; }
             .col-km { width: 70px; min-width: 70px; max-width: 70px; }
             .col-hours { width: 70px; min-width: 70px; max-width: 70px; }
-            .col-send { width: 100px; min-width: 100px; max-width: 100px; }
+            .col-send { width: 180px; min-width: 180px; max-width: 180px; }
             .group-buttons .btn {
                 font-size: 7px;
                 padding: 2px 3px;
@@ -2137,7 +2347,7 @@
             .col-rfi, .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
             .col-km { width: 60px; min-width: 60px; max-width: 60px; }
             .col-hours { width: 60px; min-width: 60px; max-width: 60px; }
-            .col-send { width: 90px; min-width: 90px; max-width: 90px; }
+            .col-send { width: 160px; min-width: 160px; max-width: 160px; }
             
             /* Keep buttons inline but smaller */
             .group-buttons {
@@ -2257,7 +2467,7 @@
             .col-rfi, .col-invoice { width: 50px; min-width: 50px; max-width: 50px; }
             .col-km { width: 50px; min-width: 50px; max-width: 50px; }
             .col-hours { width: 50px; min-width: 50px; max-width: 50px; }
-            .col-send { width: 80px; min-width: 80px; max-width: 80px; }
+            .col-send { width: 140px; min-width: 140px; max-width: 140px; }
             
             .group-buttons {
                 flex-wrap: nowrap;
@@ -2453,15 +2663,7 @@
 
         <!-- Messages Section - Disabled -->
         
-        <!-- User Context Message -->
-        {% if user_message %}
-        <div class="messages">
-            <div class="message info" style="background-color: rgba(59, 130, 246, 0.1); color: #3b82f6; border-left: 3px solid #3b82f6;">
-                <i class="fas fa-info-circle"></i>
-                {{ user_message }}
-            </div>
-        </div>
-        {% endif %}
+        <!-- User Context Message - Removed to hide status reset notifications -->
      
         <div class="action-bar">
             <!-- Home Button -->
@@ -2577,6 +2779,14 @@
                                 <option value="NO_RFI" {% if request.GET.rfi_status == 'NO_RFI' %}selected{% endif %}>No RFI</option>
                             </select>
                         </div>
+                        <div class="form-field" style="flex: 1;">
+                            <label class="form-label">Compliance Status</label>
+                            <select class="form-control" name="compliance_status">
+                                <option value="">All Inspections</option>
+                                <option value="COMPLIANT" {% if request.GET.compliance_status == 'COMPLIANT' %}selected{% endif %}>Compliant Only</option>
+                                <option value="NON_COMPLIANT" {% if request.GET.compliance_status == 'NON_COMPLIANT' %}selected{% endif %}>Non-Compliant Only</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <!-- Action Buttons Row -->
@@ -2628,6 +2838,7 @@
                                 <th class="col-account-code">Account Code</th>
                                 <th class="col-date">Inspection Date</th>
                                 <th class="col-email">Email</th>
+                                <th class="col-compliance">Compliance Status</th>
                                 <th class="col-inspector">Inspector</th>
                                 <th class="col-view-files">View Files</th>
                                 <th class="col-rfi">RFI</th>
@@ -2646,14 +2857,18 @@
                             {% with date_str=shipment.date_of_inspection|date:"Ymd" %}
                             {% with fallback_group_id=client_slug|add:"_"|add:date_str %}
                             <!-- Main grouped row -->
-                            <tr class="group-row shipment-row {% if shipment.is_complete %}inspection-complete{% endif %}" data-group-id="{{ fallback_group_id }}" data-client-name="{{ shipment.client_name }}" data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
+                            <tr class="group-row shipment-row {% if shipment.is_complete and not shipment.is_sent %}inspection-complete{% endif %}" data-group-id="{{ fallback_group_id }}" data-client-name="{{ shipment.client_name }}" data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}" {% if shipment.sent_date %}data-sent-timestamp="{{ shipment.sent_date|date:'c' }}"{% endif %}>
                                 <td class="col-expand">
                                     <button class="expand-btn" data-group-id="{{ fallback_group_id }}" title="Expand/Collapse">
                                         <i class="fas fa-chevron-right"></i>
                                     </button>
                                 </td>
                                 <td class="col-client-name tooltip" data-tooltip="{{ shipment.client_name }}">
-                                    {{ shipment.client_name|truncatechars:20|default:"-" }}
+                                    <div style="display: flex; align-items: center; gap: 5px;">
+                                        <span>{{ shipment.client_name|truncatechars:20|default:"-" }}</span>
+                                        {% comment %} Sample status indicator will be added by JavaScript {% endcomment %}
+                                        <span class="sample-indicator" data-group-id="{{ fallback_group_id }}" style="font-size: 0.5rem;"></span>
+                                    </div>
                                 </td>
                                 <td class="col-account-code">{{ shipment.internal_account_code|default:"-" }}</td>
                                 <td class="col-date">{{ shipment.date_of_inspection|date:"m/d/y"|default:"-" }}</td>
@@ -2669,6 +2884,13 @@
                                         {% endfor %}
                                     {% else %}
                                         -
+                                    {% endif %}
+                                </td>
+                                <td class="col-compliance">
+                                    {% if shipment.is_direction_present_for_this_inspection %}
+                                        <span class="compliance-status non-compliant" title="Non-Compliant (Direction Present)">Non-Compliant</span>
+                                    {% else %}
+                                        <span class="compliance-status compliant" title="Compliant (No Direction)">Compliant</span>
                                     {% endif %}
                                 </td>
                                 <td class="col-inspector">{{ shipment.inspector_name|default:"-" }}</td>
@@ -2804,24 +3026,23 @@
                                 <!-- Sent Status Column -->
                                 <td class="col-send">
                                     {% if user_role != 'inspector' and user_role != 'scientist' %}
-                                        <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}" 
+                                        <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}{% if shipment.compliance_status != 'complete' %} disabled-dropdown{% endif %}" 
                                                 data-group-id="{{ fallback_group_id }}" 
                                                 data-delay-days="{{ onedrive_delay_days }}" 
+                                                data-compliance-status="{{ shipment.compliance_status }}"
                                                 onchange="updateSentStatus(this)" 
-                                                title="Mark as sent when documents are delivered">
+                                                {% if shipment.compliance_status != 'complete' %}disabled{% endif %}
+                                                title="{% if shipment.compliance_status == 'complete' %}Mark as sent when documents are delivered{% else %}All required files must be uploaded before marking as sent (Status: {{ shipment.compliance_status }}){% endif %}">
                                             <option value="NO" {% if shipment.is_sent == False %}selected{% endif %}>Not Sent</option>
-                                            <option value="YES" {% if shipment.is_sent %}selected{% endif %}>Sent</option>
+                                            <option value="YES" {% if shipment.is_sent %}selected{% endif %}>{% if shipment.sent_by and shipment.sent_by.first_name %}{{ shipment.sent_by.first_name }}{% else %}{{ shipment.sent_by.username|default:"Sent" }}{% endif %}{% if shipment.sent_date %} - {{ shipment.sent_date|date:"M d, Y H:i" }}{% endif %}</option>
                                         </select>
-                                        {% if shipment.is_sent and shipment.sent_date %}
-                                        <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">
-                                            {% if shipment.sent_by %}{{ shipment.sent_by.username }}{% else %}{{ request.user.username }}{% endif %} - {{ shipment.sent_date|date:"M d, Y H:i" }}
-                                        </small>
+                                        {% if shipment.is_sent == True and shipment.sent_date %}
                                         <div class="onedrive-countdown" 
                                              data-sent-date="{{ shipment.sent_date|date:'c' }}" 
                                              data-onedrive-uploaded="{{ shipment.onedrive_uploaded|yesno:'true,false' }}"
                                              data-onedrive-upload-date="{% if shipment.onedrive_upload_date %}{{ shipment.onedrive_upload_date|date:'c' }}{% endif %}"
                                              data-delay-days="{{ onedrive_delay_days }}"
-                                             style="font-size: 0.5rem; margin-top: 1px; text-align: center;">
+                                             style="font-size: 0.6rem; margin-top: 2px; text-align: center;">
                                             <span class="countdown-text">{{ onedrive_delay_days|floatformat:0 }} days until upload</span>
                                         </div>
                                         {% else %}
@@ -2832,7 +3053,7 @@
                                         <div class="sent-status-readonly">
                                             {% if shipment.is_sent == True %}
                                                 <span class="badge badge-success" style="background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
-                                                    Sent ✓
+                                                    {% if shipment.sent_by and shipment.sent_by.first_name %}{{ shipment.sent_by.first_name }}{% else %}{{ shipment.sent_by.username|default:"Sent" }}{% endif %} ✓
                                                 </span>
                                                 {% if shipment.sent_date %}
                                                 <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">
@@ -2856,7 +3077,7 @@
                             
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
-                                <td colspan="{% if user.role == 'inspector' %}11{% else %}12{% endif %}" class="detail-cell">
+                                <td colspan="{% if user.role == 'inspector' %}12{% else %}13{% endif %}" class="detail-cell">
                                     <div class="detail-content">
                                         <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"m/d/y" }} 
                                             <small style="color: #666; font-size: 0.8em;">
@@ -2912,23 +3133,28 @@
                                                             <option value="NO" {% if product.needs_retest == 'NO' or not product.is_sample_taken %}selected{% endif %}>No</option>
                                                         </select>
                                                     </td>
-                                                    <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
+                                                    <td class="col-km">
                                                         <input type="text" class="km-input" 
                                                                data-inspection-id="{{ product.remote_id }}" 
                                                                value="{{ product.product_name|default:'' }}"
                                                                placeholder="Enter product name"
                                                                onchange="updateProductName(this)"
-                                                               {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - Product name entry disabled"{% endif %}>
+                                                               >
                                                     </td>
                                                     <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <select class="km-input" 
+                                                        {% with lower_commodity=product.commodity|default:''|lower %}
+                                                        <select class="km-input product-class-select" 
                                                                 data-inspection-id="{{ product.remote_id }}"
+                                                                data-commodity="{{ lower_commodity }}"
                                                                 onchange="updateProductClass(this)"
-                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - Product class selection disabled"{% endif %}>
-                                                            <option value="">Select Class...</option>
+                                                                {% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}disabled style="opacity: 0.5; cursor: not-allowed;" title="Class not applicable for Egg/Poultry"{% endif %}>
+                                                            <option value="">{% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}No Class{% else %}Select Class...{% endif %}</option>
+                                                        {% endwith %}
                                                             <option {% if product.product_class == 'Extra Lean Mince' %}selected{% endif %}>Extra Lean Mince</option>
+                                                            <option {% if product.product_class == 'Lean Mince' %}selected{% endif %}>Lean Mince</option>
                                                             <option {% if product.product_class == 'Regular Mince' %}selected{% endif %}>Regular Mince</option>
                                                             <option {% if product.product_class == 'Raw Flavoured Ground Meat' %}selected{% endif %}>Raw Flavoured Ground Meat</option>
+                                                            <option {% if product.product_class == 'Raw Flavoured Ground Meat & Offal' %}selected{% endif %}>Raw Flavoured Ground Meat & Offal</option>
                                                             <option {% if product.product_class == 'Raw Flavoured mixed species Ground Meat' %}selected{% endif %}>Raw Flavoured mixed species Ground Meat</option>
                                                             <option {% if product.product_class == 'Raw Flavoured mixed species Ground Meat & Offal' %}selected{% endif %}>Raw Flavoured mixed species Ground Meat & Offal</option>
                                                             <option {% if product.product_class == 'Raw Boerewors' %}selected{% endif %}>Raw Boerewors</option>
@@ -3015,33 +3241,38 @@
                                                     {% if user.role != 'inspector' %}
                                                     <td>
                                                         <!-- Other roles can upload lab documents -->
+                                                        {% if product.is_sample_taken %}
                                                         <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if product.is_sample_taken %}onclick="uploadLab('{{ product.remote_id|escapejs }}')"{% endif %} 
-                                                                title="{% if not product.is_sample_taken %}No sample taken - Lab upload disabled{% elif product.needs_retest == 'NO' %}Lab result upload available{% else %}Lab result upload available{% endif %}">
+                                                                onclick="uploadLab('{{ product.remote_id|escapejs }}')" 
+                                                                title="Lab result upload available">
                                                             <i class="fas fa-flask"></i> Lab
                                                         </button>
                                                         <button class="btn btn-sm btn-lab-form" id="lab-form-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if product.is_sample_taken %}onclick="uploadLabForm('{{ product.remote_id|escapejs }}')"{% endif %} 
-                                                                title="{% if not product.is_sample_taken %}No sample taken - Lab form upload disabled{% else %}Lab form submission upload available{% endif %}">
+                                                                onclick="uploadLabForm('{{ product.remote_id|escapejs }}')" 
+                                                                title="Lab form submission upload available">
                                                             <i class="fas fa-file-alt"></i> Lab Form
                                                         </button>
                                                         <button class="btn btn-sm btn-retest" id="retest-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if not product.is_sample_taken or product.needs_retest != 'YES' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if product.is_sample_taken and product.needs_retest == 'YES' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')"{% endif %} 
-                                                                title="{% if not product.is_sample_taken %}No sample taken - Retest upload disabled{% elif product.is_sample_taken and product.needs_retest == 'YES' %}Retest required - Please upload retest document{% elif product.needs_retest == 'NO' %}No retest required - Upload disabled{% else %}Select retest status first{% endif %}">
+                                                                {% if product.needs_retest != 'YES' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
+                                                                {% if product.needs_retest == 'YES' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')"{% endif %} 
+                                                                title="{% if product.needs_retest == 'YES' %}Retest required - Please upload retest document{% else %}No retest required - Upload disabled{% endif %}">
                                                             <i class="fas fa-redo"></i> Retest
                                                         </button>
+                                                        {% else %}
+                                                        <!-- No sample taken - show message instead of buttons -->
+                                                        <span class="text-muted" style="font-size: 0.85em; font-style: italic;">
+                                                            <i class="fas fa-info-circle"></i> No sample taken
+                                                        </span>
+                                                        {% endif %}
                                                     </td>
                                                     {% endif %}
                                                 </tr>
@@ -3737,6 +3968,10 @@
                     // Re-enable RFI and Invoice buttons if their files were deleted
                     reEnableUploadButtons(filePath, category);
                     
+                    // Update View Files button colors after deletion
+                    console.log('🎨 Updating button colors after file deletion...');
+                    updateAllViewFilesButtonColors();
+                    
                     // Refresh the files display
                     if (window.currentFilesClient && window.currentFilesDate) {
                         openFilesPopup(window.currentFilesGroupId, window.currentFilesClient, window.currentFilesDate);
@@ -4239,6 +4474,49 @@
             });
         }
         
+        // Function to initialize disabled rows for already sent items
+        function initializeDisabledRows() {
+            console.log('🔍 Initializing sent rows...');
+            
+            // Find all rows with sent timestamps
+            const sentRows = document.querySelectorAll('.shipment-row[data-sent-timestamp]');
+            console.log('🔍 Found', sentRows.length, 'rows with sent timestamps');
+            
+            sentRows.forEach((row, index) => {
+                console.log(`🔍 Processing sent row ${index + 1}:`, row);
+                
+                const groupId = row.getAttribute('data-group-id');
+                const sentTimestamp = row.getAttribute('data-sent-timestamp');
+                
+                // Store timestamp in localStorage for persistence
+                if (groupId && sentTimestamp) {
+                    localStorage.setItem('sent_timestamp_' + groupId, sentTimestamp);
+                    console.log(`💾 Stored sent timestamp for group ${groupId}:`, sentTimestamp);
+                    
+                    // Check if 15 minutes have already passed
+                    const sentDate = new Date(sentTimestamp);
+                    const fifteenMinutesLater = new Date(sentDate.getTime() + (15 * 60 * 1000));
+                    const now = new Date();
+                    const remainingTime = fifteenMinutesLater.getTime() - now.getTime();
+                    
+                    if (remainingTime <= 0) {
+                        // 15 minutes have passed, disable the row (no countdown display, no green background)
+                        console.log(`🔒 15 minutes already passed for group ${groupId}, disabling row`);
+                        disableRowAfterTimer(row, groupId);
+                    } else {
+                        // 15 minutes haven't passed yet, start countdown timer (no green background)
+                        console.log(`⏰ 15 minutes not yet passed for group ${groupId}, starting countdown timer`);
+                        startFifteenMinuteTimer(row, groupId, sentTimestamp);
+                    }
+                } else {
+                    // No timestamp available, keep as disabled (fallback)
+                    console.log(`⚠️ No timestamp available for group ${groupId}, keeping disabled`);
+                    row.setAttribute('data-was-sent', 'true');
+                }
+            });
+            
+            console.log('✅ Sent rows initialization complete');
+        }
 
         
         // Initialize page on load
@@ -4252,6 +4530,18 @@
             console.log('🚀 [SENT STATUS] Calling loadSentStatus immediately');
             console.log('🚀 [SENT STATUS] ===========================================');
             loadSentStatus();
+            
+            // Initialize disabled rows for already sent items
+            initializeDisabledRows();
+            
+            // Initialize 15-minute timers for sent rows
+            console.log('🔍 About to call initializeFifteenMinuteTimers...');
+            if (typeof initializeFifteenMinuteTimers === 'function') {
+                console.log('✅ initializeFifteenMinuteTimers function found, calling it...');
+                initializeFifteenMinuteTimers();
+            } else {
+                console.error('❌ initializeFifteenMinuteTimers function not found!');
+            }
             
             // Load sent status with a longer delay to ensure DOM is fully rendered and all other functions have run
             setTimeout(() => {
@@ -5470,27 +5760,24 @@
                     
                     if (groupRow) {
                         groupRow.classList.add('inspection-complete');
-                        console.log('🎯 [SENT STATUS] SUCCESS: Marked group ' + groupId + ' as complete on page load');
-                        
-                        // Force the styling directly and make it persistent
-                        groupRow.style.backgroundColor = '#22c55e !important';
-                        groupRow.style.color = 'white !important';
-                        groupRow.style.borderColor = '#16a34a !important';
-                        
-                        // Also apply to all td elements with !important
-                        const tds = groupRow.querySelectorAll('td');
-                        tds.forEach(td => {
-                            td.style.setProperty('background-color', '#22c55e', 'important');
-                            td.style.setProperty('color', 'white', 'important');
-                            td.style.setProperty('border-color', '#16a34a', 'important');
-                        });
-                        
-                        // Add a data attribute to mark this row as sent
+                        groupRow.classList.add('row-locked');
+                        groupRow.setAttribute('data-locked', 'true');
                         groupRow.setAttribute('data-sent-status', 'yes');
+                        groupRow.setAttribute('data-was-sent', 'true');
+                        console.log('🎯 [SENT STATUS] SUCCESS: Marked group ' + groupId + ' as complete and LOCKED on page load');
+                        
+                        // Lock the entire row - disable all interactive elements
+                        if (typeof lockRow === 'function') {
+                            lockRow(groupRow);
+                        } else {
+                            console.log('⚠️ [SENT STATUS] lockRow function not available, applying basic styling');
+                            // Fallback styling if lockRow function is not available
+                            groupRow.style.borderLeft = '4px solid #22c55e';
+                        }
                         
                         // Verify the class was added
                         if (groupRow.classList.contains('inspection-complete')) {
-                            console.log('✅ [SENT STATUS] VERIFIED: Row ' + groupId + ' has inspection-complete class');
+                            console.log('✅ [SENT STATUS] VERIFIED: Row ' + groupId + ' has inspection-complete class and is LOCKED');
                         } else {
                             console.log('❌ [SENT STATUS] ERROR: Row ' + groupId + ' does NOT have inspection-complete class');
                         }
@@ -5508,10 +5795,21 @@
                     dropdown.classList.remove('sent-yes');
                     dropdown.classList.add('sent-no');
                     
-                    // Remove complete status from row
+                    // Remove complete status from row and unlock it
                     const groupRow = document.querySelector('tr[data-group-id="' + groupId + '"]');
                     if (groupRow) {
                         groupRow.classList.remove('inspection-complete');
+                        groupRow.classList.remove('row-locked');
+                        groupRow.removeAttribute('data-locked');
+                        groupRow.removeAttribute('data-sent-status');
+                        
+                        // Unlock the row if lockRow function is available
+                        if (typeof unlockRow === 'function') {
+                            unlockRow(groupRow);
+                        } else {
+                            // Fallback: remove styling
+                            groupRow.style.borderLeft = '';
+                        }
                     }
                 } else {
                     dropdown.style.backgroundColor = 'var(--card-bg)';
@@ -5519,10 +5817,21 @@
                     dropdown.style.borderColor = 'var(--border)';
                     dropdown.classList.remove('sent-yes', 'sent-no');
                     
-                    // Remove complete status from row
+                    // Remove complete status from row and unlock it
                     const groupRow = document.querySelector('tr[data-group-id="' + groupId + '"]');
                     if (groupRow) {
                         groupRow.classList.remove('inspection-complete');
+                        groupRow.classList.remove('row-locked');
+                        groupRow.removeAttribute('data-locked');
+                        groupRow.removeAttribute('data-sent-status');
+                        
+                        // Unlock the row if lockRow function is available
+                        if (typeof unlockRow === 'function') {
+                            unlockRow(groupRow);
+                        } else {
+                            // Fallback: remove styling
+                            groupRow.style.borderLeft = '';
+                        }
                     }
                 }
                 
@@ -5976,6 +6285,15 @@
                                 console.log('✅ RFI uploaded successfully!');
                                 markAsUploaded('rfi-' + groupId);
                                 
+                                // Update View Files button colors after upload with delay to ensure server processing
+                                console.log('🎨 Updating button colors after RFI upload...');
+                                console.log('⏰ Setting 3-second timer for delayed color update...');
+                                setTimeout(() => {
+                                    console.log('⏰ Timer fired! Starting delayed color update...');
+                                    console.log('🔄 Delayed file status check after RFI upload...');
+                                    updateAllViewFilesButtonColors();
+                                }, 3000); // 3 second delay to ensure server processing is complete
+                                
                                 // Auto-open files popup after successful upload
                                 const button = document.getElementById('rfi-' + groupId);
                                 if (button) {
@@ -6055,6 +6373,10 @@
                             console.log('🔧 About to call markAsUploaded for invoice-' + groupId);
                             markAsUploaded('invoice-' + groupId);
                             console.log('🔧 markAsUploaded called for invoice-' + groupId);
+                            
+                            // Update View Files button colors after upload
+                            console.log('🎨 Updating button colors after Invoice upload...');
+                            updateAllViewFilesButtonColors();
                             
                             // Auto-open files popup after successful upload
                             const button = document.getElementById('invoice-' + groupId);
@@ -6634,6 +6956,103 @@
                 console.log('Product class update blocked - no sample taken');
                 return;
             }
+
+            // If commodity is egg/poultry, block updates and reset to empty
+            const commodity = (dropdown.getAttribute('data-commodity') || '').toLowerCase();
+            if (['egg', 'eggs', 'poultry', 'chicken'].includes(commodity)) {
+                dropdown.value = '';
+                alert('Product class is not applicable for Egg/Poultry commodities.');
+                return;
+            }
+
+            // Filter options based on RAW vs PMP commodity
+            const isRaw = commodity === 'raw';
+
+            // Normalization helper for robust label matching
+            const normalizeLabel = (s) => (s || '')
+                .toLowerCase()
+                .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            const rawAllowed = new Set([
+                'extra lean mince',
+                'lean mince',
+                'regular mince',
+                'raw flavoured ground meat',
+                'raw flavoured ground meat & offal',
+                'raw flavoured mixed species ground meat',
+                'raw flavoured mixed species ground meat & offal',
+                'raw boerewors',
+                'raw species sausage / wors',
+                'raw mixed species sausage / wors',
+                'ground burger / ground patty = extra lean',
+                'ground burger / ground patty = lean',
+                'ground burger / ground patty = regular',
+                'burger / patty / hamburger patty / meatball / frikkadel = extra lean',
+                'burger / patty / hamburger patty / meatball / frikkadel = lean',
+                'burger / patty / hamburger patty / meatball / frikkadel = regular',
+                'value burger / value patty / value hamburger / value meatball / value frikkadel',
+                'economy burger / econo burger / economy patty / econo patty / budget burger',
+                'raw banger / griller',
+                'raw boerewors / sizzle'
+            ].map(normalizeLabel));
+
+            const pmpAllowed = new Set([
+                'whole muscle, cured, heat treated products',
+                'whole muscle, dry cured, heat treated products',
+                'whole muscle, uncured and heat / partial treated products',
+                'whole muscle, uncured, no or partial heat treated and air dried products',
+                'whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
+                'whole muscle, dry cured, no or partial heat treated products',
+                'whole muscle, cured and no or partial heat treated products',
+                'whole muscle, cured, no or partial heat treated and air dried products',
+                'whole muscle, dry cured, no or partial heat treated and dried products',
+                'comminuted, cured and heat treated products',
+                'liver spreads, pates and terrines',
+                'products in aspic: brawn',
+                'product in aspic: suelze',
+                'other products containing cured meat pieces in aspic',
+                'products made from blood',
+                'comminuted, uncured, no or partial heat treated and dried products',
+                'comminuted, cured, no or partial heat treated, dried and fermented products',
+                'comminuted, uncured and heat treated products',
+                'reformed, uncured and no or partial heat treated products',
+                'reformed, cured, heat treated products from single species',
+                'reformed, cured, heat treated products from mixed species',
+                'reformed, cured and no or partial heat treated products',
+                'coated processed meat products',
+                'unspecified processed meat products'
+            ].map(normalizeLabel));
+
+            // Rebuild the options list with only allowed options
+            const currentValue = dropdown.value;
+            const allOptions = Array.from(dropdown.options).map(opt => ({
+                text: opt.text,
+                value: opt.value,
+                norm: normalizeLabel(opt.text || ''),
+            }));
+            const placeholder = allOptions[0];
+            const allowedSet = isRaw ? rawAllowed : pmpAllowed;
+            const filtered = allOptions.slice(1).filter(opt => allowedSet.has(opt.norm));
+            // Clear and repopulate
+            dropdown.innerHTML = '';
+            const ph = document.createElement('option');
+            ph.value = placeholder.value || '';
+            ph.textContent = placeholder.text || 'Select Class...';
+            dropdown.appendChild(ph);
+            filtered.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.value || opt.text;
+                o.textContent = opt.text;
+                dropdown.appendChild(o);
+            });
+            // Restore selection if still present
+            if (filtered.some(opt => opt.value === currentValue || opt.text === currentValue)) {
+                dropdown.value = currentValue;
+            } else {
+                dropdown.value = '';
+            }
             
             const inspectionId = dropdown.getAttribute('data-inspection-id');
             const value = dropdown.value;
@@ -6651,6 +7070,66 @@
                 if (!data.success) alert('Error updating product class: ' + (data.error || 'Unknown error'));
             }).catch(err => alert('Error updating product class: ' + (err?.message || err)));
         }
+
+        // Filter helper that does NOT submit updates; used on page load to ensure all dropdowns are filtered
+        function filterClassOptions(dropdown) {
+            const commodity = (dropdown.getAttribute('data-commodity') || '').toLowerCase();
+            const isRaw = commodity === 'raw';
+            const normalizeLabel = (s) => (s || '')
+                .toLowerCase()
+                .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            const rawAllowed = new Set([
+                'extra lean mince','lean mince','regular mince','raw flavoured ground meat','raw flavoured ground meat & offal','raw flavoured mixed species ground meat','raw flavoured mixed species ground meat & offal','raw boerewors','raw species sausage / wors','raw mixed species sausage / wors','ground burger / ground patty = extra lean','ground burger / ground patty = lean','ground burger / ground patty = regular','burger / patty / hamburger patty / meatball / frikkadel = extra lean','burger / patty / hamburger patty / meatball / frikkadel = lean','burger / patty / hamburger patty / meatball / frikkadel = regular','value burger / value patty / value hamburger / value meatball / value frikkadel','economy burger / econo burger / economy patty / econo patty / budget burger','raw banger / griller','raw boerewors / sizzle'
+            ].map(normalizeLabel));
+            const pmpAllowed = new Set([
+                'whole muscle, cured, heat treated products','whole muscle, dry cured, heat treated products','whole muscle, uncured and heat / partial treated products','whole muscle, uncured, no or partial heat treated and air dried products','whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)','whole muscle, dry cured, no or partial heat treated products','whole muscle, cured and no or partial heat treated products','whole muscle, cured, no or partial heat treated and air dried products','whole muscle, dry cured, no or partial heat treated and dried products','comminuted, cured and heat treated products','liver spreads, pates and terrines','products in aspic: brawn','product in aspic: suelze','other products containing cured meat pieces in aspic','products made from blood','comminuted, uncured, no or partial heat treated and dried products','comminuted, cured, no or partial heat treated, dried and fermented products','comminuted, uncured and heat treated products','reformed, uncured and no or partial heat treated products','reformed, cured, heat treated products from single species','reformed, cured, heat treated products from mixed species','reformed, cured and no or partial heat treated products','coated processed meat products','unspecified processed meat products'
+            ].map(normalizeLabel));
+            // Rebuild options strictly with allowed list
+            const currentValue = dropdown.value;
+            const allOptions = Array.from(dropdown.options).map(opt => ({
+                text: opt.text,
+                value: opt.value,
+                norm: normalizeLabel(opt.text || ''),
+            }));
+            const placeholder = allOptions[0];
+            const allowedSet = isRaw ? rawAllowed : pmpAllowed;
+            const filtered = allOptions.slice(1).filter(opt => allowedSet.has(opt.norm));
+            dropdown.innerHTML = '';
+            const ph = document.createElement('option');
+            ph.value = placeholder.value || '';
+            ph.textContent = placeholder.text || 'Select Class...';
+            dropdown.appendChild(ph);
+            filtered.forEach(opt => {
+                const o = document.createElement('option');
+                o.value = opt.value || opt.text;
+                o.textContent = opt.text;
+                dropdown.appendChild(o);
+            });
+            if (filtered.some(opt => opt.value === currentValue || opt.text === currentValue)) {
+                dropdown.value = currentValue;
+            } else {
+                dropdown.value = '';
+            }
+        }
+
+        // Ensure all visible dropdowns are filtered at page load
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+            // Observe the table for dynamic changes and re-apply filters
+            const table = document.getElementById('shipmentsTable');
+            if (table && 'MutationObserver' in window) {
+                const observer = new MutationObserver(() => {
+                    document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+                });
+                observer.observe(table, { childList: true, subtree: true });
+            }
+            // Fallback: periodic re-filter shortly after load in case of late rendering
+            setTimeout(() => {
+                document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+            }, 500);
+        });
 
         // Update Lab function
         function updateLab(dropdown) {
@@ -6900,6 +7379,231 @@
         
         // updateSentStatus function now defined at top of script section
         
+        // Initialize sample status indicators and apply filtering
+        function initializeSampleIndicators() {
+            console.log('🔬 Initializing sample indicators...');
+            
+            // First, temporarily show all detail rows to read sample data
+            const detailRows = document.querySelectorAll('.detail-row');
+            const originalStates = new Map();
+            
+            // Save original states and show all detail rows
+            detailRows.forEach(row => {
+                originalStates.set(row.id, row.style.display);
+                row.style.display = '';
+            });
+            
+            // Process each row
+            detailRows.forEach(row => {
+                const groupId = row.id.replace('detail-', '');
+                const indicator = document.querySelector('.sample-indicator[data-group-id="' + groupId + '"]');
+                
+                // Check if any product in this group has samples
+                const sampleBadges = row.querySelectorAll('.sampled-badge.sampled-yes');
+                const hasSamples = sampleBadges.length > 0;
+                
+                console.log(`🔬 Processing ${groupId}: found ${sampleBadges.length} sampled products, hasSamples=${hasSamples}`);
+                
+                if (indicator) {
+                    if (hasSamples) {
+                        indicator.innerHTML = '<span class="sampled-badge sampled-yes" style="padding: 1px 3px;" title="Has samples">S</span>';
+                    } else {
+                        indicator.innerHTML = '<span class="sampled-badge sampled-no" style="padding: 1px 3px;" title="No samples">N</span>';
+                    }
+                }
+                
+                // Store sample status as data attribute for filtering
+                const mainRow = document.querySelector('[data-group-id="' + groupId + '"]');
+                if (mainRow) {
+                    mainRow.setAttribute('data-has-samples', hasSamples);
+                    console.log(`🔬 Set data-has-samples="${hasSamples}" for ${mainRow.getAttribute('data-client-name')}`);
+                } else {
+                    console.warn(`🔬 Could not find main row for group ID: ${groupId}`);
+                }
+            });
+            
+            // Restore original states
+            detailRows.forEach(row => {
+                const originalState = originalStates.get(row.id);
+                row.style.display = originalState || 'none';
+            });
+            
+            console.log('✅ Sample indicators initialized');
+            
+            // Apply sample filter if one is selected
+            applySampleFilter();
+        }
+        
+        // Apply sample status filtering
+        function applySampleFilter() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sampleStatus = urlParams.get('sample_status');
+            
+            console.log('🔬 Checking sample filter. URL param:', sampleStatus);
+            
+            if (!sampleStatus) {
+                console.log('🔬 No sample filter applied, showing all');
+                return; // No filter applied
+            }
+            
+            console.log('🔬 Applying sample filter:', sampleStatus);
+            
+            const allRows = document.querySelectorAll('.group-row.shipment-row');
+            let visibleCount = 0;
+            let hiddenCount = 0;
+            
+            allRows.forEach(row => {
+                const hasSamples = row.getAttribute('data-has-samples') === 'true';
+                const groupId = row.getAttribute('data-group-id');
+                const detailRow = document.getElementById('detail-' + groupId);
+                const clientName = row.getAttribute('data-client-name');
+                
+                let shouldShow = false;
+                
+                if (sampleStatus === 'SAMPLED' && hasSamples) {
+                    shouldShow = true;
+                } else if (sampleStatus === 'NOT_SAMPLED' && !hasSamples) {
+                    shouldShow = true;
+                } else if (sampleStatus === '' || !sampleStatus) {
+                    shouldShow = true;
+                }
+                
+                console.log(`🔬 ${clientName}: hasSamples=${hasSamples}, filter=${sampleStatus}, shouldShow=${shouldShow}`);
+                
+                if (shouldShow) {
+                    row.style.display = '';
+                    if (detailRow) {
+                        // Restore original detail row state (hidden by default)
+                        if (!detailRow.style.display || detailRow.style.display === 'none') {
+                            detailRow.style.display = 'none';
+                        }
+                    }
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                    if (detailRow) detailRow.style.display = 'none';
+                    hiddenCount++;
+                }
+            });
+            
+            // Update the inspection count display
+            updateInspectionCount(visibleCount);
+            
+            console.log(`✅ Sample filter applied: showing ${visibleCount}, hidden ${hiddenCount} inspections`);
+        }
+        
+        // Update the inspection count display
+        function updateInspectionCount(count) {
+            const countElement = document.querySelector('.table-info');
+            if (countElement) {
+                const currentText = countElement.textContent;
+                const newText = currentText.replace(/Showing \d+ of \d+ inspections/, `Showing ${count} of ${count} inspections`);
+                countElement.textContent = newText;
+            }
+        }
+        
+        // Manual function to trigger sample filter (for debugging)
+        function triggerSampleFilter() {
+            console.log('🔬 Manually triggering sample filter...');
+            initializeSampleIndicators();
+        }
+        
+        // Debug function to check current page state
+        function debugSampleFilter() {
+            console.log('🔬 DEBUGGING SAMPLE FILTER STATE');
+            console.log('================================');
+            
+            // Check URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const sampleStatus = urlParams.get('sample_status');
+            console.log('📍 URL sample_status parameter:', sampleStatus);
+            
+            // Check all rows
+            const allRows = document.querySelectorAll('.group-row.shipment-row');
+            console.log('📋 Total rows found:', allRows.length);
+            
+            let sampledCount = 0;
+            let notSampledCount = 0;
+            let unknownCount = 0;
+            
+            allRows.forEach((row, index) => {
+                const clientName = row.getAttribute('data-client-name');
+                const groupId = row.getAttribute('data-group-id');
+                const hasSamples = row.getAttribute('data-has-samples');
+                const isVisible = row.style.display !== 'none';
+                
+                console.log(`🔍 Row ${index + 1}: ${clientName}`);
+                console.log(`   group-id: ${groupId}`);
+                console.log(`   data-has-samples: ${hasSamples}`);
+                console.log(`   visible: ${isVisible}`);
+                
+                // Check detail row for actual sample badges
+                const detailRow = document.getElementById('detail-' + groupId);
+                if (detailRow) {
+                    const sampleBadges = detailRow.querySelectorAll('.sampled-badge.sampled-yes');
+                    const totalBadges = detailRow.querySelectorAll('.sampled-badge');
+                    console.log(`   sample badges: ${sampleBadges.length}/${totalBadges.length} "Yes"`);
+                    
+                    if (sampleBadges.length > 0) {
+                        sampledCount++;
+                    } else if (totalBadges.length > 0) {
+                        notSampledCount++;
+                    } else {
+                        unknownCount++;
+                    }
+                } else {
+                    console.log(`   ⚠️ No detail row found for group-id: ${groupId}`);
+                    unknownCount++;
+                }
+                console.log('');
+            });
+            
+            console.log('📊 SUMMARY:');
+            console.log(`   Sampled inspections: ${sampledCount}`);
+            console.log(`   Not sampled inspections: ${notSampledCount}`);
+            console.log(`   Unknown status: ${unknownCount}`);
+            console.log(`   Expected sampled (from test): 2 (Nesta Foods Factory, New RMP Producer)`);
+            console.log(`   Expected not sampled (from test): 23`);
+            
+            // Check dropdown state
+            const dropdown = document.querySelector('select[name="sample_status"]');
+            if (dropdown) {
+                console.log(`📋 Dropdown current value: "${dropdown.value}"`);
+            }
+            
+            return {
+                totalRows: allRows.length,
+                sampledCount,
+                notSampledCount,
+                unknownCount,
+                urlParam: sampleStatus,
+                dropdownValue: dropdown ? dropdown.value : null
+            };
+        }
+        
+        // Function to force apply filter manually
+        function forceApplyFilter(filterType) {
+            console.log(`🔧 FORCING filter application: ${filterType}`);
+            
+            // Update dropdown
+            const dropdown = document.querySelector('select[name="sample_status"]');
+            if (dropdown) {
+                dropdown.value = filterType || '';
+            }
+            
+            // Update URL
+            const currentUrl = new URL(window.location);
+            if (filterType) {
+                currentUrl.searchParams.set('sample_status', filterType);
+            } else {
+                currentUrl.searchParams.delete('sample_status');
+            }
+            window.history.replaceState({}, '', currentUrl.toString());
+            
+            // Apply filter
+            initializeSampleIndicators();
+        }
+        
         // Test function to verify JavaScript is working
         function testFunction() {
             console.log('Test function is working');
@@ -6912,6 +7616,25 @@
             
             // Initialize other functions
             initializeButtonStates();
+            
+            // Initialize sample indicators with delay to ensure DOM is ready
+            setTimeout(() => {
+                initializeSampleIndicators();
+            }, 1000);
+            
+            // Sample filter now handled by backend - no client-side filtering needed
+            // Just let the form submit normally to reload with backend filtering
+            
+            // Also add listener to the form submission to ensure compatibility
+            const filterForm = document.querySelector('form[method="get"]');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function(e) {
+                    // Let form submit normally but also apply client-side filter
+                    setTimeout(() => {
+                        initializeSampleIndicators();
+                    }, 100);
+                });
+            }
         });
         
         // Function to handle Send button clicks with validation
@@ -7141,6 +7864,35 @@
             }
         
             console.log('JavaScript finished loading successfully!');
+            
+            // Test if timer functions are available
+            console.log('🔍 Testing timer function availability...');
+            console.log('🔍 initializeFifteenMinuteTimers available:', typeof initializeFifteenMinuteTimers);
+            console.log('🔍 initializeDisabledRows available:', typeof initializeDisabledRows);
+            
+            // Try to call timer functions directly
+            if (typeof initializeFifteenMinuteTimers === 'function') {
+                console.log('🔍 Calling initializeFifteenMinuteTimers directly...');
+                try {
+                    initializeFifteenMinuteTimers();
+                } catch (error) {
+                    console.error('❌ Error calling initializeFifteenMinuteTimers:', error);
+                }
+            } else {
+                console.error('❌ initializeFifteenMinuteTimers function not found!');
+            }
+            
+            // Also try to call initializeDisabledRows
+            if (typeof initializeDisabledRows === 'function') {
+                console.log('🔍 Calling initializeDisabledRows directly...');
+                try {
+                    initializeDisabledRows();
+                } catch (error) {
+                    console.error('❌ Error calling initializeDisabledRows:', error);
+                }
+            } else {
+                console.error('❌ initializeDisabledRows function not found!');
+            }
         }
     </script>
 </body>

@@ -50,6 +50,7 @@ function uploadRFI(groupId) {
                 formData.append('csrfmiddlewaretoken', getCSRFToken());
                 
                 console.log('Uploading file:', file.name, 'for group:', groupId);
+                uploadInProgress = true; // Set upload flag to prevent status check override
                 
                 // Show loading message
                 const originalAlert = alert;
@@ -68,6 +69,7 @@ function uploadRFI(groupId) {
                 })
                 .then(data => {
                     alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
                         if (data.success) {
                             alert(data.message || 'RFI document uploaded successfully!');
                             console.log('Upload successful:', data);
@@ -82,9 +84,13 @@ function uploadRFI(groupId) {
                                 if (button) {
                                     console.log('✅ Found RFI button, updating to green success state');
                                     
+                                    // Clear file-deleted attributes since we now have a file
+                                    button.removeAttribute('data-file-deleted');
+                                    button.removeAttribute('data-last-updated');
+                                    
                                     // Update button to green success state
                                     button.disabled = true;
-                                    button.className = 'btn btn-sm btn-success';
+                                    button.className = 'btn btn-sm btn-success success';
                                     button.style.backgroundColor = '#28a745';
                                     button.style.borderColor = '#28a745';
                                     button.style.cursor = 'not-allowed';
@@ -95,6 +101,31 @@ function uploadRFI(groupId) {
                                     button.onclick = null;
                                     
                                     console.log('✅ Updated RFI button to green success state');
+                                    
+        // Update View Files button colors after upload with delay to ensure server processing
+        console.log('🎨 Updating button colors after RFI upload...');
+        console.log('⏰ Setting 5-second timer for delayed color update...');
+        console.log('🔍 [DEBUG] Upload in progress flag:', uploadInProgress);
+        
+        // Clear upload flag before setting delayed update to prevent race condition
+        uploadInProgress = false;
+        console.log('🔍 [DEBUG] Cleared upload flag before delayed update');
+        
+        setTimeout(() => {
+            console.log('⏰ Timer fired! Starting delayed color update...');
+            console.log('🔍 [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
+            console.log('🔍 [DEBUG] Status check in progress flag:', statusCheckInProgress);
+            if (typeof updateAllViewFilesButtonColors === 'function') {
+                console.log('🔄 Delayed file status check after RFI upload...');
+                updateAllViewFilesButtonColors();
+            } else {
+                console.warn('updateAllViewFilesButtonColors function not available');
+            }
+            
+            // Also update RFI button color with delayed check
+            console.log('🔄 Delayed RFI button color update...');
+            updateRFIButtonColorDelayed(groupId);
+        }, 5000); // 5 second delay to ensure server processing is complete
                                     
                                     // Check if View Files popup is open - if so, auto-refresh it
                                     const modal = document.getElementById('filesModal');
@@ -117,10 +148,8 @@ function uploadRFI(groupId) {
                                         }, 2000);
                                     }
                                 } else {
-                                    console.log('⚠️ RFI button not found, refreshing page to show updated state');
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    }, 1000);
+                                    console.log('⚠️ RFI button not found, but continuing without page refresh');
+                                    // Page refresh removed to prevent button color reset
                                 }
                     } else {
                         alert('Upload failed: ' + (data.error || 'Unknown error'));
@@ -129,6 +158,7 @@ function uploadRFI(groupId) {
                 })
                 .catch(error => {
                     alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
                     console.error('Upload error:', error);
                     alert('Upload error: ' + error.message);
                 });
@@ -183,6 +213,7 @@ function uploadInvoice(groupId) {
                 formData.append('csrfmiddlewaretoken', getCSRFToken());
                 
                 console.log('Uploading invoice:', file.name, 'for group:', groupId);
+                uploadInProgress = true; // Set upload flag to prevent status check override
                 
                 fetch('/upload-document/', {
                     method: 'POST',
@@ -190,6 +221,7 @@ function uploadInvoice(groupId) {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    uploadInProgress = false; // Clear upload flag
                     if (data.success) {
                         alert(data.message || 'Invoice uploaded successfully!');
                         console.log('Invoice upload successful:', data);
@@ -214,9 +246,13 @@ function uploadInvoice(groupId) {
                         if (button) {
                             console.log('✅ Found Invoice button, updating to green success state');
                             
+                            // Clear file-deleted attributes since we now have a file
+                            button.removeAttribute('data-file-deleted');
+                            button.removeAttribute('data-last-updated');
+                            
                             // Update button to green success state
                             button.disabled = true;
-                            button.className = 'btn btn-sm btn-success';
+                            button.className = 'btn btn-sm btn-success success';
                             button.style.backgroundColor = '#28a745';
                             button.style.borderColor = '#28a745';
                             button.style.cursor = 'not-allowed';
@@ -227,6 +263,30 @@ function uploadInvoice(groupId) {
                             button.onclick = null;
                             
                             console.log('✅ Updated Invoice button to green success state');
+                            
+                            // Update View Files button colors after upload with delay to ensure server processing
+                            console.log('🎨 Updating button colors after Invoice upload...');
+                            console.log('⏰ Setting 5-second timer for delayed color update...');
+                            
+                            // Clear upload flag before setting delayed update to prevent race condition
+                            uploadInProgress = false;
+                            console.log('🔍 [DEBUG] Cleared upload flag before delayed update');
+                            
+                            setTimeout(() => {
+                                console.log('⏰ Timer fired! Starting delayed color update...');
+                                console.log('🔍 [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
+                                console.log('🔍 [DEBUG] Status check in progress flag:', statusCheckInProgress);
+                                if (typeof updateAllViewFilesButtonColors === 'function') {
+                                    console.log('🔄 Delayed file status check after Invoice upload...');
+                                    updateAllViewFilesButtonColors();
+                                } else {
+                                    console.warn('updateAllViewFilesButtonColors function not available');
+                                }
+                                
+                                // Also update Invoice button color with delayed check
+                                console.log('🔄 Delayed Invoice button color update...');
+                                updateInvoiceButtonColorDelayed(groupId);
+                            }, 5000); // 5 second delay to ensure server processing is complete
                             
                             // Check if View Files popup is open - if so, auto-refresh it
                             const modal = document.getElementById('filesModal');
@@ -249,10 +309,8 @@ function uploadInvoice(groupId) {
                                 }, 2000);
                             }
                         } else {
-                            console.log('⚠️ Invoice button not found, refreshing page to show updated state');
-                            setTimeout(() => {
-                                window.location.reload();
-                            }, 1000);
+                            console.log('⚠️ Invoice button not found, but continuing without page refresh');
+                            // Page refresh removed to prevent button color reset
                         }
                     } else {
                         alert('Invoice upload failed: ' + (data.error || 'Unknown error'));
@@ -260,6 +318,7 @@ function uploadInvoice(groupId) {
                     }
                 })
                 .catch(error => {
+                    uploadInProgress = false; // Clear upload flag
                     console.error('Invoice upload error:', error);
                     alert('Invoice upload error: ' + error.message);
                 });
@@ -278,6 +337,246 @@ function uploadInvoice(groupId) {
     } catch (error) {
         console.error('Error in uploadInvoice function:', error);
         alert('Error in upload function: ' + error.message);
+    }
+}
+
+// Upload Lab function
+function uploadLab(inspectionId) {
+    console.log('uploadLab called with inspectionId:', inspectionId);
+    
+    if (!inspectionId) {
+        alert('Error: Inspection ID is missing');
+        return;
+    }
+    
+    try {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf';
+        fileInput.style.display = 'none';
+        
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed. Please select a PDF document.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('inspection_id', inspectionId);
+                formData.append('document_type', 'lab');
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+                
+                console.log('Uploading lab result:', file.name, 'for inspection:', inspectionId);
+                uploadInProgress = true;
+                
+                fetch('/upload-document/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    uploadInProgress = false;
+                    if (data.success) {
+                        alert(data.message || 'Lab result uploaded successfully!');
+                        console.log('Lab upload successful:', data);
+                        
+                        // Update button to green success state
+                        const buttonId = 'lab-' + inspectionId;
+                        let button = document.getElementById(buttonId);
+                        if (button) {
+                            button.classList.add('uploaded');
+                            button.innerHTML = '<i class="fas fa-flask"></i> Lab ✓';
+                            button.disabled = true;
+                            button.title = 'Lab result uploaded';
+                        }
+                        
+                        // Trigger delayed color update
+                        setTimeout(() => {
+                            updateAllViewFilesButtonColors();
+                        }, 1000);
+                    } else {
+                        alert(data.message || 'Failed to upload lab result');
+                        console.error('Lab upload failed:', data);
+                    }
+                })
+                .catch(error => {
+                    uploadInProgress = false;
+                    console.error('Error uploading lab result:', error);
+                    alert('Error uploading lab result. Please try again.');
+                });
+            }
+        };
+        
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+        
+    } catch (error) {
+        console.error('Error creating file input for lab upload:', error);
+        alert('Error creating file input. Please try again.');
+    }
+}
+
+// Upload Lab Form function
+function uploadLabForm(inspectionId) {
+    console.log('uploadLabForm called with inspectionId:', inspectionId);
+    
+    if (!inspectionId) {
+        alert('Error: Inspection ID is missing');
+        return;
+    }
+    
+    try {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf';
+        fileInput.style.display = 'none';
+        
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed. Please select a PDF document.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('inspection_id', inspectionId);
+                formData.append('document_type', 'lab_form');
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+                
+                console.log('Uploading lab form:', file.name, 'for inspection:', inspectionId);
+                uploadInProgress = true;
+                
+                fetch('/upload-document/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    uploadInProgress = false;
+                    if (data.success) {
+                        alert(data.message || 'Lab form uploaded successfully!');
+                        console.log('Lab form upload successful:', data);
+                        
+                        // Update button to green success state
+                        const buttonId = 'lab-form-' + inspectionId;
+                        let button = document.getElementById(buttonId);
+                        if (button) {
+                            button.classList.add('uploaded');
+                            button.innerHTML = '<i class="fas fa-file-alt"></i> Lab Form ✓';
+                            button.disabled = true;
+                            button.title = 'Lab form uploaded';
+                        }
+                        
+                        // Trigger delayed color update
+                        setTimeout(() => {
+                            updateAllViewFilesButtonColors();
+                        }, 1000);
+                    } else {
+                        alert(data.message || 'Failed to upload lab form');
+                        console.error('Lab form upload failed:', data);
+                    }
+                })
+                .catch(error => {
+                    uploadInProgress = false;
+                    console.error('Error uploading lab form:', error);
+                    alert('Error uploading lab form. Please try again.');
+                });
+            }
+        };
+        
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+        
+    } catch (error) {
+        console.error('Error creating file input for lab form upload:', error);
+        alert('Error creating file input. Please try again.');
+    }
+}
+
+// Upload Retest function
+function uploadRetest(inspectionId) {
+    console.log('uploadRetest called with inspectionId:', inspectionId);
+    
+    if (!inspectionId) {
+        alert('Error: Inspection ID is missing');
+        return;
+    }
+    
+    try {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf';
+        fileInput.style.display = 'none';
+        
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed. Please select a PDF document.');
+                    return;
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('inspection_id', inspectionId);
+                formData.append('document_type', 'retest');
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+                
+                console.log('Uploading retest document:', file.name, 'for inspection:', inspectionId);
+                uploadInProgress = true;
+                
+                fetch('/upload-document/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    uploadInProgress = false;
+                    if (data.success) {
+                        alert(data.message || 'Retest document uploaded successfully!');
+                        console.log('Retest upload successful:', data);
+                        
+                        // Update button to green success state
+                        const buttonId = 'retest-' + inspectionId;
+                        let button = document.getElementById(buttonId);
+                        if (button) {
+                            button.classList.add('uploaded');
+                            button.innerHTML = '<i class="fas fa-redo"></i> Retest ✓';
+                            button.disabled = true;
+                            button.title = 'Retest document uploaded';
+                        }
+                        
+                        // Trigger delayed color update
+                        setTimeout(() => {
+                            updateAllViewFilesButtonColors();
+                        }, 1000);
+                    } else {
+                        alert(data.message || 'Failed to upload retest document');
+                        console.error('Retest upload failed:', data);
+                    }
+                })
+                .catch(error => {
+                    uploadInProgress = false;
+                    console.error('Error uploading retest document:', error);
+                    alert('Error uploading retest document. Please try again.');
+                });
+            }
+        };
+        
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+        
+    } catch (error) {
+        console.error('Error creating file input for retest upload:', error);
+        alert('Error creating file input. Please try again.');
     }
 }
 
@@ -417,22 +716,41 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         console.log('🔄 Original date:', inspectionDate);
         console.log('🔄 Cleaned date:', cleanDate);
         
-        // Use the working method directly with cache-busting
+        // Get the first inspection ID from the group by finding lab buttons
+        let inspectionId = null;
+        const rows = document.querySelectorAll('tr[data-client-name="' + cleanClientName + '"][data-inspection-date="' + cleanDate + '"]');
+        for (const row of rows) {
+            const labButton = row.querySelector('button[id^="lab-"]');
+            if (labButton) {
+                const buttonId = labButton.id;
+                inspectionId = buttonId.replace('lab-', '');
+                console.log('🔍 Found inspection ID from lab button:', inspectionId);
+                break;
+            }
+        }
+        
+        if (!inspectionId) {
+            console.warn('⚠️ No inspection ID found for group, will show all files');
+        }
+
+        // Use the working method directly with aggressive cache-busting
         const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const response = await fetch('/inspections/files/', {
+        const response = await fetch('/list-uploaded-files/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': getCSRFToken(),
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
-                'Expires': '0'
+                'Expires': '0',
+                'X-Cache-Bust': cacheBuster  // Additional cache-busting header
             },
             body: JSON.stringify({
-                group_id: groupId,
                 client_name: cleanClientName,
                 inspection_date: cleanDate,
-                _cache_bust: cacheBuster
+                inspection_id: inspectionId,  // Add inspection ID for filtering
+                _cache_bust: cacheBuster,
+                _force_refresh: true  // Force server to skip cache
             })
         });
         
@@ -595,10 +913,23 @@ function displayFiles(files, message = null, isTestData = false) {
             
             if (fileList && Array.isArray(fileList) && fileList.length > 0) {
                 totalFiles += fileList.length;
+                
+                // Map category keys to proper capitalized labels
+                const categoryLabels = {
+                    'rfi': 'Request For Invoice',
+                    'invoice': 'Invoice',
+                    'lab': 'Lab Results',
+                    'lab_form': 'Lab Forms',
+                    'retest': 'Retest',
+                    'compliance': 'Compliance'
+                };
+                
+                const displayLabel = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+                
                 html += `<div class="file-category" style="margin-bottom: 1rem; border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
                     <h4 style="color: #495057; margin-bottom: 0.5rem; display: flex; align-items: center;">
                         <i class="fas fa-folder" style="margin-right: 0.5rem; color: #6c757d;"></i>
-                        ${category} (${fileList.length})
+                        ${displayLabel} (${fileList.length})
                     </h4>
                     <div class="file-list">`;
                 
@@ -749,9 +1080,10 @@ async function deleteFile(filePath, fileName) {
         // Get the current client and inspection date from stored values
         let clientName = window.currentFilesClient;
         let inspectionDate = window.currentFilesDate;
+        let groupId = window.currentFilesGroupId;
         
-        if (!clientName || !inspectionDate) {
-            alert('Error: Missing client or inspection date information');
+        if (!clientName || !inspectionDate || !groupId) {
+            alert('Error: Missing client, inspection date, or group ID information');
             return;
         }
         
@@ -797,10 +1129,14 @@ async function deleteFile(filePath, fileName) {
             
             // Determine document type from file path
             let documentType = 'unknown';
-            if (filePath.includes('/rfi/')) {
+            if (filePath.includes('/Request For Invoice/') || filePath.includes('/rfi/')) {
                 documentType = 'rfi';
             } else if (filePath.includes('/invoice/')) {
                 documentType = 'invoice';
+            } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
+                documentType = 'lab';
+            } else if (filePath.includes('/retest/')) {
+                documentType = 'retest';
             }
             
             // IMMEDIATE UI UPDATE: Remove the file from the current display
@@ -813,6 +1149,12 @@ async function deleteFile(filePath, fileName) {
                     fileContainer.innerHTML = `<div class="file-deleted">📄 ${fileName} - Deleted</div>`;
                 }
             });
+            
+            // IMMEDIATE BUTTON RESET: Reset the corresponding button immediately
+            if (documentType !== 'unknown') {
+                console.log(`🔧 Immediately resetting ${documentType} button...`);
+                resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
+            }
             
             // Clear any client-side file cache
             console.log('🧹 Clearing client-side file cache...');
@@ -837,10 +1179,38 @@ async function deleteFile(filePath, fileName) {
             if (documentType !== 'unknown') {
                 console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
                 updateButtonAfterDeletion(clientName, inspectionDate, documentType);
+                
+                // Also directly reset the button to gray state
+                const groupId = window.currentFilesGroupId;
+                if (groupId) {
+                    const buttonId = `${documentType}-${groupId}`;
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        console.log(`🔧 Directly resetting ${documentType} button to gray state`);
+                        button.disabled = false;
+                        button.className = 'btn btn-outline-secondary btn-sm';
+                        button.style.background = '';
+                        button.style.color = '';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = documentType.toUpperCase();
+                        button.title = `Upload ${documentType.toUpperCase()}`;
+                        button.setAttribute('data-file-deleted', 'true');
+                        button.setAttribute('data-last-updated', Date.now().toString());
+                        
+                        // Re-enable onclick functionality
+                        if (documentType === 'rfi') {
+                            button.onclick = function() { uploadRFI(groupId); };
+                        } else if (documentType === 'invoice') {
+                            button.onclick = function() { uploadInvoice(groupId); };
+                        }
+                        console.log(`✅ ${documentType.toUpperCase()} button directly reset to gray state`);
+                    } else {
+                        console.log(`⚠️ Button not found for direct reset: ${buttonId}`);
+                    }
+                }
             }
             
             // Refresh the files list with a delay to ensure server-side cleanup is complete
-            const groupId = window.currentFilesGroupId;
             if (groupId && clientName && inspectionDate) {
                 console.log('🔄 Scheduling fresh file list reload...');
                 setTimeout(() => {
@@ -878,18 +1248,14 @@ async function deleteFile(filePath, fileName) {
                         
                         console.log(`✅ Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
                     }
-                } else {
-                    // Update button colors after file deletion for other document types
-                    setTimeout(() => {
-                        console.log('🎨 Updating button colors after file deletion...');
-                        updateAllViewFilesButtonColors();
-                    }, 500);
                     
-                    // Update UI dynamically instead of reloading page
-                    setTimeout(() => {
-                        console.log('🔄 Updating UI to show updated button states...');
-                        updateAllViewFilesButtonColors();
-                    }, 1000);
+                    // IMMEDIATELY update View Files button colors after RFI/Invoice deletion
+                    console.log('🎨 Immediately updating View Files button colors after file deletion...');
+                    updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                } else {
+                    // IMMEDIATELY update View Files button colors after file deletion for other document types
+                    console.log('🎨 Immediately updating View Files button colors after file deletion...');
+                    updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
                 }
             }
         } else {
@@ -899,23 +1265,54 @@ async function deleteFile(filePath, fileName) {
                 
                 // Determine document type from file path
                 let documentType = 'unknown';
-                if (filePath.includes('/rfi/')) {
+                if (filePath.includes('/Request For Invoice/') || filePath.includes('/rfi/')) {
                     documentType = 'rfi';
                 } else if (filePath.includes('/invoice/')) {
                     documentType = 'invoice';
+                } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
+                    documentType = 'lab';
+                } else if (filePath.includes('/retest/')) {
+                    documentType = 'retest';
                 }
                 
                 // Update the corresponding button immediately
                 if (documentType !== 'unknown') {
                     console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
                     updateButtonAfterDeletion(clientName, inspectionDate, documentType);
+                    
+                    // Also directly reset the button to gray state
+                    if (groupId) {
+                        const buttonId = `${documentType}-${groupId}`;
+                        const button = document.getElementById(buttonId);
+                        if (button) {
+                            console.log(`🔧 Directly resetting ${documentType} button to gray state`);
+                            button.disabled = false;
+                            button.className = 'btn btn-outline-secondary btn-sm';
+                            button.style.background = '';
+                            button.style.color = '';
+                            button.style.cursor = 'pointer';
+                            button.innerHTML = documentType.toUpperCase();
+                            button.title = `Upload ${documentType.toUpperCase()}`;
+                            button.setAttribute('data-file-deleted', 'true');
+                            button.setAttribute('data-last-updated', Date.now().toString());
+                            
+                            // Re-enable onclick functionality
+                            if (documentType === 'rfi') {
+                                button.onclick = function() { uploadRFI(groupId); };
+                            } else if (documentType === 'invoice') {
+                                button.onclick = function() { uploadInvoice(groupId); };
+                            }
+                            console.log(`✅ ${documentType.toUpperCase()} button directly reset to gray state`);
+                        } else {
+                            console.log(`⚠️ Button not found for direct reset: ${buttonId}`);
+                        }
+                    }
                 }
                 
                 // Clear any cached file data for this client/date
                 console.log('🧹 Clearing file cache for updated state...');
                 
                 // Refresh the files list to show updated state
-                const groupId = window.currentFilesGroupId;
                 if (groupId && clientName && inspectionDate) {
                     console.log('🔄 Refreshing View Files popup to show updated file count');
                     setTimeout(() => {
@@ -1141,6 +1538,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1500);
         });
     });
+    
+    // Initialize upload button states for lab, lab form, and retest buttons
+    setTimeout(() => {
+        console.log('🔍 [PAGE] Initializing upload button states...');
+        initializeUploadButtonStates();
+    }, 3000);
 });
 
 // Cookie utility function
@@ -1847,6 +2250,17 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
     buttons.forEach((button, index) => {
         if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
             console.log('   Button ' + (index + 1) + ': "' + button.textContent.trim() + '"');
+            
+            // Skip if this button was recently updated by file deletion
+            if (button.getAttribute('data-file-deleted') === 'true') {
+                const lastUpdated = parseInt(button.getAttribute('data-last-updated') || '0');
+                const timeSinceUpdate = Date.now() - lastUpdated;
+                if (timeSinceUpdate < 5000) { // Skip for 5 seconds after deletion
+                    console.log('   ⏭️ Skipping button update - recently updated by file deletion');
+                    return;
+                }
+            }
+            
             // Remove existing color classes
             button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
             
@@ -1940,6 +2354,22 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
     buttons.forEach((button, index) => {
         if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
             console.log('   Button ' + (index + 1) + ': "' + button.textContent.trim() + '"');
+            console.log('   Button ' + (index + 1) + ' current classes:', button.className);
+            console.log('   Button ' + (index + 1) + ' current styles:', {
+                backgroundColor: button.style.backgroundColor,
+                color: button.style.color,
+                borderColor: button.style.borderColor
+            });
+            
+            // Skip if this button was recently updated by file deletion
+            if (button.getAttribute('data-file-deleted') === 'true') {
+                const lastUpdated = parseInt(button.getAttribute('data-last-updated') || '0');
+                const timeSinceUpdate = Date.now() - lastUpdated;
+                if (timeSinceUpdate < 5000) { // Skip for 5 seconds after deletion
+                    console.log('   ⏭️ Skipping button update - recently updated by file deletion');
+                    return;
+                }
+            }
             
             // Remove existing color classes
             button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-danger');
@@ -1947,11 +2377,17 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
             // Apply color based on file status
             switch (fileStatus) {
                 case 'all_files':
-                    button.classList.add('btn-success');
+                    button.classList.add('btn-success', 'success');
                     button.style.backgroundColor = '#28a745';
                     button.style.color = 'white';
                     button.title = 'All files available (RFI, Invoice, Lab, Compliance)';
                     console.log('   🟢 Applied GREEN color to button');
+                    console.log('   🟢 Button after update - classes:', button.className);
+                    console.log('   🟢 Button after update - styles:', {
+                        backgroundColor: button.style.backgroundColor,
+                        color: button.style.color,
+                        borderColor: button.style.borderColor
+                    });
                     break;
                 case 'compliance_only':
                     button.classList.add('btn-warning');
@@ -1959,13 +2395,61 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     button.style.color = 'black';
                     button.title = 'Only compliance documents available';
                     console.log('   🟠 Applied ORANGE color to button');
+                    console.log('   🟠 Button after update - classes:', button.className);
+                    console.log('   🟠 Button after update - styles:', {
+                        backgroundColor: button.style.backgroundColor,
+                        color: button.style.color,
+                        borderColor: button.style.borderColor
+                    });
                     break;
                 case 'partial_files':
-                    button.classList.add('btn-info');
-                    button.style.backgroundColor = '#17a2b8';
-                    button.style.color = 'white';
-                    button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
-                    console.log('   🔵 Applied BLUE color to button');
+                    // Check if RFI button is green (has RFI file)
+                    const rfiButton = document.querySelector(`button[id*="rfi-"][data-client-name="${clientName}"][data-inspection-date="${inspectionDate}"]`);
+                    
+                    // Check if RFI button was recently reset due to file deletion
+                    const rfiButtonRecentlyDeleted = rfiButton && rfiButton.getAttribute('data-file-deleted') === 'true';
+                    const rfiButtonLastUpdated = rfiButton ? parseInt(rfiButton.getAttribute('data-last-updated') || '0') : 0;
+                    const rfiButtonTimeSinceUpdate = Date.now() - rfiButtonLastUpdated;
+                    const rfiButtonRecentlyReset = rfiButtonRecentlyDeleted && rfiButtonTimeSinceUpdate < 10000; // 10 seconds
+                    
+                    // Check multiple indicators for green RFI button, but respect file deletion
+                    const hasGreenRFI = rfiButton && !rfiButtonRecentlyReset && (
+                        rfiButton.classList.contains('btn-success') ||
+                        rfiButton.style.backgroundColor === 'rgb(40, 167, 69)' ||
+                        rfiButton.style.backgroundColor === '#28a745' ||
+                        rfiButton.innerHTML.includes('✓') ||
+                        rfiButton.innerHTML.includes('RFI ✓')
+                    );
+                    
+                    console.log('   🔍 [RFI CHECK] RFI button found:', !!rfiButton);
+                    if (rfiButton) {
+                        console.log('   🔍 [RFI CHECK] RFI button classes:', rfiButton.className);
+                        console.log('   🔍 [RFI CHECK] RFI button background:', rfiButton.style.backgroundColor);
+                        console.log('   🔍 [RFI CHECK] RFI button innerHTML:', rfiButton.innerHTML);
+                        console.log('   🔍 [RFI CHECK] Has green RFI:', hasGreenRFI);
+                    }
+                    
+                    if (hasGreenRFI) {
+                        // If RFI is green, make View Files button yellow
+                        button.classList.add('btn-warning');
+                        button.style.backgroundColor = '#ffc107';
+                        button.style.color = 'black';
+                        button.title = 'RFI file available';
+                        console.log('   🟡 Applied YELLOW color to button (RFI present)');
+                    } else {
+                        // Otherwise, use blue for partial files
+                        button.classList.add('btn-info');
+                        button.style.backgroundColor = '#17a2b8';
+                        button.style.color = 'white';
+                        button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
+                        console.log('   🔵 Applied BLUE color to button (partial files)');
+                    }
+                    console.log('   Button after update - classes:', button.className);
+                    console.log('   Button after update - styles:', {
+                        backgroundColor: button.style.backgroundColor,
+                        color: button.style.color,
+                        borderColor: button.style.borderColor
+                    });
                     break;
                 case 'no_files':
                     button.classList.add('btn-danger');
@@ -1973,6 +2457,16 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     button.style.color = 'white';
                     button.title = 'No files available';
                     console.log('   🔴 Applied RED color to button');
+                    console.log('   🔴 Button after update - classes:', button.className);
+                    console.log('   🔴 Button after update - styles:', {
+                        backgroundColor: button.style.backgroundColor,
+                        color: button.style.color,
+                        borderColor: button.style.borderColor
+                    });
+                    
+                    // When View Files button goes red (no files), reset RFI and Invoice buttons to grey
+                    console.log('   🔄 View Files is red - resetting RFI and Invoice buttons to grey...');
+                    resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate);
                     break;
                 default:
                     button.style.backgroundColor = '#6c757d';
@@ -1988,10 +2482,308 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
 // Check file status for all clients and update button colors
 let statusCheckInProgress = false;
 
+// Global variable to track if we're in the middle of an upload process
+let uploadInProgress = false;
+
+// Function to update RFI button color with delayed check
+function updateRFIButtonColorDelayed(groupId) {
+    console.log('🔄 [DELAYED] Updating RFI button color for group:', groupId);
+    
+    // Extract client name and date from groupId
+    const parts = groupId.split('_');
+    if (parts.length < 3) {
+        console.warn('Invalid groupId format for RFI button update:', groupId);
+        return;
+    }
+    
+    // Reconstruct client name (handle cases with underscores in client name)
+    // For groupId like "Jusmar_Farm_Eggs_Pty_Ltd_20250918", we need to be more careful
+    const datePart = parts[parts.length - 1];
+    const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+    
+    // Reconstruct client name by joining all parts except the last one (date)
+    // and then replacing underscores with spaces, but being careful about special characters
+    let clientName = parts.slice(0, -1).join('_');
+    
+    // Handle special cases for common patterns
+    if (clientName.includes('Pty_Ltd')) {
+        clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+    } else {
+        clientName = clientName.replace(/_/g, ' ');
+    }
+    
+    console.log('🔍 [DELAYED] Extracted client name:', clientName);
+    console.log('🔍 [DELAYED] Extracted inspection date:', inspectionDate);
+    
+    // Check if RFI files exist for this client+date combination
+    fetch('/inspections/files/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            client_name: clientName,
+            inspection_date: inspectionDate,
+            _force_refresh: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.files) {
+            const hasRFI = data.files.rfi && data.files.rfi.length > 0;
+            console.log('🔍 [DELAYED] RFI file check result:', hasRFI);
+            
+            const buttonId = 'rfi-' + groupId;
+            const button = document.getElementById(buttonId);
+            
+            if (button) {
+                if (hasRFI) {
+                    // Update to green success state
+                    button.disabled = true;
+                    button.className = 'btn btn-sm btn-success success';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.borderColor = '#28a745';
+                    button.style.cursor = 'not-allowed';
+                    button.innerHTML = 'RFI ✓';
+                    button.title = 'RFI file exists';
+                    button.onclick = null;
+                    console.log('✅ [DELAYED] Updated RFI button to green success state');
+                } else {
+                    // Update to red error state (file was deleted or not found)
+                    button.disabled = false;
+                    button.className = 'btn btn-sm btn-danger';
+                    button.style.backgroundColor = '#dc3545';
+                    button.style.borderColor = '#dc3545';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'RFI';
+                    button.title = 'Upload RFI file';
+                    button.onclick = () => uploadRFI(groupId);
+                    console.log('❌ [DELAYED] Updated RFI button to red error state');
+                }
+            } else {
+                console.warn('RFI button not found for delayed update:', buttonId);
+            }
+        } else {
+            console.warn('Failed to get file status for RFI button update:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking RFI file status for delayed update:', error);
+    });
+}
+
+// Function to reset RFI and Invoice buttons to grey when View Files button goes red
+function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
+    console.log('🔄 [RESET] Resetting RFI and Invoice buttons to grey for:', clientName, 'on', inspectionDate);
+    
+    // Find the row for this client and date
+    const rows = document.querySelectorAll('tr[data-client-name="' + clientName + '"][data-inspection-date="' + inspectionDate + '"]');
+    
+    rows.forEach(row => {
+        // Find RFI button
+        const rfiButton = row.querySelector('button[id*="rfi-"]');
+        if (rfiButton) {
+            // Check if RFI button was recently reset due to file deletion
+            const rfiButtonRecentlyDeleted = rfiButton.getAttribute('data-file-deleted') === 'true';
+            const rfiButtonLastUpdated = parseInt(rfiButton.getAttribute('data-last-updated') || '0');
+            const rfiButtonTimeSinceUpdate = Date.now() - rfiButtonLastUpdated;
+            const rfiButtonRecentlyReset = rfiButtonRecentlyDeleted && rfiButtonTimeSinceUpdate < 10000; // 10 seconds
+            
+            if (rfiButtonRecentlyReset) {
+                console.log('⏭️ [RESET] Skipping RFI button reset - recently updated by file deletion');
+            } else {
+                console.log('🔄 [RESET] Found RFI button, resetting to grey...');
+                rfiButton.disabled = false;
+                rfiButton.className = 'btn btn-sm btn-secondary';
+                rfiButton.style.backgroundColor = '#6c757d';
+                rfiButton.style.borderColor = '#6c757d';
+                rfiButton.style.color = 'white';
+                rfiButton.style.cursor = 'pointer';
+                rfiButton.innerHTML = 'RFI';
+                rfiButton.title = 'Upload RFI file';
+                
+                // Restore the onclick function
+                const groupId = rfiButton.id.replace('rfi-', '');
+                rfiButton.onclick = () => uploadRFI(groupId);
+                
+                console.log('✅ [RESET] RFI button reset to grey');
+            }
+        } else {
+            console.log('⚠️ [RESET] RFI button not found');
+        }
+        
+        // Find Invoice button
+        const invoiceButton = row.querySelector('button[id*="invoice-"]');
+        if (invoiceButton) {
+            // Check if Invoice button was recently reset due to file deletion
+            const invoiceButtonRecentlyDeleted = invoiceButton.getAttribute('data-file-deleted') === 'true';
+            const invoiceButtonLastUpdated = parseInt(invoiceButton.getAttribute('data-last-updated') || '0');
+            const invoiceButtonTimeSinceUpdate = Date.now() - invoiceButtonLastUpdated;
+            const invoiceButtonRecentlyReset = invoiceButtonRecentlyDeleted && invoiceButtonTimeSinceUpdate < 10000; // 10 seconds
+            
+            if (invoiceButtonRecentlyReset) {
+                console.log('⏭️ [RESET] Skipping Invoice button reset - recently updated by file deletion');
+            } else {
+                console.log('🔄 [RESET] Found Invoice button, resetting to grey...');
+                invoiceButton.disabled = false;
+                invoiceButton.className = 'btn btn-sm btn-secondary';
+                invoiceButton.style.backgroundColor = '#6c757d';
+                invoiceButton.style.borderColor = '#6c757d';
+                invoiceButton.style.color = 'white';
+                invoiceButton.style.cursor = 'pointer';
+                invoiceButton.innerHTML = 'Invoice';
+                invoiceButton.title = 'Upload Invoice file';
+                
+                // Restore the onclick function
+                const groupId = invoiceButton.id.replace('invoice-', '');
+                invoiceButton.onclick = () => uploadInvoice(groupId);
+                
+                console.log('✅ [RESET] Invoice button reset to grey');
+            }
+        } else {
+            console.log('⚠️ [RESET] Invoice button not found');
+        }
+    });
+    
+    // Also try to find buttons by group ID pattern as fallback
+    const groupId = clientName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + inspectionDate.replace(/-/g, '');
+    
+    // Reset RFI button by group ID
+    const rfiButtonById = document.getElementById('rfi-' + groupId);
+    if (rfiButtonById) {
+        console.log('🔄 [RESET] Found RFI button by ID, resetting to grey...');
+        rfiButtonById.disabled = false;
+        rfiButtonById.className = 'btn btn-sm btn-secondary';
+        rfiButtonById.style.backgroundColor = '#6c757d';
+        rfiButtonById.style.borderColor = '#6c757d';
+        rfiButtonById.style.color = 'white';
+        rfiButtonById.style.cursor = 'pointer';
+        rfiButtonById.innerHTML = 'RFI';
+        rfiButtonById.title = 'Upload RFI file';
+        rfiButtonById.onclick = () => uploadRFI(groupId);
+        console.log('✅ [RESET] RFI button reset to grey (by ID)');
+    }
+    
+    // Reset Invoice button by group ID
+    const invoiceButtonById = document.getElementById('invoice-' + groupId);
+    if (invoiceButtonById) {
+        console.log('🔄 [RESET] Found Invoice button by ID, resetting to grey...');
+        invoiceButtonById.disabled = false;
+        invoiceButtonById.className = 'btn btn-sm btn-secondary';
+        invoiceButtonById.style.backgroundColor = '#6c757d';
+        invoiceButtonById.style.borderColor = '#6c757d';
+        invoiceButtonById.style.color = 'white';
+        invoiceButtonById.style.cursor = 'pointer';
+        invoiceButtonById.innerHTML = 'Invoice';
+        invoiceButtonById.title = 'Upload Invoice file';
+        invoiceButtonById.onclick = () => uploadInvoice(groupId);
+        console.log('✅ [RESET] Invoice button reset to grey (by ID)');
+    }
+}
+
+// Function to update Invoice button color with delayed check
+function updateInvoiceButtonColorDelayed(groupId) {
+    console.log('🔄 [DELAYED] Updating Invoice button color for group:', groupId);
+    
+    // Extract client name and date from groupId
+    const parts = groupId.split('_');
+    if (parts.length < 3) {
+        console.warn('Invalid groupId format for Invoice button update:', groupId);
+        return;
+    }
+    
+    // Reconstruct client name (handle cases with underscores in client name)
+    // For groupId like "Jusmar_Farm_Eggs_Pty_Ltd_20250918", we need to be more careful
+    const datePart = parts[parts.length - 1];
+    const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+    
+    // Reconstruct client name by joining all parts except the last one (date)
+    // and then replacing underscores with spaces, but being careful about special characters
+    let clientName = parts.slice(0, -1).join('_');
+    
+    // Handle special cases for common patterns
+    if (clientName.includes('Pty_Ltd')) {
+        clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+    } else {
+        clientName = clientName.replace(/_/g, ' ');
+    }
+    
+    console.log('🔍 [DELAYED] Extracted client name:', clientName);
+    console.log('🔍 [DELAYED] Extracted inspection date:', inspectionDate);
+    
+    // Check if Invoice files exist for this client+date combination
+    fetch('/inspections/files/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            client_name: clientName,
+            inspection_date: inspectionDate,
+            _force_refresh: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.files) {
+            const hasInvoice = data.files.invoice && data.files.invoice.length > 0;
+            console.log('🔍 [DELAYED] Invoice file check result:', hasInvoice);
+            
+            const buttonId = 'invoice-' + groupId;
+            const button = document.getElementById(buttonId);
+            
+            if (button) {
+                if (hasInvoice) {
+                    // Update to green success state
+                    button.disabled = true;
+                    button.className = 'btn btn-sm btn-success success';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.borderColor = '#28a745';
+                    button.style.cursor = 'not-allowed';
+                    button.innerHTML = 'Invoice ✓';
+                    button.title = 'Invoice file exists';
+                    button.onclick = null;
+                    console.log('✅ [DELAYED] Updated Invoice button to green success state');
+                } else {
+                    // Update to red error state (file was deleted or not found)
+                    button.disabled = false;
+                    button.className = 'btn btn-sm btn-danger';
+                    button.style.backgroundColor = '#dc3545';
+                    button.style.borderColor = '#dc3545';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'Invoice';
+                    button.title = 'Upload Invoice file';
+                    button.onclick = () => uploadInvoice(groupId);
+                    console.log('❌ [DELAYED] Updated Invoice button to red error state');
+                }
+            } else {
+                console.warn('Invoice button not found for delayed update:', buttonId);
+            }
+        } else {
+            console.warn('Failed to get file status for Invoice button update:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking Invoice file status for delayed update:', error);
+    });
+}
+
 async function updateAllViewFilesButtonColors() {
+    console.log('🔍 [DEBUG] updateAllViewFilesButtonColors called');
+    console.log('🔍 [DEBUG] statusCheckInProgress:', statusCheckInProgress);
+    console.log('🔍 [DEBUG] uploadInProgress:', uploadInProgress);
+    
     // Prevent multiple simultaneous requests
     if (statusCheckInProgress) {
         console.log('⏳ [FRONTEND] Status check already in progress, skipping...');
+        return;
+    }
+    
+    // Skip if upload is in progress to prevent overriding upload results
+    if (uploadInProgress) {
+        console.log('⏳ [FRONTEND] Upload in progress, skipping status check to prevent override...');
         return;
     }
     
@@ -2023,11 +2815,19 @@ async function updateAllViewFilesButtonColors() {
             console.log('🔍 [DEBUG] Available client names:', clientDateCombinations.map(c => c.client_name));
         }
         
-        const response = await fetch('/page-clients-status/', {
+        // Clear any caches before checking file status
+        if ('caches' in window) {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        const response = await fetch('/page-clients-status/?t=' + Date.now(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
+                'X-CSRFToken': getCSRFToken(),
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
             },
             body: JSON.stringify({
                 client_date_combinations: clientDateCombinations
@@ -2038,6 +2838,7 @@ async function updateAllViewFilesButtonColors() {
         
         if (result.success) {
             console.log('✅ Received file status data for all client+date combinations');
+            console.log('🔍 [DEBUG] Full server response for delayed update:', result);
             
             // Debug: Check if New Poultry Retailer is in the response
             const newPoultryStatuses = Object.entries(result.combination_statuses).filter(([key, data]) => data.client_name === 'New Poultry Retailer');
@@ -2055,7 +2856,29 @@ async function updateAllViewFilesButtonColors() {
                         has_compliance: data.has_compliance
                     });
                 });
+            }
+            
+            // Debug: Check Jusmar Farm Eggs specifically
+            const jusmarStatuses = Object.entries(result.combination_statuses).filter(([key, data]) => data.client_name === 'Jusmar Farm Eggs (Pty) Ltd.');
+            if (jusmarStatuses.length > 0) {
+                console.log('🔍 [DEBUG] Found Jusmar Farm Eggs in response:', jusmarStatuses);
+                jusmarStatuses.forEach(([key, data]) => {
+                    console.log(`🔍 [DEBUG] Jusmar Farm Eggs ${key}:`, {
+                        client_name: data.client_name,
+                        inspection_date: data.inspection_date,
+                        file_status: data.file_status,
+                        has_rfi: data.has_rfi,
+                        has_invoice: data.has_invoice,
+                        has_lab: data.has_lab,
+                        has_retest: data.has_retest,
+                        has_compliance: data.has_compliance
+                    });
+                });
             } else {
+                console.log('🔍 [DEBUG] Jusmar Farm Eggs NOT found in server response');
+            }
+            
+            if (newPoultryStatuses.length === 0) {
                 console.log('❌ [DEBUG] New Poultry Retailer NOT found in response');
                 console.log('🔍 [DEBUG] Available clients in response:', Object.values(result.combination_statuses).map(d => d.client_name));
             }
@@ -2148,6 +2971,138 @@ function validateUploadButtonStates() {
     });
 }
 
+// Initialize upload button states based on existing files
+async function initializeUploadButtonStates() {
+    console.log('🔍 Initializing upload button states based on existing files...');
+    
+    // Get all lab, lab form, and retest buttons
+    const allButtons = document.querySelectorAll('button[id^="lab-"], button[id^="retest-"]');
+    const labButtons = Array.from(allButtons).filter(btn => btn.id.startsWith('lab-') && !btn.id.startsWith('lab-form-'));
+    const labFormButtons = Array.from(document.querySelectorAll('button[id^="lab-form-"]'));
+    const retestButtons = Array.from(document.querySelectorAll('button[id^="retest-"]'));
+    
+    console.log(`🔍 Found ${labButtons.length} lab buttons, ${labFormButtons.length} lab form buttons, ${retestButtons.length} retest buttons`);
+    
+    // Process each button type
+    await processButtonGroup(labButtons, 'lab');
+    await processButtonGroup(labFormButtons, 'lab_form');
+    await processButtonGroup(retestButtons, 'retest');
+    
+    console.log('✅ Upload button state initialization complete');
+}
+
+// Process a group of buttons to check for existing files
+async function processButtonGroup(buttons, documentType) {
+    // Ensure buttons is an array
+    if (!Array.isArray(buttons)) {
+        console.warn(`⚠️ processButtonGroup received non-array for ${documentType}:`, buttons);
+        return;
+    }
+    
+        // Process buttons in batches of 2 to avoid overwhelming the server
+        const batchSize = 2;
+    for (let i = 0; i < buttons.length; i += batchSize) {
+        const batch = buttons.slice(i, i + batchSize);
+        
+        // Process batch in parallel
+        await Promise.all(batch.map(async (button) => {
+            try {
+                const inspectionId = button.id.split('-').pop();
+                const groupId = button.getAttribute('data-group-id');
+                const clientName = button.getAttribute('data-client-name');
+                const inspectionDate = button.getAttribute('data-inspection-date');
+                
+                if (!inspectionId || !clientName || !inspectionDate) {
+                    console.log(`⚠️ Skipping ${documentType} button ${button.id} - missing required data`);
+                    return;
+                }
+                
+                // Check if files exist for this inspection
+                console.log(`🔍 Checking files for ${documentType} button ${button.id}: ${clientName} on ${inspectionDate} (inspection ID: ${inspectionId})`);
+                const hasFiles = await checkFilesExist(clientName, inspectionDate, documentType, inspectionId);
+                console.log(`🔍 Files exist for ${documentType} button ${button.id}: ${hasFiles}`);
+                
+                if (hasFiles) {
+                    // Update button to green success state
+                    // Add the uploaded class and disable the button
+                    button.classList.add('uploaded');
+                    button.disabled = true;
+                    button.title = `${documentType.charAt(0).toUpperCase() + documentType.slice(1)} uploaded`;
+                    
+                    // Update button text with checkmark
+                    const originalText = button.innerHTML;
+                    if (!originalText.includes('✓')) {
+                        button.innerHTML = originalText.replace(/>([^<]+)</, '>$1 ✓<');
+                    }
+                    
+                    console.log(`✅ Updated ${documentType} button ${button.id} to success state`);
+                }
+            } catch (error) {
+                console.error(`❌ Error processing ${documentType} button ${button.id}:`, error);
+            }
+        }));
+        
+                // Add a delay between batches to prevent overwhelming the server
+                if (i + batchSize < buttons.length) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+    }
+}
+
+// Check if files exist for a specific document type
+async function checkFilesExist(clientName, inspectionDate, documentType, inspectionId = null) {
+    try {
+                // Create an AbortController for timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const requestBody = {
+            client_name: clientName,
+            inspection_date: inspectionDate
+        };
+        
+        // Add inspection ID if provided for more specific file checking
+        if (inspectionId) {
+            requestBody.inspection_id = inspectionId;
+        }
+        
+        const response = await fetch('/list-uploaded-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify(requestBody),
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            console.error(`❌ Failed to check files for ${documentType}:`, response.status);
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.files) {
+            const files = data.files[documentType] || [];
+            console.log(`🔍 Found ${files.length} ${documentType} files for ${clientName} on ${inspectionDate}`);
+            return files.length > 0;
+        }
+        
+        console.log(`🔍 No files found for ${documentType} - ${clientName} on ${inspectionDate}`);
+        return false;
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            console.warn(`⏰ Timeout checking files for ${documentType} - ${clientName} on ${inspectionDate}`);
+        } else {
+            console.error(`❌ Error checking files for ${documentType}:`, error);
+        }
+        return false;
+    }
+}
+
 // Check if files actually exist for a specific button
 async function checkButtonFileStatus(button, groupId, clientName, inspectionDate, documentType) {
     // Skip checking if this button has been marked as file-deleted to prevent reversion
@@ -2219,6 +3174,215 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
     }
 }
 
+// Immediately update View Files button after file deletion without backend check
+function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
+    console.log(`🎨 [IMMEDIATE] Updating View Files button for ${clientName} on ${inspectionDate} after file deletion`);
+    
+    // Clean the inspection date - handle both escaped and unescaped formats
+    let cleanDate = inspectionDate;
+    if (typeof cleanDate === 'string') {
+        // First try to parse as JSON string to handle escaped unicode
+        try {
+            cleanDate = JSON.parse('"' + cleanDate + '"');
+        } catch (e) {
+            // If that fails, just replace the escaped dashes
+            cleanDate = cleanDate.replace(/\\u002D/g, '-');
+        }
+    }
+    
+    // Find all View Files buttons for this client and date
+    const buttons = document.querySelectorAll('button');
+    const matchingButtons = Array.from(buttons).filter(button => {
+        const buttonText = button.textContent.trim();
+        const dataClientName = button.getAttribute('data-client-name') || '';
+        const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
+        const onclick = button.getAttribute('onclick') || '';
+        
+        // Check if this button is for the correct client and date using data attributes
+        return (buttonText.includes('Files') || onclick.includes('openFilesPopup')) &&
+               dataClientName === clientName && 
+               dataInspectionDate === cleanDate;
+    });
+    
+    console.log(`🔍 [IMMEDIATE] Found ${matchingButtons.length} View Files buttons for ${clientName} on ${cleanDate}`);
+    
+    // Debug: Log all buttons to see what we're working with
+    if (matchingButtons.length === 0) {
+        console.log(`🔍 [DEBUG] No matching buttons found. Searching all buttons...`);
+        const allButtons = document.querySelectorAll('button');
+        console.log(`🔍 [DEBUG] Total buttons found: ${allButtons.length}`);
+        
+        allButtons.forEach((button, index) => {
+            const buttonText = button.textContent.trim();
+            const dataClientName = button.getAttribute('data-client-name') || '';
+            const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
+            
+            if (buttonText.includes('Files')) {
+                console.log(`🔍 [DEBUG] Button ${index}: text="${buttonText}", data-client-name="${dataClientName}", data-inspection-date="${dataInspectionDate}"`);
+            }
+        });
+        
+        // Fallback: Try to find buttons by partial matching with better date handling
+        console.log(`🔍 [DEBUG] Trying fallback search with partial matching...`);
+        const fallbackButtons = Array.from(allButtons).filter(button => {
+            const buttonText = button.textContent.trim();
+            const dataClientName = button.getAttribute('data-client-name') || '';
+            const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
+            
+            // Clean the button's date for comparison
+            let buttonDate = dataInspectionDate;
+            try {
+                buttonDate = JSON.parse('"' + buttonDate + '"');
+            } catch (e) {
+                buttonDate = buttonDate.replace(/\\u002D/g, '-');
+            }
+            
+            return buttonText.includes('Files') && 
+                   dataClientName === clientName && 
+                   buttonDate === cleanDate;
+        });
+        
+        if (fallbackButtons.length > 0) {
+            console.log(`🔍 [DEBUG] Found ${fallbackButtons.length} buttons with fallback search`);
+            matchingButtons.push(...fallbackButtons);
+        }
+    }
+    
+    // For now, we'll check the current file state by making a quick API call
+    // but we'll optimize this later to avoid the race condition
+    fetch('/inspections/files/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            client_name: clientName,
+            inspection_date: cleanDate
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success && result.files) {
+            // Determine file status based on what files exist
+            const hasRfi = result.files.rfi && result.files.rfi.length > 0;
+            const hasInvoice = result.files.invoice && result.files.invoice.length > 0;
+            const hasLab = result.files.lab && result.files.lab.length > 0;
+            const hasRetest = result.files.retest && result.files.retest.length > 0;
+            const hasCompliance = result.files.compliance && result.files.compliance.length > 0;
+            
+            let fileStatus;
+            if (hasRfi && hasInvoice && hasLab && hasCompliance) {
+                fileStatus = 'all_files';
+            } else if (hasCompliance) {
+                fileStatus = 'compliance_only';
+            } else if (hasRfi || hasInvoice || hasLab || hasRetest) {
+                fileStatus = 'partial_files';
+            } else {
+                fileStatus = 'no_files';
+            }
+            
+            console.log(`📊 [IMMEDIATE] File status after deletion: ${fileStatus} (RFI:${hasRfi}, Invoice:${hasInvoice}, Lab:${hasLab}, Compliance:${hasCompliance})`);
+            
+            // Update the button colors immediately - bypass the skip logic for file deletion
+            matchingButtons.forEach(button => {
+                console.log(`🎨 [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
+                
+                // Remove existing color classes
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+                
+                // Find the status icon
+                const statusIcon = button.querySelector('i[class*="fa-"]');
+                
+                // Apply appropriate color class and icon based on status
+                switch(fileStatus) {
+                    case 'all_files':
+                        button.classList.add('btn-view-files-green');
+                        button.title = 'All files available (RFI, Invoice, Lab Results, Compliance)';
+                        if (statusIcon) {
+                            statusIcon.className = 'fas fa-check-circle';
+                            statusIcon.style.color = '#059669';
+                        }
+                        console.log('   ✅ Applied GREEN color to button');
+                        break;
+                    case 'compliance_only':
+                        button.classList.add('btn-view-files-orange');
+                        button.title = 'Only compliance documents available';
+                        if (statusIcon) {
+                            statusIcon.className = 'fas fa-shield-alt';
+                            statusIcon.style.color = '#f59e0b';
+                        }
+                        console.log('   🟡 Applied ORANGE color to button');
+                        break;
+                    case 'partial_files':
+                        button.classList.add('btn-view-files-blue');
+                        button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
+                        if (statusIcon) {
+                            statusIcon.className = 'fas fa-file-alt';
+                            statusIcon.style.color = '#3b82f6';
+                        }
+                        console.log('   🔵 Applied BLUE color to button');
+                        break;
+                    case 'no_files':
+                        button.classList.add('btn-view-files-red');
+                        button.title = 'No files found';
+                        if (statusIcon) {
+                            statusIcon.className = 'fas fa-times-circle';
+                            statusIcon.style.color = '#dc2626';
+                        }
+                        console.log('   🔴 Applied RED color to button');
+                        break;
+                    default:
+                        console.log('   ⚠️ Unknown file status:', fileStatus);
+                }
+            });
+        } else {
+            // No files found - set to red
+            console.log(`📊 [IMMEDIATE] No files found after deletion - setting to no_files`);
+            matchingButtons.forEach(button => {
+                console.log(`🎨 [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
+                
+                // Remove existing color classes
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+                
+                // Find the status icon
+                const statusIcon = button.querySelector('i[class*="fa-"]');
+                
+                // Apply red color for no files
+                button.classList.add('btn-view-files-red');
+                button.title = 'No files found';
+                if (statusIcon) {
+                    statusIcon.className = 'fas fa-times-circle';
+                    statusIcon.style.color = '#dc2626';
+                }
+                console.log('   🔴 Applied RED color to button (no files)');
+            });
+        }
+    })
+    .catch(error => {
+        console.error(`❌ [IMMEDIATE] Error checking file status after deletion:`, error);
+        // Fallback to no_files status
+        matchingButtons.forEach(button => {
+            console.log(`🎨 [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
+            
+            // Remove existing color classes
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+            
+            // Find the status icon
+            const statusIcon = button.querySelector('i[class*="fa-"]');
+            
+            // Apply red color for no files
+            button.classList.add('btn-view-files-red');
+            button.title = 'No files found';
+            if (statusIcon) {
+                statusIcon.className = 'fas fa-times-circle';
+                statusIcon.style.color = '#dc2626';
+            }
+            console.log('   🔴 Applied RED color to button (error fallback)');
+        });
+    });
+}
+
 // Update button state after file deletion
 function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     console.log(`🔄 Updating ${documentType} button after deletion for ${clientName}`);
@@ -2285,18 +3449,19 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     if (button) {
         console.log(`✅ Found ${documentType} button: ${buttonId}`);
             
-            // Reset button to uploadable state
+            // Reset button to default state (no files)
             button.disabled = false;
-        button.classList.remove('uploaded');
-        button.classList.add(`btn-${documentType}`, 'btn-sm');
-            button.style.background = '#28a745';
-            button.style.color = 'white';
+            button.classList.remove('uploaded');
+            button.classList.add('btn-outline-secondary', 'btn-sm');
+            button.style.background = '';
+            button.style.color = '';
             button.style.cursor = 'pointer';
-        button.innerHTML = documentType.toUpperCase();
+            button.innerHTML = documentType.toUpperCase();
             button.title = `Upload ${documentType.toUpperCase()}`;
             
             // Mark button as file-deleted to prevent UI updates from overriding this state
             button.setAttribute('data-file-deleted', 'true');
+            button.setAttribute('data-last-updated', Date.now().toString());
             
             // Re-enable onclick functionality
             if (documentType === 'rfi') {
@@ -2915,6 +4080,132 @@ function processPendingButtonUpdates() {
     }
 }
 
+// Enhanced button reset function for immediate UI updates
+function resetButtonImmediately(documentType, groupId, clientName, inspectionDate) {
+    console.log(`🔧 Resetting ${documentType} button immediately for group ${groupId}`);
+    
+    const buttonId = `${documentType}-${groupId}`;
+    console.log(`🔍 Looking for button with ID: ${buttonId}`);
+    
+    // Try multiple methods to find the button
+    let button = document.getElementById(buttonId);
+    
+    if (!button) {
+        console.log(`🔍 Button not found by ID, searching by pattern...`);
+        const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
+        console.log(`🔍 Found ${allButtons.length} buttons with pattern "${documentType}-"`);
+        
+        for (let btn of allButtons) {
+            if (btn.id === buttonId) {
+                button = btn;
+                console.log(`✅ Found button by pattern search: ${btn.id}`);
+                break;
+            }
+        }
+    }
+    
+    if (button) {
+        console.log(`✅ Found ${documentType} button: ${buttonId}`);
+        
+        // Reset button to default state (uploadable)
+        button.disabled = false;
+        button.classList.remove('uploaded', 'btn-success');
+        button.classList.add('btn-outline-secondary', 'btn-sm');
+        button.style.background = '';
+        button.style.color = '';
+        button.style.border = '';
+        button.style.cursor = 'pointer';
+        button.innerHTML = documentType.toUpperCase();
+        button.title = `Upload ${documentType.toUpperCase()}`;
+        
+        // Mark button as file-deleted to prevent UI updates from overriding this state
+        button.setAttribute('data-file-deleted', 'true');
+        button.setAttribute('data-last-updated', Date.now().toString());
+        
+        // Re-enable onclick functionality
+        if (documentType === 'rfi') {
+            button.onclick = function() { uploadRFI(groupId); };
+        } else if (documentType === 'invoice') {
+            button.onclick = function() { uploadInvoice(groupId); };
+        } else if (documentType === 'lab') {
+            button.onclick = function() { uploadLab(groupId); };
+        } else if (documentType === 'retest') {
+            button.onclick = function() { uploadRetest(groupId); };
+        }
+        
+        console.log(`✅ ${documentType.toUpperCase()} button reset to uploadable state`);
+        
+        // Also update any buttons in the main table (not just in popup)
+        updateMainTableButtons(documentType, groupId, clientName, inspectionDate);
+        
+    } else {
+        console.log(`⚠️ Button not found: ${buttonId}`);
+        console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
+        
+        // Store the update for when the popup closes
+        if (!window.pendingButtonUpdates) {
+            window.pendingButtonUpdates = [];
+        }
+        window.pendingButtonUpdates.push({
+            buttonId: buttonId,
+            documentType: documentType,
+            groupId: groupId,
+            action: 'reset'
+        });
+        console.log(`📝 Stored pending update for button: ${buttonId}`);
+    }
+}
+
+// Function to update buttons in the main table (not just popup)
+function updateMainTableButtons(documentType, groupId, clientName, inspectionDate) {
+    console.log(`🔧 Updating main table buttons for ${documentType}...`);
+    
+    // Find the main table row for this group
+    const groupRow = document.querySelector(`tr[data-group-id="${groupId}"]`);
+    if (!groupRow) {
+        console.log(`⚠️ Main table row not found for group: ${groupId}`);
+        return;
+    }
+    
+    // Find the button in the main table
+    const buttonId = `${documentType}-${groupId}`;
+    const button = groupRow.querySelector(`#${buttonId}`);
+    
+    if (button) {
+        console.log(`✅ Found main table button: ${buttonId}`);
+        
+        // Reset button to default state
+        button.disabled = false;
+        button.classList.remove('uploaded', 'btn-success');
+        button.classList.add('btn-outline-secondary', 'btn-sm');
+        button.style.background = '';
+        button.style.color = '';
+        button.style.border = '';
+        button.style.cursor = 'pointer';
+        button.innerHTML = documentType.toUpperCase();
+        button.title = `Upload ${documentType.toUpperCase()}`;
+        
+        // Mark button as file-deleted
+        button.setAttribute('data-file-deleted', 'true');
+        button.setAttribute('data-last-updated', Date.now().toString());
+        
+        // Re-enable onclick functionality
+        if (documentType === 'rfi') {
+            button.onclick = function() { uploadRFI(groupId); };
+        } else if (documentType === 'invoice') {
+            button.onclick = function() { uploadInvoice(groupId); };
+        } else if (documentType === 'lab') {
+            button.onclick = function() { uploadLab(groupId); };
+        } else if (documentType === 'retest') {
+            button.onclick = function() { uploadRetest(groupId); };
+        }
+        
+        console.log(`✅ Main table ${documentType} button reset to uploadable state`);
+    } else {
+        console.log(`⚠️ Main table button not found: ${buttonId}`);
+    }
+}
+
 // updateButtonAfterUpload function removed - we now use markAsUploaded to show username instead
 
 // Download all files for current inspection group as ZIP
@@ -2991,48 +4282,50 @@ async function downloadAllFiles() {
 // Function to update button states based on retest selection
 function updateButtonStates(inspectionId, needsRetest) {
     const labButton = document.getElementById('lab-' + inspectionId);
+    const labFormButton = document.getElementById('lab-form-' + inspectionId);
     const retestButton = document.getElementById('retest-' + inspectionId);
     const dropdown = document.querySelector('select[data-inspection-id="' + inspectionId + '"]');
     
-    if (labButton && retestButton) {
-        // Check if sample was taken
-        const isSampleTaken = dropdown && !dropdown.disabled;
-        
-        if (!isSampleTaken) {
-            // No sample taken - disable both buttons
-            labButton.disabled = true;
-            labButton.style.opacity = '0.5';
-            labButton.style.cursor = 'not-allowed';
-            labButton.onclick = null;
-            labButton.title = 'No sample taken - Lab upload disabled';
-            
+    // Check if sample was taken
+    const isSampleTaken = dropdown && !dropdown.disabled;
+    
+    // If no sample taken, buttons won't exist in DOM, so nothing to do
+    if (!isSampleTaken) {
+        console.log(`No sample taken for inspection ${inspectionId} - buttons not rendered`);
+        return;
+    }
+    
+    // Sample taken - buttons should exist, update their states
+    if (labButton) {
+        labButton.disabled = false;
+        labButton.style.opacity = '';
+        labButton.style.cursor = '';
+        labButton.onclick = function() { uploadLab(inspectionId); };
+        labButton.title = 'Lab result upload available';
+    }
+    
+    if (labFormButton) {
+        labFormButton.disabled = false;
+        labFormButton.style.opacity = '';
+        labFormButton.style.cursor = '';
+        labFormButton.onclick = function() { uploadLabForm(inspectionId); };
+        labFormButton.title = 'Lab form submission upload available';
+    }
+    
+    if (retestButton) {
+        // Retest button is enabled ONLY if sample taken AND retest is YES (must upload document)
+        if (needsRetest === 'YES') {
+            retestButton.disabled = false;
+            retestButton.style.opacity = '1';
+            retestButton.style.cursor = 'pointer';
+            retestButton.onclick = function() { uploadRetest(inspectionId); };
+            retestButton.title = 'Retest required - Please upload retest document';
+        } else {
             retestButton.disabled = true;
             retestButton.style.opacity = '0.5';
             retestButton.style.cursor = 'not-allowed';
             retestButton.onclick = null;
-            retestButton.title = 'No sample taken - Retest upload disabled';
-        } else {
-            // Sample taken - enable lab button
-            labButton.disabled = false;
-            labButton.style.opacity = '';
-            labButton.style.cursor = '';
-            labButton.onclick = function() { uploadLab(inspectionId); };
-            labButton.title = 'Lab result upload available';
-            
-            // Retest button is enabled ONLY if sample taken AND retest is YES (must upload document)
-            if (isSampleTaken && needsRetest === 'YES') {
-                retestButton.disabled = false;
-                retestButton.style.opacity = '1';
-                retestButton.style.cursor = 'pointer';
-                retestButton.onclick = function() { uploadRetest(inspectionId); };
-                retestButton.title = 'Retest required - Please upload retest document';
-            } else {
-                retestButton.disabled = true;
-                retestButton.style.opacity = '0.5';
-                retestButton.style.cursor = 'not-allowed';
-                retestButton.onclick = null;
-                retestButton.title = needsRetest === 'NO' ? 'No retest required - Upload disabled' : 'Select retest status first';
-            }
+            retestButton.title = needsRetest === 'NO' ? 'No retest required - Upload disabled' : 'Select retest status first';
         }
     }
 }
