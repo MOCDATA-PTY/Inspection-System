@@ -8,23 +8,19 @@ import re
 from django.utils import timezone
 
 # Add role field to existing User model
-User.add_to_class(
-    'role',
-    models.CharField(
-        max_length=20,
-        choices=[
-            ('inspector', 'Inspector'),
-            ('admin', 'Administrators'),
-            ('super_admin', 'Super Admin'),
-            ('financial', 'Financial Administrator'),
-            ('scientist', 'Lab Technician'),
-            ('developer', 'Developer'),
-        ],
-        default='inspector',
-        help_text="User role in the system"
-    )
-)
-
+User.add_to_class('role', models.CharField(
+    max_length=20,
+    choices=[
+        ('inspector', 'Inspector'),
+        ('admin', 'HR/Admin Staff'),
+        ('super_admin', 'Super Admin'),
+        ('financial', 'Financial'),
+        ('scientist', 'Scientist'),
+        ('developer', 'Developer'),
+    ],
+    default='inspector',
+    help_text="User role in the system"
+))
 
 User.add_to_class('phone_number', models.CharField(max_length=20, blank=True, null=True))
 User.add_to_class('department', models.CharField(max_length=100, blank=True, null=True))
