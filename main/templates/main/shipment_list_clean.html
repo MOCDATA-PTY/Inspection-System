@@ -317,9 +317,6 @@
     background-color: #ef4444; /* Red color */
     color: white;
 }
-
-        
-        
         .btn-analytics:hover {
             background-color: #dc2626; /* Darker red on hover */
         }
@@ -967,7 +964,6 @@
         .btn-retest:hover {
             background-color: #4b5563;
         }
-        
         .btn-retest.uploaded {
             background-color: #059669;
         }
@@ -1613,7 +1609,6 @@
             opacity: 1 !important;
             cursor: not-allowed !important;
         }
-        
         .btn-lab.uploaded:disabled:hover,
         .btn-lab-form.uploaded:disabled:hover,
         .btn-retest.uploaded:disabled:hover {
@@ -2260,7 +2255,6 @@
         .mobile-overlay.show {
             display: block;
         }
-        
         @media (max-width: 1024px) {
             .mobile-menu-btn {
                 display: block;
@@ -3074,7 +3068,6 @@
                                     {% endif %}
                                 </td>
                             </tr>
-                            
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
                                 <td colspan="{% if user.role == 'inspector' %}12{% else %}13{% endif %}" class="detail-cell">
@@ -3687,9 +3680,9 @@
     </style>
 
     <!-- Load sent status functionality from external file -->
-    <script src="{% static 'js/sent_status.js' %}"></script>
+    <script src="{% static 'js/sent_status.js' %}?v=20250925-fix-endpoint-calls"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20250917-fix-all-issues"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20250925-fix-endpoint-calls"></script>
     <script>
         // Set global CSRF token for upload functions
         try {
@@ -3699,7 +3692,6 @@
             console.error('Error setting CSRF token:', error);
         }
     </script>
-    
     <script>
         // Global error handler to catch any uncaught exceptions
         window.addEventListener('error', function(event) {
@@ -4332,9 +4324,6 @@
             // Allow default navigation - don't prevent default
             // The page will reload with the new page number
         }
-        
-
-        
         // Function to check compliance documents in batch with completion tracking
         async function checkComplianceDocumentsBatch(inspections, overlay, messageElement) {
             try {
@@ -4744,7 +4733,8 @@
                 const requestData = {
                     group_id: groupId,
                     client_name: clientName,
-                    inspection_date: inspectionDate
+                    inspection_date: inspectionDate,
+                    _force_refresh: true
                 };
                 console.log('🔍 DEBUG: Request data being sent:', JSON.stringify(requestData, null, 2));
                 
@@ -4981,7 +4971,6 @@
                 progressDiv.remove();
             }
         }
-
         async function loadClientAllFilesOptimized(clientName, currentPageClients) {
             try {
                 console.log('🔄 Client files: Starting OPTIMIZED files fetch for client:', clientName);
@@ -5629,7 +5618,6 @@
                 alert('Network error: ' + error.message);
             }
         }
-        
         function formatFileSize(bytes) {
             if (!bytes) return '0 B';
             const k = 1024;
@@ -6239,8 +6227,6 @@
                 updateAllViewFilesButtonColors();
             }, 3000);
         });
-
-        
         // Upload RFI function
         function uploadRFI(groupId) {
             console.log('🔍 uploadRFI called with groupId:', groupId);
@@ -6887,7 +6873,6 @@
                 alert('Error updating Group Hours: ' + error.message);
             });
         }
-        
         // Update Hours function
         function updateHours(input) {
             const inspectionId = input.getAttribute('data-inspection-id');
@@ -7507,7 +7492,6 @@
             console.log('🔬 Manually triggering sample filter...');
             initializeSampleIndicators();
         }
-        
         // Debug function to check current page state
         function debugSampleFilter() {
             console.log('🔬 DEBUGGING SAMPLE FILTER STATE');

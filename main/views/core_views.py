@@ -1,3 +1,4 @@
+import json
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from ..models import FoodSafetyAgencyInspection
@@ -58,6 +59,19 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+
+# Safe print wrapper to avoid UnicodeEncodeError on Windows consoles
+def safe_print(*args, **kwargs):
+    try:
+        print(*args, **kwargs)
+    except UnicodeEncodeError:
+        sanitized_args = []
+        for a in args:
+            try:
+                sanitized_args.append(str(a).encode('cp1252', errors='ignore').decode('cp1252', errors='ignore'))
+            except Exception:
+                sanitized_args.append(str(a))
+        print(*sanitized_args, **kwargs)
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -743,121 +757,150 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
         from django.conf import settings
         from datetime import datetime
         import re
+        import glob
         
-        # Build base path: media/inspection/YYYY/Month/ClientName/Compliance/
+        print(f"[DEBUG] Starting compliance check for {client_name} on {date_of_inspection}")
+        
+        # Initialize variables
+        commodity_status = {}
+        has_any_compliance = False
+        
+        # Build base path
         date_str = str(date_of_inspection).replace('-', '')
         year_folder = date_str[:4]
         month_num = int(date_str[4:6]) if len(date_str) >= 6 else int(datetime.now().strftime('%m'))
         year_num = int(year_folder)
         month_folder = datetime.strptime(f"{year_num}-{month_num:02d}-01", "%Y-%m-%d").strftime("%B")
         
-        # Get unique commodities from inspections
+        # Get unique commodities
         commodities = set()
         for inspection in inspections:
-            if inspection.commodity:
-                commodities.add(str(inspection.commodity).upper().strip())
+            commodity = getattr(inspection, 'commodity', None)
+            print(f"   📝 Inspection commodity: {commodity}")
+            if commodity:
+                commodities.add(commodity)
+            from django.conf import settings
+            from datetime import datetime
+            import os
+            # Build base path: media/inspection/YYYY/Month/ClientName/Compliance/
+            date_str = str(date_of_inspection).replace('-', '')
+            year_folder = date_str[:4]
+            month_num = int(date_str[4:6]) if len(date_str) >= 6 else int(datetime.now().strftime('%m'))
+            year_num = int(year_folder)
+            month_folder = datetime.strptime(f"{year_num}-{month_num:02d}-01", "%Y-%m-%d").strftime("%B")
+
+            # Get unique commodities from inspections
+            commodities = set()
+            for inspection in inspections:
+                # Add debug for inspection commodity
+                print(f"   📝 Inspection commodity: {getattr(inspection, 'commodity', None)}")
+                commodities.add(getattr(inspection, 'commodity', None))
+
+            commodity_status = {}
+            has_any_compliance = False
+
+            # Use original client name for folder matching (folders now use original names)
+            client_folder = client_name or 'Unknown Client'
+
+            print(f"[DEBUG] Checking compliance for client: '{client_name}' (folder: '{client_folder}')")
+
+        # Check both main compliance folder and inspection-specific folders
+        client_base = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_folder)
+        print(f"   📂 Checking client base path: {client_base}")
         
-        commodity_status = {}
-        has_any_compliance = False
+        # Check main Compliance folder
+        main_compliance_path = os.path.join(client_base, 'Compliance')
+        print(f"   📂 Checking main compliance path: {main_compliance_path}")
         
-        # Use original client name for folder matching (folders now use original names)
-        client_folder = client_name or 'Unknown Client'
+        # Check Inspection-* folders for compliance files
+        inspection_folders = []
+        if os.path.exists(client_base):
+            inspection_folders = [d for d in os.listdir(client_base) if d.startswith('Inspection-')]
         
-        print(f"🔍 Checking compliance for client: {client_name}")
-        print(f"   📁 Looking for folder: {client_folder}")
+        has_compliance_files = False
         
-        # Check compliance folder with original client name
-        base_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_folder, 'Compliance')
-        print(f"   📂 Checking path: {base_path}")
-        
-        if os.path.exists(base_path):
-            print(f"   ✅ Found compliance folder: {client_folder}")
-            
-            # Check each commodity folder
-            for commodity in commodities:
-                commodity_path = os.path.join(base_path, commodity)
-                if os.path.exists(commodity_path):
-                    files = os.listdir(commodity_path)
-                    if files:
-                        commodity_status[commodity] = True
-                        has_any_compliance = True
-                        print(f"   ✅ {commodity}: {len(files)} files")
-                    else:
-                        commodity_status[commodity] = False
-                        print(f"   ❌ {commodity}: No files")
-                else:
-                    commodity_status[commodity] = False
-                    print(f"   ❌ {commodity}: Folder not found")
-            
-            # Return results since we found the folder
-            all_commodities_have_compliance = all(commodity_status.values()) if commodity_status else False
-            return {
-                'has_any_compliance': has_any_compliance,
-                'all_commodities_have_compliance': all_commodities_have_compliance,
-                'commodity_status': commodity_status,
-                'client_folder_found': True
-            }
-        else:
-            print(f"   ❌ Compliance folder not found: {base_path}")
-            # Check if we need to try other variations for backwards compatibility
-            client_folder_variations = [
-                # Legacy sanitized names for backwards compatibility
-                re.sub(r'[^a-zA-Z0-9_]', '_', client_name).replace('_+', '_').strip('_'),
-                re.sub(r'[^a-zA-Z0-9]', '', client_name),
-                client_name.replace(' ', '_').replace('-', '_').replace("'", '').replace('"', ''),
-            ]
-            
-            # Remove duplicates while preserving order
-            client_folder_variations = list(dict.fromkeys(client_folder_variations))
-            
-            print(f"   📁 Trying legacy folder variations: {client_folder_variations}")
-            
-            # Check each commodity folder for each client folder variation
-            for legacy_client_folder in client_folder_variations:
-                legacy_base_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, legacy_client_folder, 'Compliance')
-                print(f"   📂 Checking legacy path: {legacy_base_path}")
+        # Check main compliance folder
+        if os.path.exists(main_compliance_path):
+            try:
+                files = os.listdir(main_compliance_path)
+                if files:
+                    print(f"   [OK] Found files in main Compliance folder: {files}")
+                    has_compliance_files = True
+            except Exception as e:
+                print(f"   [ERR] Error listing main compliance files: {e}")
                 
-                if os.path.exists(legacy_base_path):
-                    print(f"   ✅ Found legacy compliance folder: {legacy_client_folder}")
+        # Check each Inspection folder
+        for folder in inspection_folders:
+            inspection_path = os.path.join(client_base, folder)
+            if os.path.exists(inspection_path):
+                try:
+                    files = os.listdir(inspection_path)
+                    if files:
+                        print(f"   ✅ Found files in {folder}: {files}")
+                        has_compliance_files = True
+                except Exception as e:
+                    print(f"   ❌ Error listing {folder} files: {e}")
                     
-                    # Check each commodity folder
-                    for commodity in commodities:
-                        commodity_path = os.path.join(legacy_base_path, commodity)
-                        has_files = False
-                        
-                        if os.path.isdir(commodity_path):
-                            # Check if there are any files in the commodity folder
-                            files = [f for f in os.listdir(commodity_path) if os.path.isfile(os.path.join(commodity_path, f))]
-                            has_files = len(files) > 0
-                            if has_files:
-                                has_any_compliance = True
-                                print(f"   📄 {commodity}: {len(files)} files found")
-                            else:
-                                print(f"   📄 {commodity}: No files")
-                        else:
-                            print(f"   📄 {commodity}: No folder")
-                        
-                        commodity_status[commodity] = has_files
-                    
-                    # If we found the folder, break out of the loop
-                    break
-                else:
-                    print(f"   ❌ Legacy folder not found: {legacy_client_folder}")
+        if not has_compliance_files:
+            print(f"   🚫 No compliance files found in any location")        # Use original client name for folder matching
+        client_folder = client_name or 'Unknown Client'
+        client_base = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder, client_folder)
+        print(f"   📂 Checking client base path: {client_base}")
         
-        # Check if all commodities have compliance documents
+        if os.path.exists(client_base):
+            # Check main Compliance folder
+            main_compliance_path = os.path.join(client_base, 'Compliance')
+            print(f"   📂 Checking main compliance path: {main_compliance_path}")
+            
+            if os.path.exists(main_compliance_path):
+                try:
+                    files = os.listdir(main_compliance_path)
+                    if files:
+                        print(f"   ✅ Found files in main Compliance folder: {files}")
+                        has_any_compliance = True
+                except Exception as e:
+                    print(f"   ❌ Error listing main compliance folder: {e}")
+            
+            # Check Inspection-* folders
+            try:
+                folders = os.listdir(client_base)
+                inspection_folders = [d for d in folders if d.startswith('Inspection-')]
+                print(f"   🔍 Found inspection folders: {inspection_folders}")
+                
+                for folder in inspection_folders:
+                    inspection_path = os.path.join(client_base, folder)
+                    if os.path.exists(inspection_path):
+                        try:
+                            files = os.listdir(inspection_path)
+                            if files:
+                                print(f"   ✅ Found files in {folder}: {files}")
+                                has_any_compliance = True
+                        except Exception as e:
+                            print(f"   ❌ Error listing {folder}: {e}")
+            except Exception as e:
+                print(f"   ❌ Error listing inspection folders: {e}")
+        else:
+            print(f"   🚫 Client base path does not exist")
+        
+        # Update commodity status
+        for commodity in commodities:
+            commodity_status[commodity] = has_any_compliance
+        
         all_commodities_have_compliance = all(commodity_status.values()) if commodity_status else False
         
-        print(f"   🎯 Final result: has_any_compliance={has_any_compliance}, all_commodities_have_compliance={all_commodities_have_compliance}")
+        print(f"   🎯 Final results:")
+        print(f"      - Has any compliance: {has_any_compliance}")
+        print(f"      - All commodities have compliance: {all_commodities_have_compliance}")
+        print(f"      - Commodity status: {commodity_status}")
         
         return {
             'has_any_compliance': has_any_compliance,
             'all_commodities_have_compliance': all_commodities_have_compliance,
             'commodity_status': commodity_status
         }
-        
+    
     except Exception as e:
         print(f"   ❌ Error checking compliance: {str(e)}")
-        # If any error, return default status
         return {
             'has_any_compliance': False,
             'all_commodities_have_compliance': False,
@@ -873,8 +916,8 @@ def shipment_list(request):
     clear_messages(request)
     
     print("=" * 80)
-    print("🚀🚀🚀 SHIPMENT_LIST VIEW CALLED - DEBUGGING INSPECTION ISSUES 🚀🚀🚀")
-    print(f"👤 User: {request.user.username} (Role: {getattr(request.user, 'role', 'unknown')})")
+    safe_print("SHIPMENT_LIST VIEW CALLED - DEBUGGING INSPECTION ISSUES")
+    safe_print(f"User: {request.user.username} (Role: {getattr(request.user, 'role', 'unknown')})")
     print("=" * 80)
     
     # Check for stored sync messages in cache and display them
@@ -900,11 +943,11 @@ def shipment_list(request):
     cache_key = f"shipment_list_{request.user.id}_{request.user.role}"
     
     # FORCE CACHE CLEAR on every page load to prevent stale data issues
-    print("🧹 CLEARING CACHE on page load to prevent stale data...")
+    safe_print("CLEARING CACHE on page load to prevent stale data...")
     cache.delete(cache_key)
     cache.delete('drive_files_lookup_v2')
     cache.delete('page_clients_status_cache')
-    print("✅ Cache cleared - fresh data will be loaded")
+    safe_print("Cache cleared - fresh data will be loaded")
     
     # Check if we have cached data (only clear if needed)
     cached_data = cache.get(cache_key)
@@ -2301,448 +2344,402 @@ def upload_document(request):
 
 
 @login_required(login_url='login')
+def scan_inspection_folders(test_path, seen_files):
+    """Scan Inspection-XXXX folders for files and return a list of files by category."""
+    files_list = {}
+    inspection_folders = [d for d in os.listdir(test_path) if d.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, d))]
+    
+    for inspection_folder in sorted(inspection_folders):
+        inspection_path = os.path.join(test_path, inspection_folder)
+        print(f"🔍 [DEBUG] Checking inspection folder: {inspection_folder}")
+        
+        # Check each document type in the inspection folder
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance']
+        for doc_type in doc_types:
+            doc_path = os.path.join(inspection_path, doc_type)
+            if os.path.exists(doc_path):
+                print(f"🔍 [DEBUG] Found {doc_type} in {inspection_folder}")
+                files = []
+                
+                # Handle subfolders (for lab results and compliance)
+                paths_to_check = []
+                if doc_type in ['lab results', 'Compliance']:
+                    # Check commodity subfolders
+                    try:
+                        for item in os.listdir(doc_path):
+                            item_path = os.path.join(doc_path, item)
+                            if os.path.isdir(item_path):
+                                paths_to_check.append(item_path)
+                                print(f"🔍 [DEBUG] Adding commodity path: {item_path}")
+                    except Exception as e:
+                        print(f"⚠️ Error checking commodity folders: {e}")
+                else:
+                    paths_to_check = [doc_path]
+                
+                # Scan all paths for files
+                for check_path in paths_to_check:
+                    try:
+                        for filename in os.listdir(check_path):
+                            file_path = os.path.join(check_path, filename)
+                            if os.path.isfile(file_path):
+                                file_size = os.path.getsize(file_path)
+                                unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                
+                                if unique_key not in seen_files:
+                                    seen_files.add(unique_key)
+                                    display_path = os.path.join(inspection_folder, doc_type, os.path.relpath(file_path, doc_path))
+                                    files.append({
+                                        'name': filename,
+                                        'path': display_path.replace('\\', '/'),
+                                        'size': file_size
+                                    })
+                                    print(f"✅ [DEBUG] Added file: {filename} from {doc_type}")
+                    except Exception as e:
+                        print(f"⚠️ Error reading files in {check_path}: {e}")
+                
+                if files:
+                    # Use standardized category keys
+                    category_key = doc_type.lower()
+                    if doc_type == 'Request For Invoice':
+                        category_key = 'rfi'
+                    elif doc_type == 'lab results':
+                        category_key = 'lab'
+                    elif doc_type == 'Compliance':
+                        category_key = 'compliance'
+                    
+                    if category_key not in files_list:
+                        files_list[category_key] = []
+                    files_list[category_key].extend(files)
+    
+    return files_list
+
+def scan_inspection_folders(base_path, seen_files):
+    """Scan Inspection-XXXX folders for files and return a list of files by category."""
+    import os
+    files_list = {}
+    inspection_folders = [d for d in os.listdir(base_path) if d.startswith('Inspection-') and os.path.isdir(os.path.join(base_path, d))]
+    
+    for inspection_folder in sorted(inspection_folders):
+        inspection_path = os.path.join(base_path, inspection_folder)
+        print(f"🔍 [DEBUG] Checking inspection folder: {inspection_folder}")
+        
+        # Check each document type in the inspection folder
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance']
+        for doc_type in doc_types:
+            doc_path = os.path.join(inspection_path, doc_type)
+            if os.path.exists(doc_path):
+                print(f"🔍 [DEBUG] Found {doc_type} in {inspection_folder}")
+                files = []
+                
+                # Handle subfolders (for lab results and compliance)
+                paths_to_check = []
+                if doc_type in ['lab results', 'Compliance']:
+                    # Check commodity subfolders
+                    try:
+                        for item in os.listdir(doc_path):
+                            item_path = os.path.join(doc_path, item)
+                            if os.path.isdir(item_path):
+                                paths_to_check.append(item_path)
+                    except Exception as e:
+                        print(f"⚠️ Error checking commodity folders: {e}")
+                else:
+                    paths_to_check = [doc_path]
+                
+                # Process files in all checked paths
+                for check_path in paths_to_check:
+                    try:
+                        for filename in os.listdir(check_path):
+                            file_path = os.path.join(check_path, filename)
+                            if os.path.isfile(file_path):
+                                file_size = os.path.getsize(file_path)
+                                unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                
+                                if unique_key not in seen_files:
+                                    seen_files.add(unique_key)
+                                    # Determine category key first
+                                    category_key = doc_type.lower()
+                                    if doc_type == 'Request For Invoice':
+                                        category_key = 'rfi'
+                                    elif doc_type == 'lab results':
+                                        category_key = 'lab'
+                                    elif doc_type == 'Compliance':
+                                        category_key = 'compliance'
+                                    
+                                    # Use get_file_info to create proper file structure
+                                    file_info = get_file_info(file_path, category_key)
+                                    files.append(file_info)
+                                    print(f"✅ [DEBUG] Added file: {filename} from {doc_type}")
+                    except Exception as e:
+                        print(f"⚠️ Error reading files in {check_path}: {e}")
+                
+                if files:
+                    # Use standardized category keys (already determined above)
+                    category_key = doc_type.lower()
+                    if doc_type == 'Request For Invoice':
+                        category_key = 'rfi'
+                    elif doc_type == 'lab results':
+                        category_key = 'lab'
+                    elif doc_type == 'Compliance':
+                        category_key = 'compliance'
+                    
+                    if category_key not in files_list:
+                        files_list[category_key] = []
+                    files_list[category_key].extend(files)
+    
+    return files_list
+
 def list_uploaded_files(request):
     """List uploaded files for a given inspection or group."""
-    if request.method == 'GET':
-        try:
-            from ..models import FoodSafetyAgencyInspection
-            import os
-            from django.conf import settings
-            from datetime import datetime
-            
-            group_id = request.GET.get('group_id')
-            inspection_id = request.GET.get('inspection_id')
-            
-            if not group_id and not inspection_id:
-                return JsonResponse({'success': False, 'error': f'No group ID or inspection ID provided. Group ID: "{group_id}", Inspection ID: "{inspection_id}". Please refresh the page and try again.'})
-            
-            # Get inspection data to determine folder path
-            if group_id:
-                # Parse group_id to get client name and date
-                parts = group_id.split('_')
-                if len(parts) >= 2:
-                    # Reconstruct the original client name from group_id
-                    # Group ID format: "Client_Name_20250912" -> Client Name
-                    client_name_from_group = '_'.join(parts[:-1])
-                    date_str = parts[-1]
-                    
-                    # Convert the group_id client name back to original format
-                    # The sanitize_group_id function converts "Boxer - Heidedal" to "Boxer_Heidedal"
-                    # So we need to convert it back to the original format
-                    # Try different variations to find the actual folder name
-                    possible_names = [
-                        client_name_from_group.replace('_', ' - '),  # "Boxer - Heidedal" (most common)
-                        client_name_from_group.replace('_', ' '),    # "Boxer Heidedal"
-                        client_name_from_group.replace('_', '-'),    # "Boxer-Heidedal"
-                        client_name_from_group,                      # "Boxer_Heidedal"
-                    ]
-                    
-                    # We'll try to find the actual folder name by checking what exists
-                    # For now, use the most likely format (with dashes)
-                    original_client_name = possible_names[0]  # "Boxer - Heidedal"
-                    
-                    if len(date_str) == 8:
-                        year = date_str[:4]
-                        month_num = int(date_str[4:6])
-                        month_name = datetime.strptime(f"2023-{month_num:02d}-01", "%Y-%m-%d").strftime("%B")
-                        year_folder = year
-                        month_folder = month_name
-                    else:
-                        year_folder = datetime.now().strftime("%Y")
-                        month_folder = datetime.now().strftime("%B")
-                else:
-                    original_client_name = group_id
-                    year_folder = datetime.now().strftime("%Y")
-                    month_folder = datetime.now().strftime("%B")
-                
-                # Now create the proper folder variations using the original client name
-                client_name = original_client_name
-                
-            else:
-                # Individual inspection
-                inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
-                if inspection:
-                    client_name = inspection.client_name or "Unknown_Client"
-                    if inspection.date_of_inspection:
-                        year_folder = inspection.date_of_inspection.strftime("%Y")
-                        month_folder = inspection.date_of_inspection.strftime("%B")
-                    else:
-                        year_folder = datetime.now().strftime("%Y")
-                        month_folder = datetime.now().strftime("%B")
-                else:
-                    client_name = "Unknown_Client"
-                    year_folder = datetime.now().strftime("%Y")
-                    month_folder = datetime.now().strftime("%B")
-                
-            # Use exact client name since folders now use original names
-            import re
-            parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
-            client_folder_variations = [client_name]
-            
-            # List files in document type folders (checking multiple folder variations)
-            files_list = {}
-            seen_files = set()  # Track files to avoid duplicates
-            
-            # Check all folder variations for files
-            for folder_variation in client_folder_variations:
-                test_path = os.path.join(parent_path, folder_variation)
-                if not os.path.exists(test_path):
-                    continue
-                
-                print(f"🔍 [DEBUG] Checking folder: {test_path}")
-                
-                # Check traditional document folders first (where files are actually uploaded)
-                traditional_docs = ['Request For Invoice', 'invoice', 'lab results', 'retest']
-                for doc_type in traditional_docs:
-                    doc_path = os.path.join(test_path, doc_type)
-                    if os.path.exists(doc_path):
-                        print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
-                        files = []
-                        
-                        # Check both the main folder and any subfolders (for lab results with commodity subfolders)
-                        paths_to_check = [doc_path]
-                        if doc_type == 'lab results':
-                            # Also check subfolders for lab results (commodity folders)
-                            try:
-                                for item in os.listdir(doc_path):
-                                    item_path = os.path.join(doc_path, item)
-                                    if os.path.isdir(item_path):
-                                        paths_to_check.append(item_path)
-                                        print(f"🔍 [DEBUG] Also checking subfolder: {item_path}")
-                            except Exception as e:
-                                print(f"⚠️ Error checking subfolders: {e}")
-                        
-                        for check_path in paths_to_check:
-                            try:
-                                for filename in os.listdir(check_path):
-                                    if os.path.isfile(os.path.join(check_path, filename)):
-                                        file_path = os.path.join(check_path, filename)
-                                        file_size = os.path.getsize(file_path)
-                                        
-                                        # Create unique key to avoid duplicates
-                                        unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                        if unique_key not in seen_files:
-                                            seen_files.add(unique_key)
-                                            
-                                            # Determine the actual document type based on filename
-                                            actual_doc_type = doc_type
-                                            if doc_type == 'Request For Invoice':
-                                                actual_doc_type = 'rfi'
-                                            elif doc_type == 'lab results':
-                                                if 'lab_form' in filename.lower():
-                                                    actual_doc_type = 'lab_form'
-                                                else:
-                                                    actual_doc_type = 'lab'
-                                            
-                                            file_info = get_file_info(file_path, actual_doc_type)
-                                            files.append(file_info)
-                                            print(f"✅ Added unique file: {filename} as {actual_doc_type}")
-                                        else:
-                                            print(f"⚠️ Skipped duplicate file: {filename}")
-                            except Exception as e:
-                                print(f"⚠️ Error processing {check_path}: {e}")
-                        
-                        if files:
-                            # Group files by their actual document type
-                            for file_info in files:
-                                actual_doc_type = file_info.get('document_type', doc_type)
-                                if actual_doc_type not in files_list:
-                                    files_list[actual_doc_type] = []
-                                files_list[actual_doc_type].append(file_info)
-                
-                # Also check nested Inspection-XXXX folders for files
-                try:
-                    for item in os.listdir(test_path):
-                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
-                            inspection_folder = os.path.join(test_path, item)
-                            print(f"🔍 [DEBUG] Checking nested folder: {item}")
-                            
-                            # Check each document type in the nested folder
-                            for doc_type in traditional_docs:
-                                nested_doc_path = os.path.join(inspection_folder, doc_type)
-                                if os.path.exists(nested_doc_path):
-                                    print(f"🔍 [DEBUG] Found nested {doc_type} folder at: {nested_doc_path}")
-                                    files = []
-                                    for filename in os.listdir(nested_doc_path):
-                                        if os.path.isfile(os.path.join(nested_doc_path, filename)):
-                                            file_path = os.path.join(nested_doc_path, filename)
-                                            file_size = os.path.getsize(file_path)
-                                            
-                                            # Create unique key to avoid duplicates
-                                            unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                            if unique_key not in seen_files:
-                                                seen_files.add(unique_key)
-                                                file_info = get_file_info(file_path, f'{item}/{doc_type}')
-                                                files.append(file_info)
-                                                print(f"✅ Added unique nested file: {filename}")
-                                            else:
-                                                print(f"⚠️ Skipped duplicate nested file: {filename}")
-                                    
-                                    if files:
-                                        if doc_type not in files_list:
-                                            files_list[doc_type] = []
-                                        files_list[doc_type].extend(files)
-                            
-                            # Check compliance folder in nested folder
-                            nested_compliance_path = os.path.join(inspection_folder, 'Compliance')
-                            if os.path.exists(nested_compliance_path):
-                                print(f"🔍 [DEBUG] Found nested Compliance folder at: {nested_compliance_path}")
-                                compliance_files = []
-                                try:
-                                    # Check for any commodity folders
-                                    for commodity_folder in os.listdir(nested_compliance_path):
-                                        commodity_path = os.path.join(nested_compliance_path, commodity_folder)
-                                        if os.path.isdir(commodity_path):
-                                            for filename in os.listdir(commodity_path):
-                                                if os.path.isfile(os.path.join(commodity_path, filename)):
-                                                    file_path = os.path.join(commodity_path, filename)
-                                                    file_size = os.path.getsize(file_path)
-                                                    
-                                                    # Create unique key to avoid duplicates
-                                                    unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                                    if unique_key not in seen_files:
-                                                        seen_files.add(unique_key)
-                                                        file_info = get_file_info(file_path, f'{item}/Compliance/{commodity_folder}')
-                                                        compliance_files.append(file_info)
-                                                        print(f"✅ Added unique nested compliance file: {filename}")
-                                                    else:
-                                                        print(f"⚠️ Skipped duplicate nested compliance file: {filename}")
-                                except (OSError, PermissionError):
-                                    print(f"⚠️ Error accessing nested compliance folder: {nested_compliance_path}")
-                                    continue
-                                
-                                if compliance_files:
-                                    if 'compliance' not in files_list:
-                                        files_list['compliance'] = []
-                                    files_list['compliance'].extend(compliance_files)
-                except (OSError, PermissionError):
-                    print(f"⚠️ Error accessing nested folders in: {test_path}")
-            
-            # Also check for compliance documents in the new folder structure
-            for folder_variation in client_folder_variations:
-                test_path = os.path.join(parent_path, folder_variation)
-                if not os.path.exists(test_path):
-                    continue
-                
-                compliance_path = os.path.join(test_path, 'Compliance')
-                if os.path.exists(compliance_path):
-                    print(f"🔍 [DEBUG] Found compliance folder at: {compliance_path}")
-                    
-                    # Get all commodity subfolders
-                    for commodity_folder in os.listdir(compliance_path):
-                        commodity_path = os.path.join(compliance_path, commodity_folder)
-                        
-                        if os.path.isdir(commodity_path):
-                            print(f"Checking commodity folder: {commodity_folder}")
-                            
-                            # List all files in this commodity folder
-                            files = []
-                            for filename in os.listdir(commodity_path):
-                                if os.path.isfile(os.path.join(commodity_path, filename)):
-                                    file_path = os.path.join(commodity_path, filename)
-                                    file_size = os.path.getsize(file_path)
-                                    
-                                    # Create unique key to avoid duplicates
-                                    unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                    if unique_key not in seen_files:
-                                        seen_files.add(unique_key)
-                                        
-                                        # Determine document type based on filename or folder
-                                        doc_type = 'compliance'
-                                        if 'rfi' in filename.lower():
-                                            doc_type = 'rfi'
-                                        elif 'invoice' in filename.lower():
-                                            doc_type = 'invoice'
-                                        elif 'lab' in filename.lower():
-                                            doc_type = 'lab'
-                                        elif 'retest' in filename.lower():
-                                            doc_type = 'retest'
-                                        
-                                        file_info = get_file_info(file_path, doc_type)
-                                        file_info['commodity'] = commodity_folder
-                                        files.append(file_info)
-                                        print(f"✅ Added compliance file: {filename}")
-                            
-                            if files:
-                                if 'compliance' not in files_list:
-                                    files_list['compliance'] = []
-                                files_list['compliance'].extend(files)
-                                print(f"Found {len(files)} compliance files in {commodity_folder}")
-            
-            # Log the results for debugging
-            print(f"Files found for {inspection_id or group_id}: {files_list}")
-            print(f"Group ID: {group_id}, Inspection ID: {inspection_id}")
-            print(f"Parent path: {parent_path}")
-            
-            return JsonResponse({
-                'success': True,
-                'files': files_list,
-                'base_path': parent_path
-            })
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
+    import os
+    import json
+    from django.conf import settings
+    from django.http import JsonResponse
+    from django.shortcuts import get_object_or_404
+    from ..models import Inspection
+    import logging
+
+    logger = logging.getLogger(__name__)
+    inspection_id = None
+    group_id = None
     
+    # Log request details for debugging
+    logger.debug(f"🔍 [DEBUG] Request method: {request.method}")
+    logger.debug(f"🔍 [DEBUG] Request content type: {request.content_type}")
+    
+    if request.method == 'GET':
+        inspection_id = request.GET.get('inspection_id') or request.GET.get('inspection')
+        group_id = request.GET.get('group_id') or request.GET.get('group')
     elif request.method == 'POST':
         try:
-            import json
-            from ..models import FoodSafetyAgencyInspection
-            import os
-            from django.conf import settings
-            from datetime import datetime
-            
+            logger.debug(f"🔍 [DEBUG] Request body: {request.body.decode('utf-8')}")
             data = json.loads(request.body)
-            client_name = data.get('client_name')
-            inspection_date = data.get('inspection_date')
-            inspection_id = data.get('inspection_id')
-            
-            if not client_name or not inspection_date:
-                return JsonResponse({'success': False, 'error': 'Client name and inspection date are required'})
-            
-            # Parse date
+            inspection_id = data.get('inspection_id') or data.get('inspection')
+            group_id = data.get('group_id') or data.get('group')
+            logger.debug(f"🔍 [DEBUG] Parsed POST data - inspection_id: {inspection_id}, group_id: {group_id}")
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ [ERROR] JSON decode error: {str(e)}")
+            return JsonResponse({'error': 'Invalid JSON in request body'}, status=400)
+        except Exception as e:
+            logger.error(f"❌ [ERROR] Unexpected error processing POST data: {str(e)}")
+            return JsonResponse({'error': 'Error processing request'}, status=400)
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    if not inspection_id and not group_id:
+        logger.warning("⚠️ [WARNING] No inspection_id or group_id provided")
+        return JsonResponse({'error': 'No inspection_id or group_id provided'}, status=400)
+        
+    base_path = None
+    try:
+        if inspection_id:
             try:
-                date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
-                year_folder = date_obj.strftime('%Y')
-                month_folder = date_obj.strftime('%B')
-            except ValueError:
-                return JsonResponse({'success': False, 'error': 'Invalid date format'})
+                inspection = get_object_or_404(Inspection, pk=inspection_id)
+                base_path = os.path.join(settings.MEDIA_ROOT, 'inspections', 
+                                       inspection.get_date_folder(), 
+                                       inspection.client.name)
+            except Exception as e:
+                print(f"❌ Error getting inspection folder: {str(e)}")
+                return JsonResponse({'error': 'Invalid inspection ID'}, status=400)
+        elif group_id:
+            # The Group model is not defined in main.models in this codebase.
+            # Return a clear error instead of attempting to import a missing model.
+            return JsonResponse({'error': 'Group-based listing not supported'}, status=400)
+
+        if not base_path:
+            print("❌ Base path is None")
+            return JsonResponse({'error': 'Could not determine base path'}, status=500)
             
-            # Use exact client name since folders now use original names
-            parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
-            client_folder_variations = [client_name]
-            
-            # List files in document type folders (checking multiple folder variations)
-            files_list = {}
-            seen_files = set()  # Track files to avoid duplicates
-            
-            # Check all folder variations for files
-            for folder_variation in client_folder_variations:
-                test_path = os.path.join(parent_path, folder_variation)
-                if not os.path.exists(test_path):
-                    continue
+        if not os.path.exists(base_path):
+            print(f"⚠️ Base path does not exist: {base_path}")
+            return JsonResponse({'files': []})
+
+        print(f"🔍 [DEBUG] Scanning base path: {base_path}")
+        seen_files = set()
+        files_list = scan_inspection_folders(base_path, seen_files)
+
+        # Initialize any missing categories
+        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance']:
+            if category not in files_list:
+                files_list[category] = []
                 
-                print(f"🔍 [DEBUG] Checking folder: {test_path}")
-                
-                # Check traditional document folders first (where files are actually uploaded)
-                traditional_docs = ['Request For Invoice', 'invoice', 'lab results', 'retest']
-                for doc_type in traditional_docs:
-                    doc_path = os.path.join(test_path, doc_type)
-                    if os.path.exists(doc_path):
-                        print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
-                        files = []
-                        
-                        # Check both the main folder and any subfolders (for lab results with commodity subfolders)
-                        paths_to_check = [doc_path]
-                        if doc_type == 'lab results':
-                            # Also check subfolders for lab results (commodity folders)
-                            try:
-                                for item in os.listdir(doc_path):
-                                    item_path = os.path.join(doc_path, item)
-                                    if os.path.isdir(item_path):
-                                        paths_to_check.append(item_path)
-                                        print(f"🔍 [DEBUG] Also checking subfolder: {item_path}")
-                            except Exception as e:
-                                print(f"⚠️ Error checking subfolders: {e}")
-                        
-                        for check_path in paths_to_check:
-                            try:
-                                for filename in os.listdir(check_path):
-                                    if os.path.isfile(os.path.join(check_path, filename)):
-                                        file_path = os.path.join(check_path, filename)
-                                        file_size = os.path.getsize(file_path)
-                                        
-                                        # Create unique key to avoid duplicates
-                                        unique_key = (filename, file_size, os.path.getmtime(file_path))
-                                        if unique_key not in seen_files:
-                                            seen_files.add(unique_key)
-                                            
-                                            # Determine the actual document type based on filename
-                                            actual_doc_type = doc_type
-                                            if doc_type == 'Request For Invoice':
-                                                actual_doc_type = 'rfi'
-                                            elif doc_type == 'lab results':
-                                                if 'lab_form' in filename.lower():
-                                                    actual_doc_type = 'lab_form'
-                                                else:
-                                                    actual_doc_type = 'lab'
-                                            
-                                            file_info = get_file_info(file_path, actual_doc_type)
-                                            files.append(file_info)
-                                            print(f"✅ Added unique file: {filename} as {actual_doc_type}")
-                                        else:
-                                            print(f"⚠️ Skipped duplicate file: {filename}")
-                            except Exception as e:
-                                print(f"⚠️ Error processing {check_path}: {e}")
-                        
-                        if files:
-                            # Group files by their actual document type
-                            for file_info in files:
-                                actual_doc_type = file_info.get('document_type', doc_type)
-                                if actual_doc_type not in files_list:
-                                    files_list[actual_doc_type] = []
-                                files_list[actual_doc_type].append(file_info)
-            
-            # Also check for compliance documents in the new folder structure
-            for folder_variation in client_folder_variations:
-                test_path = os.path.join(parent_path, folder_variation)
-                if not os.path.exists(test_path):
-                    continue
-                
-                compliance_path = os.path.join(test_path, 'Compliance')
-                if os.path.exists(compliance_path):
-                    print(f"🔍 [DEBUG] Found compliance folder at: {compliance_path}")
-                    
-                    # Get all commodity subfolders
-                    for commodity_folder in os.listdir(compliance_path):
-                        commodity_path = os.path.join(compliance_path, commodity_folder)
-                        
-                        if os.path.isdir(commodity_path):
-                            print(f"Checking commodity folder: {commodity_folder}")
-                            
-                            # List all files in this commodity folder
-                            files = []
-                            for filename in os.listdir(commodity_path):
-                                if os.path.isfile(os.path.join(commodity_path, filename)):
-                                    file_path = os.path.join(commodity_path, filename)
+        return JsonResponse({'files': files_list})
+        
+    except Exception as e:
+        print(f"❌ [ERROR] Exception in list_uploaded_files: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+def list_client_folder_files(request):
+    """Return files for a client inspection folder (POST JSON: client_name, inspection_date, inspection_id optional)."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+    try:
+        import json
+        from ..models import FoodSafetyAgencyInspection
+        import os
+        from django.conf import settings
+        from datetime import datetime
+
+        data = json.loads(request.body)
+        client_name = data.get('client_name')
+        inspection_date = data.get('inspection_date')
+        inspection_id = data.get('inspection_id')
+
+        if not client_name or not inspection_date:
+            return JsonResponse({'success': False, 'error': 'Client name and inspection date are required'})
+
+        # Parse date
+        try:
+            date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+            year_folder = date_obj.strftime('%Y')
+            month_folder = date_obj.strftime('%B')
+        except ValueError:
+            return JsonResponse({'success': False, 'error': 'Invalid date format'})
+
+        # Use exact client name since folders now use original names
+        parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
+        client_folder_variations = [client_name]
+
+        # List files in document type folders (checking multiple folder variations)
+        files_list = {}
+        seen_files = set()  # Track files to avoid duplicates
+
+        # Check all folder variations for files
+        for folder_variation in client_folder_variations:
+            test_path = os.path.join(parent_path, folder_variation)
+            if not os.path.exists(test_path):
+                continue
+
+            print(f"🔍 [DEBUG] Checking folder: {test_path}")
+
+            # First, use the scan_inspection_folders function to check Inspection-XXXX folders
+            inspection_files = scan_inspection_folders(test_path, seen_files)
+            for category, file_list in inspection_files.items():
+                if category not in files_list:
+                    files_list[category] = []
+                files_list[category].extend(file_list)
+
+            # Also check traditional document folders (for backward compatibility)
+            traditional_docs = ['Request For Invoice', 'invoice', 'lab results', 'retest']
+            for doc_type in traditional_docs:
+                doc_path = os.path.join(test_path, doc_type)
+                if os.path.exists(doc_path):
+                    print(f"🔍 [DEBUG] Found {doc_type} folder at: {doc_path}")
+                    files = []
+
+                    # Check both the main folder and any subfolders (for lab results with commodity subfolders)
+                    paths_to_check = [doc_path]
+                    if doc_type == 'lab results':
+                        # Also check subfolders for lab results (commodity folders)
+                        try:
+                            for item in os.listdir(doc_path):
+                                item_path = os.path.join(doc_path, item)
+                                if os.path.isdir(item_path):
+                                    paths_to_check.append(item_path)
+                                    print(f"🔍 [DEBUG] Also checking subfolder: {item_path}")
+                        except Exception as e:
+                            print(f"⚠️ Error checking subfolders: {e}")
+
+                    for check_path in paths_to_check:
+                        try:
+                            for filename in os.listdir(check_path):
+                                if os.path.isfile(os.path.join(check_path, filename)):
+                                    file_path = os.path.join(check_path, filename)
                                     file_size = os.path.getsize(file_path)
-                                    
+
                                     # Create unique key to avoid duplicates
                                     unique_key = (filename, file_size, os.path.getmtime(file_path))
                                     if unique_key not in seen_files:
                                         seen_files.add(unique_key)
-                                        
-                                        # Determine document type based on filename or folder
-                                        doc_type = 'compliance'
-                                        if 'rfi' in filename.lower():
-                                            doc_type = 'rfi'
-                                        elif 'invoice' in filename.lower():
-                                            doc_type = 'invoice'
-                                        elif 'lab' in filename.lower():
-                                            doc_type = 'lab'
-                                        elif 'retest' in filename.lower():
-                                            doc_type = 'retest'
-                                        
-                                        file_info = get_file_info(file_path, doc_type)
-                                        file_info['commodity'] = commodity_folder
+
+                                        # Determine the actual document type based on filename
+                                        actual_doc_type = doc_type
+                                        if doc_type == 'Request For Invoice':
+                                            actual_doc_type = 'rfi'
+                                        elif doc_type == 'lab results':
+                                            if 'lab_form' in filename.lower():
+                                                actual_doc_type = 'lab_form'
+                                            else:
+                                                actual_doc_type = 'lab'
+
+                                        file_info = get_file_info(file_path, actual_doc_type)
                                         files.append(file_info)
-                                        print(f"✅ Added compliance file: {filename}")
-                            
-                            if files:
-                                if 'compliance' not in files_list:
-                                    files_list['compliance'] = []
-                                files_list['compliance'].extend(files)
-                                print(f"Found {len(files)} compliance files in {commodity_folder}")
-            
-            return JsonResponse({
-                'success': True,
-                'files': files_list,
-                'base_path': parent_path
-            })
-            
-        except Exception as e:
-            return JsonResponse({'success': False, 'error': str(e)})
-    
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+                                        print(f"✅ Added unique file: {filename} as {actual_doc_type}")
+                                    else:
+                                        print(f"⚠️ Skipped duplicate file: {filename}")
+                        except Exception as e:
+                            print(f"⚠️ Error processing {check_path}: {e}")
+
+                    if files:
+                        # Group files by their actual document type
+                        for file_info in files:
+                            actual_doc_type = file_info.get('document_type', doc_type)
+                            if actual_doc_type not in files_list:
+                                files_list[actual_doc_type] = []
+                            files_list[actual_doc_type].append(file_info)
+
+        # Also check for compliance documents in the new folder structure
+        for folder_variation in client_folder_variations:
+            test_path = os.path.join(parent_path, folder_variation)
+            if not os.path.exists(test_path):
+                continue
+
+            compliance_path = os.path.join(test_path, 'Compliance')
+            if os.path.exists(compliance_path):
+                print(f"🔍 [DEBUG] Found compliance folder at: {compliance_path}")
+
+                # Get all commodity subfolders
+                for commodity_folder in os.listdir(compliance_path):
+                    commodity_path = os.path.join(compliance_path, commodity_folder)
+
+                    if os.path.isdir(commodity_path):
+                        print(f"Checking commodity folder: {commodity_folder}")
+
+                        # List all files in this commodity folder
+                        files = []
+                        for filename in os.listdir(commodity_path):
+                            if os.path.isfile(os.path.join(commodity_path, filename)):
+                                file_path = os.path.join(commodity_path, filename)
+                                file_size = os.path.getsize(file_path)
+
+                                # Create unique key to avoid duplicates
+                                unique_key = (filename, file_size, os.path.getmtime(file_path))
+                                if unique_key not in seen_files:
+                                    seen_files.add(unique_key)
+
+                                    # Determine document type based on filename or folder
+                                    doc_type = 'compliance'
+                                    if 'rfi' in filename.lower():
+                                        doc_type = 'rfi'
+                                    elif 'invoice' in filename.lower():
+                                        doc_type = 'invoice'
+                                    elif 'lab' in filename.lower():
+                                        doc_type = 'lab'
+                                    elif 'retest' in filename.lower():
+                                        doc_type = 'retest'
+
+                                    file_info = get_file_info(file_path, doc_type)
+                                    file_info['commodity'] = commodity_folder
+                                    files.append(file_info)
+                                    print(f"✅ Added compliance file: {filename}")
+
+                        if files:
+                            if 'compliance' not in files_list:
+                                files_list['compliance'] = []
+                            files_list['compliance'].extend(files)
+                            print(f"Found {len(files)} compliance files in {commodity_folder}")
+
+        return JsonResponse({
+            'success': True,
+            'files': files_list,
+            'base_path': parent_path
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 
 
 @login_required(login_url='login')
@@ -4276,7 +4273,7 @@ def settings_view(request):
                 def pull_all_data_background():
                     """Background function to pull ALL data from Google Drive"""
                     try:
-                        print("🚀 Starting full system sync - pulling ALL data from Google Drive...")
+                        print("Starting full system sync - pulling ALL data from Google Drive...")
                         
                         # Initialize Google Drive service
                         drive_service = GoogleDriveService()
@@ -6147,7 +6144,7 @@ def get_inspection_files_onedrive(client_name, inspection_date):
         cached_files = cache.get(cache_key)
         
         if cached_files:
-            print(f"🚀 Using cached files for {client_name} ({len(cached_files)} files)")
+            print(f"Using cached files for {client_name} ({len(cached_files)} files)")
             return organize_cached_files(cached_files)
         
         # If not in cache, check local files first (faster than OneDrive API)
@@ -6324,6 +6321,10 @@ def get_inspection_files_onedrive_api(client_name, inspection_date):
 
 
 def get_inspection_files_local(client_name, inspection_date, force_refresh=False):
+    def normalize_folder_name(name):
+        # Lowercase, remove spaces and underscores for loose matching
+        return name.lower().replace(' ', '').replace('_', '')
+
     """Get inspection files from local media folder using optimized structure with caching."""
     print(f"🔍 [BACKEND] get_inspection_files_local called with:")
     print(f"  - client_name: '{client_name}'")
@@ -6387,28 +6388,39 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         # Create cache key for this specific client/date combination
         cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
         
-        # Try to get from cache first (fastest - 10 minute cache)
-        # But skip cache if force_refresh is True or cache was recently cleared
-        if force_refresh:
-            print(f"🔄 Force refresh enabled for {client_name}, skipping cache")
-        else:
-            # Check if cache was recently cleared (within last 30 seconds)
-            # Check both client_name and client_folder formats
-            cache_clear_time_key1 = f"cache_cleared:{client_name}:{year_folder}:{month_folder}"
-            cache_clear_time_key2 = f"cache_cleared:{client_folder}:{year_folder}:{month_folder}"
-            cache_clear_time1 = cache.get(cache_clear_time_key1)
-            cache_clear_time2 = cache.get(cache_clear_time_key2)
-            current_time = time.time()
+        # Enhanced caching logic with compliance status awareness
+        use_cache = not force_refresh
+        
+        if use_cache:
+            # Check if cache was recently cleared
+            cache_clear_time_keys = [
+                f"cache_cleared:{client_name}:{year_folder}:{month_folder}",
+                f"cache_cleared:{client_folder}:{year_folder}:{month_folder}",
+                f"compliance_status_{client_name}_{inspection_date}"  # Check if compliance status was updated
+            ]
             
-            if ((cache_clear_time1 and (current_time - cache_clear_time1) < 30) or 
-                (cache_clear_time2 and (current_time - cache_clear_time2) < 30)):
-                print(f"🔄 Cache was recently cleared for {client_name}, skipping cache")
-            else:
+            current_time = time.time()
+            for key in cache_clear_time_keys:
+                clear_time = cache.get(key)
+                if clear_time and (current_time - clear_time) < 30:
+                    print(f"🔄 Cache {key} was recently cleared, skipping cache")
+                    use_cache = False
+                    break
+            
+            if use_cache:
                 cached_files = cache.get(cache_key)
                 if cached_files:
-                    total_cached = sum(len(files) for files in cached_files.values())
-                    print(f"🚀 Using cached local files for {client_name} ({total_cached} files)")
-                    return cached_files
+                    # Verify compliance files are included if status indicates they should exist
+                    compliance_status = cache.get(f"compliance_status_{client_name}_{inspection_date}")
+                    has_compliance_files = len(cached_files.get('compliance', [])) > 0
+                    
+                    if (compliance_status in ['partial', 'complete'] and not has_compliance_files):
+                        print(f"🔄 Cache invalid - compliance status mismatch, refreshing")
+                        use_cache = False
+                    else:
+                        total_cached = sum(len(files) for files in cached_files.values())
+                        print(f"Using cached local files for {client_name} ({total_cached} files)")
+                        return cached_files
         
         print(f"🔍 Scanning files for: {client_name} ({inspection_date})")
         
@@ -6465,31 +6477,35 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         for category_key in categories.keys():
             files_by_category[category_key] = []
         
-        # Find the actual client path (optimized with early exit)
+        # Find the actual client path (robust matching)
         actual_client_path = None
-        
         # First try the exact path
         if os.path.exists(client_base_path):
             actual_client_path = client_base_path
         else:
-            # Try to find client folder with optimized search
+            # Try to find a folder with a similar name (case/underscore/space-insensitive)
             month_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
             if os.path.exists(month_path):
                 try:
-                    # Use listdir with error handling and early exit
+                    requested_norm = normalize_folder_name(client_folder)
+                    best_match = None
                     for folder_name in os.listdir(month_path):
                         folder_path = os.path.join(month_path, folder_name)
                         if os.path.isdir(folder_path):
-                            # Use exact matching since folders now use original client names
                             if folder_name == client_folder:
                                 actual_client_path = folder_path
                                 break
+                            # Try normalized match
+                            if normalize_folder_name(folder_name) == requested_norm:
+                                best_match = folder_path
+                    if not actual_client_path and best_match:
+                        print(f"⚠️  Using best match folder: {best_match} for requested '{client_folder}'")
+                        actual_client_path = best_match
                 except (OSError, PermissionError):
                     print(f"❌ Error accessing month folder: {month_path}")
                     # Cache empty result to avoid repeated failed scans
                     cache.set(cache_key, files_by_category, 300)  # Cache for 5 minutes
                     return files_by_category
-        
         if not actual_client_path:
             print(f"❌ No client folder found for: {client_folder}")
             # Cache empty result to avoid repeated failed scans
@@ -6506,28 +6522,63 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
             {'rfi': 'request for invoice', 'invoice': 'Invoice', 'lab': 'Lab', 'retest': 'Retest', 'compliance': 'Compliance'}
         ]
         
-        # First check top-level folders
+        # Enhanced compliance file scanning
+        def scan_compliance_files(base_path, label_prefix=''):
+            """Helper function to scan compliance files recursively"""
+            found_files = []
+            if os.path.exists(base_path):
+                try:
+                    print(f"🔍 [COMPLIANCE] Scanning folder: {base_path}")
+                    for root, _dirs, files in os.walk(base_path):
+                        for filename in files:
+                            file_path = os.path.join(root, filename)
+                            # Build relative label for display
+                            rel_path = os.path.relpath(file_path, base_path).replace('\\', '/')
+                            display_path = f"{label_prefix}/{rel_path}" if label_prefix else rel_path
+                            file_info = get_file_info(file_path, display_path)
+                            found_files.append(file_info)
+                            print(f"✅ [COMPLIANCE] Found file: {filename} at {display_path}")
+                except (OSError, PermissionError) as e:
+                    print(f"⚠️ Error accessing compliance folder {base_path}: {str(e)}")
+            return found_files
+
+        # Check for Inspection-XXXX folders that might contain files
+        for item in os.listdir(actual_client_path):
+            if item.startswith('Inspection-'):
+                inspection_path = os.path.join(actual_client_path, item)
+                if os.path.isdir(inspection_path):
+                    for category_key in categories:
+                        category_path = os.path.join(inspection_path, categories[category_key])
+                        if os.path.exists(category_path):
+                            category_files = scan_compliance_files(category_path, f"{item}/{categories[category_key]}")
+                            files_by_category[category_key].extend(category_files)
+
+        # Then check top-level folders
         for structure in folder_structures:
             print(f"🔍 [FILES] Checking folder structure: {structure}")
             for category_key, folder_name in structure.items():
                 print(f"🔍 [FILES] Checking {category_key} in folder: {folder_name}")
                 if category_key == 'compliance':
-                    # Check compliance subfolders for all commodities
-                    compliance_base = os.path.join(actual_client_path, 'Compliance')
-                    if os.path.exists(compliance_base):
-                        try:
-                            # Check for any commodity folders
-                            for commodity_folder in os.listdir(compliance_base):
-                                commodity_path = os.path.join(compliance_base, commodity_folder)
-                                if os.path.isdir(commodity_path):
-                                    for filename in os.listdir(commodity_path):
-                                        file_path = os.path.join(commodity_path, filename)
-                                        if os.path.isfile(file_path):
-                                            file_info = get_file_info(file_path, f'Compliance/{commodity_folder}')
-                                            files_by_category[category_key].append(file_info)
-                        except (OSError, PermissionError):
-                            print(f"⚠️ Error accessing compliance folder: {compliance_base}")
-                            continue
+                    # Check main Compliance folder
+                    main_compliance = os.path.join(actual_client_path, 'Compliance')
+                    files_by_category[category_key].extend(
+                        scan_compliance_files(main_compliance, 'Compliance')
+                    )
+                    
+                    # Also check top-level compliance files (some systems store them directly)
+                    direct_files = []
+                    try:
+                        for item in os.listdir(actual_client_path):
+                            if os.path.isfile(os.path.join(actual_client_path, item)):
+                                # Common compliance file patterns
+                                if any(pattern in item.lower() for pattern in ['compliance', 'cert', 'declaration', 'regulatory']):
+                                    file_path = os.path.join(actual_client_path, item)
+                                    file_info = get_file_info(file_path, item)
+                                    direct_files.append(file_info)
+                                    print(f"✅ [COMPLIANCE] Found direct compliance file: {item}")
+                    except (OSError, PermissionError) as e:
+                        print(f"⚠️ Error checking direct compliance files: {str(e)}")
+                    files_by_category[category_key].extend(direct_files)
                 else:
                     # Check regular category folder
                     category_path = os.path.join(actual_client_path, folder_name)
@@ -6550,31 +6601,45 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                             print(f"⚠️ Error accessing category folder: {category_path}")
                             continue
         
-        # Also check nested Inspection-XXXX folders for files
+        # Scan nested Inspection-XXXX folders for all file types
         try:
             for item in os.listdir(actual_client_path):
                 if item.startswith('Inspection-') and os.path.isdir(os.path.join(actual_client_path, item)):
                     inspection_folder = os.path.join(actual_client_path, item)
-                    print(f"🔍 [FILES] Checking nested folder: {item}")
+                    print(f"🔍 [FILES] Checking inspection folder: {item}")
                     
-                    # Check each category in the nested folder
+                    # Check each category in the inspection folder
                     for structure in folder_structures:
                         for category_key, folder_name in structure.items():
                             if category_key == 'compliance':
-                                # Check compliance subfolders in nested folder
+                                # Scan compliance files in this inspection folder
                                 nested_compliance_base = os.path.join(inspection_folder, 'Compliance')
+                                inspection_compliance_files = scan_compliance_files(
+                                    nested_compliance_base, 
+                                    f"{item}/Compliance"
+                                )
+                                files_by_category[category_key].extend(inspection_compliance_files)
+                                
+                                # Also check for compliance files directly in the inspection folder
+                                try:
+                                    for nested_item in os.listdir(inspection_folder):
+                                        if os.path.isfile(os.path.join(inspection_folder, nested_item)):
+                                            if any(pattern in nested_item.lower() for pattern in ['compliance', 'cert', 'declaration', 'regulatory']):
+                                                file_path = os.path.join(inspection_folder, nested_item)
+                                                file_info = get_file_info(file_path, f"{item}/{nested_item}")
+                                                files_by_category[category_key].append(file_info)
+                                                print(f"✅ [COMPLIANCE] Found inspection-level compliance file: {nested_item}")
+                                except (OSError, PermissionError) as e:
+                                    print(f"⚠️ Error checking inspection folder compliance files: {str(e)}")
                                 if os.path.exists(nested_compliance_base):
                                     try:
-                                        # Check for any commodity folders
-                                        for commodity_folder in os.listdir(nested_compliance_base):
-                                            commodity_path = os.path.join(nested_compliance_base, commodity_folder)
-                                            if os.path.isdir(commodity_path):
-                                                for filename in os.listdir(commodity_path):
-                                                    file_path = os.path.join(commodity_path, filename)
-                                                    if os.path.isfile(file_path):
-                                                        file_info = get_file_info(file_path, f'{item}/Compliance/{commodity_folder}')
-                                                        files_by_category[category_key].append(file_info)
-                                                        print(f"✅ [FILES] Found compliance file in nested folder: {filename}")
+                                        for root, _dirs, files in os.walk(nested_compliance_base):
+                                            for filename in files:
+                                                file_path = os.path.join(root, filename)
+                                                rel_under_compliance = os.path.relpath(file_path, nested_compliance_base).replace('\\', '/')
+                                                file_info = get_file_info(file_path, f'{item}/Compliance/{rel_under_compliance}')
+                                                files_by_category[category_key].append(file_info)
+                                                print(f"✅ [FILES] Found compliance file in nested folder: {filename}")
                                     except (OSError, PermissionError):
                                         print(f"⚠️ Error accessing nested compliance folder: {nested_compliance_base}")
                                         continue
@@ -6701,7 +6766,7 @@ def pull_six_month_data_from_google_drive(request):
         import os
         import re
         
-        print("🚀 STARTING 6-MONTH GOOGLE DRIVE DATA PULL")
+        print("STARTING 6-MONTH GOOGLE DRIVE DATA PULL")
         print("=" * 60)
         
         # Get inspections from last 6 months
@@ -7648,7 +7713,7 @@ def get_page_clients_file_status(request):
         cache_key = f"combination_status:{hash(tuple(sorted(combination_keys)))}"
         cached_result = cache.get(cache_key)
         if cached_result:
-            print(f"🚀 [TERMINAL] Using cached status for {len(client_date_combinations)} combinations")
+            print(f"[TERMINAL] Using cached status for {len(client_date_combinations)} combinations")
             return JsonResponse(cached_result)
         
         # Base inspection path

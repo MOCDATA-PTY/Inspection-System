@@ -781,7 +781,7 @@ function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
     console.log('🔍 [REAL FILES] Client:', clientPart, 'Date:', inspectionDate);
     
     // Call the server to get actual file status
-    fetch('/list-uploaded-files/', {
+    fetch('/list-client-folder-files/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

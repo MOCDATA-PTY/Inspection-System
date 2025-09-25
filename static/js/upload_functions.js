@@ -735,7 +735,7 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
 
         // Use the working method directly with aggressive cache-busting
         const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        const response = await fetch('/list-uploaded-files/', {
+        const response = await fetch('/list-client-folder-files/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -834,7 +834,8 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
             body: JSON.stringify({
                 group_id: groupId,
                 client_name: clientName,
-                inspection_date: cleanDate
+                inspection_date: cleanDate,
+                _force_refresh: true
             })
         });
         
@@ -3066,7 +3067,7 @@ async function checkFilesExist(clientName, inspectionDate, documentType, inspect
             requestBody.inspection_id = inspectionId;
         }
         
-        const response = await fetch('/list-uploaded-files/', {
+        const response = await fetch('/list-client-folder-files/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -64,6 +64,7 @@ urlpatterns = [
     path('upload-document/', upload_document, name='upload_document'),
     path('delete-inspection-file/', views.delete_inspection_file, name='delete_inspection_file'),
     path('list-uploaded-files/', views.list_uploaded_files, name='list_uploaded_files'),
+    path('list-client-folder-files/', views.list_client_folder_files, name='list_client_folder_files'),
     path('update-test-result/', views.update_test_result, name='update_test_result'),
     path('update-needs-retest/', views.update_needs_retest, name='update_needs_retest'),
     path('update-km-traveled/', views.update_km_traveled, name='update_km_traveled'),

@@ -25,7 +25,7 @@ LOGIN_URL = 'login'
 
 # Session Configuration - Use database sessions to avoid Redis conflicts
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-print("✅ Using database sessions to avoid Redis conflicts during sync operations")
+print("Using database sessions to avoid Redis conflicts during sync operations")
 
 SESSION_COOKIE_AGE = 86400  # Keep users logged in for 1 day
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request for long operations
@@ -186,5 +186,4 @@ ONEDRIVE_ENABLED = True
 PREFER_ONEDRIVE = True
 
 # ZIP File Auto-Organization Settings
-AUTO_ORGANIZE_ZIP_FILES = True  # Automatically organize ZIP files by inspection numbers
-
+AUTO_ORGANIZE_ZIP_FILES = True  # Automatically organize ZIP files by inspection number
