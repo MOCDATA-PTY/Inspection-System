@@ -34,11 +34,25 @@ SESSION_COOKIE_SECURE = False  # Change to True if using HTTPS
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
 SESSION_COOKIE_SAMESITE = 'Lax'  # Prevent session issues with CSRF
 
-# CSRF Settings for better security
+# CSRF Settings for better security and to prevent CSRF failures
 CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
 CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for AJAX
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_AGE = 86400  # 24 hours
+CSRF_COOKIE_NAME = 'csrftoken'  # Default CSRF cookie name
+CSRF_HEADER_NAME = 'HTTP_X_CSRFTOKEN'  # Default CSRF header name
+CSRF_TOKEN_COOKIE_NAME = 'csrftoken'  # Ensure consistency
+CSRF_USE_SESSIONS = False  # Use cookies instead of sessions for CSRF tokens
+CSRF_COOKIE_PATH = '/'  # Make CSRF cookie available site-wide
+CSRF_TRUSTED_ORIGINS = [
+    'http://127.0.0.1:8000',
+    'http://localhost:8000',
+    'https://127.0.0.1:8000',
+    'https://localhost:8000',
+]
+
+# Custom CSRF failure view
+CSRF_FAILURE_VIEW = 'main.views.csrf_failure'
 
 ALLOWED_HOSTS = ["*"]  # Change this to your actual domain in production
 

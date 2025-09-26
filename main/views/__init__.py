@@ -50,6 +50,9 @@ from .core_views import (
     # User management views
     user_management,
     
+    # CSRF failure view
+    csrf_failure,
+    
     # System logs views
     system_logs,
     
@@ -122,6 +125,9 @@ __all__ = [
     
     # User management views
     'user_management',
+    
+    # CSRF failure view
+    'csrf_failure',
     
     # System logs views
     'system_logs',

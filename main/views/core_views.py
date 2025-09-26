@@ -3627,7 +3627,6 @@ def home(request):
 
 
 @login_required
-@inspector_only_inspections
 def analytics_dashboard(request):
     """Display the Power BI analytics dashboard with basic analytics data."""
     # Block administrators from accessing analytics dashboard
@@ -10006,10 +10005,10 @@ def user_management(request):
     
     # Role choices for the form
     role_choices = [
-        ('admin', 'HR/Admin Staff'),
+        ('admin', 'Administrator'),
         ('super_admin', 'Super Admin'),
-        ('financial', 'Financial'),
-        ('scientist', 'Scientist'),
+        ('financial', 'Financial Administrator'),
+        ('scientist', 'Lab Technician'),
         ('inspector', 'Inspector'),
         ('developer', 'Developer'),  # Hidden role
     ]
@@ -10031,7 +10030,35 @@ def user_management(request):
         'settings': settings,
     }
     
-    return render(request, 'main/user_management.html', context)
+    # Ensure CSRF token is properly generated and available
+    from django.middleware.csrf import get_token
+    get_token(request)
+    
+    response = render(request, 'main/user_management.html', context)
+    response['Cache-Control'] = 'no-store'  # Prevent caching issues with CSRF tokens
+    return response
+
+
+def csrf_failure(request, reason=""):
+    """Custom CSRF failure view to handle CSRF token errors gracefully."""
+    from django.shortcuts import render
+    from django.http import HttpResponseForbidden
+    
+    context = {
+        'reason': reason,
+        'title': 'Security Token Error',
+        'message': 'Your security token has expired. This can happen if you\'ve been inactive for too long or opened the page in multiple tabs.',
+        'suggestions': [
+            'Refresh the page and try again',
+            'Clear your browser cookies and cache',
+            'Make sure cookies are enabled in your browser',
+            'Try logging out and logging back in',
+        ]
+    }
+    
+    response = render(request, 'main/csrf_failure.html', context, status=403)
+    response['Cache-Control'] = 'no-store'
+    return response
 
 @login_required
 @inspector_only_inspections
