@@ -10687,7 +10687,7 @@ def onedrive_callback(request):
 
 
 @login_required(login_url='login')
-@role_required(['developer'])
+@role_required(['developer', 'super_admin'])
 def performance_monitor(request):
     """View and browse media folder contents with navigation."""
     import os
