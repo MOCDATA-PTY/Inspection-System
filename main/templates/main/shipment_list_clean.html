@@ -4997,6 +4997,11 @@
                     console.log('🎨 Updating button colors after file deletion...');
                     updateAllViewFilesButtonColors();
                     
+                    // Also update RFI/Invoice button colors after deletion
+                    if (window.currentFilesClient) {
+                        updateRFIAndInvoiceButtonColorsForClient(window.currentFilesClient);
+                    }
+                    
                     // Refresh the files display
                     if (window.currentFilesClient && window.currentFilesDate) {
                         openFilesPopup(window.currentFilesGroupId, window.currentFilesClient, window.currentFilesDate);
@@ -5969,7 +5974,7 @@
                     }
                     
                     // Update all button colors
-                    const clientStatuses = result.client_statuse;s;
+                    const clientStatuses = result.client_statuses;
                     for (const [clientName, status] of Object.entries(clientStatuses)) {
                         console.log('🔄 Processing client: ' + clientName + ' with status: ' + status.file_status);
                         updateViewFilesButtonColor(clientName, status.file_status);
@@ -6184,89 +6189,128 @@
                 }
             });
             
-            // Also update RFI and Invoice button colors based on file status
-            updateRFIAndInvoiceButtonColors(clientName, fileStatus);
+            // Also update RFI and Invoice button colors based on actual file existence
+            updateRFIAndInvoiceButtonColorsForClient(clientName);
         }
 
-        function updateRFIAndInvoiceButtonColors(clientName, fileStatus) {
-            console.log('🔍 [RFI CHECK] Updating RFI and Invoice button colors for:', clientName, 'Status:', fileStatus);
+        function updateRFIAndInvoiceButtonColorsForClient(clientName) {
+            console.log('🔍 [BUTTON COLOR] Updating RFI/Invoice button colors for all rows of client:', clientName);
             
-            // Find the group row for this client
-            const groupRows = document.querySelectorAll('tr.group-row');
-            console.log('🔍 [RFI CHECK] Found', groupRows.length, 'group rows');
-            let targetRow = null;
+            // Find all group rows for this client
+            const groupRows = document.querySelectorAll('tr.group-row[data-client-name="' + clientName + '"]');
+            console.log('🔍 [BUTTON COLOR] Found', groupRows.length, 'rows for client:', clientName);
             
-            groupRows.forEach((row, index) => {
-                const rowClientName = row.getAttribute('data-client-name');
-                console.log('🔍 [RFI CHECK] Row', index, 'client name:', rowClientName);
-                if (rowClientName === clientName) {
-                    targetRow = row;
-                    console.log('🔍 [RFI CHECK] Found matching row for client:', clientName);
+            groupRows.forEach(row => {
+                const inspectionDate = row.getAttribute('data-inspection-date');
+                if (inspectionDate) {
+                    console.log('🔍 [BUTTON COLOR] Processing row for date:', inspectionDate);
+                    updateRFIAndInvoiceButtonColors(clientName, inspectionDate);
                 }
             });
+        }
+
+        function updateRFIAndInvoiceButtonColors(clientName, inspectionDate) {
+            console.log('🔍 [BUTTON COLOR] Updating RFI/Invoice button colors for:', clientName, 'on', inspectionDate);
             
-            if (!targetRow) {
-                console.log('🔍 [RFI CHECK] No group row found for client:', clientName);
-                return;
-            }
-            
-            // Find RFI button in this row
-            const rfiButton = targetRow.querySelector('button[id^="rfi-"]');
-            if (rfiButton) {
-                console.log('🔍 [RFI CHECK] RFI button found:', rfiButton.id);
-                
-                // Update RFI button based on file status
-                if (fileStatus === 'partial_files' || fileStatus === 'all_files') {
-                    // RFI file exists - make it green
-                    rfiButton.className = 'btn btn-sm btn-success';
-                    rfiButton.innerHTML = 'RFI ✓';
-                    rfiButton.title = 'RFI file exists';
-                    rfiButton.style.backgroundColor = '#28a745';
-                    rfiButton.style.borderColor = '#28a745';
-                    rfiButton.disabled = true;
-                    console.log('✅ [RFI CHECK] RFI button updated to green');
-                } else {
-                    // No RFI file - make it grey
-                    rfiButton.className = 'btn btn-sm btn-secondary';
-                    rfiButton.innerHTML = 'RFI';
-                    rfiButton.title = 'Upload RFI';
-                    rfiButton.style.backgroundColor = '';
-                    rfiButton.style.borderColor = '';
-                    rfiButton.disabled = false;
-                    console.log('🔘 [RFI CHECK] RFI button updated to grey');
+            // Make API call to check specifically for RFI and Invoice files
+            fetch('/get-inspection-files/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    inspection_date: inspectionDate
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.files) {
+                    const rfiFiles = data.files.rfi || [];
+                    const invoiceFiles = data.files.invoice || [];
+                    
+                    console.log('🔍 [BUTTON COLOR] RFI files found:', rfiFiles.length);
+                    console.log('🔍 [BUTTON COLOR] Invoice files found:', invoiceFiles.length);
+                    
+                    // Find the group row for this client and date
+                    const groupRows = document.querySelectorAll('tr.group-row');
+                    let targetRow = null;
+                    
+                    groupRows.forEach(row => {
+                        const rowClientName = row.getAttribute('data-client-name');
+                        const rowDate = row.getAttribute('data-inspection-date');
+                        if (rowClientName === clientName && rowDate === inspectionDate) {
+                            targetRow = row;
+                        }
+                    });
+                    
+                    if (targetRow) {
+                        // Update RFI button
+                        const rfiButton = targetRow.querySelector('button[id^="rfi-"]');
+                        if (rfiButton) {
+                            if (rfiFiles.length > 0) {
+                                // RFI file exists - make it green
+                                rfiButton.className = 'btn btn-sm btn-success';
+                                rfiButton.innerHTML = 'RFI ✓';
+                                rfiButton.title = 'RFI file uploaded';
+                                rfiButton.style.backgroundColor = '#28a745';
+                                rfiButton.style.borderColor = '#28a745';
+                                rfiButton.style.color = 'white';
+                                rfiButton.disabled = true;
+                                rfiButton.onclick = null;
+                                console.log('✅ [RFI] Button updated to GREEN (file exists)');
+                            } else {
+                                // No RFI file - make it gray
+                                rfiButton.className = 'btn btn-sm btn-secondary';
+                                rfiButton.innerHTML = 'RFI';
+                                rfiButton.title = 'Upload RFI';
+                                rfiButton.style.removeProperty('background-color');
+                                rfiButton.style.removeProperty('border-color');
+                                rfiButton.style.removeProperty('color');
+                                rfiButton.disabled = false;
+                                // Re-enable onclick handler
+                                const groupId = rfiButton.id.replace('rfi-', '');
+                                rfiButton.onclick = function() { uploadRFI(groupId); };
+                                console.log('🔘 [RFI] Button updated to GRAY (no file)');
+                            }
+                        }
+                        
+                        // Update Invoice button
+                        const invoiceButton = targetRow.querySelector('button[id^="invoice-"]');
+                        if (invoiceButton) {
+                            if (invoiceFiles.length > 0) {
+                                // Invoice file exists - make it green
+                                invoiceButton.className = 'btn btn-sm btn-success';
+                                invoiceButton.innerHTML = 'Invoice ✓';
+                                invoiceButton.title = 'Invoice file uploaded';
+                                invoiceButton.style.backgroundColor = '#28a745';
+                                invoiceButton.style.borderColor = '#28a745';
+                                invoiceButton.style.color = 'white';
+                                invoiceButton.disabled = true;
+                                invoiceButton.onclick = null;
+                                console.log('✅ [INVOICE] Button updated to GREEN (file exists)');
+                            } else {
+                                // No Invoice file - make it gray
+                                invoiceButton.className = 'btn btn-sm btn-secondary';
+                                invoiceButton.innerHTML = 'Invoice';
+                                invoiceButton.title = 'Upload Invoice';
+                                invoiceButton.style.removeProperty('background-color');
+                                invoiceButton.style.removeProperty('border-color');
+                                invoiceButton.style.removeProperty('color');
+                                invoiceButton.disabled = false;
+                                // Re-enable onclick handler
+                                const groupId = invoiceButton.id.replace('invoice-', '');
+                                invoiceButton.onclick = function() { uploadInvoice(groupId); };
+                                console.log('🔘 [INVOICE] Button updated to GRAY (no file)');
+                            }
+                        }
+                    }
                 }
-            } else {
-                console.log('🔍 [RFI CHECK] RFI button not found in row');
-            }
-            
-            // Find Invoice button in this row
-            const invoiceButton = targetRow.querySelector('button[id^="invoice-"]');
-            if (invoiceButton) {
-                console.log('🔍 [INVOICE CHECK] Invoice button found:', invoiceButton.id);
-                
-                // Update Invoice button based on file status
-                if (fileStatus === 'all_files') {
-                    // Invoice file exists - make it green
-                    invoiceButton.className = 'btn btn-sm btn-success';
-                    invoiceButton.innerHTML = 'Invoice ✓';
-                    invoiceButton.title = 'Invoice file exists';
-                    invoiceButton.style.backgroundColor = '#28a745';
-                    invoiceButton.style.borderColor = '#28a745';
-                    invoiceButton.disabled = true;
-                    console.log('✅ [INVOICE CHECK] Invoice button updated to green');
-                } else {
-                    // No Invoice file - make it grey
-                    invoiceButton.className = 'btn btn-sm btn-secondary';
-                    invoiceButton.innerHTML = 'Invoice';
-                    invoiceButton.title = 'Upload Invoice';
-                    invoiceButton.style.backgroundColor = '';
-                    invoiceButton.style.borderColor = '';
-                    invoiceButton.disabled = false;
-                    console.log('🔘 [INVOICE CHECK] Invoice button updated to grey');
-                }
-            } else {
-                console.log('🔍 [INVOICE CHECK] Invoice button not found in row');
-            }
+            })
+            .catch(error => {
+                console.error('❌ [BUTTON COLOR] Error checking file status:', error);
+            });
         }
 
         function displayClientAllFiles(files, categories, totalFiles, inspectionsFound, message = null, fileStatus = null) {
@@ -7483,6 +7527,15 @@
                                     console.log('⏰ Timer fired! Starting delayed color update...');
                                     console.log('🔄 Delayed file status check after RFI upload...');
                                     updateAllViewFilesButtonColors();
+                                    
+                                    // Also update RFI/Invoice button colors
+                                    const button = document.getElementById('rfi-' + groupId);
+                                    if (button) {
+                                        const clientName = button.getAttribute('data-client-name');
+                                        if (clientName) {
+                                            updateRFIAndInvoiceButtonColorsForClient(clientName);
+                                        }
+                                    }
                                 }, 3000); // 3 second delay to ensure server processing is complete
                                 
                                 // Auto-open files popup after successful upload
@@ -7568,6 +7621,17 @@
                             // Update View Files button colors after upload
                             console.log('🎨 Updating button colors after Invoice upload...');
                             updateAllViewFilesButtonColors();
+                            
+                            // Also update RFI/Invoice button colors
+                            const button = document.getElementById('invoice-' + groupId);
+                            if (button) {
+                                const clientName = button.getAttribute('data-client-name');
+                                if (clientName) {
+                                    setTimeout(() => {
+                                        updateRFIAndInvoiceButtonColorsForClient(clientName);
+                                    }, 2000); // Delay to ensure server processing
+                                }
+                            }
                             
                             // Auto-open files popup after successful upload
                             const button = document.getElementById('invoice-' + groupId);
@@ -8761,6 +8825,30 @@
                 // Update button states based on current dropdown value
                 updateButtonStates(inspectionId, needsRetest);
             });
+            
+            // Initialize RFI and Invoice button colors based on actual file existence
+            setTimeout(() => {
+                initializeRFIAndInvoiceButtonColors();
+            }, 2000); // Delay to ensure page is fully loaded
+        }
+        
+        function initializeRFIAndInvoiceButtonColors() {
+            console.log('🔍 [INIT] Initializing RFI and Invoice button colors...');
+            
+            // Get all unique client names from the page
+            const groupRows = document.querySelectorAll('tr.group-row[data-client-name]');
+            const processedClients = new Set();
+            
+            groupRows.forEach(row => {
+                const clientName = row.getAttribute('data-client-name');
+                if (clientName && !processedClients.has(clientName)) {
+                    processedClients.add(clientName);
+                    console.log('🔍 [INIT] Processing client:', clientName);
+                    updateRFIAndInvoiceButtonColorsForClient(clientName);
+                }
+            });
+            
+            console.log('🔍 [INIT] Processed', processedClients.size, 'unique clients');
         }
     </script>
     <script>
