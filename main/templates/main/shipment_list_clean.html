@@ -5036,28 +5036,32 @@
                 if (button) {
                     console.log('🔄 Re-enabling button:', buttonId);
                     
-                    // Reset button to upload state
+                    // Reset button to original upload state (gray/secondary)
                     button.disabled = false;
-                    button.classList.remove('uploaded');
+                    button.classList.remove('uploaded', 'btn-success');
+                    button.classList.add('btn-secondary', 'btn-sm');
                     
-                    // Add appropriate CSS classes based on button type
-                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
-                    if (docType === 'RFI') {
-                        button.classList.add('btn-rfi', 'btn-sm');
-                    } else {
-                        button.classList.add('btn-invoice', 'btn-sm');
-                    }
-                    
-                    button.style.background = '#28a745'; // Same green color for both RFI and Invoice
-                    button.style.color = 'white';
-                    button.style.border = '1px solid #1e7e34'; // Same border color for both
+                    // Reset to original gray color (not green!)
+                    button.style.removeProperty('background-color');
+                    button.style.removeProperty('border-color');
+                    button.style.removeProperty('color');
                     button.style.cursor = 'pointer';
                     
                     // Reset button content to original text
+                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
                     button.innerHTML = docType;
                     
                     // Reset button title
                     button.title = 'Upload ' + docType;
+                    
+                    // Re-enable the onclick handler
+                    if (docType === 'RFI') {
+                        const groupId = buttonId.replace('rfi-', '');
+                        button.onclick = function() { uploadRFI(groupId); };
+                    } else if (docType === 'Invoice') {
+                        const groupId = buttonId.replace('invoice-', '');
+                        button.onclick = function() { uploadInvoice(groupId); };
+                    }
                     
                     // Remove from localStorage
                     const uploadStatus = JSON.parse(localStorage.getItem('uploadStatus') || '{}');
@@ -7015,7 +7019,7 @@
                 .then(data => {
                     console.log('Response for ' + buttonId + ':', data);
                     if (data.success) {
-                        const files = data.files[docType] || [;];
+                        const files = data.files[docType] || [];
                         console.log('Files found for ' + docType + ':', files);
                         if (files.length === 0) {
                             // File doesn't exist, reset button
