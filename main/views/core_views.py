@@ -1543,18 +1543,14 @@ def shipment_list(request):
         has_invoice = invoice_uploader is not None
         has_compliance = compliance_status_result.get('has_any_compliance', False)
         
-        # Determine compliance status based on individual inspection compliance
-        # Check if ALL individual inspections in the group are compliant
-        all_compliant = True
-        for inspection in group_inspections:
-            if inspection.is_direction_present_for_this_inspection:
-                all_compliant = False
-                break
-        
-        if all_compliant:
-            compliance_status = 'complete'  # All inspections are compliant
+        # Determine compliance status based on FILE UPLOADS, not inspection compliance
+        # This controls whether the "Sent" status dropdown is enabled
+        if has_rfi and has_invoice and has_compliance:
+            compliance_status = 'complete'  # All required files uploaded
+        elif has_rfi or has_invoice or has_compliance:
+            compliance_status = 'partial'  # Some files uploaded but not all
         else:
-            compliance_status = 'no_compliance'  # At least one inspection is non-compliant
+            compliance_status = 'no_compliance'  # No files uploaded
         
         # Determine file status for View Files button (separate from compliance status)
         if has_rfi and has_invoice and has_compliance:
@@ -1566,16 +1562,14 @@ def shipment_list(request):
         else:
             file_status = 'no_compliance'  # Red - no files at all
             
-        print(f" COMPLIANCE STATUS DEBUG for {client_name}:")
-        print(f"    Individual inspections compliance check:")
-        for i, inspection in enumerate(group_inspections):
-            direction_present = inspection.is_direction_present_for_this_inspection
-            status = "Non-Compliant" if direction_present else "Compliant"
-            print(f"      Inspection {i+1}: {status} (direction_present: {direction_present})")
-        print(f"    All compliant: {all_compliant}")
-        print(f"    Final group compliance status: {compliance_status}")
-        print(f"    File status for View Files button: {file_status}")
-        print(f"    UI will show: {'Compliant' if compliance_status == 'complete' else 'Non-Compliant'}")
+        print(f" FILE STATUS DEBUG for {client_name}:")
+        print(f"    File upload status:")
+        print(f"      RFI uploaded: {has_rfi}")
+        print(f"      Invoice uploaded: {has_invoice}")
+        print(f"      Compliance docs: {has_compliance}")
+        print(f"    Compliance status (for Sent dropdown): {compliance_status}")
+        print(f"    File status (for View Files button): {file_status}")
+        print(f"    Sent dropdown will be: {'Enabled' if compliance_status == 'complete' else 'Disabled'}")
         
         # Generate group_id
         sanitized_client = sanitize_group_id(client_name) if client_name else ""
@@ -10695,20 +10689,119 @@ def onedrive_callback(request):
 @login_required(login_url='login')
 @role_required(['developer'])
 def performance_monitor(request):
-    """Monitor performance metrics and cache statistics."""
-    from django.core.cache import cache
-    import time
+    """View and browse media folder contents with navigation."""
+    import os
+    from django.conf import settings as django_settings
+    from datetime import datetime
+    from urllib.parse import unquote
     
-    # Get cache statistics
-    cache_stats = {
-        'shipment_list_cache_hits': cache.get('shipment_list_cache_hits', 0),
-        'compliance_status_cache_hits': cache.get('compliance_status_cache_hits', 0),
-        'onedrive_compliance_cache_hits': cache.get('onedrive_compliance_cache_hits', 0),
-        'client_maps_cache_hits': cache.get('client_maps_cache_hits', 0),
-    }
+    # Get media folder path
+    media_root = django_settings.MEDIA_ROOT
     
-    # Get recent performance data
-    recent_load_times = cache.get('recent_load_times', [])
+    # Get current path from URL parameter
+    current_path = request.GET.get('path', '')
+    if current_path:
+        current_path = unquote(current_path)
+        # Security check: ensure path is within media root
+        full_current_path = os.path.join(media_root, current_path)
+        full_current_path = os.path.normpath(full_current_path)
+        if not full_current_path.startswith(os.path.normpath(media_root)):
+            current_path = ''
+            full_current_path = media_root
+    else:
+        full_current_path = media_root
+    
+    # Build breadcrumb navigation
+    breadcrumbs = [{'name': 'Media', 'path': ''}]
+    if current_path:
+        path_parts = current_path.split(os.sep)
+        cumulative_path = ''
+        for part in path_parts:
+            if part:
+                cumulative_path = os.path.join(cumulative_path, part) if cumulative_path else part
+                breadcrumbs.append({'name': part, 'path': cumulative_path})
+    
+    # Scan current folder
+    media_files = []
+    media_folders = []
+    
+    try:
+        if os.path.exists(full_current_path):
+            for item in os.listdir(full_current_path):
+                item_path = os.path.join(full_current_path, item)
+                
+                if os.path.isfile(item_path):
+                    # Get file info
+                    stat = os.stat(item_path)
+                    file_size = stat.st_size
+                    modified_time = datetime.fromtimestamp(stat.st_mtime)
+                    
+                    # Determine file type
+                    file_ext = os.path.splitext(item)[1].lower()
+                    file_type = 'unknown'
+                    icon = 'fas fa-file'
+                    
+                    if file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']:
+                        file_type = 'image'
+                        icon = 'fas fa-image'
+                    elif file_ext in ['.pdf']:
+                        file_type = 'pdf'
+                        icon = 'fas fa-file-pdf'
+                    elif file_ext in ['.doc', '.docx']:
+                        file_type = 'document'
+                        icon = 'fas fa-file-word'
+                    elif file_ext in ['.xls', '.xlsx']:
+                        file_type = 'spreadsheet'
+                        icon = 'fas fa-file-excel'
+                    elif file_ext in ['.zip', '.rar', '.7z']:
+                        file_type = 'archive'
+                        icon = 'fas fa-file-archive'
+                    elif file_ext in ['.txt', '.log']:
+                        file_type = 'text'
+                        icon = 'fas fa-file-alt'
+                    
+                    # Build relative path for media URL
+                    relative_path = os.path.relpath(item_path, media_root).replace('\\', '/')
+                    
+                    media_files.append({
+                        'name': item,
+                        'path': item_path,
+                        'relative_path': relative_path,
+                        'size': file_size,
+                        'size_formatted': format_file_size(file_size),
+                        'modified': modified_time,
+                        'type': file_type,
+                        'icon': icon,
+                        'extension': file_ext
+                    })
+                    
+                elif os.path.isdir(item_path):
+                    # Count files in folder recursively
+                    try:
+                        file_count = 0
+                        for root, dirs, files in os.walk(item_path):
+                            file_count += len(files)
+                    except:
+                        file_count = 0
+                    
+                    # Build navigation path
+                    nav_path = os.path.join(current_path, item) if current_path else item
+                    nav_path = nav_path.replace('\\', '/')
+                    
+                    media_folders.append({
+                        'name': item,
+                        'path': item_path,
+                        'nav_path': nav_path,
+                        'file_count': file_count,
+                        'icon': 'fas fa-folder'
+                    })
+        
+        # Sort files and folders
+        media_files.sort(key=lambda x: x['modified'], reverse=True)
+        media_folders.sort(key=lambda x: x['name'])
+        
+    except Exception as e:
+        safe_print(f"Error scanning media folder: {e}")
     
     # Get theme settings
     try:
@@ -10721,13 +10814,30 @@ def performance_monitor(request):
         settings = type('Settings', (), {'dark_mode': False})()
     
     context = {
-        'cache_stats': cache_stats,
-        'recent_load_times': recent_load_times[-10:],  # Last 10 load times
-        'average_load_time': sum(recent_load_times) / len(recent_load_times) if recent_load_times else 0,
+        'media_files': media_files,
+        'media_folders': media_folders,
+        'media_root': media_root,
+        'current_path': current_path,
+        'current_folder_name': os.path.basename(full_current_path) if current_path else 'Media',
+        'breadcrumbs': breadcrumbs,
+        'total_files': len(media_files),
+        'total_folders': len(media_folders),
         'settings': settings,
     }
     
     return render(request, 'main/performance_monitor.html', context)
+
+
+def format_file_size(size_bytes):
+    """Convert bytes to human readable format."""
+    if size_bytes == 0:
+        return "0 B"
+    size_names = ["B", "KB", "MB", "GB", "TB"]
+    import math
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f"{s} {size_names[i]}"
 
 @login_required(login_url='login')
 def server_status(request):

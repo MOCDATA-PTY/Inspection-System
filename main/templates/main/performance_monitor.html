@@ -4,10 +4,9 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Monitor - Food Safety Agency</title>
+    <title>Server View - Food Safety Agency</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -191,6 +190,139 @@
             gap: 1.5rem;
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        /* File Grid */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Single folder takes full width */
+        .file-grid.single-folder {
+            grid-template-columns: 1fr;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-item:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .folder-item {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .file-icon {
+            font-size: 2rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-details {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            display: flex;
+            gap: 1rem;
+        }
+
+        .file-size {
+            font-weight: 500;
+        }
+
+        .file-date {
+            opacity: 0.8;
+        }
+
+        .file-preview {
+            margin-left: 1rem;
+            flex-shrink: 0;
+        }
+
+        /* Breadcrumb Navigation */
+        .breadcrumb-nav {
+            margin-top: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb-link {
+            color: white;
+            text-decoration: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .breadcrumb-link:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .breadcrumb-separator {
+            color: rgba(255, 255, 255, 0.6);
+            margin: 0 0.25rem;
+        }
+
+        .breadcrumb-current {
+            color: white;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Folder Link Styles */
+        .folder-link {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .folder-link:hover {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .folder-arrow {
+            margin-left: auto;
+            padding-left: 1rem;
+        }
+
+        .folder-item:hover .folder-arrow i {
+            color: var(--primary) !important;
+            transform: translateX(4px);
+            transition: all 0.3s ease;
         }
 
         .metric-card {
@@ -483,7 +615,7 @@
                     <li>
                         <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-primary">
                             <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
-                            Performance Monitor
+                            Server View
                         </a>
                     </li>
                     {% endif %}
@@ -514,132 +646,90 @@
         <div class="main-content ml-64">
             
             <div class="header">
-                <h1>🚀 Performance Monitor</h1>
-                <h2>Real-time system performance metrics and analytics</h2>
-            </div>
-
-            <div class="performance-grid">
+                <h1>📁 Server View</h1>
+                <h2>Browse and manage media folder contents</h2>
                 
-                <!-- Average Load Time -->
-                <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-stopwatch" style="color: #007890;"></i>
-                        Average Page Load Time
-                    </h3>
-                    <div class="metric-value">{{ average_load_time|floatformat:2 }}s</div>
-                    <div class="metric-description">Based on last 10 page loads</div>
-                    <div class="metric-trend trend-stable">
-                        <i class="fas fa-minus"></i>
-                        <span>Stable performance</span>
-                    </div>
+                <!-- Breadcrumb Navigation -->
+                <div class="breadcrumb-nav">
+                    {% for breadcrumb in breadcrumbs %}
+                        {% if not forloop.last %}
+                            <a href="{% url 'performance_monitor' %}?path={{ breadcrumb.path|urlencode }}" class="breadcrumb-link">
+                                {{ breadcrumb.name }}
+                            </a>
+                            <span class="breadcrumb-separator">/</span>
+                        {% else %}
+                            <span class="breadcrumb-current">{{ breadcrumb.name }}</span>
+                        {% endif %}
+                    {% endfor %}
                 </div>
-
-                <!-- Cache Hit Rate -->
-                <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-memory" style="color: #10b981;"></i>
-                        Cache Hit Rate
-                    </h3>
-                    <div class="metric-value">{{ cache_stats.total_cache_hits|default:0 }}</div>
-                    <div class="metric-description">Total cache hits across all systems</div>
-                    <div class="metric-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Excellent caching</span>
-                    </div>
-                </div>
-
-                <!-- Shipment List Cache -->
-                <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-list" style="color: #3b82f6;"></i>
-                        Shipment List Cache
-                    </h3>
-                    <div class="metric-value">{{ cache_stats.shipment_list_cache_hits|default:0 }}</div>
-                    <div class="metric-description">Page-level caching performance</div>
-                    <div class="metric-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>High efficiency</span>
-                    </div>
-                </div>
-
-                <!-- Compliance Status Cache -->
-                <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-file-check" style="color: #f59e0b;"></i>
-                        Compliance Status Cache
-                    </h3>
-                    <div class="metric-value">{{ cache_stats.compliance_status_cache_hits|default:0 }}</div>
-                    <div class="metric-description">Document status caching</div>
-                    <div class="metric-trend trend-stable">
-                        <i class="fas fa-minus"></i>
-                        <span>Consistent performance</span>
-                    </div>
-                </div>
-
-                <!-- OneDrive Cache -->
-                <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-cloud" style="color: #8b5cf6;"></i>
-                        OneDrive Cache Hits
-                    </h3>
-                    <div class="metric-value">{{ cache_stats.onedrive_compliance_cache_hits|default:0 }}</div>
-                    <div class="metric-description">OneDrive API caching performance</div>
-                    <div class="metric-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Optimized sync</span>
-                    </div>
-                </div>
-
-                <!-- Client Maps Cache -->
-            <div class="metric-card">
-                    <h3>
-                        <i class="fas fa-map-marked-alt" style="color: #ec4899;"></i>
-                        Client Maps Cache
-                    </h3>
-                    <div class="metric-value">{{ cache_stats.client_maps_cache_hits|default:0 }}</div>
-                    <div class="metric-description">Client data caching efficiency</div>
-                    <div class="metric-trend trend-up">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>Fast data access</span>
-                    </div>
-                </div>
-
             </div>
 
-            <!-- Performance Chart -->
+
+            <!-- Folders Section -->
+            {% if media_folders %}
             <div class="chart-container">
                 <h3>
-                    <i class="fas fa-chart-line"></i>
-                    Load Time Trends
+                    <i class="fas fa-folder"></i>
+                    Folders ({{ media_folders|length }})
                 </h3>
-                <canvas id="loadTimeChart" width="400" height="200"></canvas>
-            </div>
-
-            <!-- System Status -->
-            <div class="chart-container">
-                <h3>
-                    <i class="fas fa-server"></i>
-                    System Status Overview
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div class="status-indicator status-good">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Database: Online</span>
-                    </div>
-                    <div class="status-indicator status-good">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Cache: Active</span>
-                    </div>
-                    <div class="status-indicator status-good">
-                        <i class="fas fa-check-circle"></i>
-                        <span>OneDrive: Connected</span>
-                    </div>
-                    <div class="status-indicator status-good">
-                        <i class="fas fa-check-circle"></i>
-                        <span>Google Sheets: Synced</span>
-                    </div>
+                <div class="file-grid{% if media_folders|length == 1 %} single-folder{% endif %}">
+                    {% for folder in media_folders %}
+                    <a href="{% url 'performance_monitor' %}?path={{ folder.nav_path|urlencode }}" class="file-item folder-item folder-link">
+                        <div class="file-icon">
+                            <i class="{{ folder.icon }}" style="color: #f59e0b;"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">{{ folder.name }}</div>
+                            <div class="file-details">{{ folder.file_count }} files</div>
+                        </div>
+                        <div class="folder-arrow">
+                            <i class="fas fa-chevron-right" style="color: #6b7280;"></i>
+                        </div>
+                    </a>
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
+
+            <!-- Files Section -->
+            {% if media_files %}
+            <div class="chart-container">
+                <h3>
+                    <i class="fas fa-file"></i>
+                    Files ({{ media_files|length }})
+                </h3>
+                <div class="file-grid">
+                    {% for file in media_files %}
+                    <div class="file-item">
+                        <div class="file-icon">
+                            <i class="{{ file.icon }}" style="color: {% if file.type == 'image' %}#ec4899{% elif file.type == 'pdf' %}#dc2626{% elif file.type == 'document' %}#2563eb{% elif file.type == 'spreadsheet' %}#059669{% elif file.type == 'archive' %}#7c3aed{% else %}#6b7280{% endif %};"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name" title="{{ file.name }}">{{ file.name }}</div>
+                            <div class="file-details">
+                                <span class="file-size">{{ file.size_formatted }}</span>
+                                <span class="file-date">{{ file.modified|date:"M d, Y H:i" }}</span>
+                            </div>
+                        </div>
+                        {% if file.type == 'image' %}
+                        <div class="file-preview">
+                            <img src="{{ MEDIA_URL }}{{ file.relative_path }}" alt="{{ file.name }}" style="max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px;">
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not media_files and not media_folders %}
+            <div class="chart-container">
+                <div style="text-align: center; padding: 2rem; color: var(--text-light);">
+                    <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No files or folders found in the media directory.</p>
+                </div>
+            </div>
+            {% endif %}
 
         </div>
     </div>
@@ -650,97 +740,6 @@
     </button>
 
     <script>
-        // Initialize Chart
-        const ctx = document.getElementById('loadTimeChart').getContext('2d');
-        
-        // Prepare chart data
-        const chartLabels = [
-            {% for load_time in recent_load_times %}
-            'Load #{{ forloop.revcounter }}'{% if not forloop.last %},{% endif %}
-            {% empty %}
-            'No Data'
-            {% endfor %}
-        ];
-        
-        const chartData = [
-            {% for load_time in recent_load_times %}
-            {{ load_time|floatformat:2 }}{% if not forloop.last %},{% endif %}
-            {% empty %}
-            0
-            {% endfor %}
-        ];
-        
-        const loadTimeChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: chartLabels,
-                datasets: [{
-                    label: 'Load Time (seconds)',
-                    data: chartData,
-                    borderColor: '#007890',
-                    backgroundColor: 'rgba(0, 120, 144, 0.1)',
-                    borderWidth: 2,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#007890',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 2,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#007890',
-                        borderWidth: 1
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Load Time (seconds)',
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
-                        },
-                        ticks: {
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Recent Loads',
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
-                        },
-                        ticks: {
-                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
-                        }
-                    }
-                }
-            }
-        });
-
         // Refresh functionality
         function refreshData() {
             const refreshBtn = document.querySelector('.refresh-btn');
@@ -753,14 +752,15 @@
             
             // Reload page after short delay
             setTimeout(() => {
-            location.reload();
+                location.reload();
             }, 1000);
         }
 
-        // Auto-refresh every 60 seconds
-        setInterval(() => {
-            refreshData();
-        }, 60000);
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize theme
+            initTheme();
+        });
 
         // Theme management
         function initTheme() {
@@ -776,11 +776,6 @@
             
             document.documentElement.setAttribute('data-theme', activeTheme);
         }
-
-        // Initialize theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-        });
     </script>
 </body>
 </html>
