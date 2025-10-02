@@ -5041,7 +5041,7 @@
                     button.classList.remove('uploaded');
                     
                     // Add appropriate CSS classes based on button type
-                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice;';
+                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
                     if (docType === 'RFI') {
                         button.classList.add('btn-rfi', 'btn-sm');
                     } else {
@@ -7487,10 +7487,10 @@
                                     const clientName = button.getAttribute('data-client-name');
                                     const inspectionDate = button.getAttribute('data-inspection-date');
                                     if (clientName && inspectionDate) {
-                                        // Small delay to ensure the upload is processed
+                                        // Longer delay to ensure the upload is processed and indexed
                                         setTimeout(() => {
                                             openFilesPopup(groupId, clientName, inspectionDate);
-                                        }, 1000);
+                                        }, 2500);
                                     }
                                 }
                             } else {
@@ -7571,10 +7571,10 @@
                                 const clientName = button.getAttribute('data-client-name');
                                 const inspectionDate = button.getAttribute('data-inspection-date');
                                 if (clientName && inspectionDate) {
-                                    // Small delay to ensure the upload is processed
+                                    // Longer delay to ensure the upload is processed and indexed
                                     setTimeout(() => {
                                         openFilesPopup(groupId, clientName, inspectionDate);
-                                    }, 1000);
+                                    }, 2500);
                                 }
                             }
                         } else {
@@ -7650,10 +7650,10 @@
                                 const clientName = button.getAttribute('data-client-name');
                                 const inspectionDate = button.getAttribute('data-inspection-date');
                                 if (groupId && clientName && inspectionDate) {
-                                    // Small delay to ensure the upload is processed
+                                    // Longer delay to ensure the upload is processed and indexed
                                     setTimeout(() => {
                                         openFilesPopup(groupId, clientName, inspectionDate);
-                                    }, 1000);
+                                    }, 2500);
                                 }
                             }
                         } else {
@@ -7729,10 +7729,10 @@
                                 const clientName = button.getAttribute('data-client-name');
                                 const inspectionDate = button.getAttribute('data-inspection-date');
                                 if (groupId && clientName && inspectionDate) {
-                                    // Small delay to ensure the upload is processed
+                                    // Longer delay to ensure the upload is processed and indexed
                                     setTimeout(() => {
                                         openFilesPopup(groupId, clientName, inspectionDate);
-                                    }, 1000);
+                                    }, 2500);
                                 }
                             }
                         } else {
@@ -7808,10 +7808,10 @@
                                 const clientName = button.getAttribute('data-client-name');
                                 const inspectionDate = button.getAttribute('data-inspection-date');
                                 if (groupId && clientName && inspectionDate) {
-                                    // Small delay to ensure the upload is processed
+                                    // Longer delay to ensure the upload is processed and indexed
                                     setTimeout(() => {
                                         openFilesPopup(groupId, clientName, inspectionDate);
-                                    }, 1000);
+                                    }, 2500);
                                 }
                             }
                         } else {
