@@ -1,0 +1,32 @@
+QUICK RFI AND VIEW FILES TEST GUIDE
+===================================
+
+1. START THE SERVER (if not already running):
+   python manage.py runserver
+
+2. GO TO: http://127.0.0.1:8000/inspections/
+
+3. FIND ANY INSPECTION ROW
+
+4. TEST RFI UPLOAD:
+   - Click the "RFI" button (gray button in the RFI column)
+   - Select a PDF file from your computer
+   - The file will upload
+   - The button should change to green with "RFI ✓"
+
+5. TEST VIEW FILES:
+   - Click the "Files" button (colored button in View Files column)
+   - A popup should open showing all files for that inspection
+   - You should see your RFI file immediately in the "Request For Invoice" section
+   - The file should have a download icon and delete icon
+
+6. VERIFY FILE STATUS:
+   - The "Files" button color shows file status:
+     * GREEN = All files present (RFI + Invoice + Compliance)
+     * YELLOW = Some files present
+     * RED = No files
+
+THAT'S IT! The RFI file should be visible immediately after upload.
+
+Server is ready for testing - go ahead and test it now!
+

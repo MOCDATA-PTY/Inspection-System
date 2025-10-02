@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KM Hours Debug Helper</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .code { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        .success { color: green; }
+        .error { color: red; }
+        .warning { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>🔍 KM and Hours Debug Helper</h1>
+    
+    <div class="debug-section">
+        <h2>Step 1: Check Input Field Attributes</h2>
+        <p>Right-click on the KM input field and select "Inspect Element". Look for these attributes:</p>
+        <div class="code">
+            &lt;input type="number" class="form-control form-control-sm group-km-input" 
+                   data-group-id="[SOME_GROUP_ID]" 
+                   onchange="updateGroupKmTraveled(this)"
+                   onblur="updateGroupKmTraveled(this)"&gt;
+        </div>
+        <p class="warning">⚠️ If any of these attributes are missing, that's the problem!</p>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 2: Check Browser Console</h2>
+        <p>Open browser console (F12) and run these commands:</p>
+        <div class="code">
+            // Check if the input field exists
+            document.querySelector('.group-km-input')
+            
+            // Check the group ID
+            document.querySelector('.group-km-input').getAttribute('data-group-id')
+            
+            // Check if the function exists
+            typeof updateGroupKmTraveled
+            
+            // Check CSRF token
+            getCSRFToken()
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 3: Test the Function Manually</h2>
+        <p>In the browser console, run:</p>
+        <div class="code">
+            // Get the input field
+            const input = document.querySelector('.group-km-input');
+            
+            // Set a test value
+            input.value = '45';
+            
+            // Call the function manually
+            updateGroupKmTraveled(input);
+        </div>
+        <p class="success">✅ If this works, the function is fine. If not, there's a JavaScript error.</p>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 4: Check Network Requests</h2>
+        <p>1. Open Network tab in Developer Tools</p>
+        <p>2. Clear the network log</p>
+        <p>3. Enter a value in KM field and click away</p>
+        <p>4. Look for a request to <code>/update-group-km-traveled/</code></p>
+        <p>5. Click on the request to see details</p>
+        <div class="code">
+            Expected Request:
+            - Method: POST
+            - URL: /update-group-km-traveled/
+            - Data: group_id, km_traveled, csrfmiddlewaretoken
+            - Response: {"success": true, "message": "..."}
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 5: Common Issues and Solutions</h2>
+        <h3>Issue 1: No console logs appear</h3>
+        <p class="error">❌ The JavaScript function isn't being called</p>
+        <p><strong>Solution:</strong> Check if the input field has the correct event handlers</p>
+        
+        <h3>Issue 2: Console shows "updateGroupKmTraveled is not defined"</h3>
+        <p class="error">❌ The JavaScript function is missing</p>
+        <p><strong>Solution:</strong> Refresh the page or check for JavaScript errors</p>
+        
+        <h3>Issue 3: Network request shows 403 Forbidden</h3>
+        <p class="error">❌ CSRF token issue or not logged in</p>
+        <p><strong>Solution:</strong> Make sure you're logged in and CSRF token is valid</p>
+        
+        <h3>Issue 4: Network request shows 404 Not Found</h3>
+        <p class="error">❌ Endpoint doesn't exist</p>
+        <p><strong>Solution:</strong> Check if the URL is correct</p>
+        
+        <h3>Issue 5: Network request shows 500 Internal Server Error</h3>
+        <p class="error">❌ Backend error</p>
+        <p><strong>Solution:</strong> Check server logs for the error</p>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 6: Quick Test Commands</h2>
+        <p>Copy and paste these commands in the browser console:</p>
+        <div class="code">
+            // Quick diagnostic
+            console.log('=== KM Hours Debug ===');
+            console.log('Input field:', document.querySelector('.group-km-input'));
+            console.log('Group ID:', document.querySelector('.group-km-input')?.getAttribute('data-group-id'));
+            console.log('Function exists:', typeof updateGroupKmTraveled);
+            console.log('CSRF token:', getCSRFToken());
+            console.log('=====================');
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Step 7: Expected Group ID Format</h2>
+        <p>For "Boxer Superstore - Kwamashu 2" on 09/26/25, the group ID should be:</p>
+        <div class="code">
+            Boxer_Superstore_-_Kwamashu_2_20250926
+            or
+            Boxer_Superstore___Kwamashu_2_20250926
+        </div>
+        <p class="warning">⚠️ The exact format depends on how the client name is processed</p>
+    </div>
+    
+    <script>
+        // Add some helpful functions to the page
+        function debugKMHours() {
+            console.log('=== KM Hours Debug ===');
+            const input = document.querySelector('.group-km-input');
+            if (input) {
+                console.log('✅ Input field found');
+                console.log('Group ID:', input.getAttribute('data-group-id'));
+                console.log('Current value:', input.value);
+                console.log('Has onchange:', input.hasAttribute('onchange'));
+                console.log('Has onblur:', input.hasAttribute('onblur'));
+            } else {
+                console.log('❌ Input field not found');
+            }
+            console.log('Function exists:', typeof updateGroupKmTraveled);
+            console.log('CSRF token:', typeof getCSRFToken === 'function' ? getCSRFToken() : 'Function not found');
+            console.log('=====================');
+        }
+        
+        // Make the function available globally
+        window.debugKMHours = debugKMHours;
+    </script>
+    
+    <p><strong>💡 Tip:</strong> You can also run <code>debugKMHours()</code> in the console for a quick diagnostic!</p>
+</body>
+</html>
