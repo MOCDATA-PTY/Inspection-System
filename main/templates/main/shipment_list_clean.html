@@ -5655,9 +5655,9 @@
         // Download all files for current inspection group as ZIP
         async function downloadAllFiles() {
             const downloadBtn = document.getElementById('downloadAllBtn');
-            const clientName = window.currentFilesClien;t;
-            const inspectionDate = window.currentFilesDat;e;
-            const groupId = window.currentFilesGroupI;d;
+            const clientName = window.currentFilesClient;
+            const inspectionDate = window.currentFilesDate;
+            const groupId = window.currentFilesGroupId;
             
             if (!clientName || !inspectionDate) {
                 alert('Error: Missing client or inspection date information');
@@ -5665,7 +5665,7 @@
             }
             
             // Show loading state
-            const originalText = downloadBtn.innerHTM;L;
+            const originalText = downloadBtn.innerHTML;
             downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating ZIP...';
             downloadBtn.disabled = true;
             
@@ -5691,7 +5691,7 @@
                     const contentDisposition = response.headers.get('Content-Disposition');
                     
                     // Extract filename from header or create default
-                    let filename = clientName + '_' + inspectionDate + '_all_files.zip;';
+                    let filename = clientName + '_' + inspectionDate + '_all_files.zip';
                     if (contentDisposition) {
                         const match = contentDisposition.match(/filename[;^;=\n]*=([^;\n]*)/);
                         if (match && match[1]) {

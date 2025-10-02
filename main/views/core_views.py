@@ -7385,20 +7385,20 @@ def delete_inspection_file(request):
                             if (folder_pattern == client_pattern or 
                                 client_pattern in folder_pattern or
                                 folder_pattern in client_pattern):
-                                print(f"️ Found matching client folder: {folder_name}")
+                                print(f"Found matching client folder: {folder_name}")
                                 
                                 # Search for the file in this folder
-                                print(f"️ Searching in folder: {folder_path}")
-                                print(f"️ Looking for filename: {os.path.basename(file_path)}")
+                                print(f"Searching in folder: {folder_path}")
+                                print(f"Looking for filename: {os.path.basename(file_path)}")
                                 
                                 for root, dirs, files in os.walk(folder_path):
-                                    print(f"️ Checking directory: {root}")
-                                    print(f"️ Files in directory: {files}")
+                                    print(f"Checking directory: {root}")
+                                    print(f"Files in directory: {files}")
                                     
                                     for file in files:
                                         if file == os.path.basename(file_path):
                                             full_file_path = os.path.join(root, file)
-                                            print(f"️ Found file at: {full_file_path}")
+                                            print(f"Found file at: {full_file_path}")
                                             break
                                     if full_file_path is not None:
                                         break
@@ -7593,7 +7593,7 @@ def get_client_all_files(request):
         # Use exact client name for matching (folders now use original names)
         client_folder_pattern = client_name
         
-        print(f" Looking for client folder: {client_folder_pattern}")
+        print(f"Looking for client folder: {client_folder_pattern}")
         
         # Base inspection path
         inspection_base = os.path.join(settings.MEDIA_ROOT, 'inspection')
@@ -8436,7 +8436,7 @@ def download_all_inspection_files(request):
         if not client_name or not inspection_date:
             return JsonResponse({'success': False, 'error': 'Client name and inspection date are required'})
         
-        print(f"️ Creating ZIP for {client_name} on {inspection_date}")
+        safe_print(f"Creating ZIP for {client_name} on {inspection_date}")
         
         # Parse date and build folder path
         if isinstance(inspection_date, str):
@@ -8466,11 +8466,11 @@ def download_all_inspection_files(request):
                 
                 # If no date pattern found, include the file anyway
                 # This is more permissive and includes files without dates in their names
-                print(f"    Including file without date pattern: {filename}")
+                safe_print(f"Including file without date pattern: {filename}")
                 return True
                 
             except Exception as e:
-                print(f"️ Error checking file date for {filename}: {e}")
+                safe_print(f"Error checking file date for {filename}: {e}")
                 # If there's an error, include the file to be safe
                 return True
             
@@ -8487,7 +8487,7 @@ def download_all_inspection_files(request):
         # Use exact client name for matching (folders now use original names)
         client_folder_pattern = client_name
         
-        print(f" Looking for client folder: {client_folder_pattern}")
+        safe_print(f"Looking for client folder: {client_folder_pattern}")
         
         # Find all matching client folders across all months (like file listing does)
         matching_folders = []
@@ -8514,20 +8514,27 @@ def download_all_inspection_files(request):
                     normalized_folder = re.sub(r'_+', '_', normalized_folder).strip('_')
                     
                     # Use flexible matching to handle variations in client names
-                    # Remove common variations that might cause mismatches
-                    normalized_client = client_folder_pattern.replace('.', '').strip()
-                    normalized_folder = folder_name.replace('.', '').strip()
+                    # Normalize both names to handle spaces, underscores, and special characters
+                    def normalize_name(name):
+                        # Convert to lowercase, replace spaces and special chars with underscores
+                        normalized = re.sub(r'[^a-zA-Z0-9]', '_', name.lower())
+                        # Remove multiple underscores and strip
+                        normalized = re.sub(r'_+', '_', normalized).strip('_')
+                        return normalized
+                    
+                    normalized_client = normalize_name(client_folder_pattern)
+                    normalized_folder = normalize_name(folder_name)
                     
                     is_match = (normalized_folder == normalized_client)
                     
                     if is_match:
-                        print(f"    Exact match: {folder_name} in {year_folder_search}/{month_folder_search}")
+                        safe_print(f"    Exact match: {folder_name} in {year_folder_search}/{month_folder_search}")
                     else:
-                        print(f"    No match: {folder_name} in {year_folder_search}/{month_folder_search}")
+                        safe_print(f"    No match: {folder_name} in {year_folder_search}/{month_folder_search}")
                     
                     if is_match:
                         matching_folders.append(folder_path)
-                        print(f" Found matching client folder: {folder_name} in {year_folder_search}/{month_folder_search}")
+                        safe_print(f"Found matching client folder: {folder_name} in {year_folder_search}/{month_folder_search}")
         
         if not matching_folders:
             return JsonResponse({'success': False, 'error': f'No client folders found for {client_name}. Searched in {inspection_base}'})
@@ -8543,21 +8550,21 @@ def download_all_inspection_files(request):
                 # Process all matching client folders
                 for base_path in matching_folders:
                     folder_name = os.path.basename(base_path)
-                    print(f" Processing folder: {folder_name} at {base_path}")
+                    safe_print(f"Processing folder: {folder_name} at {base_path}")
                     
                     # Check what's actually in this folder
                     if os.path.exists(base_path):
                         folder_contents = os.listdir(base_path)
-                        print(f" Folder contents: {folder_contents}")
+                        safe_print(f"Folder contents: {folder_contents}")
                     
                     # Define categories to check (using actual folder names)
-                    categories = ['Request For Invoice', 'invoice', 'lab results', 'retest']
+                    categories = ['Request For Invoice', 'rfi', 'invoice', 'lab results', 'retest']
                     
                     # Check each category folder
                     for category in categories:
                         category_path = os.path.join(base_path, category)
                         if os.path.exists(category_path):
-                            print(f" Found {category} folder")
+                            safe_print(f"Found {category} folder")
                             for filename in os.listdir(category_path):
                                 file_path = os.path.join(category_path, filename)
                                 if os.path.isfile(file_path):
@@ -8566,6 +8573,7 @@ def download_all_inspection_files(request):
                                         # Map folder names to proper display names in ZIP
                                         folder_mapping = {
                                             'Request For Invoice': 'Request For Invoice',
+                                            'rfi': 'RFI',
                                             'invoice': 'Invoice',
                                             'lab results': 'Lab Results',
                                             'retest': 'Retest'
@@ -8585,34 +8593,34 @@ def download_all_inspection_files(request):
                                                 zip_file.write(file_path, arcname)
                                                 added_files[file_key] = arcname
                                                 files_added += 1
-                                                print(f"   Added {category}: {arcname} ({file_size} bytes)")
+                                                safe_print(f"Added {category}: {arcname} ({file_size} bytes)")
                                             else:
-                                                print(f"   Skipped {category} (exact duplicate): {arcname}")
+                                                safe_print(f"Skipped {category} (exact duplicate): {arcname}")
                                         except Exception as e:
-                                            print(f"   Error getting file stats for {file_path}: {e}")
+                                            safe_print(f"Error getting file stats for {file_path}: {e}")
                                             # If we can't get stats, include the file to be safe
                                             zip_file.write(file_path, arcname)
                                             files_added += 1
-                                            print(f"   Added {category}: {arcname} (no stats)")
+                                            safe_print(f"Added {category}: {arcname} (no stats)")
                                     else:
-                                        print(f"   Skipped {category} (wrong date): {filename}")
+                                        safe_print(f"Skipped {category} (wrong date): {filename}")
                         else:
-                            print(f"️ No {category} folder found")
+                            safe_print(f"No {category} folder found")
                     
                     # Check for compliance documents
                     compliance_base = os.path.join(base_path, 'Compliance')
                     if os.path.exists(compliance_base):
-                        print(f" Found Compliance folder: {compliance_base}")
+                        safe_print(f"Found Compliance folder: {compliance_base}")
                         compliance_contents = os.listdir(compliance_base)
-                        print(f" Compliance folder contents: {compliance_contents}")
+                        safe_print(f"Compliance folder contents: {compliance_contents}")
                         
                         # Check all commodity subfolders
                         for commodity_folder in compliance_contents:
                             commodity_path = os.path.join(compliance_base, commodity_folder)
                             if os.path.isdir(commodity_path):
-                                print(f" Checking commodity folder: {commodity_folder}")
+                                safe_print(f"Checking commodity folder: {commodity_folder}")
                                 commodity_files = os.listdir(commodity_path)
-                                print(f" Commodity {commodity_folder} files: {commodity_files}")
+                                safe_print(f"Commodity {commodity_folder} files: {commodity_files}")
                                 
                                 for filename in commodity_files:
                                     file_path = os.path.join(commodity_path, filename)
@@ -8637,19 +8645,19 @@ def download_all_inspection_files(request):
                                                     zip_file.write(file_path, arcname)
                                                     added_files[file_key] = arcname
                                                     files_added += 1
-                                                    print(f"   Added compliance: {arcname} ({file_size} bytes)")
+                                                    safe_print(f"   Added compliance: {arcname} ({file_size} bytes)")
                                                 else:
-                                                    print(f"   Skipped compliance (exact duplicate): {arcname} (same name and size already added)")
+                                                    safe_print(f"   Skipped compliance (exact duplicate): {arcname} (same name and size already added)")
                                             except Exception as e:
-                                                print(f"   Error getting file stats for {file_path}: {e}")
+                                                safe_print(f"   Error getting file stats for {file_path}: {e}")
                                                 # If we can't get stats, include the file to be safe
                                                 zip_file.write(file_path, arcname)
                                                 files_added += 1
-                                                print(f"   Added compliance: {arcname} (no stats)")
+                                                safe_print(f"   Added compliance: {arcname} (no stats)")
                                         else:
-                                            print(f"   Skipped compliance (wrong date): {filename}")
+                                            safe_print(f"   Skipped compliance (wrong date): {filename}")
                     else:
-                        print(f"️ No Compliance folder found at: {compliance_base}")
+                        safe_print(f"No Compliance folder found at: {compliance_base}")
                 
                 if files_added == 0:
                     return JsonResponse({'success': False, 'error': 'No files found to download'})
@@ -8667,7 +8675,7 @@ def download_all_inspection_files(request):
             response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
             response['Content-Length'] = len(zip_content)
             
-            print(f" ZIP created successfully: {zip_filename} ({files_added} files)")
+            safe_print(f"ZIP created successfully: {zip_filename} ({files_added} files)")
             return response
             
         finally:
@@ -8678,7 +8686,7 @@ def download_all_inspection_files(request):
                 pass
                 
     except Exception as e:
-        print(f" Error creating ZIP: {e}")
+        safe_print(f"Error creating ZIP: {e}")
         return JsonResponse({'success': False, 'error': str(e)})
 
 
