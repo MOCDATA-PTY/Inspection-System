@@ -8008,7 +8008,7 @@
         // Update Km Traveled function
         function updateKmTraveled(input) {
             const inspectionId = input.getAttribute('data-inspection-id');
-            const kmValue = input.valu;e;
+            const kmValue = input.value;
             
             // Get CSRF token
             const csrfToken = getCSRFToken();
@@ -8044,7 +8044,7 @@
         // Update Bought Sample function
         function updateBoughtSample(input) {
             const inspectionId = input.getAttribute('data-inspection-id');
-            const boughtSampleValue = input.valu;e;
+            const boughtSampleValue = input.value;
             
             // Get CSRF token
             const csrfToken = getCSRFToken();
@@ -8103,7 +8103,7 @@
             }
             
             const inspectionId = input.getAttribute('data-inspection-id');
-            const value = input.valu;e;
+            const value = input.value;
             const formData = new FormData();
             formData.append('inspection_id', inspectionId);
             formData.append('product_name', value);
