@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retest Button Performance Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .btn-retest {
+            background-color: #6b7280;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn-retest:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .needs-retest-dropdown {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin: 5px;
+        }
+        .test-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Retest Button Performance Test</h1>
+    
+    <div class="test-container">
+        <h2>Test Setup</h2>
+        <p>This test simulates the retest button behavior from your Django application.</p>
+        
+        <div>
+            <label for="retest-dropdown">Retest Status:</label>
+            <select id="retest-dropdown" class="needs-retest-dropdown">
+                <option value="">Select...</option>
+                <option value="NO">No</option>
+                <option value="YES">Yes</option>
+            </select>
+        </div>
+        
+        <div>
+            <button id="retest-button" class="btn-retest" disabled>Retest Upload</button>
+        </div>
+        
+        <div>
+            <button id="run-test" class="test-button">Run Performance Test</button>
+            <button id="clear-results" class="test-button">Clear Results</button>
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test Results</h2>
+        <div id="results" class="results">Click "Run Performance Test" to start...</div>
+    </div>
+
+    <script>
+        // Simulate the retest button logic from your Django app
+        const dropdown = document.getElementById('retest-dropdown');
+        const retestButton = document.getElementById('retest-button');
+        const runTestButton = document.getElementById('run-test');
+        const clearButton = document.getElementById('clear-results');
+        const resultsDiv = document.getElementById('results');
+        
+        let testResults = [];
+        
+        // Update button state based on dropdown selection
+        function updateButtonState() {
+            const value = dropdown.value;
+            
+            if (value === 'YES') {
+                // Enable button when retest is YES
+                retestButton.disabled = false;
+                retestButton.style.opacity = '1';
+                retestButton.style.cursor = 'pointer';
+                retestButton.title = 'Retest required - Please upload retest document';
+            } else {
+                // Disable button for other values
+                retestButton.disabled = true;
+                retestButton.style.opacity = '0.5';
+                retestButton.style.cursor = 'not-allowed';
+                retestButton.title = value === 'NO' ? 'No retest required - Upload disabled' : 'Select retest status first';
+            }
+        }
+        
+        // Measure transition time
+        function measureTransition(fromValue, toValue, testName) {
+            return new Promise((resolve) => {
+                // Set initial state
+                dropdown.value = fromValue;
+                updateButtonState();
+                
+                // Wait a moment for initial state
+                setTimeout(() => {
+                    const startTime = performance.now();
+                    
+                    // Change to target value
+                    dropdown.value = toValue;
+                    updateButtonState();
+                    
+                    // Check button state
+                    const endTime = performance.now();
+                    const duration = endTime - startTime;
+                    
+                    const disabled = retestButton.disabled;
+                    const opacity = retestButton.style.opacity;
+                    const cursor = retestButton.style.cursor;
+                    
+                    resolve({
+                        duration: duration,
+                        disabled: disabled,
+                        opacity: opacity,
+                        cursor: cursor,
+                        testName: testName
+                    });
+                }, 50); // Small delay to ensure state is set
+            });
+        }
+        
+        // Run comprehensive test
+        async function runPerformanceTest() {
+            resultsDiv.textContent = '🧪 Running Performance Test...\n';
+            testResults = [];
+            
+            try {
+                // Test 1: NO → YES (disabled → enabled)
+                const result1 = await measureTransition('NO', 'YES', 'Disabled → Enabled');
+                testResults.push(result1);
+                resultsDiv.textContent += `\n🧪 ${result1.testName}: ${result1.duration.toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   📊 Final state: disabled=${result1.disabled}, opacity=${result1.opacity}\n`;
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Test 2: YES → NO (enabled → disabled)
+                const result2 = await measureTransition('YES', 'NO', 'Enabled → Disabled');
+                testResults.push(result2);
+                resultsDiv.textContent += `\n🧪 ${result2.testName}: ${result2.duration.toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   📊 Final state: disabled=${result2.disabled}, opacity=${result2.opacity}\n`;
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Test 3: Rapid toggle test
+                resultsDiv.textContent += `\n🧪 TEST 3: Rapid Toggle Test (5 cycles)\n`;
+                for (let i = 0; i < 5; i++) {
+                    const value = i % 2 === 0 ? 'YES' : 'NO';
+                    const fromValue = i % 2 === 0 ? 'NO' : 'YES';
+                    const result = await measureTransition(fromValue, value, `Rapid ${i+1}`);
+                    testResults.push(result);
+                    resultsDiv.textContent += `   Cycle ${i+1}: ${value} → ${result.duration.toFixed(2)}ms\n`;
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
+                // Calculate statistics
+                const times = testResults.map(r => r.duration);
+                const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+                const minTime = Math.min(...times);
+                const maxTime = Math.max(...times);
+                
+                resultsDiv.textContent += `\n📊 PERFORMANCE STATISTICS:\n`;
+                resultsDiv.textContent += `   Average: ${avgTime.toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   Fastest: ${minTime.toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   Slowest: ${maxTime.toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   Total tests: ${testResults.length}\n`;
+                
+                // Performance assessment
+                if (avgTime < 1) {
+                    resultsDiv.textContent += `\n✅ EXCELLENT: Transition is instant (< 1ms)\n`;
+                } else if (avgTime < 5) {
+                    resultsDiv.textContent += `\n✅ GOOD: Transition is very fast (< 5ms)\n`;
+                } else if (avgTime < 16) {
+                    resultsDiv.textContent += `\n✅ GOOD: Transition is fast (< 16ms)\n`;
+                } else if (avgTime < 50) {
+                    resultsDiv.textContent += `\n⚠️ MODERATE: Transition is noticeable (< 50ms)\n`;
+                } else {
+                    resultsDiv.textContent += `\n❌ SLOW: Transition is too slow (> 50ms)\n`;
+                }
+                
+                resultsDiv.textContent += `\n🎯 RECOMMENDATIONS:\n`;
+                if (avgTime > 16) {
+                    resultsDiv.textContent += `   - Remove any CSS transitions from button styles\n`;
+                    resultsDiv.textContent += `   - Ensure JavaScript updates DOM properties directly\n`;
+                    resultsDiv.textContent += `   - Check for any setTimeout delays in the code\n`;
+                } else {
+                    resultsDiv.textContent += `   - Performance is excellent!\n`;
+                }
+                
+            } catch (error) {
+                resultsDiv.textContent += `\n❌ Error during testing: ${error.message}\n`;
+            }
+        }
+        
+        // Event listeners
+        dropdown.addEventListener('change', updateButtonState);
+        runTestButton.addEventListener('click', runPerformanceTest);
+        clearButton.addEventListener('click', () => {
+            resultsDiv.textContent = 'Click "Run Performance Test" to start...';
+            testResults = [];
+        });
+        
+        // Initial state
+        updateButtonState();
+    </script>
+</body>
+</html>

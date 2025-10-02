@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page_title }} - Food Safety Agency</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        'sidebar-bg': '#1e293b',
+                        'sidebar-text': '#f1f5f9',
+                        success: '#10b981',
+                        info: '#3b82f6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #f1f5f9;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text: #ffffff;
+            --text-light: #b0b0b0;
+            --border: #404040;
+            --sidebar-bg: #2D2D2D;
+            --sidebar-text: #ffffff;
+            --primary-light: #1a3a40;
+        }
+        
+        /* Sidebar theme styles */
+        #sidebar {
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a {
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        #sidebar .border-slate-600 {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #sidebar .text-sidebar-text {
+            color: var(--sidebar-text) !important;
+        }
+        
+        /* Force sidebar to be dark in both themes */
+        [data-theme="light"] #sidebar {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar a {
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="dark"] #sidebar {
+            background-color: #2D2D2D !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] #sidebar a {
+            color: #ffffff !important;
+        }
+        
+        /* Ensure smooth sidebar transitions */
+        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+        }
+        
+        /* Additional theme-specific styles */
+        [data-theme="dark"] .card {
+            background: #2d2d2d !important;
+            color: #ffffff !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .folder-item {
+            background: #2d2d2d !important;
+            color: #ffffff !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .folder-item:hover {
+            background: #3a3a3a !important;
+        }
+        
+        [data-theme="dark"] .btn {
+            background: var(--primary) !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .btn:hover {
+            background: #005a6b !important;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Mobile-first layout */
+        .page-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Main Content - Full width on mobile */
+        .main-content {
+            flex: 1;
+            width: 100%;
+            padding: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header {
+            padding: 4rem 0 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header h2 {
+            color: white;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+        }
+        
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card-header i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .folder-item {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 1rem;
+            background: var(--card-bg);
+            transition: all 0.2s ease;
+        }
+        
+        .folder-item:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-1px);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #005a6b;
+            transform: translateY(-1px);
+        }
+        
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        .status-connected { color: var(--success); }
+        .status-disconnected { color: var(--danger); }
+        .status-warning { color: var(--warning); }
+
+        /* Statistics Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Tablet and Desktop Responsive */
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 2rem;
+            }
+            
+            .header {
+                padding: 2rem 0;
+            }
+            
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .header h2 {
+                font-size: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .main-content {
+                margin-left: 16rem;
+            }
+        }
+        
+        /* Small mobile adjustments */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .card {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 3rem 0 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .header h2 {
+                font-size: 0.9rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 w-64 h-screen transition-all duration-300 z-50 shadow-2xl flex flex-col">
+            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
+                <div class="text-center mb-2">
+                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
+                </div>
+                <div class="text-sm font-semibold text-center">
+                    Food Safety Agency (Pty) Ltd
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <ul class="px-2 py-2 space-y-1">
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-home mr-2 w-4 text-center"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Clients -->
+                    <li>
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users mr-2 w-4 text-center"></i>
+                            Clients
+                        </a>
+                    </li>
+                    
+                    <!-- Inspections -->
+                    <li>
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                            Inspections
+                        </a>
+                    </li>
+                    
+                    <!-- User Management -->
+                    <li>
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
+                            User Management
+                        </a>
+                    </li>
+                    
+                    <!-- System Logs -->
+                    <li>
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
+                            System Logs
+                        </a>
+                    </li>
+                    
+                    <!-- OneDrive View (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-primary">
+                            <i class="fas fa-cloud mr-2 w-4 text-center"></i>
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Performance Monitor (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
+                            Performance Monitor
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Settings -->
+                    <li>
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Logout Button - Fixed at bottom -->
+            <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
+                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content ml-64">
+            
+            <div class="header">
+                <h1>☁️ OneDrive View</h1>
+                <h2>Developer-only access to OneDrive folder structure and files</h2>
+            </div>
+
+            <!-- Connection Status -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cloud"></i>
+                    OneDrive Connection Status
+                </div>
+                <div class="card-body">
+                    {% if onedrive_data.connected %}
+                        <div class="flex items-center gap-2 status-connected">
+                            <i class="fas fa-check-circle"></i>
+                            <span class="font-semibold">Connected to OneDrive</span>
+                            {% if onedrive_data.token_refreshed %}
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full ml-2">
+                                    <i class="fas fa-sync-alt mr-1"></i>
+                                    Token Refreshed
+                                </span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm mt-2" style="color: var(--text-light);">
+                            Successfully connected to Microsoft OneDrive (Business Account). You can view the folder structure below.
+                            {% if onedrive_data.token_refreshed %}
+                                <br><span class="status-connected font-medium">✅ Access token was automatically refreshed!</span>
+                            {% endif %}
+                        </p>
+                    {% else %}
+                        <div class="flex items-center gap-2 status-disconnected">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span class="font-semibold">Not Connected to OneDrive</span>
+                        </div>
+                        <p class="text-sm mt-2" style="color: var(--text-light);">
+                            {% if onedrive_data.error %}
+                                {{ onedrive_data.error }}
+                            {% else %}
+                                OneDrive is not connected. Please connect in Settings.
+                            {% endif %}
+                        </p>
+                        <div class="mt-4">
+                            <a href="{% url 'settings' %}" class="btn">
+                                <i class="fas fa-cog"></i>
+                                Go to Settings
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if onedrive_data.connected %}
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ onedrive_data.folders|length }}</div>
+                    <div class="stat-label">Total Folders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ onedrive_data.total_files }}</div>
+                    <div class="stat-label">Total Files</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value status-connected">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-label">Status</div>
+                </div>
+            </div>
+
+            <!-- Folder Structure -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-folder-tree"></i>
+                    OneDrive Folder Structure
+                </div>
+                <div class="card-body">
+                    {% if onedrive_data.folders %}
+                        <div class="space-y-3">
+                            {% for folder in onedrive_data.folders %}
+                            <div class="folder-item">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-folder text-blue-500 text-lg"></i>
+                                        <div>
+                                            <div class="font-semibold" style="color: var(--text);">{{ folder.name }}</div>
+                                            {% if folder.path %}
+                                                <div class="text-sm" style="color: var(--text-light);">{{ folder.path }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        {% if folder.file_count is not None %}
+                                            <div class="text-sm" style="color: var(--text-light);">
+                                                <i class="fas fa-file mr-1"></i>
+                                                {{ folder.file_count }} files
+                                            </div>
+                                        {% endif %}
+                                        {% if folder.size %}
+                                            <div class="text-sm" style="color: var(--text-light);">
+                                                <i class="fas fa-hdd mr-1"></i>
+                                                {{ folder.size }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if folder.subfolders %}
+                                <div class="mt-3 ml-6 space-y-2">
+                                    {% for subfolder in folder.subfolders %}
+                                    <div class="flex items-center gap-2 text-sm" style="color: var(--text-light);">
+                                        <i class="fas fa-folder text-blue-400"></i>
+                                        <span>{{ subfolder.name }}</span>
+                                        {% if subfolder.file_count is not None %}
+                                            <span class="text-gray-400">({{ subfolder.file_count }} files)</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8" style="color: var(--text-light);">
+                            <i class="fas fa-folder-open text-4xl mb-4"></i>
+                            <p>No folders found in OneDrive</p>
+                            <p class="text-sm mt-2">Files will appear here once they are uploaded to OneDrive</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-tools"></i>
+                    Quick Actions
+                </div>
+                <div class="card-body">
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="refreshOneDrive()" class="btn">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh OneDrive
+                        </button>
+                        <a href="{% url 'settings' %}" class="btn" style="background: var(--success);">
+                            <i class="fas fa-cog"></i>
+                            OneDrive Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+            
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+            }
+            
+            document.documentElement.setAttribute('data-theme', activeTheme);
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+        });
+
+        function refreshOneDrive() {
+            // Simple page refresh to get latest OneDrive data
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

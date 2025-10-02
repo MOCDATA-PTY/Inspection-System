@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Monitor - Food Safety Agency</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        'sidebar-bg': '#1e293b',
+                        'sidebar-text': '#f1f5f9',
+                        success: '#10b981',
+                        info: '#3b82f6',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --info: #3b82f6;
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --sidebar-bg: #1e293b;
+            --sidebar-text: #f1f5f9;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text: #ffffff;
+            --text-light: #b0b0b0;
+            --border: #404040;
+            --sidebar-bg: #2D2D2D;
+            --sidebar-text: #ffffff;
+            --primary-light: #1a3a40;
+        }
+        
+        /* Sidebar theme styles */
+        #sidebar {
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a {
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        #sidebar .border-slate-600 {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #sidebar .text-sidebar-text {
+            color: var(--sidebar-text) !important;
+        }
+        
+        /* Force sidebar to be dark in both themes */
+        [data-theme="light"] #sidebar {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar a {
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="dark"] #sidebar {
+            background-color: #2D2D2D !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] #sidebar a {
+            color: #ffffff !important;
+        }
+        
+        /* Ensure smooth sidebar transitions */
+        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+        }
+        
+        /* Additional theme-specific styles for better visibility */
+        [data-theme="dark"] .metric-card {
+            background: #2d2d2d !important;
+            color: #ffffff !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .chart-container {
+            background: #2d2d2d !important;
+            color: #ffffff !important;
+            border-color: #404040 !important;
+        }
+        
+        [data-theme="dark"] .metric-card h3 {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] .chart-container h3 {
+            color: #ffffff !important;
+        }
+        
+        /* Ensure smooth transitions between themes */
+        body, .page-container, .sidebar, .main-content, .metric-card,
+        .form-group input, .form-group select, .btn {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.5;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Mobile-first layout */
+        .page-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Main Content - Full width on mobile */
+        .main-content {
+            flex: 1;
+            width: 100%;
+            padding: 1rem;
+            transition: margin-left 0.3s ease;
+        }
+
+        .header {
+            padding: 4rem 0 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .header h1 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header h2 {
+            color: white;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        
+        /* Performance Grid */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--info));
+        }
+        
+        .metric-card h3 {
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-card h3 i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .trend-up { color: var(--success); }
+        .trend-down { color: var(--danger); }
+        .trend-stable { color: var(--text-light); }
+        
+        /* Chart Container */
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+            margin-top: 1.5rem;
+        }
+        
+        .chart-container canvas {
+            max-height: 300px !important;
+            height: 300px !important;
+        }
+        
+        .chart-container h3 {
+            display: flex;
+            align-items: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container h3 i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-good {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-critical {
+            background: rgba(236, 52, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Refresh Button */
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .refresh-btn:hover {
+            background: #005a6b;
+            transform: scale(1.05);
+        }
+        
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Tablet and Desktop Responsive */
+        @media (min-width: 768px) {
+            .main-content {
+                padding: 2rem;
+            }
+            
+            .header {
+                padding: 2rem 0;
+            }
+            
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .header h2 {
+                font-size: 1rem;
+            }
+            
+            .performance-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+            }
+            
+            .metric-card {
+                padding: 2rem;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .performance-grid {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+        
+        /* Small mobile adjustments */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.5rem;
+            }
+            
+            .metric-card {
+                padding: 1rem;
+            }
+            
+            .header {
+                padding: 3rem 0 1rem;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .header h2 {
+                font-size: 0.9rem;
+            }
+            
+            .metric-value {
+                font-size: 2rem;
+            }
+            
+            .refresh-btn {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 w-64 h-screen transition-all duration-300 z-50 shadow-2xl flex flex-col">
+            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
+                <div class="text-center mb-2">
+                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
+                </div>
+                <div class="text-sm font-semibold text-center">
+                    Food Safety Agency (Pty) Ltd
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <ul class="px-2 py-2 space-y-1">
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-home mr-2 w-4 text-center"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- Clients -->
+                    <li>
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users mr-2 w-4 text-center"></i>
+                            Clients
+                        </a>
+                    </li>
+                    
+                    <!-- Inspections -->
+                    <li>
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                            Inspections
+                        </a>
+                    </li>
+                    
+                    <!-- User Management -->
+                    <li>
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
+                            User Management
+                        </a>
+                    </li>
+                    
+                    <!-- System Logs -->
+                    <li>
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
+                            System Logs
+                        </a>
+                    </li>
+                    
+                    <!-- OneDrive View (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cloud mr-2 w-4 text-center"></i>
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Performance Monitor (Developer only) -->
+                    {% if request.user.role == 'developer' %}
+                    <li>
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-primary">
+                            <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
+                            Performance Monitor
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- Settings -->
+                    <li>
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Logout Button - Fixed at bottom -->
+            <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
+                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content ml-64">
+            
+            <div class="header">
+                <h1>🚀 Performance Monitor</h1>
+                <h2>Real-time system performance metrics and analytics</h2>
+            </div>
+
+            <div class="performance-grid">
+                
+                <!-- Average Load Time -->
+                <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-stopwatch" style="color: #007890;"></i>
+                        Average Page Load Time
+                    </h3>
+                    <div class="metric-value">{{ average_load_time|floatformat:2 }}s</div>
+                    <div class="metric-description">Based on last 10 page loads</div>
+                    <div class="metric-trend trend-stable">
+                        <i class="fas fa-minus"></i>
+                        <span>Stable performance</span>
+                    </div>
+                </div>
+
+                <!-- Cache Hit Rate -->
+                <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-memory" style="color: #10b981;"></i>
+                        Cache Hit Rate
+                    </h3>
+                    <div class="metric-value">{{ cache_stats.total_cache_hits|default:0 }}</div>
+                    <div class="metric-description">Total cache hits across all systems</div>
+                    <div class="metric-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Excellent caching</span>
+                    </div>
+                </div>
+
+                <!-- Shipment List Cache -->
+                <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-list" style="color: #3b82f6;"></i>
+                        Shipment List Cache
+                    </h3>
+                    <div class="metric-value">{{ cache_stats.shipment_list_cache_hits|default:0 }}</div>
+                    <div class="metric-description">Page-level caching performance</div>
+                    <div class="metric-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>High efficiency</span>
+                    </div>
+                </div>
+
+                <!-- Compliance Status Cache -->
+                <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-file-check" style="color: #f59e0b;"></i>
+                        Compliance Status Cache
+                    </h3>
+                    <div class="metric-value">{{ cache_stats.compliance_status_cache_hits|default:0 }}</div>
+                    <div class="metric-description">Document status caching</div>
+                    <div class="metric-trend trend-stable">
+                        <i class="fas fa-minus"></i>
+                        <span>Consistent performance</span>
+                    </div>
+                </div>
+
+                <!-- OneDrive Cache -->
+                <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-cloud" style="color: #8b5cf6;"></i>
+                        OneDrive Cache Hits
+                    </h3>
+                    <div class="metric-value">{{ cache_stats.onedrive_compliance_cache_hits|default:0 }}</div>
+                    <div class="metric-description">OneDrive API caching performance</div>
+                    <div class="metric-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Optimized sync</span>
+                    </div>
+                </div>
+
+                <!-- Client Maps Cache -->
+            <div class="metric-card">
+                    <h3>
+                        <i class="fas fa-map-marked-alt" style="color: #ec4899;"></i>
+                        Client Maps Cache
+                    </h3>
+                    <div class="metric-value">{{ cache_stats.client_maps_cache_hits|default:0 }}</div>
+                    <div class="metric-description">Client data caching efficiency</div>
+                    <div class="metric-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>Fast data access</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Performance Chart -->
+            <div class="chart-container">
+                <h3>
+                    <i class="fas fa-chart-line"></i>
+                    Load Time Trends
+                </h3>
+                <canvas id="loadTimeChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- System Status -->
+            <div class="chart-container">
+                <h3>
+                    <i class="fas fa-server"></i>
+                    System Status Overview
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="status-indicator status-good">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Database: Online</span>
+                    </div>
+                    <div class="status-indicator status-good">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Cache: Active</span>
+                    </div>
+                    <div class="status-indicator status-good">
+                        <i class="fas fa-check-circle"></i>
+                        <span>OneDrive: Connected</span>
+                    </div>
+                    <div class="status-indicator status-good">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Google Sheets: Synced</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="refresh-btn" onclick="refreshData()" title="Refresh Data">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
+    <script>
+        // Initialize Chart
+        const ctx = document.getElementById('loadTimeChart').getContext('2d');
+        
+        // Prepare chart data
+        const chartLabels = [
+            {% for load_time in recent_load_times %}
+            'Load #{{ forloop.revcounter }}'{% if not forloop.last %},{% endif %}
+            {% empty %}
+            'No Data'
+            {% endfor %}
+        ];
+        
+        const chartData = [
+            {% for load_time in recent_load_times %}
+            {{ load_time|floatformat:2 }}{% if not forloop.last %},{% endif %}
+            {% empty %}
+            0
+            {% endfor %}
+        ];
+        
+        const loadTimeChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'Load Time (seconds)',
+                    data: chartData,
+                    borderColor: '#007890',
+                    backgroundColor: 'rgba(0, 120, 144, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#007890',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#007890',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Load Time (seconds)',
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
+                        },
+                        ticks: {
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Recent Loads',
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
+                        },
+                        ticks: {
+                            color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#b0b0b0' : '#6b7280'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Refresh functionality
+        function refreshData() {
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const icon = refreshBtn.querySelector('i');
+            
+            // Add spinning animation
+            refreshBtn.classList.add('spinning');
+            icon.classList.remove('fa-sync-alt');
+            icon.classList.add('fa-spinner');
+            
+            // Reload page after short delay
+            setTimeout(() => {
+            location.reload();
+            }, 1000);
+        }
+
+        // Auto-refresh every 60 seconds
+        setInterval(() => {
+            refreshData();
+        }, 60000);
+
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+            
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+            }
+            
+            document.documentElement.setAttribute('data-theme', activeTheme);
+        }
+
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+        });
+    </script>
+</body>
+</html>
