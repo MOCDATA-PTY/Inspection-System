@@ -3744,7 +3744,7 @@
                                 <td class="col-account-code">{{ shipment.internal_account_code|default:"-" }}</td>
                                 <td class="col-date">{{ shipment.date_of_inspection|date:"m/d/y"|default:"-" }}</td>
                                 <td class="col-compliance">
-                                    {% if shipment.compliance_status == 'complete' %}
+                                    {% if shipment.inspection_compliance_status == 'compliant' %}
                                         <span style="color: #28a745; font-weight: bold;">Compliant</span>
                                     {% else %}
                                         <span style="color: #dc3545; font-weight: bold;">Non-Compliant</span>

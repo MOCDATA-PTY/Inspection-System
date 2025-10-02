@@ -1543,8 +1543,20 @@ def shipment_list(request):
         has_invoice = invoice_uploader is not None
         has_compliance = compliance_status_result.get('has_any_compliance', False)
         
-        # Determine compliance status based on FILE UPLOADS, not inspection compliance
-        # This controls whether the "Sent" status dropdown is enabled
+        # Determine INSPECTION compliance status (for display in header)
+        # Check if ALL individual inspections in the group are compliant
+        all_inspections_compliant = True
+        for inspection in group_inspections:
+            if inspection.is_direction_present_for_this_inspection:
+                all_inspections_compliant = False
+                break
+        
+        if all_inspections_compliant:
+            inspection_compliance_status = 'compliant'  # All inspections are compliant
+        else:
+            inspection_compliance_status = 'non_compliant'  # At least one inspection is non-compliant
+        
+        # Determine FILE UPLOAD compliance status (controls "Sent" status dropdown)
         if has_rfi and has_invoice and has_compliance:
             compliance_status = 'complete'  # All required files uploaded
         elif has_rfi or has_invoice or has_compliance:
@@ -1562,13 +1574,20 @@ def shipment_list(request):
         else:
             file_status = 'no_compliance'  # Red - no files at all
             
-        print(f" FILE STATUS DEBUG for {client_name}:")
+        print(f" COMPLIANCE STATUS DEBUG for {client_name}:")
+        print(f"    Individual inspections compliance:")
+        for i, inspection in enumerate(group_inspections):
+            direction_present = inspection.is_direction_present_for_this_inspection
+            status = "Non-Compliant" if direction_present else "Compliant"
+            print(f"      Inspection {i+1}: {status} (direction_present: {direction_present})")
+        print(f"    Inspection compliance status (for header): {inspection_compliance_status}")
         print(f"    File upload status:")
         print(f"      RFI uploaded: {has_rfi}")
         print(f"      Invoice uploaded: {has_invoice}")
         print(f"      Compliance docs: {has_compliance}")
-        print(f"    Compliance status (for Sent dropdown): {compliance_status}")
+        print(f"    File compliance status (for Sent dropdown): {compliance_status}")
         print(f"    File status (for View Files button): {file_status}")
+        print(f"    Header will show: {'Compliant' if inspection_compliance_status == 'compliant' else 'Non-Compliant'}")
         print(f"    Sent dropdown will be: {'Enabled' if compliance_status == 'complete' else 'Disabled'}")
         
         # Generate group_id
@@ -1602,7 +1621,8 @@ def shipment_list(request):
             'rfi_uploaded_date': rfi_upload_date,  # When RFI was uploaded
             'invoice_uploaded_by': invoice_uploader,  # Who uploaded Invoice
             'invoice_uploaded_date': invoice_upload_date,  # When Invoice was uploaded
-            'compliance_status': compliance_status,  # For compliance column display (based on individual inspections)
+            'inspection_compliance_status': inspection_compliance_status,  # For header compliance display (based on individual inspections)
+            'compliance_status': compliance_status,  # For sent dropdown control (based on file uploads)
             'file_status': file_status,  # For View Files button color coding (based on actual files)
             'compliance_documents_status': {
                 'all_commodities_have_compliance': bool(compliance_status_result.get('all_commodities_have_compliance', False)) if compliance_status_result else False,
