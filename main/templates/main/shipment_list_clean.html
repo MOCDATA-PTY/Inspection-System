@@ -4103,9 +4103,9 @@
                                                             <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                         </select>
                                                     </td>
-                                                    {% if user.role != 'inspector' %}
+                                                    {% if user.role != 'inspector' and user.role != 'administrator' and user.role != 'financial_administrator' %}
                                                     <td>
-                                                        <!-- Other roles can upload lab documents -->
+                                                        <!-- Only non-inspector, non-administrator, non-financial_administrator roles can upload lab documents -->
                                                         {% if product.is_sample_taken %}
                                                         <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
@@ -7423,7 +7423,7 @@
                 console.log('✅ File input element created successfully');
                 
                 fileInput.onchange = function(e) {
-                    const file = e.target.files[0;];
+                    const file = e.target.files[0];
                     if (file) {
                         // Additional client-side PDF validation
                         if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -7438,7 +7438,7 @@
                         
                         // Get CSRF token
                         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                         '{{ csrf_token|escapejs }};';
+                                         '{{ csrf_token|escapejs }}';
                         formData.append('csrfmiddlewaretoken', csrfToken);
                         
                         // Upload file
@@ -7510,7 +7510,7 @@
             fileInput.style.display = 'none';
             
             fileInput.onchange = function(e) {
-                const file = e.target.files[0;];
+                const file = e.target.files[0];
                 if (file) {
                     // Additional client-side PDF validation
                     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -7525,7 +7525,7 @@
                     
                     // Get CSRF token
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                     '{{ csrf_token|escapejs }};';
+                                     '{{ csrf_token|escapejs }}';
                     formData.append('csrfmiddlewaretoken', csrfToken);
                     
                     // Upload file
@@ -7582,7 +7582,7 @@
             fileInput.style.display = 'none';
             
             fileInput.onchange = function(e) {
-                const file = e.target.files[0;];
+                const file = e.target.files[0];
                 if (file) {
                     // Additional client-side PDF validation
                     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -7607,7 +7607,7 @@
                     
                     // Get CSRF token
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                     '{{ csrf_token|escapejs }};';
+                                     '{{ csrf_token|escapejs }}';
                     formData.append('csrfmiddlewaretoken', csrfToken);
                     
                     // Upload file
@@ -7661,7 +7661,7 @@
             fileInput.style.display = 'none';
             
             fileInput.onchange = function(e) {
-                const file = e.target.files[0;];
+                const file = e.target.files[0];
                 if (file) {
                     // Additional client-side PDF validation
                     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -7686,7 +7686,7 @@
                     
                     // Get CSRF token
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                     '{{ csrf_token|escapejs }};';
+                                     '{{ csrf_token|escapejs }}';
                     formData.append('csrfmiddlewaretoken', csrfToken);
                     
                     // Upload file
@@ -7740,7 +7740,7 @@
             fileInput.style.display = 'none';
             
             fileInput.onchange = function(e) {
-                const file = e.target.files[0;];
+                const file = e.target.files[0];
                 if (file) {
                     // Additional client-side PDF validation
                     if (!file.name.toLowerCase().endsWith('.pdf')) {
@@ -7765,7 +7765,7 @@
                     
                     // Get CSRF token
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
-                                     '{{ csrf_token|escapejs }};';
+                                     '{{ csrf_token|escapejs }}';
                     formData.append('csrfmiddlewaretoken', csrfToken);
                     
                     // Upload file
@@ -8833,7 +8833,7 @@
             btn.style.opacity = '0.7';
             statusDiv.innerHTML = '';
 
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token|escapejs }};';
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token|escapejs }}';
 
             fetch('{% url "refresh_inspections" %}', {
                 method: 'POST',
