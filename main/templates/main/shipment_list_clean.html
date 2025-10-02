@@ -4103,24 +4103,34 @@
                                                             <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                         </select>
                                                     </td>
-                                                    {% if user.role != 'inspector' and user.role != 'administrator' and user.role != 'financial_administrator' %}
+                                                    {% if user.role != 'inspector' %}
                                                     <td>
-                                                        <!-- Only non-inspector, non-administrator, non-financial_administrator roles can upload lab documents -->
+                                                        <!-- Lab upload buttons - disabled for admin roles but still visible for status -->
                                                         {% if product.is_sample_taken %}
                                                         <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
+                                                                disabled style="opacity: 0.6; cursor: not-allowed;"
+                                                                title="Lab upload - View only (upload restricted for {{ user.role }})"
+                                                                {% else %}
                                                                 onclick="uploadLab('{{ product.remote_id|escapejs }}')" 
-                                                                title="Lab result upload available">
+                                                                title="Lab result upload available"
+                                                                {% endif %}>
                                                             <i class="fas fa-flask"></i> Lab
                                                         </button>
                                                         <button class="btn btn-sm btn-lab-form" id="lab-form-{{ product.remote_id }}" 
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
+                                                                disabled style="opacity: 0.6; cursor: not-allowed;"
+                                                                title="Lab form - View only (upload restricted for {{ user.role }})"
+                                                                {% else %}
                                                                 onclick="uploadLabForm('{{ product.remote_id|escapejs }}')" 
-                                                                title="Lab form submission upload available">
+                                                                title="Lab form submission upload available"
+                                                                {% endif %}>
                                                             <i class="fas fa-file-alt"></i> Lab Form
                                                         </button>
                                                         <button class="btn btn-sm btn-retest" id="retest-{{ product.remote_id }}" 
@@ -4128,8 +4138,12 @@
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
                                                                 {% if product.needs_retest != 'YES' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if product.needs_retest == 'YES' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')"{% endif %} 
-                                                                title="{% if product.needs_retest == 'YES' %}Retest required - Please upload retest document{% else %}No retest required - Upload disabled{% endif %}">
+                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
+                                                                {% if product.needs_retest == 'YES' %}disabled style="opacity: 0.6; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ user.role }})"{% endif %}
+                                                                {% else %}
+                                                                {% if product.needs_retest == 'YES' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')" title="Retest required - Please upload retest document"{% endif %}
+                                                                {% endif %}
+                                                                {% if product.needs_retest != 'YES' %}title="No retest required - Upload disabled"{% endif %}>
                                                             <i class="fas fa-redo"></i> Retest
                                                         </button>
                                                         {% else %}
