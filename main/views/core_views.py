@@ -2201,15 +2201,18 @@ def upload_document(request):
             # Enforce unified directory scheme
             # - Grouped (unmatched): client-level rfi, invoice, compliance
             # - Individual (matched): inspection-<id>/{rfi,invoice,compliance,lab,retest,form}
-            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'retest', 'form']:
+            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form']:
                 if upload_type == 'individual' and inspection_id:
-                    document_dir = os.path.join(client_dir, f"inspection-{inspection_id}", document_type)
+                    # Map lab_form to lab folder for individual inspections
+                    mapped_type = 'lab' if document_type == 'lab_form' else document_type
+                    document_dir = os.path.join(client_dir, f"inspection-{inspection_id}", mapped_type)
                 else:
                     top_map = {
                         'rfi': 'rfi',
                         'invoice': 'invoice',
                         'compliance': 'compliance',
                         'lab': 'lab',
+                        'lab_form': 'lab',  # Map lab_form to lab folder
                         'retest': 'retest',
                         'form': 'form',
                     }
