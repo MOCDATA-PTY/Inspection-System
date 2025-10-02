@@ -242,6 +242,12 @@
                 margin: 10px;
             }
         }
+        
+        /* Disabled button styling for administrators */
+        .btn:disabled:hover,
+        button[disabled]:hover {
+            cursor: not-allowed !important;
+        }
     </style>
 </head>
 <body>
@@ -300,7 +306,7 @@
                             </div>
                             <button type="button" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.875rem;" 
                                     {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                    disabled style="opacity: 0.6; cursor: not-allowed;" title="Lab upload - View only (upload restricted for {{ user.role }})"
+                                    disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Lab upload - View only (upload restricted for {{ user.role }})"
                                     {% else %}
                                     onclick="uploadDocument('lab', {{ inspection.remote_id }})"
                                     {% endif %}>
@@ -325,7 +331,7 @@
                             </div>
                             <button type="button" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.875rem;" 
                                     {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                    disabled style="opacity: 0.6; cursor: not-allowed;" title="Retest upload - View only (upload restricted for {{ user.role }})"
+                                    disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest upload - View only (upload restricted for {{ user.role }})"
                                     {% else %}
                                     onclick="uploadDocument('retest', {{ inspection.remote_id }})"
                                     {% endif %}>

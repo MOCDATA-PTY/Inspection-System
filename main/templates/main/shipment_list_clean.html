@@ -1359,6 +1359,12 @@
             background-color: #047857;
         }
         
+        /* Disabled button styling for administrators */
+        .btn:disabled:hover,
+        button[disabled]:hover {
+            cursor: not-allowed !important;
+        }
+        
         /* Group actions styling - inline, no wrapping */
         .group-actions {
             display: flex;
@@ -4112,7 +4118,7 @@
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
                                                                 {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                                                disabled style="opacity: 0.6; cursor: not-allowed;"
+                                                                disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
                                                                 title="Lab upload - View only (upload restricted for {{ user.role }})"
                                                                 {% else %}
                                                                 onclick="uploadLab('{{ product.remote_id|escapejs }}')" 
@@ -4125,7 +4131,7 @@
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
                                                                 {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                                                disabled style="opacity: 0.6; cursor: not-allowed;"
+                                                                disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
                                                                 title="Lab form - View only (upload restricted for {{ user.role }})"
                                                                 {% else %}
                                                                 onclick="uploadLabForm('{{ product.remote_id|escapejs }}')" 
@@ -4139,7 +4145,7 @@
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
                                                                 {% if product.needs_retest != 'YES' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
                                                                 {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                                                {% if product.needs_retest == 'YES' %}disabled style="opacity: 0.6; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ user.role }})"{% endif %}
+                                                                {% if product.needs_retest == 'YES' %}disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ user.role }})"{% endif %}
                                                                 {% else %}
                                                                 {% if product.needs_retest == 'YES' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')" title="Retest required - Please upload retest document"{% endif %}
                                                                 {% endif %}
