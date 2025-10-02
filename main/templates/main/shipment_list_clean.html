@@ -6449,7 +6449,7 @@
                 'lab': 'flask',
                 'retest': 'redo',
                 'compliance': 'shield-alt'
-            ;};
+            };
             return icons[categoryKey] || 'file';
         }
         
@@ -6460,7 +6460,7 @@
                 'lab': '#8b5cf6',
                 'retest': '#ef4444',
                 'compliance': '#fbbf24'  // Yellow color for compliance documents
-            ;};
+            };
             return colors[categoryKey] || '#6b7280';
         }
         
@@ -6478,7 +6478,7 @@
                 'gif': 'file-image',
                 'zip': 'file-archive',
                 'rar': 'file-archive'
-            ;};
+            };
             return iconMap[ext] || 'file';
         }
         
@@ -9123,76 +9123,6 @@
         // Initialize theme on page load
         initTheme();
         
-        // Simple function to make RFI and Invoice buttons green when files are present
-        function makeRFIInvoiceButtonsGreen() {
-            console.log('Starting RFI/Invoice button color check...');
-            
-            // Get all visible rows on the current page
-            const visibleRows = document.querySelectorAll('tr.group-row:not([style*="display: none"])');
-            console.log(`Found ${visibleRows.length} visible rows to check`);
-            
-            visibleRows.forEach((row, index) => {
-                const clientName = row.getAttribute('data-client-name');
-                const inspectionDate = row.getAttribute('data-inspection-date');
-                
-                if (clientName && inspectionDate) {
-                    console.log(`Checking row ${index + 1}: ${clientName} on ${inspectionDate}`);
-                    
-                    // Make API call to check for files
-                    fetch('/inspections/files/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': getCSRFToken()
-                        },
-                        body: JSON.stringify({
-                            client_name: clientName,
-                            inspection_date: inspectionDate
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && data.files) {
-                            const rfiFiles = data.files.rfi || [];
-                            const invoiceFiles = data.files.invoice || [];
-                            
-                            // Find RFI button in this row
-                            const rfiButton = row.querySelector('button[id^="rfi-"]');
-                            if (rfiButton && rfiFiles.length > 0) {
-                                rfiButton.style.backgroundColor = '#28a745';
-                                rfiButton.style.borderColor = '#28a745';
-                                rfiButton.style.color = 'white';
-                                rfiButton.innerHTML = 'RFI ✓';
-                                rfiButton.title = 'RFI file uploaded';
-                                rfiButton.disabled = true;
-                                console.log(`Made RFI button GREEN for ${clientName}`);
-                            }
-                            
-                            // Find Invoice button in this row
-                            const invoiceButton = row.querySelector('button[id^="invoice-"]');
-                            if (invoiceButton && invoiceFiles.length > 0) {
-                                invoiceButton.style.backgroundColor = '#28a745';
-                                invoiceButton.style.borderColor = '#28a745';
-                                invoiceButton.style.color = 'white';
-                                invoiceButton.innerHTML = 'Invoice ✓';
-                                invoiceButton.title = 'Invoice file uploaded';
-                                invoiceButton.disabled = true;
-                                console.log(`Made Invoice button GREEN for ${clientName}`);
-                            }
-                        }
-                    })
-                    .catch(error => {
-                        console.error(`Error checking files for ${clientName}:`, error);
-                    });
-                }
-            });
-        }
-        
-        // Run the simple function after page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded, will check RFI/Invoice buttons in 2 seconds...');
-            setTimeout(makeRFIInvoiceButtonsGreen, 2000);
-        });
     </script>
 </body>
 </html>

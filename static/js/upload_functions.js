@@ -109,10 +109,13 @@ function uploadRFI(groupId) {
             window.uploadedFiles = {[groupId]: true};
         }
         
-        // Update View Files button colors after upload with delay to ensure server processing
-        console.log('🎨 Updating button colors after RFI upload...');
-        console.log('⏰ Setting 5-second timer for delayed color update...');
-        console.log('🔍 [DEBUG] Upload in progress flag:', uploadInProgress);
+                        // Update View Files button colors after upload with delay to ensure server processing
+                        console.log('Updating button colors after RFI upload...');
+                        console.log('Setting 5-second timer for delayed color update...');
+                        console.log('[DEBUG] Upload in progress flag:', uploadInProgress);
+                        
+                        // Immediately make View Files button ORANGE since we just uploaded a file
+                        makeViewFilesButtonOrange(groupId);
         console.log('🔍 [DEBUG] Marked groupId for file refresh:', groupId);
         
         // Clear upload flag before setting delayed update to prevent race condition
@@ -281,7 +284,10 @@ function uploadInvoice(groupId) {
                             console.log('🔍 [DEBUG] Marked groupId for file refresh:', groupId);
                             
                             // Update View Files button colors after upload with delay to ensure server processing
-                            console.log('🎨 Updating button colors after Invoice upload...');
+                            console.log('Updating button colors after Invoice upload...');
+                            
+                            // Immediately make View Files button ORANGE since we just uploaded a file
+                            makeViewFilesButtonOrange(groupId);
                             console.log('⏰ Setting 5-second timer for delayed color update...');
                             
                             // Clear upload flag before setting delayed update to prevent race condition
@@ -1567,6 +1573,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('🔍 [PAGE] Initializing RFI buttons immediately...');
         initializeRFIButtonsSimple();
     }, 1000);
+    
+    // SIMPLE INVOICE BUTTON INITIALIZATION - Run immediately
+    setTimeout(() => {
+        console.log('🔍 [PAGE] Initializing Invoice buttons immediately...');
+        initializeInvoiceButtonsSimple();
+    }, 1200);
 });
 
 // Cookie utility function
@@ -2284,8 +2296,8 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
                 }
             }
             
-            // Remove existing color classes
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+            // Remove existing color classes including the problematic btn-files-none
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
             
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -2311,13 +2323,15 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
                     console.log('   🟡 Applied ORANGE color to button');
                     break;
                 case 'partial_files':
-                    button.classList.add('btn-view-files-blue');
-                    button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
+                    button.classList.add('btn-warning');
+                    button.style.backgroundColor = '#ff8c00';
+                    button.style.color = 'white';
+                    button.title = 'Files uploaded';
                     if (statusIcon) {
                         statusIcon.className = 'fas fa-file-alt';
-                        statusIcon.style.color = '#3b82f6';
+                        statusIcon.style.color = 'white';
                     }
-                    console.log('   🔵 Applied BLUE color to button');
+                    console.log('   🟠 Applied ORANGE color to button (files detected)');
                     break;
                 case 'no_files':
                     button.classList.add('btn-view-files-red');
@@ -2394,8 +2408,8 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                 }
             }
             
-            // Remove existing color classes
-            button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-danger');
+            // Remove existing color classes including the problematic btn-files-none
+            button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-danger', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
             
             // Apply color based on file status
             switch (fileStatus) {
@@ -2426,12 +2440,12 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     });
                     break;
                 case 'partial_files':
-                    // ANY file detected - make View Files button YELLOW
+                    // ANY file detected - make View Files button ORANGE
                     button.classList.add('btn-warning');
-                    button.style.backgroundColor = '#ffc107';
-                    button.style.color = 'black';
-                    button.title = 'Files available (RFI, Invoice, Lab, or Compliance)';
-                    console.log('   🟡 Applied YELLOW color to button (files detected)');
+                    button.style.backgroundColor = '#ff8c00';
+                    button.style.color = 'white';
+                    button.title = 'Files uploaded';
+                    console.log('   ORANGE Applied ORANGE color to button (files detected)');
                     console.log('   Button after update - classes:', button.className);
                     console.log('   Button after update - styles:', {
                         backgroundColor: button.style.backgroundColor,
@@ -3258,6 +3272,106 @@ async function initializeRFIButtonsSimple() {
     console.log('✅ [SIMPLE] RFI button initialization complete');
 }
 
+// SIMPLE INVOICE BUTTON INITIALIZATION - Direct and fast
+async function initializeInvoiceButtonsSimple() {
+    console.log('🔍 [SIMPLE] Initializing Invoice buttons...');
+    
+    const invoiceButtons = document.querySelectorAll('button[id^="invoice-"]');
+    console.log(`🔍 [SIMPLE] Found ${invoiceButtons.length} Invoice buttons`);
+    
+    for (const button of invoiceButtons) {
+        const buttonId = button.id;
+        const groupId = buttonId.replace('invoice-', '');
+        
+        // Extract client name and date from groupId
+        const parts = groupId.split('_');
+        if (parts.length < 3) continue;
+        
+        const datePart = parts[parts.length - 1];
+        const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        let clientName = parts.slice(0, -1).join('_');
+        
+        if (clientName.includes('Pty_Ltd')) {
+            clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+        } else {
+            clientName = clientName.replace(/_/g, ' ');
+        }
+        
+        try {
+            const response = await fetch('/inspections/files/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    inspection_date: inspectionDate,
+                    _force_refresh: true
+                })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.files) {
+                    const hasInvoice = data.files.invoice && data.files.invoice.length > 0;
+                    
+                    if (hasInvoice) {
+                        // GREEN - Invoice file exists
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Invoice ✓';
+                        button.title = 'Invoice file exists';
+                        button.onclick = null;
+                        console.log(`✅ [SIMPLE] Set ${clientName} Invoice button to GREEN`);
+                    } else {
+                        // GREY - No Invoice file
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Invoice';
+                        button.title = 'Upload Invoice file';
+                        button.onclick = () => uploadInvoice(groupId);
+                        console.log(`⚪ [SIMPLE] Set ${clientName} Invoice button to GREY`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`❌ [SIMPLE] Error checking Invoice for ${clientName}:`, error);
+        }
+    }
+    
+    console.log('✅ [SIMPLE] Invoice button initialization complete');
+}
+
+// Simple function to immediately make View Files button ORANGE after file upload
+function makeViewFilesButtonOrange(groupId) {
+    console.log('Making View Files button ORANGE for groupId:', groupId);
+    
+    // Find the View Files button for this group
+    const viewFilesButton = document.querySelector(`button[onclick*="${groupId}"][onclick*="openFilesPopup"]`);
+    
+    if (viewFilesButton) {
+        // Remove existing color classes including the problematic btn-files-none
+        viewFilesButton.classList.remove('btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
+        
+        // Make it ORANGE
+        viewFilesButton.classList.add('btn-warning');
+        viewFilesButton.style.backgroundColor = '#ff8c00';
+        viewFilesButton.style.color = 'white';
+        viewFilesButton.title = 'Files uploaded';
+        
+        console.log('SUCCESS: Made View Files button ORANGE');
+    } else {
+        console.log('View Files button not found for groupId:', groupId);
+    }
+}
+
 // Check if files actually exist for a specific button
 async function checkButtonFileStatus(button, groupId, clientName, inspectionDate, documentType) {
     // Skip checking if this button has been marked as file-deleted to prevent reversion
@@ -3443,8 +3557,8 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             matchingButtons.forEach(button => {
                 console.log(`🎨 [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
                 
-                // Remove existing color classes
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+                // Remove existing color classes including the problematic btn-files-none
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
                 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -3470,13 +3584,15 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
                         console.log('   🟡 Applied ORANGE color to button');
                         break;
                     case 'partial_files':
-                        button.classList.add('btn-view-files-blue');
-                        button.title = 'Some files available (RFI, Invoice, Lab) but no compliance documents';
+                        button.classList.add('btn-warning');
+                        button.style.backgroundColor = '#ff8c00';
+                        button.style.color = 'white';
+                        button.title = 'Files uploaded';
                         if (statusIcon) {
                             statusIcon.className = 'fas fa-file-alt';
-                            statusIcon.style.color = '#3b82f6';
+                            statusIcon.style.color = 'white';
                         }
-                        console.log('   🔵 Applied BLUE color to button');
+                        console.log('   ORANGE Applied ORANGE color to button');
                         break;
                     case 'no_files':
                         button.classList.add('btn-view-files-red');
@@ -3497,8 +3613,8 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             matchingButtons.forEach(button => {
                 console.log(`🎨 [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
                 
-                // Remove existing color classes
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+                // Remove existing color classes including the problematic btn-files-none
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
                 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -3520,8 +3636,8 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         matchingButtons.forEach(button => {
             console.log(`🎨 [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
             
-            // Remove existing color classes
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange');
+            // Remove existing color classes including the problematic btn-files-none
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
             
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');

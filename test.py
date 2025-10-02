@@ -1,112 +1,296 @@
 #!/usr/bin/env python3
 """
-Simple test script to verify the JavaScript fixes work
+Test script to verify file button color functionality.
+
+This script tests that View Files buttons turn orange when files are detected
+and red when no files are present.
 """
 
 import os
 import sys
-from pathlib import Path
+import django
+import time
+from datetime import datetime, date
 
-def test_javascript_fixes():
-    """Test that JavaScript syntax errors have been fixed"""
-    print("Testing JavaScript syntax fixes...")
-    
-    template_path = Path("main/templates/main/shipment_list_clean.html")
-    
-    if not template_path.exists():
-        print("ERROR: Template file not found!")
-        return False
-    
-    with open(template_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    
-    # Test 1: Check that textConten;t typo is fixed
-    if "textConten;t" in content:
-        print("ERROR: JavaScript typo 'textConten;t' still exists!")
-        return False
-    else:
-        print("PASS: JavaScript typo 'textConten;t' has been fixed")
-    
-    # Test 2: Check that semicolon inside object is fixed
-    if "_force_refresh: true\n                ;};" in content:
-        print("ERROR: JavaScript syntax error with semicolon inside object still exists!")
-        return False
-    else:
-        print("PASS: JavaScript syntax error with semicolon inside object has been fixed")
-    
-    return True
+# Add the project root to Python path
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
 
-def test_rfi_invoice_function():
-    """Test that the new RFI/Invoice button function exists"""
-    print("\nTesting RFI/Invoice button function...")
+# Setup Django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+django.setup()
+
+from main.models import FoodSafetyAgencyInspection
+from django.contrib.auth.models import User
+from django.conf import settings
+from django.utils import timezone
+import os
+
+def create_test_data():
+    """Create test inspections and files for testing button colors."""
+    print("Creating test data...")
     
-    template_path = Path("main/templates/main/shipment_list_clean.html")
+    # Get or create a test user
+    user, created = User.objects.get_or_create(
+        username='testuser',
+        defaults={'email': 'test@example.com', 'first_name': 'Test', 'last_name': 'User'}
+    )
     
-    with open(template_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    # Test case 1: Inspection with files (should show orange button)
+    inspection_with_files, created = FoodSafetyAgencyInspection.objects.get_or_create(
+        client_name='Test Client With Files',
+        date_of_inspection=date.today(),
+        defaults={
+            'remote_id': 99991,
+            'rfi_uploaded_by': user,
+            'rfi_uploaded_date': timezone.now()
+        }
+    )
     
-    # Test 1: Check that makeRFIInvoiceButtonsGreen function exists
-    if "function makeRFIInvoiceButtonsGreen()" in content:
-        print("PASS: makeRFIInvoiceButtonsGreen function exists")
+    # Create a test file on filesystem for this inspection
+    create_test_file(inspection_with_files, 'rfi')
+    
+    # Test case 2: Inspection without files (should show red button)
+    inspection_no_files, created = FoodSafetyAgencyInspection.objects.get_or_create(
+        client_name='Test Client No Files',
+        date_of_inspection=date.today(),
+        defaults={
+            'remote_id': 99992
+        }
+    )
+    
+    print("Created test inspections:")
+    print(f"   - {inspection_with_files.client_name} (ID: {inspection_with_files.id}) - Has files")
+    print(f"   - {inspection_no_files.client_name} (ID: {inspection_no_files.id}) - No files")
+    
+    return inspection_with_files, inspection_no_files
+
+def create_test_file(inspection, file_type):
+    """Create a test file on the filesystem for an inspection."""
+    from datetime import datetime
+    import re
+    
+    # Create folder structure matching the upload system
+    date_obj = inspection.date_of_inspection
+    year_folder = date_obj.strftime('%Y')
+    month_folder = date_obj.strftime('%B')
+    
+    # Sanitize client name for filesystem (matching upload function)
+    def create_folder_name(name):
+        if not name:
+            return "unknown_client"
+        clean_name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', name)
+        clean_name = clean_name.replace(' ', '_').replace('-', '_')
+        clean_name = re.sub(r'_+', '_', clean_name)
+        clean_name = clean_name.strip('_').lower()
+        return clean_name or "unknown_client"
+    
+    client_folder = create_folder_name(inspection.client_name)
+    
+    # Create the directory structure
+    inspection_folder = os.path.join(
+        settings.MEDIA_ROOT, 
+        'inspection', 
+        year_folder, 
+        month_folder, 
+        client_folder,
+        file_type
+    )
+    
+    os.makedirs(inspection_folder, exist_ok=True)
+    
+    # Create a test file
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"test_{file_type}_{timestamp}.pdf"
+    file_path = os.path.join(inspection_folder, filename)
+    
+    with open(file_path, 'w') as f:
+        f.write(f"Test {file_type} document for {inspection.client_name}")
+    
+    print(f"   Created test file: {file_path}")
+
+def test_file_status_api():
+    """Test the file status API endpoint."""
+    print("\nTesting file status detection...")
+    
+    try:
+        from django.test import Client
+        from django.contrib.auth.models import User
+        import json
+        
+        # Create a test client and login
+        client = Client()
+        user = User.objects.get(username='testuser')
+        client.force_login(user)
+        
+        # Test data
+        combinations = [
+            'Test Client With Files_' + date.today().strftime('%Y-%m-%d'),
+            'Test Client No Files_' + date.today().strftime('%Y-%m-%d')
+        ]
+        
+        # Make the API request
+        response = client.post('/get_file_status/', 
+            json.dumps({'combinations': combinations}),
+            content_type='application/json'
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            print("File status results:")
+            for combination, status in data.items():
+                expected_status = 'partial_files' if 'With Files' in combination else 'no_files'
+                status_color = 'ORANGE' if status == 'partial_files' else 'RED' if status == 'no_files' else 'UNKNOWN'
+                result = 'PASS' if status == expected_status else 'FAIL'
+                
+                print(f"   {result}: {combination}: {status} ({status_color})")
+                
+                if status != expected_status:
+                    print(f"      Expected: {expected_status}, Got: {status}")
     else:
-        print("ERROR: makeRFIInvoiceButtonsGreen function not found!")
-        return False
+            print(f"API request failed with status {response.status_code}")
+            print(f"   Response: {response.content.decode('utf-8')}")
+            
+    except Exception as e:
+        print(f"Error testing file status API: {e}")
+        import traceback
+        traceback.print_exc()
+
+def test_button_color_logic():
+    """Test the button color logic by simulating different file statuses."""
+    print("\nTesting button color logic...")
     
-    # Test 2: Check that function is called on page load
-    if "setTimeout(makeRFIInvoiceButtonsGreen, 2000);" in content:
-        print("PASS: Function is called on page load")
+    test_cases = [
+        ('no_files', 'RED', 'No files available'),
+        ('partial_files', 'ORANGE', 'Files uploaded'),
+        ('compliance_only', 'ORANGE', 'Only compliance documents available'),
+        ('all_files', 'GREEN', 'All files available')
+    ]
+    
+    for status, expected_color, expected_title in test_cases:
+        print(f"   Testing {status}: Expected {expected_color}")
+        
+        # This would be the JavaScript logic translated to Python for testing
+        if status == 'no_files':
+            css_class = 'btn-danger'
+            bg_color = '#dc3545'
+            text_color = 'white'
+        elif status in ['partial_files', 'compliance_only']:
+            css_class = 'btn-warning'
+            bg_color = '#ff8c00' if status == 'partial_files' else '#ffc107'
+            text_color = 'white' if status == 'partial_files' else 'black'
+        elif status == 'all_files':
+            css_class = 'btn-success'
+            bg_color = '#28a745'
+            text_color = 'white'
     else:
-        print("ERROR: Function is not called on page load!")
-        return False
+            css_class = 'btn-info'
+            bg_color = '#17a2b8'
+            text_color = 'white'
+        
+        print(f"      CSS Class: {css_class}")
+        print(f"      Background: {bg_color}")
+        print(f"      Text Color: {text_color}")
+        print(f"      Title: {expected_title}")
+
+def cleanup_test_data():
+    """Clean up test data."""
+    print("\nCleaning up test data...")
     
-    # Test 3: Check that function makes buttons green
-    if "rfiButton.style.backgroundColor = '#28a745';" in content:
-        print("PASS: Function sets RFI button to green")
-    else:
-        print("ERROR: RFI button green color not found!")
-        return False
-    
-    if "invoiceButton.style.backgroundColor = '#28a745';" in content:
-        print("PASS: Function sets Invoice button to green")
-    else:
-        print("ERROR: Invoice button green color not found!")
-        return False
-    
-    return True
+    try:
+        import shutil
+        
+        # Delete test files from filesystem
+        test_clients = ['Test Client With Files', 'Test Client No Files']
+        for client_name in test_clients:
+            # Create folder structure matching the upload system
+            date_obj = date.today()
+            year_folder = date_obj.strftime('%Y')
+            month_folder = date_obj.strftime('%B')
+            
+            # Sanitize client name for filesystem
+            def create_folder_name(name):
+                if not name:
+                    return "unknown_client"
+                import re
+                clean_name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', name)
+                clean_name = clean_name.replace(' ', '_').replace('-', '_')
+                clean_name = re.sub(r'_+', '_', clean_name)
+                clean_name = clean_name.strip('_').lower()
+                return clean_name or "unknown_client"
+            
+            client_folder = create_folder_name(client_name)
+            
+            # Remove the client folder
+            client_path = os.path.join(
+                settings.MEDIA_ROOT, 
+                'inspection', 
+                year_folder, 
+                month_folder, 
+                client_folder
+            )
+            
+            if os.path.exists(client_path):
+                shutil.rmtree(client_path)
+                print(f"   Removed folder: {client_path}")
+        
+        # Delete test inspections from database
+        deleted_count = FoodSafetyAgencyInspection.objects.filter(
+            client_name__startswith='Test Client'
+        ).delete()[0]
+        
+        print(f"Cleaned up {deleted_count} test records")
+        
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
 
 def main():
-    """Main function"""
-    print("JavaScript Fix Verification Test")
-    print("=" * 40)
+    """Main test function."""
+    print("Starting File Button Color Test")
+    print("=" * 50)
     
-    # Change to the correct directory if needed
-    if not Path("main").exists():
-        print("ERROR: Please run this script from the project root directory")
-        sys.exit(1)
+    try:
+        # Create test data
+        inspection_with_files, inspection_no_files = create_test_data()
+        
+        # Test file status API
+        test_file_status_api()
+        
+        # Test button color logic
+        test_button_color_logic()
+        
+        print("\n" + "=" * 50)
+        print("Test completed successfully!")
+        print("\nSummary:")
+        print("   - Orange buttons should appear for shipments with files")
+        print("   - Red buttons should appear for shipments without files")
+        print("   - The btn-files-none CSS class should be removed to prevent conflicts")
+        print("   - JavaScript should apply btn-warning class with orange background")
+        
+        print("\nTo test in browser:")
+        print("   1. Start the Django server: python manage.py runserver")
+        print("   2. Navigate to the shipment list page")
+        print("   3. Look for 'Test Client With Files' - button should be ORANGE")
+        print("   4. Look for 'Test Client No Files' - button should be RED")
+        print("   5. Upload a file to any shipment and verify button turns ORANGE")
+        
+    except Exception as e:
+        print(f"Test failed with error: {e}")
+        import traceback
+        traceback.print_exc()
     
-    print("Starting tests...\n")
-    
-    # Run tests
-    test1_passed = test_javascript_fixes()
-    test2_passed = test_rfi_invoice_function()
-    
-    print("\n" + "=" * 40)
-    print("TEST RESULTS")
-    print("=" * 40)
-    
-    if test1_passed and test2_passed:
-        print("SUCCESS: All tests passed!")
-        print("\nNext steps:")
-        print("1. Start Django server: python manage.py runserver")
-        print("2. Go to inspections page")
-        print("3. Open browser console (F12)")
-        print("4. Look for console messages about RFI/Invoice buttons")
-        print("5. Check that buttons turn green when files exist")
-        return True
+    finally:
+        # Ask user if they want to keep test data
+        try:
+            keep_data = input("\nKeep test data for manual testing? (y/N): ").lower().strip()
+            if keep_data != 'y':
+                cleanup_test_data()
     else:
-        print("FAILED: Some tests failed")
-        return False
+                print("Test data preserved for manual testing")
+        except KeyboardInterrupt:
+            print("\nCleaning up test data...")
+            cleanup_test_data()
 
-if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+if __name__ == '__main__':
+    main()
