@@ -6210,10 +6210,12 @@
         }
 
         function updateRFIAndInvoiceButtonColors(clientName, inspectionDate) {
-            console.log('🔍 [BUTTON COLOR] Updating RFI/Invoice button colors for:', clientName, 'on', inspectionDate);
+            console.log('🔍 [API] ===== CALLING API FOR BUTTON COLORS =====');
+            console.log('🔍 [API] Client:', clientName);
+            console.log('🔍 [API] Date:', inspectionDate);
             
             // Make API call to check specifically for RFI and Invoice files
-            fetch('/get-inspection-files/', {
+            fetch('/inspections/files/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -6224,14 +6226,22 @@
                     inspection_date: inspectionDate
                 })
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('🔍 [API] Response status:', response.status);
+                console.log('🔍 [API] Response ok:', response.ok);
+                return response.json();
+            })
             .then(data => {
+                console.log('🔍 [API] Full response data:', data);
+                
                 if (data.success && data.files) {
                     const rfiFiles = data.files.rfi || [];
                     const invoiceFiles = data.files.invoice || [];
                     
-                    console.log('🔍 [BUTTON COLOR] RFI files found:', rfiFiles.length);
-                    console.log('🔍 [BUTTON COLOR] Invoice files found:', invoiceFiles.length);
+                    console.log('🔍 [API] ✅ SUCCESS - RFI files found:', rfiFiles.length);
+                    console.log('🔍 [API] ✅ SUCCESS - Invoice files found:', invoiceFiles.length);
+                    console.log('🔍 [API] RFI files:', rfiFiles);
+                    console.log('🔍 [API] Invoice files:', invoiceFiles);
                     
                     // Find the group row for this client and date
                     const groupRows = document.querySelectorAll('tr.group-row');
@@ -6307,9 +6317,15 @@
                         }
                     }
                 }
+                } else {
+                    console.log('🔍 [API] ❌ API call failed or no files data');
+                    console.log('🔍 [API] Success:', data.success);
+                    console.log('🔍 [API] Error:', data.error);
+                }
             })
             .catch(error => {
-                console.error('❌ [BUTTON COLOR] Error checking file status:', error);
+                console.error('❌ [API] Network error checking file status:', error);
+                console.error('❌ [API] Error details:', error.message);
             });
         }
 
@@ -8833,22 +8849,32 @@
         }
         
         function initializeRFIAndInvoiceButtonColors() {
-            console.log('🔍 [INIT] Initializing RFI and Invoice button colors...');
+            console.log('🔍 [INIT] ===== STARTING RFI/INVOICE BUTTON INITIALIZATION =====');
             
             // Get all unique client names from the page
             const groupRows = document.querySelectorAll('tr.group-row[data-client-name]');
+            console.log('🔍 [INIT] Found', groupRows.length, 'group rows with data-client-name');
+            
             const processedClients = new Set();
             
-            groupRows.forEach(row => {
+            groupRows.forEach((row, index) => {
                 const clientName = row.getAttribute('data-client-name');
+                const inspectionDate = row.getAttribute('data-inspection-date');
+                console.log(`🔍 [INIT] Row ${index + 1}: client="${clientName}", date="${inspectionDate}"`);
+                
                 if (clientName && !processedClients.has(clientName)) {
                     processedClients.add(clientName);
-                    console.log('🔍 [INIT] Processing client:', clientName);
+                    console.log('🔍 [INIT] ✅ Processing NEW client:', clientName);
                     updateRFIAndInvoiceButtonColorsForClient(clientName);
+                } else if (clientName) {
+                    console.log('🔍 [INIT] ⏭️ SKIPPING already processed client:', clientName);
+                } else {
+                    console.log('🔍 [INIT] ❌ Row has no client name');
                 }
             });
             
-            console.log('🔍 [INIT] Processed', processedClients.size, 'unique clients');
+            console.log('🔍 [INIT] ===== FINISHED PROCESSING', processedClients.size, 'UNIQUE CLIENTS =====');
+            console.log('🔍 [INIT] Processed clients:', Array.from(processedClients));
         }
     </script>
     <script>
