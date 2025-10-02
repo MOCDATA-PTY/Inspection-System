@@ -4744,8 +4744,8 @@
         function initTheme() {
             try {
                 const savedTheme = localStorage.getItem('theme');
-                const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }};';
-                const theme = savedTheme || serverThem;e;
+                const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+                const theme = savedTheme || serverTheme;
                 
                 document.documentElement.setAttribute('data-theme', theme);
             } catch (error) {
@@ -5288,7 +5288,7 @@
         
         // Show loading indicator for large datasets and check OneDrive status after page is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
-            const totalRecords = parseInt('{{ total_shipments|default:0 }}') || ;0;
+            const totalRecords = parseInt('{{ total_shipments|default:0 }}') || 0;
             if (totalRecords > 1000) {
                 const loadingOverlay = document.getElementById('loadingOverlay');
                 loadingOverlay.style.display = 'flex';

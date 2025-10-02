@@ -1958,7 +1958,7 @@ def upload_document(request):
                 })
         
         # Administrators can only upload invoice and RFI documents
-        elif user_role == 'admin':
+        elif user_role == 'administrator':
             document_type = request.POST.get('document_type')
             allowed_document_types = ['invoice', 'rfi']
             if document_type not in allowed_document_types:
