@@ -736,10 +736,10 @@
             
             .col-expand { width: 22px; min-width: 22px; max-width: 22px; }
             .col-client-name { width: 100px; min-width: 100px; max-width: 100px; }
-            .col-account-code { width: 80px; min-width: 80px; max-width: 80px; }
+            .col-account-code { width: 110px; min-width: 110px; max-width: 110px; white-space: nowrap; }
             .col-date { width: 62px; min-width: 62px; max-width: 62px; }
             .col-compliance { width: 85px; min-width: 85px; max-width: 85px; text-align: center; }
-            .col-email { width: 100px; min-width: 100px; max-width: 100px; }
+            .col-email { width: 160px; min-width: 160px; max-width: 160px; white-space: nowrap; overflow: visible; }
             .col-inspector { width: 70px; min-width: 70px; max-width: 70px; }
             .col-view-files { width: 50px; min-width: 50px; max-width: 50px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
@@ -747,7 +747,7 @@
             .col-km { width: 70px; min-width: 70px; max-width: 70px; }
             .col-hours { width: 70px; min-width: 70px; max-width: 70px; }
             .col-additional-email { width: 90px; min-width: 90px; max-width: 90px; }
-            .col-send { width: 140px; min-width: 140px; max-width: 140px; }
+            .col-send { width: 120px; min-width: 120px; max-width: 120px; }
             
             /* Tablet-specific detail content optimizations */
             .detail-content {
@@ -814,10 +814,10 @@
             /* Restore original column widths for large screens */
             .col-expand { width: 25px; min-width: 25px; max-width: 25px; }
             .col-client-name { width: 120px; min-width: 120px; max-width: 120px; }
-            .col-account-code { width: 90px; min-width: 90px; max-width: 90px; }
+            .col-account-code { width: 140px; min-width: 140px; max-width: 140px; white-space: nowrap; }
             .col-date { width: 70px; min-width: 70px; max-width: 70px; }
             .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
-            .col-email { width: 120px; min-width: 120px; max-width: 120px; }
+            .col-email { width: 200px; min-width: 200px; max-width: 200px; white-space: nowrap; overflow: visible; }
             .col-inspector { width: 75px; min-width: 75px; max-width: 75px; }
             .col-view-files { width: 55px; min-width: 55px; max-width: 55px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
@@ -825,7 +825,7 @@
             .col-km { width: 75px; min-width: 75px; max-width: 75px; }
             .col-hours { width: 75px; min-width: 75px; max-width: 75px; }
             .col-additional-email { width: 110px; min-width: 110px; max-width: 110px; }
-            .col-send { width: 160px; min-width: 160px; max-width: 160px; }
+            .col-send { width: 140px; min-width: 140px; max-width: 140px; }
             
             /* Large desktop detail content */
             .detail-content {
@@ -976,11 +976,13 @@
             flex: none !important;
         }
         .col-account-code { 
-            width: 100px !important; 
-            min-width: 100px !important; 
-            max-width: 100px !important; 
+            width: 140px !important; 
+            min-width: 140px !important; 
+            max-width: 140px !important; 
             text-align: center;
             flex: none !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
         }
         .col-date { 
             width: 100px !important; 
@@ -989,10 +991,12 @@
             flex: none !important;
         }
         .col-email { 
-            width: 100px !important; 
-            min-width: 100px !important; 
-            max-width: 100px !important; 
+            width: 200px !important; 
+            min-width: 200px !important; 
+            max-width: 200px !important; 
             flex: none !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
         }
         .col-compliance { 
             width: 100px !important; 
@@ -1053,9 +1057,9 @@
             flex: none !important;
         }
         .col-send { 
-            width: 280px !important; 
-            min-width: 280px !important; 
-            max-width: 280px !important; 
+            width: 200px !important; 
+            min-width: 200px !important; 
+            max-width: 200px !important; 
             text-align: center;
             flex: none !important;
         }
@@ -3715,6 +3719,7 @@
                                 <th class="col-date">Inspection Date</th>
                                 <th class="col-compliance">Compliant/Non-Compliant</th>
                                 <th class="col-email">Email</th>
+                                <th class="col-additional-email">Additional Email</th>
                                 <th class="col-inspector">Inspector</th>
                                 <th class="col-view-files">View Files</th>
                                 <th class="col-rfi">RFI</th>
@@ -3723,7 +3728,6 @@
                                 {% endif %}
                                 <th class="col-km">Distance (Km)</th>
                                 <th class="col-hours">Hours Worked</th>
-                                <th class="col-additional-email">Additional Email</th>
                                 <th class="col-send">Sent Status</th>
                             </tr>
                         </thead>
@@ -3751,9 +3755,9 @@
                                 <td class="col-date">{{ shipment.date_of_inspection|date:"m/d/y"|default:"-" }}</td>
                                 <td class="col-compliance">
                                     {% if shipment.inspection_compliance_status == 'compliant' %}
-                                        <span style="color: #28a745; font-weight: bold;">Compliant</span>
+                                        <span class="compliance-status compliant">Compliant</span>
                                     {% else %}
-                                        <span style="color: #dc3545; font-weight: bold;">Non-Compliant</span>
+                                        <span class="compliance-status non-compliant">Non-Compliant</span>
                                     {% endif %}
                                 </td>
                                 <td class="col-email">
@@ -3768,6 +3772,28 @@
                                         {% endfor %}
                                     {% else %}
                                         -
+                                    {% endif %}
+                                </td>
+                                <!-- Additional Email Column -->
+                                <td class="col-additional-email">
+                                    {% if request.user.role == 'inspector' %}
+                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.additional_email|default:'' }}" 
+                                               placeholder="email@example.com" 
+                                               onchange="updateGroupAdditionalEmail(this)"
+                                               onblur="updateGroupAdditionalEmail(this)"
+                                               title="Additional email for this inspection group">
+                                    {% elif request.user.role != 'scientist' %}
+                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                                               data-group-id="{{ fallback_group_id }}" 
+                                               value="{{ shipment.additional_email|default:'' }}" 
+                                               placeholder="email@example.com" 
+                                               onchange="updateGroupAdditionalEmail(this)"
+                                               onblur="updateGroupAdditionalEmail(this)"
+                                               title="Additional email for this inspection group">
+                                    {% else %}
+                                        {{ shipment.additional_email|default:"-" }}
                                     {% endif %}
                                 </td>
                                 <td class="col-inspector">{{ shipment.inspector_name|default:"-" }}</td>
@@ -3904,29 +3930,6 @@
                                     {% endif %}
                                 </td>
                                 
-                                <!-- Additional Email Column -->
-                                <td class="col-additional-email">
-                                    {% if request.user.role == 'inspector' %}
-                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                               data-group-id="{{ fallback_group_id }}" 
-                                               value="{{ shipment.additional_email|default:'' }}" 
-                                               placeholder="email@example.com" 
-                                               onchange="updateGroupAdditionalEmail(this)"
-                                               onblur="updateGroupAdditionalEmail(this)"
-                                               title="Additional email for this inspection group">
-                                    {% elif request.user.role != 'scientist' %}
-                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                               data-group-id="{{ fallback_group_id }}" 
-                                               value="{{ shipment.additional_email|default:'' }}" 
-                                               placeholder="email@example.com" 
-                                               onchange="updateGroupAdditionalEmail(this)"
-                                               onblur="updateGroupAdditionalEmail(this)"
-                                               title="Additional email for this inspection group">
-                                    {% else %}
-                                        {{ shipment.additional_email|default:"-" }}
-                                    {% endif %}
-                                </td>
-                                
                                 <!-- Sent Status Column -->
                                 <td class="col-send">
                                     {% if user_role != 'inspector' and user_role != 'scientist' %}
@@ -4055,17 +4058,11 @@
                                                         <select class="km-input product-class-select" 
                                                                 data-inspection-id="{{ product.remote_id }}"
                                                                 data-commodity="{{ lower_commodity }}"
+                                                                data-current-class="{{ product.product_class }}"
                                                                 onchange="updateProductClass(this)"
                                                                 {% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}disabled style="opacity: 0.5; cursor: not-allowed;" title="Class not applicable for Egg/Poultry"{% endif %}>
-                                                            {% if lower_commodity == 'pmp' %}
-                                                                <option value="PMP" {% if product.product_class == 'PMP' %}selected{% endif %}>PMP</option>
-                                                            {% elif lower_commodity == 'raw' %}
-                                                                <option value="RAW" {% if product.product_class == 'RAW' %}selected{% endif %}>RAW</option>
-                                                            {% elif lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}
-                                                                <option value="">No Class</option>
-                                                            {% else %}
-                                                                <option value="">Select Class...</option>
-                                                            {% endif %}
+                                                            <option value="">Select Class...</option>
+                                                            <!-- Options will be populated by JavaScript filterClassOptions function -->
                                                         {% endwith %}
                                                         </select>
                                                     </td>
@@ -4584,12 +4581,54 @@
             console.error('Error setting CSRF token:', error);
         }
         
+        // CLASS DROPDOWN FUNCTION - Must be defined early to avoid syntax errors
+        window.filterClassOptions = function(dropdown) {
+            console.log('[CLASS] Populating dropdown');
+            const currentValue = dropdown.getAttribute('data-current-class') || dropdown.value;
+            
+            const allClassOptions = ['Raw species sausage / wors','Extra Lean Mince','Lean Mince','Regular Mince','Raw Flavoured Ground Meat','Raw Flavoured Ground Meat & Offal','Raw Flavoured mixed species Ground Meat','Raw Flavoured mixed species Ground Meat & Offal','Raw Boerewors','Raw mixed species sausage / wors','Ground Burger / Ground patty = Extra Lean','Ground Burger / Ground patty = Lean','Ground Burger / Ground patty = Regular','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular','Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel','Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger','Raw Banger / Griller','Raw Bratwurst / Sizzler','Whole Muscle, uncured and heat / partial heat treated products','Whole muscle, uncured, no or partial heat treated and air dried products','Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)','Whole muscle, dry cured, no or partial heat treated products','Whole muscle, cured and no or partial heat treated products','Whole muscle, cured, no or partial heat treated and air dried products','Whole muscle, dry cured, no or partial heat treated and dried products','Comminuted, cured and heat treated products','Comminuted, uncured, no or partial heat treated and dried products','Comminuted, cured, no or partial heat treated, dried and fermented products','Comminuted, uncured and heat treated products','Reformed, uncured and no or partial heat treated products','Reformed, cured, heat treated products from single species','Reformed, cured, heat treated products from mixed species','Reformed, cured and no or partial heat treated products','Liver spreads, pâté and terrines','Products in aspic: Brawn','Product in aspic: Souse, Other products containing cured meat pieces in aspic','Products made from blood','Coated Processed Meat Products','Unspecified processed meat products'];
+            
+            dropdown.innerHTML = '';
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select Class...';
+            dropdown.appendChild(placeholder);
+            
+            allClassOptions.forEach(optionText => {
+                const option = document.createElement('option');
+                option.value = optionText;
+                option.textContent = optionText;
+                if (optionText === currentValue) option.selected = true;
+                dropdown.appendChild(option);
+            });
+            
+            if (currentValue && allClassOptions.includes(currentValue)) {
+                dropdown.value = currentValue;
+            }
+            
+            console.log('[CLASS] Dropdown now has', dropdown.options.length, 'options');
+        };
+        
+        // Initialize class dropdowns when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[CLASS] Initializing class dropdowns...');
+            const dropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[CLASS] Found', dropdowns.length, 'dropdowns');
+            dropdowns.forEach(window.filterClassOptions);
+            
+            // Re-populate after expand (for dynamically shown rows)
+            setTimeout(function() {
+                console.log('[CLASS] Re-checking dropdowns after delay...');
+                document.querySelectorAll('select.product-class-select').forEach(window.filterClassOptions);
+            }, 1000);
+        });
+        
         // Simple KM and Hours update functions - defined early
         window.updateGroupKmTraveled = function(input) {
             const groupId = input.getAttribute('data-group-id');
             const kmValue = input.value;
             
-            console.log('💾 Updating Group KM - Group ID:', groupId, 'Value:', kmValue);
+            console.log('[STORAGE] Updating Group KM - Group ID:', groupId, 'Value:', kmValue);
             
             // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
@@ -4629,7 +4668,7 @@
             const groupId = input.getAttribute('data-group-id');
             const hoursValue = input.value;
             
-            console.log('💾 Updating Group Hours - Group ID:', groupId, 'Value:', hoursValue);
+            console.log('[STORAGE] Updating Group Hours - Group ID:', groupId, 'Value:', hoursValue);
             
             // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
@@ -4669,7 +4708,7 @@
             const groupId = input.getAttribute('data-group-id');
             const emailValue = input.value.trim();
             
-            console.log('💾 Updating Group Additional Email - Group ID:', groupId, 'Value:', emailValue);
+            console.log('[STORAGE] Updating Group Additional Email - Group ID:', groupId, 'Value:', emailValue);
             
             // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
@@ -4840,13 +4879,13 @@
 
         // Global toggle function
         function toggleGroup(e, groupId) {
-            console.log('🔧 Toggling group:', groupId);
+            console.log('[TOGGLE] Toggling group:', groupId);
             e.preventDefault();
             e.stopPropagation();
             
             const detailRow = document.getElementById('detail-' + groupId);
-            console.log('🔧 Detail row found:', detailRow);
-            console.log('🔧 Detail row ID:', 'detail-' + groupId);
+            console.log('[TOGGLE] Detail row found:', detailRow);
+            console.log('[TOGGLE] Detail row ID:', 'detail-' + groupId);
 
             if (!detailRow) {
                 console.warn('No detail row for groupId:', groupId);
@@ -5075,10 +5114,10 @@
                     
                     console.log('✅ Button re-enabled:', buttonId);
                 } else {
-                    console.log('⚠️ Button not found:', buttonId);
+                    console.log('[WARNING] Button not found:', buttonId);
                 }
             } else {
-                console.log('⚠️ Could not determine button ID for file:', filePath);
+                console.log('[WARNING] Could not determine button ID for file:', filePath);
             }
         }
         
@@ -5461,7 +5500,7 @@
                         }
                     } else {
                         // Error checking status, assume completion
-                        console.log('⚠️ OneDrive overlay: Status check failed, assuming completion');
+                        console.log('[WARNING] OneDrive overlay: Status check failed, assuming completion');
                         messageElement.textContent = '✅ Files processed successfully!';
                         setTimeout(function() {
                             overlay.style.display = 'none';
@@ -5477,7 +5516,7 @@
             }
             
             // If we reach max attempts, assume completion
-            console.log('⏰ OneDrive overlay: Reached max attempts, assuming completion');
+            console.log('[TIMER] OneDrive overlay: Reached max attempts, assuming completion');
             messageElement.textContent = '✅ Files processed successfully!';
             setTimeout(function() {
                 overlay.style.display = 'none';
@@ -5507,14 +5546,14 @@
         
         // Function to initialize disabled rows for already sent items
         function initializeDisabledRows() {
-            console.log('🔍 Initializing sent rows...');
+            console.log('[DEBUG] Initializing sent rows...');
             
             // Find all rows with sent timestamps
             const sentRows = document.querySelectorAll('.shipment-row[data-sent-timestamp]');
-            console.log('🔍 Found', sentRows.length, 'rows with sent timestamps');
+            console.log('[DEBUG] Found', sentRows.length, 'rows with sent timestamps');
             
             sentRows.forEach((row, index) => {
-                console.log(`🔍 Processing sent row ${index + 1}:`, row);
+                console.log(`[DEBUG] Processing sent row ${index + 1}:`, row);
                 
                 const groupId = row.getAttribute('data-group-id');
                 const sentTimestamp = row.getAttribute('data-sent-timestamp');
@@ -5522,7 +5561,7 @@
                 // Store timestamp in localStorage for persistence
                 if (groupId && sentTimestamp) {
                     localStorage.setItem('sent_timestamp_' + groupId, sentTimestamp);
-                    console.log(`💾 Stored sent timestamp for group ${groupId}:`, sentTimestamp);
+                    console.log(`[STORAGE] Stored sent timestamp for group ${groupId}:`, sentTimestamp);
                     
                     // Check if 15 minutes have already passed
                     const sentDate = new Date(sentTimestamp);
@@ -5532,16 +5571,16 @@
                     
                     if (remainingTime <= 0) {
                         // 15 minutes have passed, disable the row (no countdown display, no green background)
-                        console.log(`🔒 15 minutes already passed for group ${groupId}, disabling row`);
+                        console.log(`[LOCK] 15 minutes already passed for group ${groupId}, disabling row`);
                         disableRowAfterTimer(row, groupId);
                     } else {
                         // 15 minutes haven't passed yet, start countdown timer (no green background)
-                        console.log(`⏰ 15 minutes not yet passed for group ${groupId}, starting countdown timer`);
+                        console.log(`[TIMER] 15 minutes not yet passed for group ${groupId}, starting countdown timer`);
                         startFifteenMinuteTimer(row, groupId, sentTimestamp);
                     }
                 } else {
                     // No timestamp available, keep as disabled (fallback)
-                    console.log(`⚠️ No timestamp available for group ${groupId}, keeping disabled`);
+                    console.log(`[WARNING] No timestamp available for group ${groupId}, keeping disabled`);
                     row.setAttribute('data-was-sent', 'true');
                 }
             });
@@ -5566,7 +5605,7 @@
             initializeDisabledRows();
             
             // Initialize 15-minute timers for sent rows
-            console.log('🔍 About to call initializeFifteenMinuteTimers...');
+            console.log('[DEBUG] About to call initializeFifteenMinuteTimers...');
             if (typeof initializeFifteenMinuteTimers === 'function') {
                 console.log('✅ initializeFifteenMinuteTimers function found, calling it...');
                 initializeFifteenMinuteTimers();
@@ -5590,7 +5629,7 @@
             
             // Final check to ensure sent status styling is preserved after all other functions
             setTimeout(() => {
-                console.log('🔧 [SENT STATUS] Final check to preserve sent status styling');
+                console.log('[DEBUG] [SENT STATUS] Final check to preserve sent status styling');
                 loadSentStatus();
             }, 3000);
         });
@@ -5609,7 +5648,7 @@
                 sentRows.forEach(row => {
                     if (!row.classList.contains('inspection-complete') || 
                         row.style.backgroundColor !== 'rgb(34, 197, 94)') {
-                        console.log('🔧 [SENT STATUS] Re-applying styling to row:', row.getAttribute('data-group-id'));
+                        console.log('[DEBUG] [SENT STATUS] Re-applying styling to row:', row.getAttribute('data-group-id'));
                         row.classList.add('inspection-complete');
                         row.style.setProperty('background-color', '#22c55e', 'important');
                         row.style.setProperty('color', 'white', 'important');
@@ -5768,9 +5807,9 @@
         async function loadInspectionFiles(groupId, clientName, inspectionDate) {
             try {
                 console.log('🔄 File fetch: Starting file fetch request...');
-                console.log('🔍 DEBUG: Group ID:', groupId);
-                console.log('🔍 DEBUG: Client Name:', clientName);
-                console.log('🔍 DEBUG: Inspection Date:', inspectionDate);
+                console.log('[DEBUG] DEBUG: Group ID:', groupId);
+                console.log('[DEBUG] DEBUG: Client Name:', clientName);
+                console.log('[DEBUG] DEBUG: Inspection Date:', inspectionDate);
                 
                 const requestData = {
                     group_id: groupId,
@@ -5789,7 +5828,7 @@
                     body: JSON.stringify(requestData)
                 });
                 
-                console.log('🔍 DEBUG: Response status:', response.status);
+                console.log('[DEBUG] DEBUG: Response status:', response.status);
                 console.log('DEBUG: Response headers:', Object.fromEntries(response.headers.entries()));
                 
                 const result = await response.json();
@@ -5805,17 +5844,17 @@
                 
                 if (result.success) {
                     console.log('🔄 File fetch: Success - processing files...');
-                    console.log('🔍 DEBUG: Files object type:', typeof result.files);
-                    console.log('🔍 DEBUG: Files object:', result.files);
+                    console.log('[DEBUG] DEBUG: Files object type:', typeof result.files);
+                    console.log('[DEBUG] DEBUG: Files object:', result.files);
                     console.log('DEBUG: Files object keys:', Object.keys(result.files || {}));
                     console.log('DEBUG: Files object values:', Object.values(result.files || {}));
-                    console.log('🔍 DEBUG: Files object length:', result.files ? Object.keys(result.files).length : 'N/A');
-                    console.log('🔍 DEBUG: Message:', result.message);
+                    console.log('[DEBUG] DEBUG: Files object length:', result.files ? Object.keys(result.files).length : 'N/A');
+                    console.log('[DEBUG] DEBUG: Message:', result.message);
                     
                     // Check if files exist
                     const hasFiles = result.files && Object.keys(result.files).length > 0;
-                    console.log('🔍 DEBUG: Has files check result:', hasFiles);
-                    console.log('🔍 DEBUG: Files check breakdown:');
+                    console.log('[DEBUG] DEBUG: Has files check result:', hasFiles);
+                    console.log('[DEBUG] DEBUG: Files check breakdown:');
                     console.log('  - result.files exists:', !!result.files);
                     console.log('  - result.files is object:', typeof result.files === 'object');
                     console.log('  - Object.keys(result.files).length:', result.files ? Object.keys(result.files).length : 'N/A');
@@ -5823,14 +5862,14 @@
                     
                     if (hasFiles) {
                         console.log('📁 Files found - displaying file list');
-                        console.log('🔍 DEBUG: About to call displayFiles with:', {
+                        console.log('[DEBUG] DEBUG: About to call displayFiles with:', {
                             files: result.files,
                             message: result.message
                         });
                         displayFiles(result.files, result.message);
                     } else {
                         console.log('📁 No files found - showing empty message');
-                        console.log('🔍 DEBUG: Files object details for empty case:', {
+                        console.log('[DEBUG] DEBUG: Files object details for empty case:', {
                             files: result.files,
                             filesType: typeof result.files,
                             filesKeys: result.files ? Object.keys(result.files); : 'N/A',
@@ -5840,7 +5879,7 @@
                     }
                 } else {
                     console.error('❌ File fetch failed:', result.error);
-                    console.log('🔍 DEBUG: Error details:', {
+                    console.log('[DEBUG] DEBUG: Error details:', {
                         success: result.success,
                         error: result.error,
                         fullResult: result
@@ -5900,7 +5939,7 @@
         async function checkAllClientFileStatus() {
             // Check file status for all clients on current page and update button colors
             if (statusCheckInProgress) {
-                console.log('⚠️ [FRONTEND] Status check already in progress, skipping...');
+                console.log('[WARNING] [FRONTEND] Status check already in progress, skipping...');
                 return;
             }
             
@@ -5921,21 +5960,21 @@
                 
                 // Debug: Check if New Poultry Retailer is in the list
                 if (clientNames.includes('New Poultry Retailer')) {
-                    console.log('🔍 [DEBUG] Found New Poultry Retailer in client list');
-                    console.log('🔍 [DEBUG] Inspection date for New Poultry Retailer:', clientData['New Poultry Retailer']);
+                    console.log('[DEBUG] [DEBUG] Found New Poultry Retailer in client list');
+                    console.log('[DEBUG] [DEBUG] Inspection date for New Poultry Retailer:', clientData['New Poultry Retailer']);
                 } else {
                     console.log('❌ [DEBUG] New Poultry Retailer NOT found in client list');
-                    console.log('🔍 [DEBUG] Available client names:', clientNames);
+                    console.log('[DEBUG] [DEBUG] Available client names:', clientNames);
                 }
                 
                 // Debug: Check if buttons are available
                 const testButtons = document.querySelectorAll('button.btn-view-files, button[class*="btn-view-files"]');
                 const allButtons = document.querySelectorAll('button');
-                console.log('🔍 [FRONTEND] Found ' + testButtons.length + ' View Files buttons on page (' + allButtons.length + ' total buttons)');
+                console.log('[DEBUG] [FRONTEND] Found ' + testButtons.length + ' View Files buttons on page (' + allButtons.length + ' total buttons)');
                 
                 // If no buttons found, wait a bit more
                 if (testButtons.length === 0) {
-                    console.log('⚠️ [FRONTEND] No buttons found, waiting 500ms more...');
+                    console.log('[WARNING] [FRONTEND] No buttons found, waiting 500ms more...');
                     statusCheckInProgress = false; // Reset flag for retry
                     setTimeout(() => {
                         console.log('🔄 [FRONTEND] Retrying status check after button wait...');
@@ -5967,7 +6006,7 @@
                     
                     // Debug: Check specific client status
                     if (result.client_statuses['New Poultry Retailer']) {
-                        console.log('🔍 [DEBUG] New Poultry Retailer status:', result.client_statuses['New Poultry Retailer']);
+                        console.log('[DEBUG] [DEBUG] New Poultry Retailer status:', result.client_statuses['New Poultry Retailer']);
                     } else {
                         console.log('❌ [DEBUG] New Poultry Retailer NOT found in response');
                         console.log('DEBUG: Available clients in response:', Object.keys(result.client_statuses));
@@ -6194,25 +6233,25 @@
         }
 
         function updateRFIAndInvoiceButtonColorsForClient(clientName) {
-            console.log('🔍 [BUTTON COLOR] Updating RFI/Invoice button colors for all rows of client:', clientName);
+            console.log('[DEBUG] [BUTTON COLOR] Updating RFI/Invoice button colors for all rows of client:', clientName);
             
             // Find all group rows for this client
             const groupRows = document.querySelectorAll('tr.group-row[data-client-name="' + clientName + '"]');
-            console.log('🔍 [BUTTON COLOR] Found', groupRows.length, 'rows for client:', clientName);
+            console.log('[DEBUG] [BUTTON COLOR] Found', groupRows.length, 'rows for client:', clientName);
             
             groupRows.forEach(row => {
                 const inspectionDate = row.getAttribute('data-inspection-date');
                 if (inspectionDate) {
-                    console.log('🔍 [BUTTON COLOR] Processing row for date:', inspectionDate);
+                    console.log('[DEBUG] [BUTTON COLOR] Processing row for date:', inspectionDate);
                     updateRFIAndInvoiceButtonColors(clientName, inspectionDate);
                 }
             });
         }
 
         function updateRFIAndInvoiceButtonColors(clientName, inspectionDate) {
-            console.log('🔍 [API] ===== CALLING API FOR BUTTON COLORS =====');
-            console.log('🔍 [API] Client:', clientName);
-            console.log('🔍 [API] Date:', inspectionDate);
+            console.log('[DEBUG] [API] ===== CALLING API FOR BUTTON COLORS =====');
+            console.log('[DEBUG] [API] Client:', clientName);
+            console.log('[DEBUG] [API] Date:', inspectionDate);
             
             // Make API call to check specifically for RFI and Invoice files
             fetch('/inspections/files/', {
@@ -6227,21 +6266,21 @@
                 })
             })
             .then(response => {
-                console.log('🔍 [API] Response status:', response.status);
-                console.log('🔍 [API] Response ok:', response.ok);
+                console.log('[DEBUG] [API] Response status:', response.status);
+                console.log('[DEBUG] [API] Response ok:', response.ok);
                 return response.json();
             })
             .then(data => {
-                console.log('🔍 [API] Full response data:', data);
+                console.log('[DEBUG] [API] Full response data:', data);
                 
                 if (data.success && data.files) {
                     const rfiFiles = data.files.rfi || [];
                     const invoiceFiles = data.files.invoice || [];
                     
-                    console.log('🔍 [API] ✅ SUCCESS - RFI files found:', rfiFiles.length);
-                    console.log('🔍 [API] ✅ SUCCESS - Invoice files found:', invoiceFiles.length);
-                    console.log('🔍 [API] RFI files:', rfiFiles);
-                    console.log('🔍 [API] Invoice files:', invoiceFiles);
+                    console.log('[DEBUG] [API] ✅ SUCCESS - RFI files found:', rfiFiles.length);
+                    console.log('[DEBUG] [API] ✅ SUCCESS - Invoice files found:', invoiceFiles.length);
+                    console.log('[DEBUG] [API] RFI files:', rfiFiles);
+                    console.log('[DEBUG] [API] Invoice files:', invoiceFiles);
                     
                     // Find the group row for this client and date
                     const groupRows = document.querySelectorAll('tr.group-row');
@@ -6318,9 +6357,9 @@
                     }
                 }
                 } else {
-                    console.log('🔍 [API] ❌ API call failed or no files data');
-                    console.log('🔍 [API] Success:', data.success);
-                    console.log('🔍 [API] Error:', data.error);
+                    console.log('[DEBUG] [API] ❌ API call failed or no files data');
+                    console.log('[DEBUG] [API] Success:', data.success);
+                    console.log('[DEBUG] [API] Error:', data.error);
                 }
             })
             .catch(error => {
@@ -6521,16 +6560,16 @@
             const filesList = document.getElementById('filesList');
             
             // EXTENSIVE DEBUG LOGGING
-            console.log('🔍 displayFiles called with files:', files);
-            console.log('🔍 DEBUG: files type:', typeof files);
+            console.log('[DEBUG] displayFiles called with files:', files);
+            console.log('[DEBUG] DEBUG: files type:', typeof files);
             console.log('DEBUG: files keys:', Object.keys(files || {}));
             console.log('DEBUG: files values:', Object.values(files || {}));
-            console.log('🔍 DEBUG: message:', message);
-            console.log('🔍 DEBUG: filesList element:', filesList);
+            console.log('[DEBUG] DEBUG: message:', message);
+            console.log('[DEBUG] DEBUG: filesList element:', filesList);
             
             // Detailed analysis of files object
             if (files) {
-                console.log('🔍 DEBUG: Files object analysis:');
+                console.log('[DEBUG] DEBUG: Files object analysis:');
                 console.log('  - Is array:', Array.isArray(files));
                 console.log('  - Is object:', typeof files === 'object');
                 console.log('  - Has length property:', 'length' in files);
@@ -6541,7 +6580,7 @@
                 // Check each category
                 Object.keys(files).forEach(category => {
                     const fileList = files[category];
-                    console.log(`🔍 DEBUG: Category "${category}":`, {
+                    console.log(`[DEBUG] DEBUG: Category "${category}":`, {
                         type: typeof fileList,
                         isArray: Array.isArray(fileList),
                         length: fileList ? fileList.length : 'N/A',
@@ -6549,12 +6588,12 @@
                     });
                 });
             } else {
-                console.log('🔍 DEBUG: Files is null/undefined');
+                console.log('[DEBUG] DEBUG: Files is null/undefined');
             }
             
             // Show success message if provided
             if (message) {
-                console.log('🔍 DEBUG: Adding success message:', message);
+                console.log('[DEBUG] DEBUG: Adding success message:', message);
                 filesList.innerHTML = `<div class="success-message" style="background: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border: 1px solid #c3e6cb;">
                     <i class="fas fa-check-circle"></i> ${message}
                 </div>`;
@@ -6562,14 +6601,14 @@
             
             // Check if there are actually any files (not just empty arrays)
             const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
-            console.log('🔍 DEBUG: hasFiles check result:', hasFiles);
-            console.log('🔍 DEBUG: hasFiles breakdown:');
+            console.log('[DEBUG] DEBUG: hasFiles check result:', hasFiles);
+            console.log('[DEBUG] DEBUG: hasFiles breakdown:');
             console.log('  - files exists:', !!files);
             console.log('  - Object.values(files):', files ? Object.values(files) : 'N/A');
             console.log('  - some() result:', files ? Object.values(files).some(fileList => fileList && fileList.length > 0) : 'N/A');
             
             if (!hasFiles) {
-                console.log('🔍 DEBUG: No files found - showing empty message');
+                console.log('[DEBUG] DEBUG: No files found - showing empty message');
                 filesList.innerHTML += '<div class="empty-category">No files found for this inspection</div>';
                 return;
             }
@@ -6610,7 +6649,7 @@
                 categories.forEach(category => {
                     const categoryFiles = files[category.key] || [];
                     console.log(`📁 Processing category: ${category.key}`, categoryFiles);
-                    console.log(`🔍 Category key: "${category.key}", Is compliance: ${category.key === 'compliance'}`);
+                    console.log(`[DEBUG] Category key: "${category.key}", Is compliance: ${category.key === 'compliance'}`);
                 console.log(`📁 Files object for ${category.key}:`, files[category.key]);
                 
                 html += `
@@ -6898,16 +6937,16 @@
             
             // Get all sent status dropdowns and restore their values from the template data
             const sentDropdowns = document.querySelectorAll('.sent-status-dropdown');
-            console.log('🔍 [SENT STATUS] Found ' + sentDropdowns.length + ' sent status dropdowns');
+            console.log('[DEBUG] [SENT STATUS] Found ' + sentDropdowns.length + ' sent status dropdowns');
             
             // Also check how many rows we have
             const allRows = document.querySelectorAll('tr[data-group-id]');
-            console.log('🔍 [SENT STATUS] Found ' + allRows.length + ' rows with data-group-id');
+            console.log('[DEBUG] [SENT STATUS] Found ' + allRows.length + ' rows with data-group-id');
             
             sentDropdowns.forEach((dropdown, index) => {
                 const groupId = dropdown.getAttribute('data-group-id');
                 const currentValue = dropdown.value;
-                console.log('🔍 [SENT STATUS] Processing dropdown ' + index + 1 + '/' + sentDropdowns.length + ': groupId="' + groupId + '", value="' + currentValue + '"');
+                console.log('[DEBUG] [SENT STATUS] Processing dropdown ' + index + 1 + '/' + sentDropdowns.length + ': groupId="' + groupId + '", value="' + currentValue + '"');
                 
                 // Apply visual styling based on current value
                 if (currentValue === 'YES') {
@@ -6921,11 +6960,11 @@
                     // Also mark the row as complete
                     // Note: groupId from dropdown already has the correct format (with hyphens)
                     const groupRow = document.querySelector('tr[data-group-id="' + groupId + '"]');
-                    console.log('🔍 [SENT STATUS] Looking for row with data-group-id="' + groupId + '":', groupRow ? 'FOUND' : 'NOT FOUND');
+                    console.log('[DEBUG] [SENT STATUS] Looking for row with data-group-id="' + groupId + '":', groupRow ? 'FOUND' : 'NOT FOUND');
                     
                     // Debug: List all available rows with data-group-id
                     const allRows = document.querySelectorAll('tr[data-group-id]');
-                    console.log('🔍 [SENT STATUS] Available rows:', Array.from(allRows).map(row => row.getAttribute('data-group-id')));
+                    console.log('[DEBUG] [SENT STATUS] Available rows:', Array.from(allRows).map(row => row.getAttribute('data-group-id')));
                     
                     if (groupRow) {
                         groupRow.classList.add('inspection-complete');
@@ -6939,7 +6978,7 @@
                         if (typeof lockRow === 'function') {
                             lockRow(groupRow);
                         } else {
-                            console.log('⚠️ [SENT STATUS] lockRow function not available, applying basic styling');
+                            console.log('[WARNING] [SENT STATUS] lockRow function not available, applying basic styling');
                             // Fallback styling if lockRow function is not available
                             groupRow.style.borderLeft = '4px solid #22c55e';
                         }
@@ -6955,7 +6994,7 @@
                         
                         // Let's see what rows we do have
                         const allGroupRows = document.querySelectorAll('tr[data-group-id]');
-                        console.log('🔍 [SENT STATUS] Available rows:', Array.from(allGroupRows).map(row => row.getAttribute('data-group-id')));
+                        console.log('[DEBUG] [SENT STATUS] Available rows:', Array.from(allGroupRows).map(row => row.getAttribute('data-group-id')));
                     }
                 } else if (currentValue === 'NO') {
                     dropdown.style.backgroundColor = '#ef4444';
@@ -7013,7 +7052,7 @@
         
         // Check all uploaded files on page load to ensure buttons are properly colored
         function checkAllUploadedFiles() {
-            console.log('🔍 Checking all uploaded files on page load...');
+            console.log('[DEBUG] Checking all uploaded files on page load...');
             
             // Get all upload buttons on the page
             const uploadButtons = document.querySelectorAll('.btn-upload');
@@ -7124,49 +7163,49 @@
         // Make markAsUploaded globally available
         window.markAsUploaded = function markAsUploaded(buttonId) {
             // Mark button as uploaded and save to localStorage
-            console.log('🔍 [DEBUG] markAsUploaded called for:', buttonId);
-            console.log('🔍 [DEBUG] Button type:', buttonId.startsWith('rfi-') ? 'RFI' : buttonId.startsWith('invoice-') ? 'Invoice' : 'Unknown');
+            console.log('[DEBUG] [DEBUG] markAsUploaded called for:', buttonId);
+            console.log('[DEBUG] [DEBUG] Button type:', buttonId.startsWith('rfi-') ? 'RFI' : buttonId.startsWith('invoice-') ? 'Invoice' : 'Unknown');
             
             const button = document.getElementById(buttonId);
-            console.log('🔍 [DEBUG] Button element found:', button);
-            console.log('🔍 [DEBUG] Button current innerHTML:', button ? button.innerHTML : 'N/A');
-            console.log('🔍 [DEBUG] Button current disabled state:', button ? button.disabled : 'N/A');
+            console.log('[DEBUG] [DEBUG] Button element found:', button);
+            console.log('[DEBUG] [DEBUG] Button current innerHTML:', button ? button.innerHTML : 'N/A');
+            console.log('[DEBUG] [DEBUG] Button current disabled state:', button ? button.disabled : 'N/A');
             
             if (button) {
-                console.log('🔍 [DEBUG] Button found, updating to show uploaded state');
+                console.log('[DEBUG] [DEBUG] Button found, updating to show uploaded state');
                 
                 // Clear the file-deleted flag since a new file has been uploaded
                 button.removeAttribute('data-file-deleted');
-                console.log('🔍 [DEBUG] Removed data-file-deleted attribute');
+                console.log('[DEBUG] [DEBUG] Removed data-file-deleted attribute');
                 
                 // Get current user first name from template context
                 const currentUserName = '{{ request.user.first_name|default:request.user.username|escapejs }}';
-                console.log('🔍 [DEBUG] Current user first name from template:', currentUserName);
-                console.log('🔍 [DEBUG] User name length:', currentUserName.length);
-                console.log('🔍 [DEBUG] User name type:', typeof currentUserName);
+                console.log('[DEBUG] [DEBUG] Current user first name from template:', currentUserName);
+                console.log('[DEBUG] [DEBUG] User name length:', currentUserName.length);
+                console.log('[DEBUG] [DEBUG] User name type:', typeof currentUserName);
                 
                 const currentDate = new Date().toLocaleDateString('en-US', { 
                     month: 'numeric', 
                     day: 'numeric', 
                     year: '2-digit' 
                 });
-                console.log('🔍 [DEBUG] Current date:', currentDate);
+                console.log('[DEBUG] [DEBUG] Current date:', currentDate);
                 
                 // Store original button state for debugging
                 const originalInnerHTML = button.innerHTML;
                 const originalDisabled = button.disabled;
                 const originalStyle = button.style.cssText;
                 
-                console.log('🔍 [DEBUG] Original button state:');
+                console.log('[DEBUG] [DEBUG] Original button state:');
                 console.log('  - innerHTML:', originalInnerHTML);
                 console.log('  - disabled:', originalDisabled);
                 console.log('  - style:', originalStyle);
                 
                 // Update button to show uploaded state with user's name
-                console.log('🔍 [DEBUG] Setting button.disabled = true');
+                console.log('[DEBUG] [DEBUG] Setting button.disabled = true');
                 button.disabled = true;
                 
-                console.log('🔍 [DEBUG] Setting button styles...');
+                console.log('[DEBUG] [DEBUG] Setting button styles...');
                 // Force override any existing styles with !important
                 button.style.setProperty('background-color', '#d4edda', 'important');
                 button.style.setProperty('color', '#155724', 'important');
@@ -7177,13 +7216,13 @@
                 button.classList.remove('btn-success', 'btn-secondary', 'btn-sm');
                 button.classList.add('btn-rfi', 'uploaded');
                 
-                console.log('🔍 [DEBUG] Setting button.innerHTML to user first name:', currentUserName);
+                console.log('[DEBUG] [DEBUG] Setting button.innerHTML to user first name:', currentUserName);
                 button.innerHTML = currentUserName;
                 
                 // Verify the change was applied
-                console.log('🔍 [DEBUG] After update - button.innerHTML:', button.innerHTML);
-                console.log('🔍 [DEBUG] After update - button.disabled:', button.disabled);
-                console.log('🔍 [DEBUG] After update - button.style.background:', button.style.background);
+                console.log('[DEBUG] [DEBUG] After update - button.innerHTML:', button.innerHTML);
+                console.log('[DEBUG] [DEBUG] After update - button.disabled:', button.disabled);
+                console.log('[DEBUG] [DEBUG] After update - button.style.background:', button.style.background);
                 
                 // Determine document type from button ID
                 let docType = 'document';
@@ -7192,18 +7231,18 @@
                 } else if (buttonId.startsWith('invoice-')) {
                     docType = 'Invoice';
                 }
-                console.log('🔍 [DEBUG] Document type:', docType);
+                console.log('[DEBUG] [DEBUG] Document type:', docType);
                 
                 const titleText = `${docType} uploaded by ${currentUserName} on ${currentDate}`;
-                console.log('🔍 [DEBUG] Setting button.title to:', titleText);
+                console.log('[DEBUG] [DEBUG] Setting button.title to:', titleText);
                 button.title = titleText;
                 
                 // Remove the onclick handler since button is now disabled
-                console.log('🔍 [DEBUG] Removing onclick handler');
+                console.log('[DEBUG] [DEBUG] Removing onclick handler');
                 button.onclick = null;
                 
                 // Add uploaded class for any CSS styling
-                console.log('🔍 [DEBUG] Adding uploaded class');
+                console.log('[DEBUG] [DEBUG] Adding uploaded class');
                 button.classList.add('uploaded');
                 
                 // Save to localStorage
@@ -7219,7 +7258,7 @@
                 
             } else {
                 console.error('❌ [DEBUG] Button not found for ID:', buttonId);
-                console.log('🔍 [DEBUG] Available buttons on page:');
+                console.log('[DEBUG] [DEBUG] Available buttons on page:');
                 const allButtons = document.querySelectorAll('button[id]');
                 allButtons.forEach(btn => {
                     console.log('  - Button ID:', btn.id);
@@ -7237,12 +7276,12 @@
             
             // Method 1: By class
             allViewFilesButtons = document.querySelectorAll('button.btn-view-files, button[class*="btn-view-files"]');
-            console.log('🔍 [FRONTEND] Method 1 - Found ' + allViewFilesButtons.length + ' buttons by class');
+            console.log('[DEBUG] [FRONTEND] Method 1 - Found ' + allViewFilesButtons.length + ' buttons by class');
             
             // Method 2: By onclick attribute (more reliable)
             if (allViewFilesButtons.length === 0) {
                 allViewFilesButtons = document.querySelectorAll('button[onclick*="openFilesPopup"]');
-                console.log('🔍 [FRONTEND] Method 2 - Found ' + allViewFilesButtons.length + ' buttons by onclick');
+                console.log('[DEBUG] [FRONTEND] Method 2 - Found ' + allViewFilesButtons.length + ' buttons by onclick');
             }
             
             // Method 3: By text content as fallback
@@ -7253,7 +7292,7 @@
                     btn.textContent.includes('Files') ||
                     btn.onclick && btn.onclick.toString().includes('openFilesPopup')
                 );
-                console.log('🔍 [FRONTEND] Method 3 - Found ' + allViewFilesButtons.length + ' buttons by text/onclick');
+                console.log('[DEBUG] [FRONTEND] Method 3 - Found ' + allViewFilesButtons.length + ' buttons by text/onclick');
             }
             
             allViewFilesButtons.forEach(button => {
@@ -7273,7 +7312,7 @@
             console.log('📅 Inspection dates:', clientData);
             
             if (clientNames.length === 0) {
-                console.log('⚠️ No clients found to check');
+                console.log('[WARNING] No clients found to check');
                 // Reset loading state
                 allViewFilesButtons.forEach(button => {
                     const icon = button.querySelector('i');
@@ -7287,7 +7326,7 @@
             }
             
             if (allViewFilesButtons.length === 0) {
-                console.log('⚠️ No View Files buttons found, skipping automatic color update');
+                console.log('[WARNING] No View Files buttons found, skipping automatic color update');
                 return;
             }
             
@@ -7358,18 +7397,18 @@
         
         // Setup expand buttons function
         function setupExpandButtons() {
-            console.log('🔧 Setting up expand button event listeners');
+            console.log('[DEBUG] Setting up expand button event listeners');
             const expandButtons = document.querySelectorAll('.expand-btn');
-            console.log('🔧 Found expand buttons:', expandButtons.length);
+            console.log('[DEBUG] Found expand buttons:', expandButtons.length);
             
             if (expandButtons.length === 0) {
-                console.warn('⚠️ No expand buttons found!');
+                console.warn('[WARNING] No expand buttons found!');
                 return;
             }
             
             expandButtons.forEach((button, index) => {
-                console.log('🔧 Setting up button ' + index + ':', button);
-                console.log('🔧 Button group ID:', button.getAttribute('data-group-id'));
+                console.log('[DEBUG] Setting up button ' + index + ':', button);
+                console.log('[DEBUG] Button group ID:', button.getAttribute('data-group-id'));
                 // Remove any existing listeners to avoid duplicates
                 button.removeEventListener('click', handleExpandClick);
                 button.addEventListener('click', handleExpandClick);
@@ -7400,7 +7439,7 @@
                 e.stopPropagation();
                 const button = e.target.closest('.expand-btn');
                 const groupId = button.getAttribute('data-group-id');
-                console.log('🔧 Expand button clicked for group:', groupId);
+                console.log('[DEBUG] Expand button clicked for group:', groupId);
                 toggleGroup(e, groupId);
             }
         });
@@ -7426,7 +7465,7 @@
         
         // Function to fix header positions when expanding/collapsing
         function setupHeaderPositionFix() {
-            console.log('🔧 Setting up header position fix...');
+            console.log('[DEBUG] Setting up header position fix...');
             
             // Add event listeners to all expand buttons
             document.addEventListener('click', function(e) {
@@ -7494,8 +7533,8 @@
         }
         // Upload RFI function
         function uploadRFI(groupId) {
-            console.log('🔍 uploadRFI called with groupId:', groupId);
-            console.log('🔍 Function execution starting...');
+            console.log('[DEBUG] uploadRFI called with groupId:', groupId);
+            console.log('[DEBUG] Function execution starting...');
             
             try {
                 // Create a file input element
@@ -7538,9 +7577,9 @@
                                 
                                 // Update View Files button colors after upload with delay to ensure server processing
                                 console.log('🎨 Updating button colors after RFI upload...');
-                                console.log('⏰ Setting 3-second timer for delayed color update...');
+                                console.log('[TIMER] Setting 3-second timer for delayed color update...');
                                 setTimeout(() => {
-                                    console.log('⏰ Timer fired! Starting delayed color update...');
+                                    console.log('[TIMER] Timer fired! Starting delayed color update...');
                                     console.log('🔄 Delayed file status check after RFI upload...');
                                     updateAllViewFilesButtonColors();
                                     
@@ -7630,9 +7669,9 @@
                     .then(data => {
                         if (data.success) {
                             console.log('✅ Invoice uploaded successfully!');
-                            console.log('🔧 About to call markAsUploaded for invoice-' + groupId);
+                            console.log('[DEBUG] About to call markAsUploaded for invoice-' + groupId);
                             markAsUploaded('invoice-' + groupId);
-                            console.log('🔧 markAsUploaded called for invoice-' + groupId);
+                            console.log('[DEBUG] markAsUploaded called for invoice-' + groupId);
                             
                             // Update View Files button colors after upload
                             console.log('🎨 Updating button colors after Invoice upload...');
@@ -8089,8 +8128,8 @@
         
         // KM and Hours functions are now defined earlier in the file (lines 4456-4534)
         console.log('✅ KM and Hours update functions ready');
-        console.log('🔍 updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
-        console.log('🔍 updateGroupHours:', typeof window.updateGroupHours);
+        console.log('[DEBUG] updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
+        console.log('[DEBUG] updateGroupHours:', typeof window.updateGroupHours);
         
         
         
@@ -8156,159 +8195,117 @@
             }).catch(err => alert('Error updating product class: ' + (err?.message || err)));
         }
 
-            const rawAllowed = new Set([
-                'extra lean mince',
-                'lean mince',
-                'regular mince',
-                'raw flavoured ground meat',
-                'raw flavoured ground meat & offal',
-                'raw flavoured mixed species ground meat',
-                'raw flavoured mixed species ground meat & offal',
-                'raw boerewors',
-                'raw species sausage / wors',
-                'raw mixed species sausage / wors',
-                'ground burger / ground patty = extra lean',
-                'ground burger / ground patty = lean',
-                'ground burger / ground patty = regular',
-                'burger / patty / hamburger patty / meatball / frikkadel = extra lean',
-                'burger / patty / hamburger patty / meatball / frikkadel = lean',
-                'burger / patty / hamburger patty / meatball / frikkadel = regular',
-                'value burger / value patty / value hamburger / value meatball / value frikkadel',
-                'economy burger / econo burger / economy patty / econo patty / budget burger',
-                'raw banger / griller',
-                'raw boerewors / sizzle'
-            ].map(normalizeLabel);
-
-            const pmpAllowed = new Set([
-                'whole muscle, cured, heat treated products',
-                'whole muscle, dry cured, heat treated products',
-                'whole muscle, uncured and heat / partial treated products',
-                'whole muscle, uncured, no or partial heat treated and air dried products',
-                'whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
-                'whole muscle, dry cured, no or partial heat treated products',
-                'whole muscle, cured and no or partial heat treated products',
-                'whole muscle, cured, no or partial heat treated and air dried products',
-                'whole muscle, dry cured, no or partial heat treated and dried products',
-                'comminuted, cured and heat treated products',
-                'liver spreads, pates and terrines',
-                'products in aspic: brawn',
-                'product in aspic: suelze',
-                'other products containing cured meat pieces in aspic',
-                'products made from blood',
-                'comminuted, uncured, no or partial heat treated and dried products',
-                'comminuted, cured, no or partial heat treated, dried and fermented products',
-                'comminuted, uncured and heat treated products',
-                'reformed, uncured and no or partial heat treated products',
-                'reformed, cured, heat treated products from single species',
-                'reformed, cured, heat treated products from mixed species',
-                'reformed, cured and no or partial heat treated products',
-                'coated processed meat products',
-                'unspecified processed meat products'
-            ].map(normalizeLabel);
-
-            // Rebuild the options list with only allowed options
-            const currentValue = dropdown.value;
-            const allOptions = Array.from(dropdown.options).map(opt => ({
-                text: opt.text,
-                value: opt.value,
-                norm: normalizeLabel(opt.text || ''),
-            });
-            const placeholder = allOptions[0];
-            const allowedSet = isRaw ? rawAllowed : pmpAllowe;d;
-            const filtered = allOptions.slice(1).filter(opt => allowedSet.has(opt.norm));
-            // Clear and repopulate
-            dropdown.innerHTML = '';
-            const ph = document.createElement('option');
-            ph.value = placeholder.value || '';
-            ph.textContent = placeholder.text || 'Select Class...';
-            dropdown.appendChild(ph);
-            filtered.forEach(opt => {
-                const o = document.createElement('option');
-                o.value = opt.value || opt.text;
-                o.textContent = opt.text;
-                dropdown.appendChild(o);
-            });
-            // Restore selection if still present
-            if (filtered.some(opt => opt.value === currentValue || opt.text === currentValue)) {
-                dropdown.value = currentValue;
-            } else {
-                dropdown.value = '';
-            }
-            
-            const inspectionId = dropdown.getAttribute('data-inspection-id');
-            const value = dropdown.value;
-            const formData = new FormData();
-            formData.append('inspection_id', inspectionId);
-            formData.append('product_class', value);
-            fetch('/update-product-class/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': getCookie('csrftoken') || '',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            }).then(r => r.json()).then(data => {
-                if (!data.success) alert('Error updating product class: ' + (data.error || 'Unknown error'));
-            }).catch(err => alert('Error updating product class: ' + (err?.message || err)));
-        }
-
         // Filter helper that does NOT submit updates; used on page load to ensure all dropdowns are filtered
         function filterClassOptions(dropdown) {
-            const commodity = (dropdown.getAttribute('data-commodity') || '').toLowerCase();
-            const isRaw = commodity === 'raw';
-            const normalizeLabel = (s) => (s || '')
-                .toLowerCase()
-                .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            const rawAllowed = new Set([
-                'extra lean mince','lean mince','regular mince','raw flavoured ground meat','raw flavoured ground meat & offal','raw flavoured mixed species ground meat','raw flavoured mixed species ground meat & offal','raw boerewors','raw species sausage / wors','raw mixed species sausage / wors','ground burger / ground patty = extra lean','ground burger / ground patty = lean','ground burger / ground patty = regular','burger / patty / hamburger patty / meatball / frikkadel = extra lean','burger / patty / hamburger patty / meatball / frikkadel = lean','burger / patty / hamburger patty / meatball / frikkadel = regular','value burger / value patty / value hamburger / value meatball / value frikkadel','economy burger / econo burger / economy patty / econo patty / budget burger','raw banger / griller','raw boerewors / sizzle'
-            ].map(normalizeLabel);
-            const pmpAllowed = new Set([
-                'whole muscle, cured, heat treated products','whole muscle, dry cured, heat treated products','whole muscle, uncured and heat / partial treated products','whole muscle, uncured, no or partial heat treated and air dried products','whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)','whole muscle, dry cured, no or partial heat treated products','whole muscle, cured and no or partial heat treated products','whole muscle, cured, no or partial heat treated and air dried products','whole muscle, dry cured, no or partial heat treated and dried products','comminuted, cured and heat treated products','liver spreads, pates and terrines','products in aspic: brawn','product in aspic: suelze','other products containing cured meat pieces in aspic','products made from blood','comminuted, uncured, no or partial heat treated and dried products','comminuted, cured, no or partial heat treated, dried and fermented products','comminuted, uncured and heat treated products','reformed, uncured and no or partial heat treated products','reformed, cured, heat treated products from single species','reformed, cured, heat treated products from mixed species','reformed, cured and no or partial heat treated products','coated processed meat products','unspecified processed meat products'
-            ].map(normalizeLabel);
-            // Rebuild options strictly with allowed list
-            const currentValue = dropdown.value;
-            const allOptions = Array.from(dropdown.options).map(opt => ({
-                text: opt.text,
-                value: opt.value,
-                norm: normalizeLabel(opt.text || ''),
-            });
-            const placeholder = allOptions[0];
-            const allowedSet = isRaw ? rawAllowed : pmpAllowe;d;
-            const filtered = allOptions.slice(1).filter(opt => allowedSet.has(opt.norm));
+            console.log('[DEBUG] [CLASS DROPDOWN] filterClassOptions called for dropdown:', dropdown);
+            
+            // Get the current value from the data attribute or the dropdown value
+            const currentValue = dropdown.getAttribute('data-current-class') || dropdown.value;
+            console.log('[DEBUG] [CLASS DROPDOWN] Current value:', currentValue);
+            
+            // Complete list of all class options
+            const allClassOptions = [
+                'Raw species sausage / wors',
+                'Extra Lean Mince',
+                'Lean Mince',
+                'Regular Mince',
+                'Raw Flavoured Ground Meat',
+                'Raw Flavoured Ground Meat & Offal',
+                'Raw Flavoured mixed species Ground Meat',
+                'Raw Flavoured mixed species Ground Meat & Offal',
+                'Raw Boerewors',
+                'Raw mixed species sausage / wors',
+                'Ground Burger / Ground patty = Extra Lean',
+                'Ground Burger / Ground patty = Lean',
+                'Ground Burger / Ground patty = Regular',
+                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean',
+                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean',
+                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular',
+                'Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel',
+                'Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger',
+                'Raw Banger / Griller',
+                'Raw Bratwurst / Sizzler',
+                'Whole Muscle, uncured and heat / partial heat treated products',
+                'Whole muscle, uncured, no or partial heat treated and air dried products',
+                'Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
+                'Whole muscle, dry cured, no or partial heat treated products',
+                'Whole muscle, cured and no or partial heat treated products',
+                'Whole muscle, cured, no or partial heat treated and air dried products',
+                'Whole muscle, dry cured, no or partial heat treated and dried products',
+                'Comminuted, cured and heat treated products',
+                'Comminuted, uncured, no or partial heat treated and dried products',
+                'Comminuted, cured, no or partial heat treated, dried and fermented products',
+                'Comminuted, uncured and heat treated products',
+                'Reformed, uncured and no or partial heat treated products',
+                'Reformed, cured, heat treated products from single species',
+                'Reformed, cured, heat treated products from mixed species',
+                'Reformed, cured and no or partial heat treated products',
+                'Liver spreads, pâté and terrines',
+                'Products in aspic: Brawn',
+                'Product in aspic: Souse, Other products containing cured meat pieces in aspic',
+                'Products made from blood',
+                'Coated Processed Meat Products',
+                'Unspecified processed meat products'
+            ];
+            
+            console.log('[DEBUG] [CLASS DROPDOWN] Total options to add:', allClassOptions.length);
+            
+            // Rebuild dropdown with all options
             dropdown.innerHTML = '';
-            const ph = document.createElement('option');
-            ph.value = placeholder.value || '';
-            ph.textContent = placeholder.text || 'Select Class...';
-            dropdown.appendChild(ph);
-            filtered.forEach(opt => {
-                const o = document.createElement('option');
-                o.value = opt.value || opt.text;
-                o.textContent = opt.text;
-                dropdown.appendChild(o);
+            
+            // Add placeholder option
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select Class...';
+            dropdown.appendChild(placeholder);
+            
+            // Add all class options
+            allClassOptions.forEach(optionText => {
+                const option = document.createElement('option');
+                option.value = optionText;
+                option.textContent = optionText;
+                if (optionText === currentValue) {
+                    option.selected = true;
+                }
+                dropdown.appendChild(option);
             });
-            if (filtered.some(opt => opt.value === currentValue || opt.text === currentValue)) {
+            
+            console.log('[DEBUG] [CLASS DROPDOWN] Dropdown now has', dropdown.options.length, 'options');
+            
+            // Restore current value if it matches one of the options
+            if (currentValue && allClassOptions.includes(currentValue)) {
                 dropdown.value = currentValue;
+                console.log('[DEBUG] [CLASS DROPDOWN] Restored value:', currentValue);
             } else {
                 dropdown.value = '';
+                console.log('[DEBUG] [CLASS DROPDOWN] No value to restore, set to empty');
             }
         }
 
         // Ensure all visible dropdowns are filtered at page load
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+            console.log('[DEBUG] [CLASS DROPDOWN] DOMContentLoaded - Initializing class dropdowns...');
+            const dropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[DEBUG] [CLASS DROPDOWN] Found', dropdowns.length, 'class dropdowns');
+            dropdowns.forEach(filterClassOptions);
+            
             // Observe the table for dynamic changes and re-apply filters
             const table = document.getElementById('shipmentsTable');
             if (table && 'MutationObserver' in window) {
+                console.log('[DEBUG] [CLASS DROPDOWN] Setting up MutationObserver...');
                 const observer = new MutationObserver(() => {
+                    console.log('[DEBUG] [CLASS DROPDOWN] Table changed, re-filtering dropdowns...');
                     document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
                 });
                 observer.observe(table, { childList: true, subtree: true });
             }
+            
             // Fallback: periodic re-filter shortly after load in case of late rendering
             setTimeout(() => {
-                document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+                console.log('[DEBUG] [CLASS DROPDOWN] Fallback timeout - re-filtering dropdowns...');
+                const fallbackDropdowns = document.querySelectorAll('select.product-class-select');
+                console.log('[DEBUG] [CLASS DROPDOWN] Fallback found', fallbackDropdowns.length, 'dropdowns');
+                fallbackDropdowns.forEach(filterClassOptions);
             }, 500);
         });
 
@@ -8712,7 +8709,7 @@
                 const hasSamples = row.getAttribute('data-has-samples');
                 const isVisible = row.style.display !== 'none;';
                 
-                console.log(`🔍 Row ${index + 1}: ${clientName}`);
+                console.log(`[DEBUG] Row ${index + 1}: ${clientName}`);
                 console.log(`   group-id: ${groupId}`);
                 console.log(`   data-has-samples: ${hasSamples}`);
                 console.log(`   visible: ${isVisible}`);
@@ -8732,7 +8729,7 @@
                         unknownCount++;
                     }
                 } else {
-                    console.log(`   ⚠️ No detail row found for group-id: ${groupId}`);
+                    console.log(`   [WARNING] No detail row found for group-id: ${groupId}`);
                     unknownCount++;
                 }
                 console.log('');
@@ -8763,7 +8760,7 @@
         
         // Function to force apply filter manually
         function forceApplyFilter(filterType) {
-            console.log(`🔧 FORCING filter application: ${filterType}`);
+            console.log(`[DEBUG] FORCING filter application: ${filterType}`);
             
             // Update dropdown
             const dropdown = document.querySelector('select[name="sample_status"]');
@@ -8820,7 +8817,7 @@
         // Function to handle Send button clicks with validation
         function handleSendButtonClick(groupId, clientName, inspectionDate, hasAllDocuments) {
             if (!hasAllDocuments) {
-                console.warn('⚠️ Cannot send: Missing required documents. Ensure all compliance documents are downloaded and RFI/Invoice are uploaded.');
+                console.warn('[WARNING] Cannot send: Missing required documents. Ensure all compliance documents are downloaded and RFI/Invoice are uploaded.');
                 return false;
             }
             
@@ -8849,32 +8846,32 @@
         }
         
         function initializeRFIAndInvoiceButtonColors() {
-            console.log('🔍 [INIT] ===== STARTING RFI/INVOICE BUTTON INITIALIZATION =====');
+            console.log('[DEBUG] [INIT] ===== STARTING RFI/INVOICE BUTTON INITIALIZATION =====');
             
             // Get all unique client names from the page
             const groupRows = document.querySelectorAll('tr.group-row[data-client-name]');
-            console.log('🔍 [INIT] Found', groupRows.length, 'group rows with data-client-name');
+            console.log('[DEBUG] [INIT] Found', groupRows.length, 'group rows with data-client-name');
             
             const processedClients = new Set();
             
             groupRows.forEach((row, index) => {
                 const clientName = row.getAttribute('data-client-name');
                 const inspectionDate = row.getAttribute('data-inspection-date');
-                console.log(`🔍 [INIT] Row ${index + 1}: client="${clientName}", date="${inspectionDate}"`);
+                console.log(`[DEBUG] [INIT] Row ${index + 1}: client="${clientName}", date="${inspectionDate}"`);
                 
                 if (clientName && !processedClients.has(clientName)) {
                     processedClients.add(clientName);
-                    console.log('🔍 [INIT] ✅ Processing NEW client:', clientName);
+                    console.log('[DEBUG] [INIT] ✅ Processing NEW client:', clientName);
                     updateRFIAndInvoiceButtonColorsForClient(clientName);
                 } else if (clientName) {
-                    console.log('🔍 [INIT] ⏭️ SKIPPING already processed client:', clientName);
+                    console.log('[DEBUG] [INIT] ⏭️ SKIPPING already processed client:', clientName);
                 } else {
-                    console.log('🔍 [INIT] ❌ Row has no client name');
+                    console.log('[DEBUG] [INIT] ❌ Row has no client name');
                 }
             });
             
-            console.log('🔍 [INIT] ===== FINISHED PROCESSING', processedClients.size, 'UNIQUE CLIENTS =====');
-            console.log('🔍 [INIT] Processed clients:', Array.from(processedClients));
+            console.log('[DEBUG] [INIT] ===== FINISHED PROCESSING', processedClients.size, 'UNIQUE CLIENTS =====');
+            console.log('[DEBUG] [INIT] Processed clients:', Array.from(processedClients));
         }
     </script>
     <script>
@@ -9080,24 +9077,24 @@
             console.log('JavaScript finished loading successfully!');
             
             // Test if timer functions are available
-            console.log('🔍 Testing timer function availability...');
-            console.log('🔍 initializeFifteenMinuteTimers available:', typeof initializeFifteenMinuteTimers);
-            console.log('🔍 initializeDisabledRows available:', typeof initializeDisabledRows);
+            console.log('[DEBUG] Testing timer function availability...');
+            console.log('[DEBUG] initializeFifteenMinuteTimers available:', typeof initializeFifteenMinuteTimers);
+            console.log('[DEBUG] initializeDisabledRows available:', typeof initializeDisabledRows);
             
             // Test if KM and Hours functions are available
-            console.log('🔍 Testing KM and Hours function availability...');
-            console.log('🔍 updateGroupKmTraveled available:', typeof updateGroupKmTraveled);
-            console.log('🔍 updateGroupHours available:', typeof updateGroupHours);
-            console.log('🔍 getCSRFToken available:', typeof getCSRFToken);
+            console.log('[DEBUG] Testing KM and Hours function availability...');
+            console.log('[DEBUG] updateGroupKmTraveled available:', typeof updateGroupKmTraveled);
+            console.log('[DEBUG] updateGroupHours available:', typeof updateGroupHours);
+            console.log('[DEBUG] getCSRFToken available:', typeof getCSRFToken);
             
             // Test window object functions
-            console.log('🔍 Window functions - updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
-            console.log('🔍 Window functions - updateGroupHours:', typeof window.updateGroupHours);
-            console.log('🔍 Window functions - getCSRFToken:', typeof window.getCSRFToken);
+            console.log('[DEBUG] Window functions - updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
+            console.log('[DEBUG] Window functions - updateGroupHours:', typeof window.updateGroupHours);
+            console.log('[DEBUG] Window functions - getCSRFToken:', typeof window.getCSRFToken);
             
             // Try to call timer functions directly
             if (typeof initializeFifteenMinuteTimers === 'function') {
-                console.log('🔍 Calling initializeFifteenMinuteTimers directly...');
+                console.log('[DEBUG] Calling initializeFifteenMinuteTimers directly...');
                 try {
                     initializeFifteenMinuteTimers();
                 } catch (error) {
@@ -9109,7 +9106,7 @@
             
             // Also try to call initializeDisabledRows
             if (typeof initializeDisabledRows === 'function') {
-                console.log('🔍 Calling initializeDisabledRows directly...');
+                console.log('[DEBUG] Calling initializeDisabledRows directly...');
                 try {
                     initializeDisabledRows();
                 } catch (error) {
