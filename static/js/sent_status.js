@@ -3,7 +3,7 @@ console.log('Sent status JavaScript loaded');
 
 // Function to validate that all required uploads are complete
 function validateUploadsComplete(row, groupId) {
-    console.log('🔍 Validating uploads for group:', groupId);
+    console.log('DEBUG Validating uploads for group:', groupId);
     
     const missing = [];
     
@@ -44,9 +44,9 @@ function checkButtonUploadStatus(button, uploadType) {
         };
     }
     
-    console.log(`🔍 Checking ${uploadType} button:`, button);
-    console.log(`🔍 Button classes:`, button.className);
-    console.log(`🔍 Button text:`, button.textContent);
+    console.log(`DEBUG Checking ${uploadType} button:`, button);
+    console.log(`DEBUG Button classes:`, button.className);
+    console.log(`DEBUG Button text:`, button.textContent);
     
     // Check button classes for upload status
     const hasUploadedClass = button.classList.contains('btn-success') || 
@@ -79,7 +79,7 @@ function checkButtonUploadStatus(button, uploadType) {
     // Disabled state alone doesn't mean "not uploaded" - it could be disabled because files are uploaded
     const isUploaded = hasSuccessIndicators;
     
-    console.log(`🔍 ${uploadType} button status:`, {
+    console.log(`DEBUG ${uploadType} button status:`, {
         hasUploadedClass,
         hasUploadedColor,
         hasUploadedText,
@@ -145,12 +145,12 @@ function showResetNotification(resetCount) {
 
 
 function updateSentStatus(dropdown) {
-    console.log('🔄 updateSentStatus called');
-    console.log('🔍 Dropdown element:', dropdown);
+    console.log('INFO updateSentStatus called');
+    console.log('DEBUG Dropdown element:', dropdown);
     
     // Check if dropdown is disabled
     if (dropdown.disabled) {
-        console.log('🚫 Dropdown is disabled - ignoring change');
+        console.log('DISABLED Dropdown is disabled - ignoring change');
         return;
     }
     
@@ -164,7 +164,7 @@ function updateSentStatus(dropdown) {
     
     // If trying to mark as "Sent", validate that all uploads are complete first
     if (sentStatus === 'YES') {
-        console.log('🔍 Validating uploads before allowing "Sent" status...');
+        console.log('DEBUG Validating uploads before allowing "Sent" status...');
         
         // Check compliance status first (this is the most reliable indicator)
         if (complianceStatus !== 'complete') {
@@ -311,7 +311,7 @@ function updateSentStatus(dropdown) {
                     // DON'T lock the row immediately - let the timer handle it
                         } else {
                             // Status changed to "NO" - completely reset everything
-                            console.log('🔄 Status changed to "NO" - completely resetting row state');
+                            console.log('INFO Status changed to "NO" - completely resetting row state');
                             
                             // Clear any existing timers
                             const timerId = groupRow.getAttribute('data-timer-id');
@@ -628,12 +628,12 @@ function disableRowAfterTimer(row, groupId) {
 
 // Function to initialize disabled rows for already sent items
 function initializeDisabledRows() {
-    console.log('🔍 Initializing sent rows...');
+    console.log('DEBUG Initializing sent rows...');
     const sentRows = document.querySelectorAll('.shipment-row[data-sent-timestamp]');
-    console.log('🔍 Found', sentRows.length, 'rows with sent timestamps');
+    console.log('DEBUG Found', sentRows.length, 'rows with sent timestamps');
     
     sentRows.forEach((row, index) => {
-        console.log(`🔍 Processing sent row ${index + 1}:`, row);
+        console.log(`DEBUG Processing sent row ${index + 1}:`, row);
         const groupId = row.getAttribute('data-group-id');
         const sentTimestamp = row.getAttribute('data-sent-timestamp');
         
@@ -668,15 +668,15 @@ function initializeFifteenMinuteTimers() {
     
     // Find all rows with sent status (those with sent-yes class or data-sent-timestamp)
     const sentRows = document.querySelectorAll('.shipment-row[data-group-id]');
-    console.log('🔍 Found', sentRows.length, 'total shipment rows');
+    console.log('DEBUG Found', sentRows.length, 'total shipment rows');
     
     // Check for rows with data-sent-timestamp attribute
     const rowsWithTimestamp = document.querySelectorAll('.shipment-row[data-sent-timestamp]');
-    console.log('🔍 Found', rowsWithTimestamp.length, 'rows with data-sent-timestamp');
+    console.log('DEBUG Found', rowsWithTimestamp.length, 'rows with data-sent-timestamp');
     
     // Check for rows with sent-yes class
     const rowsWithSentYes = document.querySelectorAll('.sent-status-dropdown.sent-yes');
-    console.log('🔍 Found', rowsWithSentYes.length, 'dropdowns with sent-yes class');
+    console.log('DEBUG Found', rowsWithSentYes.length, 'dropdowns with sent-yes class');
     
     // Check for rows with "Sent" text in the sent status column
     const rowsWithSentText = document.querySelectorAll('.shipment-row');
@@ -687,7 +687,7 @@ function initializeFifteenMinuteTimers() {
             sentTextCount++;
         }
     });
-    console.log('🔍 Found', sentTextCount, 'rows with "Sent" text in status column');
+    console.log('DEBUG Found', sentTextCount, 'rows with "Sent" text in status column');
     
     sentRows.forEach((row, index) => {
         const groupId = row.getAttribute('data-group-id');
@@ -695,7 +695,7 @@ function initializeFifteenMinuteTimers() {
         const sentTimestamp = row.getAttribute('data-sent-timestamp');
         const isSent = sentDropdown || sentTimestamp;
         
-        console.log(`🔍 Row ${index + 1}: groupId=${groupId}, sentDropdown=${!!sentDropdown}, sentTimestamp=${sentTimestamp}, isSent=${!!isSent}`);
+        console.log(`DEBUG Row ${index + 1}: groupId=${groupId}, sentDropdown=${!!sentDropdown}, sentTimestamp=${sentTimestamp}, isSent=${!!isSent}`);
         
         if (isSent && groupId) {
             // Check if we have a stored timestamp
@@ -734,7 +734,7 @@ function initializeFifteenMinuteTimers() {
 
 // Function to refresh dropdown state when files are uploaded
 function refreshDropdownState(groupId, newComplianceStatus) {
-    console.log('🔄 Refreshing dropdown state for group:', groupId, 'New status:', newComplianceStatus);
+    console.log('INFO Refreshing dropdown state for group:', groupId, 'New status:', newComplianceStatus);
     
     const dropdown = document.querySelector(`.sent-status-dropdown[data-group-id="${groupId}"]`);
     if (!dropdown) {
@@ -758,14 +758,14 @@ function refreshDropdownState(groupId, newComplianceStatus) {
             dropdown.disabled = true;
             dropdown.classList.add('disabled-dropdown');
             dropdown.title = `Cannot change status - All required files must be uploaded first (Status: ${newComplianceStatus})`;
-            console.log('🚫 Kept dropdown disabled for group:', groupId);
+            console.log('DISABLED Kept dropdown disabled for group:', groupId);
         }
     }
 }
 
 // Function to validate actual files on disk for a group (NOT button states)
 function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
-    console.log('🔍 [REAL FILES] Validating actual files for group:', groupId);
+    console.log('DEBUG [REAL FILES] Validating actual files for group:', groupId);
     
     // Extract client name and date from groupId
     const parts = groupId.split('_');
@@ -778,7 +778,7 @@ function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
     const day = datePart.substring(6, 8);
     const inspectionDate = `${year}-${month}-${day}`;
     
-    console.log('🔍 [REAL FILES] Client:', clientPart, 'Date:', inspectionDate);
+    console.log('DEBUG [REAL FILES] Client:', clientPart, 'Date:', inspectionDate);
     
     // Call the server to get actual file status
     fetch('/list-client-folder-files/', {
@@ -794,14 +794,14 @@ function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log('🔍 [REAL FILES] Server response:', data);
+        console.log('DEBUG [REAL FILES] Server response:', data);
         
         const files = data.files || {};
         const hasRFI = files.rfi && files.rfi.length > 0;
         const hasInvoice = files.invoice && files.invoice.length > 0;
         const hasCompliance = files.compliance && files.compliance.length > 0;
         
-        console.log('🔍 [REAL FILES] Actual file status:', {
+        console.log('DEBUG [REAL FILES] Actual file status:', {
             hasRFI,
             hasInvoice, 
             hasCompliance,
@@ -823,7 +823,7 @@ function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
             dropdown.style.opacity = '0.6';
             dropdown.style.cursor = 'not-allowed';
             
-            console.log('🚫 [REAL FILES] Disabled dropdown - Missing:', missing);
+            console.log('DISABLED [REAL FILES] Disabled dropdown - Missing:', missing);
         } else {
             dropdown.disabled = false;
             dropdown.classList.remove('disabled-dropdown');
@@ -902,7 +902,7 @@ function cleanupDuplicateCountdowns() {
 
 // Function to reset existing "Sent" rows that don't have complete uploads
 function resetIncompleteSentRows() {
-    console.log('🔄 Checking and resetting incomplete "Sent" rows...');
+    console.log('INFO Checking and resetting incomplete "Sent" rows...');
     
     const sentDropdowns = document.querySelectorAll('.sent-status-dropdown');
     let resetCount = 0;
@@ -934,7 +934,7 @@ function resetIncompleteSentRows() {
                 }
                 
                 if (shouldReset) {
-                    console.log('🔄 Resetting incomplete "Sent" row:', groupId, 'Reason:', resetReason);
+                    console.log('INFO Resetting incomplete "Sent" row:', groupId, 'Reason:', resetReason);
                     
                     // Reset dropdown to "Not Sent"
                     dropdown.value = 'NO';
@@ -1001,7 +1001,7 @@ function resetIncompleteSentRows() {
         }
     });
     
-    console.log(`🔄 Reset ${resetCount} incomplete "Sent" rows back to "Not Sent"`);
+    console.log(`INFO Reset ${resetCount} incomplete "Sent" rows back to "Not Sent"`);
     
     // Show notification if any rows were reset
     if (resetCount > 0) {
@@ -1013,7 +1013,7 @@ function resetIncompleteSentRows() {
 
 // Function to validate and update Sent Status dropdowns on page load
 function validateAllSentStatusDropdowns() {
-    console.log('🔍 Validating all Sent Status dropdowns...');
+    console.log('DEBUG Validating all Sent Status dropdowns...');
     
     const sentDropdowns = document.querySelectorAll('.sent-status-dropdown');
     
@@ -1031,7 +1031,7 @@ function validateAllSentStatusDropdowns() {
                 dropdown.classList.add('disabled-dropdown');
                 dropdown.title = `Cannot change status - All required files must be uploaded first (Status: ${complianceStatus})`;
                 
-                console.log('🚫 Disabled entire dropdown for group:', groupId, 'Compliance status:', complianceStatus);
+                console.log('DISABLED Disabled entire dropdown for group:', groupId, 'Compliance status:', complianceStatus);
             } else {
                 // Enable the dropdown
                 dropdown.disabled = false;
@@ -1056,11 +1056,11 @@ function validateAllSentStatusDropdowns() {
 
 // Auto-initialize timers when the DOM is ready - robust version
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Auto-initializing timers from sent_status.js...');
+    console.log('DEBUG Auto-initializing timers from sent_status.js...');
 
     // Wait a bit for other scripts to load
     setTimeout(() => {
-        console.log('🔍 Starting timer initialization after delay...');
+        console.log('DEBUG Starting timer initialization after delay...');
 
         // Clean up any duplicate countdowns first
         cleanupDuplicateCountdowns();
@@ -1068,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset incomplete "Sent" rows back to "Not Sent"
         const resetCount = resetIncompleteSentRows();
         if (resetCount > 0) {
-            console.log(`🔄 Reset ${resetCount} incomplete "Sent" rows back to "Not Sent"`);
+            console.log(`INFO Reset ${resetCount} incomplete "Sent" rows back to "Not Sent"`);
         }
 
         // Validate all Sent Status dropdowns
@@ -1076,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize disabled rows
         if (typeof initializeDisabledRows === 'function') {
-            console.log('🔍 Calling initializeDisabledRows from sent_status.js...');
+            console.log('DEBUG Calling initializeDisabledRows from sent_status.js...');
             try {
                 initializeDisabledRows();
             } catch (error) {
@@ -1088,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Initialize 15-minute timers
         if (typeof initializeFifteenMinuteTimers === 'function') {
-            console.log('🔍 Calling initializeFifteenMinuteTimers from sent_status.js...');
+            console.log('DEBUG Calling initializeFifteenMinuteTimers from sent_status.js...');
             try {
                 initializeFifteenMinuteTimers();
             } catch (error) {

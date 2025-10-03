@@ -2203,18 +2203,19 @@ def upload_document(request):
             # - Individual (matched): inspection-<id>/{rfi,invoice,compliance,lab,retest,form}
             if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form']:
                 if upload_type == 'individual' and inspection_id:
-                    # Map lab_form to lab folder for individual inspections
-                    # Use proper folder names to match scan function expectations
+                    # Map document types to folder names that match scan_inspection_folders expectations
+                    # scan_inspection_folders looks for: 'Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance'
                     folder_map = {
-                        'lab': 'lab results',
-                        'lab_form': 'lab results',
-                        'rfi': 'Request For Invoice',
-                        'invoice': 'invoice',
-                        'retest': 'retest',
-                        'compliance': 'Compliance'
+                        'lab': 'lab results',          # Lab results go to 'lab results' folder
+                        'lab_form': 'lab results',     # Lab forms also go to 'lab results' folder
+                        'rfi': 'Request For Invoice',  # RFI documents go to 'Request For Invoice' folder
+                        'invoice': 'invoice',          # Invoices go to 'invoice' folder (lowercase)
+                        'retest': 'retest',            # Retest documents go to 'retest' folder (lowercase)
+                        'compliance': 'Compliance',    # Compliance documents go to 'Compliance' folder (uppercase)
+                        'form': 'lab results'          # Generic forms go to 'lab results' folder
                     }
                     mapped_type = folder_map.get(document_type, document_type)
-                    # Use uppercase Inspection- to match scan function
+                    # Use uppercase Inspection- to match scan function (it looks for folders starting with 'Inspection-')
                     document_dir = os.path.join(client_dir, f"Inspection-{inspection_id}", mapped_type)
                 else:
                     top_map = {
