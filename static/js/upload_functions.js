@@ -76,13 +76,13 @@ function uploadRFI(groupId) {
                             
                             // Update button directly to show username
                             const buttonId = 'rfi-' + groupId;
-                            console.log('🔍 Updating RFI button to show username for:', buttonId);
+                            console.log('DEBUG: Updating RFI button to show username for:', buttonId);
                             
                                 // Find and update the button - simplified approach
                                 let button = document.getElementById(buttonId);
                                 
                                 if (button) {
-                                    console.log('✅ Found RFI button, updating to green success state');
+                                    console.log('SUCCESS Found RFI button, updating to green success state');
                                     
                                     // Clear file-deleted attributes since we now have a file
                                     button.removeAttribute('data-file-deleted');
@@ -100,7 +100,7 @@ function uploadRFI(groupId) {
                                     // Remove the onclick handler since button is now disabled
                                     button.onclick = null;
                                     
-                                    console.log('✅ Updated RFI button to green success state');
+                                    console.log('SUCCESS Updated RFI button to green success state');
                                     
         // IMPORTANT: Mark that files need refresh for this client
         if (window.uploadedFiles) {
@@ -116,36 +116,36 @@ function uploadRFI(groupId) {
                         
                         // Immediately make View Files button ORANGE since we just uploaded a file
                         makeViewFilesButtonOrange(groupId);
-        console.log('🔍 [DEBUG] Marked groupId for file refresh:', groupId);
+        console.log('DEBUG [DEBUG] Marked groupId for file refresh:', groupId);
         
         // Clear upload flag before setting delayed update to prevent race condition
         uploadInProgress = false;
-        console.log('🔍 [DEBUG] Cleared upload flag before delayed update');
+        console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
         
         setTimeout(() => {
-            console.log('⏰ Timer fired! Starting delayed color update...');
-            console.log('🔍 [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
-            console.log('🔍 [DEBUG] Status check in progress flag:', statusCheckInProgress);
+            console.log('TIMER Timer fired! Starting delayed color update...');
+            console.log('DEBUG [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
+            console.log('DEBUG [DEBUG] Status check in progress flag:', statusCheckInProgress);
             if (typeof updateAllViewFilesButtonColors === 'function') {
-                console.log('🔄 Delayed file status check after RFI upload...');
+                console.log('INFO Delayed file status check after RFI upload...');
                 updateAllViewFilesButtonColors();
             } else {
                 console.warn('updateAllViewFilesButtonColors function not available');
             }
             
             // Also update RFI button color with delayed check
-            console.log('🔄 Delayed RFI button color update...');
+            console.log('INFO Delayed RFI button color update...');
             updateRFIButtonColorDelayed(groupId);
         }, 5000); // 5 second delay to ensure server processing is complete
                                     
                                     // Check if View Files popup is open - if so, auto-refresh it
                                     const modal = document.getElementById('filesModal');
                                     if (modal && modal.style.display === 'block') {
-                                        console.log('🔄 View Files popup is open - auto-refreshing after RFI upload...');
+                                        console.log('INFO View Files popup is open - auto-refreshing after RFI upload...');
                                         
                                         // Wait 2 seconds for file to be saved, then refresh the popup
                                         setTimeout(() => {
-                                            console.log('🔄 Auto-refreshing View Files popup with new RFI file...');
+                                            console.log('INFO Auto-refreshing View Files popup with new RFI file...');
                                             
                                             // Get the current popup data from the groupId
                                             const dateStr = groupId.match(/\d{8}$/);
@@ -153,7 +153,7 @@ function uploadRFI(groupId) {
                                                 const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
                                                 const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
                                                 
-                                                console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                                console.log('INFO Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
                                                 loadInspectionFiles(groupId, clientName, formattedDate);
                                             }
                                         }, 2000);
@@ -239,7 +239,7 @@ function uploadInvoice(groupId) {
                         
                         // Update button directly to green success state
                         const buttonId = 'invoice-' + groupId;
-                        console.log('🔍 Updating Invoice button to green success state for:', buttonId);
+                        console.log('DEBUG Updating Invoice button to green success state for:', buttonId);
                         
                         // Find and update the button
                         let button = document.getElementById(buttonId);
@@ -255,7 +255,7 @@ function uploadInvoice(groupId) {
                         }
                         
                         if (button) {
-                            console.log('✅ Found Invoice button, updating to green success state');
+                            console.log('SUCCESS Found Invoice button, updating to green success state');
                             
                             // Clear file-deleted attributes since we now have a file
                             button.removeAttribute('data-file-deleted');
@@ -273,7 +273,7 @@ function uploadInvoice(groupId) {
                             // Remove the onclick handler since button is now disabled
                             button.onclick = null;
                             
-                            console.log('✅ Updated Invoice button to green success state');
+                            console.log('SUCCESS Updated Invoice button to green success state');
                             
                             // IMPORTANT: Mark that files need refresh for this client
                             if (window.uploadedFiles) {
@@ -281,43 +281,43 @@ function uploadInvoice(groupId) {
                             } else {
                                 window.uploadedFiles = {[groupId]: true};
                             }
-                            console.log('🔍 [DEBUG] Marked groupId for file refresh:', groupId);
+                            console.log('DEBUG [DEBUG] Marked groupId for file refresh:', groupId);
                             
                             // Update View Files button colors after upload with delay to ensure server processing
                             console.log('Updating button colors after Invoice upload...');
                             
                             // Immediately make View Files button ORANGE since we just uploaded a file
                             makeViewFilesButtonOrange(groupId);
-                            console.log('⏰ Setting 5-second timer for delayed color update...');
+                            console.log('TIMER Setting 5-second timer for delayed color update...');
                             
                             // Clear upload flag before setting delayed update to prevent race condition
                             uploadInProgress = false;
-                            console.log('🔍 [DEBUG] Cleared upload flag before delayed update');
+                            console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
                             
                             setTimeout(() => {
-                                console.log('⏰ Timer fired! Starting delayed color update...');
-                                console.log('🔍 [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
-                                console.log('🔍 [DEBUG] Status check in progress flag:', statusCheckInProgress);
+                                console.log('TIMER Timer fired! Starting delayed color update...');
+                                console.log('DEBUG [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
+                                console.log('DEBUG [DEBUG] Status check in progress flag:', statusCheckInProgress);
                                 if (typeof updateAllViewFilesButtonColors === 'function') {
-                                    console.log('🔄 Delayed file status check after Invoice upload...');
+                                    console.log('INFO Delayed file status check after Invoice upload...');
                                     updateAllViewFilesButtonColors();
                                 } else {
                                     console.warn('updateAllViewFilesButtonColors function not available');
                                 }
                                 
                                 // Also update Invoice button color with delayed check
-                                console.log('🔄 Delayed Invoice button color update...');
+                                console.log('INFO Delayed Invoice button color update...');
                                 updateInvoiceButtonColorDelayed(groupId);
                             }, 5000); // 5 second delay to ensure server processing is complete
                             
                             // Check if View Files popup is open - if so, auto-refresh it
                             const modal = document.getElementById('filesModal');
                             if (modal && modal.style.display === 'block') {
-                                console.log('🔄 View Files popup is open - auto-refreshing after Invoice upload...');
+                                console.log('INFO View Files popup is open - auto-refreshing after Invoice upload...');
                                 
                                 // Wait 2 seconds for file to be saved, then refresh the popup
                                 setTimeout(() => {
-                                    console.log('🔄 Auto-refreshing View Files popup with new Invoice file...');
+                                    console.log('INFO Auto-refreshing View Files popup with new Invoice file...');
                                     
                                     // Get the current popup data from the groupId
                                     const dateStr = groupId.match(/\d{8}$/);
@@ -325,7 +325,7 @@ function uploadInvoice(groupId) {
                                         const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
                                         const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
                                         
-                                        console.log('🔄 Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                        console.log('INFO Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
                                         loadInspectionFiles(groupId, clientName, formattedDate);
                                     }
                                 }, 2000);
@@ -656,7 +656,7 @@ function openFilesPopup(groupId, clientName, inspectionDate) {
     if (filesLoading) filesLoading.style.display = 'block';
     if (filesContent) filesContent.style.display = 'none';
 
-    console.log('🔄 File overlay: View Files clicked - Starting files fetch for', clientName, 'on', inspectionDate);
+    console.log('INFO File overlay: View Files clicked - Starting files fetch for', clientName, 'on', inspectionDate);
 
     // Try to load real files first, but show test data if none found
     loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
@@ -678,11 +678,11 @@ function closeFilesPopup() {
     
     // Don't refresh inspection data when popup closes to prevent button reset loop
     if (window.currentFilesGroupId && window.currentFilesClient && window.currentFilesDate) {
-        console.log(`🔄 Popup closed - skipping inspection refresh to prevent button reset`);
-        console.log(`🔍 Group ID: ${window.currentFilesGroupId}`);
+        console.log(`INFO Popup closed - skipping inspection refresh to prevent button reset`);
+        console.log(`DEBUG Group ID: ${window.currentFilesGroupId}`);
         
         // Skip refresh to prevent button reset loop
-        console.log('🔄 Skipping inspection refresh to prevent button reset loop');
+        console.log('INFO Skipping inspection refresh to prevent button reset loop');
     }
     
     // Process any pending button updates now that popup is closed
@@ -697,7 +697,7 @@ function closeFilesPopup() {
 // Load inspection files with direct working method (removed unreliable first attempt)
 async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDate) {
     try {
-        console.log('🔄 File fetch: Starting direct file fetch (using working method)...');
+        console.log('INFO File fetch: Starting direct file fetch (using working method)...');
         
         // Fix client name - decode any Unicode escapes
         let cleanClientName = clientName;
@@ -733,10 +733,10 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
             }
         }
         
-        console.log('🔄 Original client name:', clientName);
-        console.log('🔄 Cleaned client name:', cleanClientName);
-        console.log('🔄 Original date:', inspectionDate);
-        console.log('🔄 Cleaned date:', cleanDate);
+        console.log('INFO Original client name:', clientName);
+        console.log('INFO Cleaned client name:', cleanClientName);
+        console.log('INFO Original date:', inspectionDate);
+        console.log('INFO Cleaned date:', cleanDate);
         
         // Get the first inspection ID from the group by finding lab buttons
         let inspectionId = null;
@@ -746,7 +746,7 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
             if (labButton) {
                 const buttonId = labButton.id;
                 inspectionId = buttonId.replace('lab-', '');
-                console.log('🔍 Found inspection ID from lab button:', inspectionId);
+                console.log('DEBUG Found inspection ID from lab button:', inspectionId);
                 break;
             }
         }
@@ -777,8 +777,8 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         });
         
         const result = await response.json();
-        console.log('🔄 File fetch: File fetch completed:', result.success);
-        console.log('🔄 File fetch: Full server response:', result);
+        console.log('INFO File fetch: File fetch completed:', result.success);
+        console.log('INFO File fetch: Full server response:', result);
         
         const filesLoading = document.getElementById('filesLoading');
         const filesContent = document.getElementById('filesContent');
@@ -788,36 +788,39 @@ async function loadInspectionFilesWithFallback(groupId, clientName, inspectionDa
         if (filesContent) filesContent.style.display = 'block';
         
         if (result.success && result.files && filesList) {
-            console.log('🔍 Server returned files object:', result.files);
-            console.log('🔍 Files object keys:', Object.keys(result.files));
-            console.log('🔍 Files object values:', Object.values(result.files));
+            console.log('DEBUG Server returned files object:', result.files);
+            console.log('DEBUG Files object keys:', Object.keys(result.files));
+            console.log('DEBUG Files object values:', Object.values(result.files));
+            console.log('DEBUG Lab files found:', result.files.lab ? result.files.lab.length : 0);
+            console.log('DEBUG Lab form files found:', result.files.lab_form ? result.files.lab_form.length : 0);
+            console.log('DEBUG Retest files found:', result.files.retest ? result.files.retest.length : 0);
             
             const hasFiles = Object.values(result.files).some(fileList => fileList && fileList.length > 0);
-            console.log('🔍 Has files check result:', hasFiles);
+            console.log('DEBUG Has files check result:', hasFiles);
             
             if (hasFiles) {
-                console.log('✅ Files found and displaying');
+                console.log('SUCCESS Files found and displaying');
                 displayFiles(result.files, result.message);
             } else {
-                console.log('📁 No files found - showing empty message');
+                console.log('FOLDER No files found - showing empty message');
                 const filesList = document.getElementById('filesList');
                 if (filesList) {
-                    filesList.innerHTML = '<div class="empty-category">📂 No files found for this inspection.</div>';
+                    filesList.innerHTML = '<div class="empty-category">FOLDER No files found for this inspection.</div>';
                 }
             }
         } else if (filesList) {
-            console.log('❌ Server returned error');
+            console.log('ERROR Server returned error');
             const filesList = document.getElementById('filesList');
             if (filesList) {
-                filesList.innerHTML = '<div class="empty-category">❌ Error loading files. Please try again.</div>';
+                filesList.innerHTML = '<div class="empty-category">ERROR Error loading files. Please try again.</div>';
             }
         }
         
     } catch (error) {
-        console.log('❌ File fetch error:', error);
+        console.log('ERROR File fetch error:', error);
         const filesList = document.getElementById('filesList');
         if (filesList) {
-            filesList.innerHTML = '<div class="empty-category">❌ Network error. Please try again.</div>';
+            filesList.innerHTML = '<div class="empty-category">ERROR Network error. Please try again.</div>';
         }
     }
 }
@@ -827,14 +830,14 @@ function showTestFiles(clientName, inspectionDate, serverMessage) {
     const filesList = document.getElementById('filesList');
     if (filesList) {
         let message = serverMessage || 'No files found for this inspection.';
-        filesList.innerHTML = `<div class="empty-category">📂 ${message}</div>`;
+        filesList.innerHTML = `<div class="empty-category">FOLDER ${message}</div>`;
     }
 }
 
 // Load inspection files function (original)
 async function loadInspectionFiles(groupId, clientName, inspectionDate) {
     try {
-        console.log('🔄 File fetch: Starting file fetch request...');
+        console.log('INFO File fetch: Starting file fetch request...');
         
         // Fix date format - decode any Unicode escapes
         let cleanDate = inspectionDate;
@@ -862,11 +865,11 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
         });
         
         const result = await response.json();
-        console.log('🔄 File fetch: File fetch completed:', result.success);
-        console.log('🔄 File fetch: Full server response:', result);
-        console.log('🔄 File fetch: Response text length:', JSON.stringify(result).length);
-        console.log('🔄 File fetch: Files data:', result.files);
-        console.log('🔄 File fetch: Message:', result.message);
+        console.log('INFO File fetch: File fetch completed:', result.success);
+        console.log('INFO File fetch: Full server response:', result);
+        console.log('INFO File fetch: Response text length:', JSON.stringify(result).length);
+        console.log('INFO File fetch: Files data:', result.files);
+        console.log('INFO File fetch: Message:', result.message);
         
         const filesLoading = document.getElementById('filesLoading');
         const filesContent = document.getElementById('filesContent');
@@ -876,10 +879,10 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
         if (filesContent) filesContent.style.display = 'block';
         
         if (result.success && filesList) {
-            console.log('✅ Calling displayFiles with success response');
+            console.log('SUCCESS Calling displayFiles with success response');
             displayFiles(result.files, result.message);
         } else if (filesList) {
-            console.log('❌ Server returned error or no success flag');
+            console.log('ERROR Server returned error or no success flag');
             filesList.innerHTML = '<div class="empty-category">Error loading files: ' + (result.error || result.message || 'Unknown error') + '</div>';
         }
         
@@ -888,7 +891,7 @@ async function loadInspectionFiles(groupId, clientName, inspectionDate) {
         const filesContent = document.getElementById('filesContent');
         const filesList = document.getElementById('filesList');
         
-        console.log('❌ File fetch: File fetch error:', error);
+        console.log('ERROR File fetch: File fetch error:', error);
         
         if (filesLoading) filesLoading.style.display = 'none';
         if (filesContent) filesContent.style.display = 'block';
@@ -904,7 +907,7 @@ function displayFiles(files, message = null, isTestData = false) {
         return;
     }
     
-    console.log('📁 displayFiles called with:', { files, message, isTestData });
+    console.log('FOLDER displayFiles called with:', { files, message, isTestData });
     
     let html = '';
     
@@ -925,14 +928,14 @@ function displayFiles(files, message = null, isTestData = false) {
     const hasFiles = files && Object.values(files).some(fileList => fileList && fileList.length > 0);
     
     if (!hasFiles) {
-        html += '<div class="empty-category">📂 No files found for this inspection.</div>';
+        html += '<div class="empty-category">FOLDER No files found for this inspection.</div>';
     } else {
         html += '<div class="files-grid">';
         let totalFiles = 0;
         
         // Display files by category
         for (const [category, fileList] of Object.entries(files)) {
-            console.log(`📁 Processing category: ${category}`, fileList);
+            console.log(`FOLDER Processing category: ${category}`, fileList);
             
             if (fileList && Array.isArray(fileList) && fileList.length > 0) {
                 totalFiles += fileList.length;
@@ -947,6 +950,8 @@ function displayFiles(files, message = null, isTestData = false) {
                     'compliance': 'Compliance'
                 };
                 
+                console.log(`FOLDER Processing category: ${category} with ${fileList.length} files`);
+                
                 const displayLabel = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
                 
                 html += `<div class="file-category" style="margin-bottom: 1rem; border: 1px solid #dee2e6; border-radius: 4px; padding: 1rem;">
@@ -957,7 +962,7 @@ function displayFiles(files, message = null, isTestData = false) {
                     <div class="file-list">`;
                 
                 fileList.forEach((file, index) => {
-                    console.log(`📄 File ${index}:`, file);
+                    console.log(`FILES File ${index}:`, file);
                     const fileName = file.name || file.filename || file.file_name || file;
                     const filePath = file.path || file.url || file.file_path || file;
                     const isTest = file.isTest || isTestData;
@@ -1010,7 +1015,7 @@ function displayFiles(files, message = null, isTestData = false) {
         }
         
         if (totalFiles === 0) {
-            html += '<div class="empty-category">📂 All categories are empty.</div>';
+            html += '<div class="empty-category">FOLDER All categories are empty.</div>';
         } else if (isTestData) {
             html += `<div style="margin-top: 1rem; padding: 0.75rem; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; color: #856404;">
                 <i class="fas fa-lightbulb" style="margin-right: 0.5rem;"></i>
@@ -1022,7 +1027,7 @@ function displayFiles(files, message = null, isTestData = false) {
     }
     
     filesList.innerHTML = html;
-    console.log('📁 displayFiles completed, HTML length:', html.length);
+    console.log('FOLDER displayFiles completed, HTML length:', html.length);
 }
 
 // Download individual file function
@@ -1149,34 +1154,103 @@ async function deleteFile(filePath, fileName) {
         
         if (result.success) {
             console.log('File deleted:', fileName);
+            console.log('DEBUG [DEBUG] File path in success block:', filePath);
             
             // Determine document type from file path
             let documentType = 'unknown';
             if (filePath.includes('/Request For Invoice/') || filePath.includes('/rfi/')) {
                 documentType = 'rfi';
+                console.log('DEBUG [DEBUG] RFI file detected!');
             } else if (filePath.includes('/invoice/')) {
                 documentType = 'invoice';
-            } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
-                documentType = 'lab';
+                console.log('DEBUG [DEBUG] Invoice file detected!');
             } else if (filePath.includes('/retest/')) {
                 documentType = 'retest';
+                console.log('DEBUG [DEBUG] Retest file detected!');
+            } else if ((filePath.includes('/lab results/') || filePath.includes('/lab/')) && (filePath.toLowerCase().includes('lab_form') || filePath.toLowerCase().includes('labform') || filePath.toLowerCase().includes('lab form'))) {
+                documentType = 'lab_form';
+                console.log('DEBUG [DEBUG] Lab Form file detected!');
+            } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
+                documentType = 'lab';
+                console.log('DEBUG [DEBUG] Lab file detected!');
+            } else {
+                console.log('DEBUG [DEBUG] Unknown file type detected!');
             }
+            console.log(`DEBUG [DEBUG] File path: ${filePath}, Document type: ${documentType}`);
             
             // IMMEDIATE UI UPDATE: Remove the file from the current display
-            console.log('🔄 Immediately removing file from UI before server refresh...');
+            console.log('INFO Immediately removing file from UI before server refresh...');
             const fileElements = document.querySelectorAll(`[data-file-path*="${fileName}"]`);
             fileElements.forEach(element => {
                 const fileContainer = element.closest('.file-item') || element.closest('.file-entry');
                 if (fileContainer) {
                     fileContainer.style.opacity = '0.3';
-                    fileContainer.innerHTML = `<div class="file-deleted">📄 ${fileName} - Deleted</div>`;
+                    fileContainer.innerHTML = `<div class="file-deleted">FILES ${fileName} - Deleted</div>`;
                 }
             });
             
             // IMMEDIATE BUTTON RESET: Reset the corresponding button immediately
             if (documentType !== 'unknown') {
                 console.log(`🔧 Immediately resetting ${documentType} button...`);
+                
+                // For lab, lab form, and retest buttons, we need to find the specific inspection ID from the file path
+                if (documentType === 'lab' || documentType === 'lab_form' || documentType === 'retest') {
+                    // Extract inspection ID from file path (e.g., "8999_lab_20251002_211932.pdf" -> "8999")
+                    // Note: Check lab_form before lab to avoid partial matches
+                    const inspectionIdMatch = filePath.match(/\/(\d+)_(?:lab_form|lab|retest)_/);
+                    if (inspectionIdMatch && inspectionIdMatch[1]) {
+                        const inspectionId = inspectionIdMatch[1];
+                        // Convert lab_form to lab-form to match HTML button ID format
+                        const buttonType = documentType.replace(/_/g, '-');
+                        const specificButtonId = `${buttonType}-${inspectionId}`;
+                        console.log(`🔧 Resetting specific ${documentType} button: ${specificButtonId}`);
+                        
+                        const specificButton = document.getElementById(specificButtonId);
+                        if (specificButton) {
+                            // Reset this specific button to grey
+                            specificButton.disabled = false;
+                            specificButton.classList.remove('uploaded', 'btn-success');
+                            specificButton.classList.add('btn-outline-secondary', 'btn-sm');
+                            specificButton.style.background = '';
+                            specificButton.style.color = '';
+                            specificButton.style.border = '';
+                            specificButton.style.cursor = 'pointer';
+                            // Set the button content with appropriate icon
+                            if (documentType === 'lab') {
+                                specificButton.innerHTML = `<i class="fas fa-flask"></i> LAB`;
+                            } else if (documentType === 'lab_form') {
+                                specificButton.innerHTML = `<i class="fas fa-file-alt"></i> LAB FORM`;
+                            } else if (documentType === 'retest') {
+                                specificButton.innerHTML = `<i class="fas fa-redo"></i> RETEST`;
+                            } else {
+                                specificButton.innerHTML = documentType.toUpperCase();
+                            }
+                            specificButton.title = `Upload ${documentType.toUpperCase()}`;
+                            specificButton.setAttribute('data-file-deleted', 'true');
+                            
+                            // Re-enable onclick functionality
+                            if (documentType === 'lab') {
+                                specificButton.onclick = function() { uploadLab(inspectionId); };
+                            } else if (documentType === 'lab_form') {
+                                specificButton.onclick = function() { uploadLabForm(inspectionId); };
+                            } else if (documentType === 'retest') {
+                                specificButton.onclick = function() { uploadRetest(inspectionId); };
+                            }
+                            
+                            console.log(`SUCCESS Reset specific ${documentType} button ${specificButtonId} to grey`);
+                        } else {
+                            console.log(`⚠️ Specific ${documentType} button not found: ${specificButtonId}`);
+                            // Fallback to group-level reset
                 resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
+                        }
+                    } else {
+                        console.log('⚠️ Could not extract inspection ID from file path, falling back to group reset');
+                        resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
+                    }
+                } else {
+                    // For other document types (RFI, Invoice), use the existing group-level reset
+                    resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
+                }
             }
             
             // Clear any client-side file cache
@@ -1226,7 +1300,7 @@ async function deleteFile(filePath, fileName) {
                         } else if (documentType === 'invoice') {
                             button.onclick = function() { uploadInvoice(groupId); };
                         }
-                        console.log(`✅ ${documentType.toUpperCase()} button directly reset to gray state`);
+                        console.log(`SUCCESS ${documentType.toUpperCase()} button directly reset to gray state`);
                     } else {
                         console.log(`⚠️ Button not found for direct reset: ${buttonId}`);
                     }
@@ -1235,7 +1309,7 @@ async function deleteFile(filePath, fileName) {
             
             // Refresh the files list with a delay to ensure server-side cleanup is complete
             if (groupId && clientName && inspectionDate) {
-                console.log('🔄 Scheduling fresh file list reload...');
+                console.log('INFO Scheduling fresh file list reload...');
                 setTimeout(() => {
                     loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
                 }, 500); // Give server time to complete cleanup
@@ -1269,15 +1343,36 @@ async function deleteFile(filePath, fileName) {
                             button.onclick = function() { uploadInvoice(groupId); };
                         }
                         
-                        console.log(`✅ Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
+                        console.log(`SUCCESS Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
                     }
                     
-                    // IMMEDIATELY update View Files button colors after RFI/Invoice deletion
-                    console.log('🎨 Immediately updating View Files button colors after file deletion...');
+                    // IMMEDIATELY update View Files button colors after file deletion
+                    console.log('COLOR Immediately updating View Files button colors after file deletion...');
                     updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    
+                    // IMMEDIATE TARGETED CHECK: Run appropriate targeted check based on file type
+                    console.log(`DEBUG [DEBUG] Document type: ${documentType}, Group ID: ${groupId}`);
+                    if (documentType === 'rfi') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted RFI check for deleted file: ${groupId}`);
+                        immediateRFIButtonCheck(groupId, clientName, inspectionDate);
+                    } else if (documentType === 'invoice') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted Invoice check for deleted file: ${groupId}`);
+                        immediateInvoiceButtonCheck(groupId, clientName, inspectionDate);
+                    } else if (documentType === 'lab') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted Lab check for deleted file: ${groupId}`);
+                        immediateLabButtonCheck(groupId, clientName, inspectionDate);
+                    } else if (documentType === 'lab_form') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted Lab Form check for deleted file: ${groupId}`);
+                        immediateLabFormButtonCheck(groupId, clientName, inspectionDate);
+                    } else if (documentType === 'retest') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted Retest check for deleted file: ${groupId}`);
+                        immediateRetestButtonCheck(groupId, clientName, inspectionDate);
+                    } else {
+                        console.log(`⚠️ [DEBUG] Not running targeted check - document type is: ${documentType}`);
+                    }
                 } else {
                     // IMMEDIATELY update View Files button colors after file deletion for other document types
-                    console.log('🎨 Immediately updating View Files button colors after file deletion...');
+                    console.log('COLOR Immediately updating View Files button colors after file deletion...');
                     updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
                 }
             }
@@ -1292,11 +1387,14 @@ async function deleteFile(filePath, fileName) {
                     documentType = 'rfi';
                 } else if (filePath.includes('/invoice/')) {
                     documentType = 'invoice';
-                } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
-                    documentType = 'lab';
                 } else if (filePath.includes('/retest/')) {
                     documentType = 'retest';
+                } else if ((filePath.includes('/lab results/') || filePath.includes('/lab/')) && (filePath.toLowerCase().includes('lab_form') || filePath.toLowerCase().includes('labform') || filePath.toLowerCase().includes('lab form'))) {
+                    documentType = 'lab_form';
+                } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
+                    documentType = 'lab';
                 }
+                console.log(`DEBUG [DEBUG] File path: ${filePath}, Document type: ${documentType}`);
                 
                 // Update the corresponding button immediately
                 if (documentType !== 'unknown') {
@@ -1325,7 +1423,7 @@ async function deleteFile(filePath, fileName) {
                             } else if (documentType === 'invoice') {
                                 button.onclick = function() { uploadInvoice(groupId); };
                             }
-                            console.log(`✅ ${documentType.toUpperCase()} button directly reset to gray state`);
+                            console.log(`SUCCESS ${documentType.toUpperCase()} button directly reset to gray state`);
                         } else {
                             console.log(`⚠️ Button not found for direct reset: ${buttonId}`);
                         }
@@ -1337,7 +1435,7 @@ async function deleteFile(filePath, fileName) {
                 
                 // Refresh the files list to show updated state
                 if (groupId && clientName && inspectionDate) {
-                    console.log('🔄 Refreshing View Files popup to show updated file count');
+                    console.log('INFO Refreshing View Files popup to show updated file count');
                     setTimeout(() => {
                         openFilesPopup(groupId, clientName, inspectionDate);
                     }, 100);
@@ -1522,17 +1620,17 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Event delegation set up for expand buttons and modal');
     
     // Start automatic color updates for View Files buttons - PAGE SPECIFIC
-    console.log('🎨 [PAGE] Starting compliance document check for current page only...');
+    console.log('COLOR [PAGE] Starting compliance document check for current page only...');
     
     // Check immediately for current page
     setTimeout(() => {
-        console.log('🎨 [PAGE] Initial compliance check for visible rows...');
+        console.log('COLOR [PAGE] Initial compliance check for visible rows...');
         updateAllViewFilesButtonColors();
     }, 1000);
     
     // Final check after everything loads
     setTimeout(() => {
-        console.log('🔄 [PAGE] Final compliance check for visible rows...');
+        console.log('INFO [PAGE] Final compliance check for visible rows...');
         updateAllViewFilesButtonColors();
     }, 2000);
     
@@ -1541,7 +1639,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // The template correctly shows uploader names based on database state
     /*
     setTimeout(() => {
-        console.log('🔍 [PAGE] Validating upload button states...');
+        console.log('DEBUG [PAGE] Validating upload button states...');
         validateUploadButtonStates();
     }, 3000);
     */
@@ -1556,7 +1654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check for new page content after navigation
             setTimeout(() => {
-                console.log('🎨 [PAGE] Checking compliance for new page after navigation...');
+                console.log('COLOR [PAGE] Checking compliance for new page after navigation...');
                 updateAllViewFilesButtonColors();
             }, 1500);
         });
@@ -1564,19 +1662,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize upload button states for lab, lab form, and retest buttons
     setTimeout(() => {
-        console.log('🔍 [PAGE] Initializing upload button states...');
+        console.log('DEBUG [PAGE] Initializing upload button states...');
         initializeUploadButtonStates();
     }, 3000);
     
     // SIMPLE RFI BUTTON INITIALIZATION - Run immediately
     setTimeout(() => {
-        console.log('🔍 [PAGE] Initializing RFI buttons immediately...');
+        console.log('DEBUG [PAGE] Initializing RFI buttons immediately...');
         initializeRFIButtonsSimple();
     }, 1000);
     
     // SIMPLE INVOICE BUTTON INITIALIZATION - Run immediately
     setTimeout(() => {
-        console.log('🔍 [PAGE] Initializing Invoice buttons immediately...');
+        console.log('DEBUG [PAGE] Initializing Invoice buttons immediately...');
         initializeInvoiceButtonsSimple();
     }, 1200);
 });
@@ -1730,26 +1828,26 @@ window.testCanonburyFiles = async function() {
         
         if (data.success) {
             const files = data.files;
-            console.log('📁 Files object:', files);
+            console.log('FOLDER Files object:', files);
             
             for (const [category, fileList] of Object.entries(files)) {
-                console.log(`📂 ${category}: ${fileList.length} files`);
+                console.log(`FOLDER ${category}: ${fileList.length} files`);
                 if (fileList.length > 0) {
                     fileList.forEach(file => {
-                        console.log(`  📄 ${file.filename} (${file.size} bytes)`);
+                        console.log(`  FILES ${file.filename} (${file.size} bytes)`);
                     });
                 }
             }
             
             // Test the displayFiles function directly
-            console.log('🎨 Testing displayFiles function...');
+            console.log('COLOR Testing displayFiles function...');
             displayFiles(files, 'Direct test - files loaded successfully');
             
         } else {
-            console.error('❌ Server error:', data.error);
+            console.error('ERROR Server error:', data.error);
         }
     } catch (error) {
-        console.error('❌ Network error:', error);
+        console.error('ERROR Network error:', error);
     }
 };
 
@@ -1844,11 +1942,11 @@ function loadJSZipLibrary() {
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
         script.onload = () => {
-            console.log('✅ JSZip library loaded successfully');
+            console.log('SUCCESS JSZip library loaded successfully');
             resolve();
         };
         script.onerror = () => {
-            console.error('❌ Failed to load JSZip library');
+            console.error('ERROR Failed to load JSZip library');
             reject(new Error('Failed to load JSZip library'));
         };
         document.head.appendChild(script);
@@ -2154,7 +2252,7 @@ async function extractAndOrganizeZip(fileName) {
         closeZipViewer();
         
         // Show success message
-        alert(`✅ Successfully extracted and organized ${totalFiles} files!\n\n- ${window.currentZipAnalysis.matchedFiles.length} files placed in individual inspection folders\n- ${window.currentZipAnalysis.unmatchedFiles.length} files placed in general compliance folder`);
+        alert(`SUCCESS Successfully extracted and organized ${totalFiles} files!\n\n- ${window.currentZipAnalysis.matchedFiles.length} files placed in individual inspection folders\n- ${window.currentZipAnalysis.unmatchedFiles.length} files placed in general compliance folder`);
         
         // Refresh the files popup to show new files
         setTimeout(() => {
@@ -2201,7 +2299,7 @@ async function uploadFileToInspection(fileData, fileName, inspectionNumber, grou
         throw new Error(`Failed to upload ${fileName}: ${result.error}`);
     }
     
-    console.log(`✅ Uploaded ${fileName} to inspection ${inspectionNumber}`);
+    console.log(`SUCCESS Uploaded ${fileName} to inspection ${inspectionNumber}`);
 }
 
 // Upload file to general compliance folder
@@ -2228,7 +2326,7 @@ async function uploadFileToGeneralCompliance(fileData, fileName, groupId, client
         throw new Error(`Failed to upload ${fileName}: ${result.error}`);
     }
     
-    console.log(`✅ Uploaded ${fileName} to general compliance folder`);
+    console.log(`SUCCESS Uploaded ${fileName} to general compliance folder`);
 }
 
 // Close ZIP viewer modal
@@ -2246,7 +2344,7 @@ function closeZipViewer() {
 
 // View Files Button Color Management
 function updateViewFilesButtonColor(clientName, fileStatus) {
-    console.log('🎨 Updating button color for client: "' + clientName + '"');
+    console.log('COLOR Updating button color for client: "' + clientName + '"');
     console.log('   File status: ' + fileStatus);
     
     // Find all View Files buttons for this client using multiple methods
@@ -2311,7 +2409,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
                         statusIcon.className = 'fas fa-check-circle';
                         statusIcon.style.color = '#059669';
                     }
-                    console.log('   ✅ Applied GREEN color to button');
+                    console.log('   SUCCESS Applied GREEN color to button');
                     break;
                 case 'compliance_only':
                     button.classList.add('btn-view-files-orange');
@@ -2350,7 +2448,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
                         statusIcon.className = 'fas fa-sync fa-spin';
                         statusIcon.style.color = '#6b7280';
                     }
-                    console.log('   🔄 Applied default color to button');
+                    console.log('   INFO Applied default color to button');
                     break;
             }
         }
@@ -2359,7 +2457,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
 
 // Update View Files button color for a specific client and inspection date
 function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStatus) {
-    console.log('🎨 Updating button color for specific client+date: "' + clientName + '" on ' + inspectionDate);
+    console.log('COLOR Updating button color for specific client+date: "' + clientName + '" on ' + inspectionDate);
     console.log('   File status: ' + fileStatus);
     
     // Find buttons for this specific client and date combination
@@ -2467,14 +2565,14 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     });
                     
                     // When View Files button goes red (no files), reset RFI and Invoice buttons to grey
-                    console.log('   🔄 View Files is red - resetting RFI and Invoice buttons to grey...');
+                    console.log('   INFO View Files is red - resetting RFI and Invoice buttons to grey...');
                     resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate);
                     break;
                 default:
                     button.style.backgroundColor = '#6c757d';
                     button.style.color = 'white';
                     button.title = 'Unknown file status';
-                    console.log('   🔄 Applied default color to button');
+                    console.log('   INFO Applied default color to button');
                     break;
             }
         }
@@ -2489,7 +2587,7 @@ let uploadInProgress = false;
 
 // Function to update RFI button color with delayed check
 function updateRFIButtonColorDelayed(groupId) {
-    console.log('🔄 [DELAYED] Updating RFI button color for group:', groupId);
+    console.log('INFO [DELAYED] Updating RFI button color for group:', groupId);
     
     // Extract client name and date from groupId
     const parts = groupId.split('_');
@@ -2514,8 +2612,8 @@ function updateRFIButtonColorDelayed(groupId) {
         clientName = clientName.replace(/_/g, ' ');
     }
     
-    console.log('🔍 [DELAYED] Extracted client name:', clientName);
-    console.log('🔍 [DELAYED] Extracted inspection date:', inspectionDate);
+    console.log('DEBUG [DELAYED] Extracted client name:', clientName);
+    console.log('DEBUG [DELAYED] Extracted inspection date:', inspectionDate);
     
     // Check if RFI files exist for this client+date combination
     fetch('/inspections/files/', {
@@ -2534,7 +2632,7 @@ function updateRFIButtonColorDelayed(groupId) {
     .then(data => {
         if (data.success && data.files) {
             const hasRFI = data.files.rfi && data.files.rfi.length > 0;
-            console.log('🔍 [DELAYED] RFI file check result:', hasRFI);
+            console.log('DEBUG [DELAYED] RFI file check result:', hasRFI);
             
             const buttonId = 'rfi-' + groupId;
             const button = document.getElementById(buttonId);
@@ -2550,7 +2648,7 @@ function updateRFIButtonColorDelayed(groupId) {
                     button.innerHTML = 'RFI ✓';
                     button.title = 'RFI file exists';
                     button.onclick = null;
-                    console.log('✅ [DELAYED] Updated RFI button to green success state');
+                    console.log('SUCCESS [DELAYED] Updated RFI button to green success state');
                 } else {
                     // Update to grey state (no file)
                     button.disabled = false;
@@ -2561,7 +2659,7 @@ function updateRFIButtonColorDelayed(groupId) {
                     button.innerHTML = 'RFI';
                     button.title = 'Upload RFI file';
                     button.onclick = () => uploadRFI(groupId);
-                    console.log('⚪ [DELAYED] Updated RFI button to grey state (no file)');
+                    console.log('GREY [DELAYED] Updated RFI button to grey state (no file)');
                 }
             } else {
                 console.warn('RFI button not found for delayed update:', buttonId);
@@ -2577,7 +2675,7 @@ function updateRFIButtonColorDelayed(groupId) {
 
 // Function to reset RFI and Invoice buttons to grey when View Files button goes red
 function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
-    console.log('🔄 [RESET] Resetting RFI and Invoice buttons to grey for:', clientName, 'on', inspectionDate);
+    console.log('INFO [RESET] Resetting RFI and Invoice buttons to grey for:', clientName, 'on', inspectionDate);
     
     // Find the row for this client and date
     const rows = document.querySelectorAll('tr[data-client-name="' + clientName + '"][data-inspection-date="' + inspectionDate + '"]');
@@ -2595,7 +2693,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
             if (rfiButtonRecentlyReset) {
                 console.log('⏭️ [RESET] Skipping RFI button reset - recently updated by file deletion');
             } else {
-                console.log('🔄 [RESET] Found RFI button, resetting to grey...');
+                console.log('INFO [RESET] Found RFI button, resetting to grey...');
                 rfiButton.disabled = false;
                 rfiButton.className = 'btn btn-sm btn-secondary';
                 rfiButton.style.backgroundColor = '#6c757d';
@@ -2609,7 +2707,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
                 const groupId = rfiButton.id.replace('rfi-', '');
                 rfiButton.onclick = () => uploadRFI(groupId);
                 
-                console.log('✅ [RESET] RFI button reset to grey');
+                console.log('SUCCESS [RESET] RFI button reset to grey');
             }
         } else {
             console.log('⚠️ [RESET] RFI button not found');
@@ -2627,7 +2725,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
             if (invoiceButtonRecentlyReset) {
                 console.log('⏭️ [RESET] Skipping Invoice button reset - recently updated by file deletion');
             } else {
-                console.log('🔄 [RESET] Found Invoice button, resetting to grey...');
+                console.log('INFO [RESET] Found Invoice button, resetting to grey...');
                 invoiceButton.disabled = false;
                 invoiceButton.className = 'btn btn-sm btn-secondary';
                 invoiceButton.style.backgroundColor = '#6c757d';
@@ -2641,7 +2739,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
                 const groupId = invoiceButton.id.replace('invoice-', '');
                 invoiceButton.onclick = () => uploadInvoice(groupId);
                 
-                console.log('✅ [RESET] Invoice button reset to grey');
+                console.log('SUCCESS [RESET] Invoice button reset to grey');
             }
         } else {
             console.log('⚠️ [RESET] Invoice button not found');
@@ -2654,7 +2752,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
     // Reset RFI button by group ID
     const rfiButtonById = document.getElementById('rfi-' + groupId);
     if (rfiButtonById) {
-        console.log('🔄 [RESET] Found RFI button by ID, resetting to grey...');
+        console.log('INFO [RESET] Found RFI button by ID, resetting to grey...');
         rfiButtonById.disabled = false;
         rfiButtonById.className = 'btn btn-sm btn-secondary';
         rfiButtonById.style.backgroundColor = '#6c757d';
@@ -2664,13 +2762,13 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
         rfiButtonById.innerHTML = 'RFI';
         rfiButtonById.title = 'Upload RFI file';
         rfiButtonById.onclick = () => uploadRFI(groupId);
-        console.log('✅ [RESET] RFI button reset to grey (by ID)');
+        console.log('SUCCESS [RESET] RFI button reset to grey (by ID)');
     }
     
     // Reset Invoice button by group ID
     const invoiceButtonById = document.getElementById('invoice-' + groupId);
     if (invoiceButtonById) {
-        console.log('🔄 [RESET] Found Invoice button by ID, resetting to grey...');
+        console.log('INFO [RESET] Found Invoice button by ID, resetting to grey...');
         invoiceButtonById.disabled = false;
         invoiceButtonById.className = 'btn btn-sm btn-secondary';
         invoiceButtonById.style.backgroundColor = '#6c757d';
@@ -2680,13 +2778,13 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
         invoiceButtonById.innerHTML = 'Invoice';
         invoiceButtonById.title = 'Upload Invoice file';
         invoiceButtonById.onclick = () => uploadInvoice(groupId);
-        console.log('✅ [RESET] Invoice button reset to grey (by ID)');
+        console.log('SUCCESS [RESET] Invoice button reset to grey (by ID)');
     }
 }
 
 // Function to update Invoice button color with delayed check
 function updateInvoiceButtonColorDelayed(groupId) {
-    console.log('🔄 [DELAYED] Updating Invoice button color for group:', groupId);
+    console.log('INFO [DELAYED] Updating Invoice button color for group:', groupId);
     
     // Extract client name and date from groupId
     const parts = groupId.split('_');
@@ -2711,8 +2809,8 @@ function updateInvoiceButtonColorDelayed(groupId) {
         clientName = clientName.replace(/_/g, ' ');
     }
     
-    console.log('🔍 [DELAYED] Extracted client name:', clientName);
-    console.log('🔍 [DELAYED] Extracted inspection date:', inspectionDate);
+    console.log('DEBUG [DELAYED] Extracted client name:', clientName);
+    console.log('DEBUG [DELAYED] Extracted inspection date:', inspectionDate);
     
     // Check if Invoice files exist for this client+date combination
     fetch('/inspections/files/', {
@@ -2731,7 +2829,7 @@ function updateInvoiceButtonColorDelayed(groupId) {
     .then(data => {
         if (data.success && data.files) {
             const hasInvoice = data.files.invoice && data.files.invoice.length > 0;
-            console.log('🔍 [DELAYED] Invoice file check result:', hasInvoice);
+            console.log('DEBUG [DELAYED] Invoice file check result:', hasInvoice);
             
             const buttonId = 'invoice-' + groupId;
             const button = document.getElementById(buttonId);
@@ -2747,7 +2845,7 @@ function updateInvoiceButtonColorDelayed(groupId) {
                     button.innerHTML = 'Invoice ✓';
                     button.title = 'Invoice file exists';
                     button.onclick = null;
-                    console.log('✅ [DELAYED] Updated Invoice button to green success state');
+                    console.log('SUCCESS [DELAYED] Updated Invoice button to green success state');
                 } else {
                     // Update to red error state (file was deleted or not found)
                     button.disabled = false;
@@ -2758,7 +2856,7 @@ function updateInvoiceButtonColorDelayed(groupId) {
                     button.innerHTML = 'Invoice';
                     button.title = 'Upload Invoice file';
                     button.onclick = () => uploadInvoice(groupId);
-                    console.log('❌ [DELAYED] Updated Invoice button to red error state');
+                    console.log('ERROR [DELAYED] Updated Invoice button to red error state');
                 }
             } else {
                 console.warn('Invoice button not found for delayed update:', buttonId);
@@ -2773,9 +2871,9 @@ function updateInvoiceButtonColorDelayed(groupId) {
 }
 
 async function updateAllViewFilesButtonColors() {
-    console.log('🔍 [DEBUG] updateAllViewFilesButtonColors called');
-    console.log('🔍 [DEBUG] statusCheckInProgress:', statusCheckInProgress);
-    console.log('🔍 [DEBUG] uploadInProgress:', uploadInProgress);
+    console.log('DEBUG [DEBUG] updateAllViewFilesButtonColors called');
+    console.log('DEBUG [DEBUG] statusCheckInProgress:', statusCheckInProgress);
+    console.log('DEBUG [DEBUG] uploadInProgress:', uploadInProgress);
     
     // Prevent multiple simultaneous requests
     if (statusCheckInProgress) {
@@ -2790,13 +2888,13 @@ async function updateAllViewFilesButtonColors() {
     }
     
     statusCheckInProgress = true;
-    console.log('🎨 [FRONTEND] Starting automatic View Files button color update...');
+    console.log('COLOR [FRONTEND] Starting automatic View Files button color update...');
     
     try {
         const clientDateCombinations = getCurrentPageClientData();
         
         if (clientDateCombinations.length === 0) {
-            console.log('📄 No client+date combinations found on current page for color update');
+            console.log('FILES No client+date combinations found on current page for color update');
             return;
         }
         
@@ -2806,15 +2904,15 @@ async function updateAllViewFilesButtonColors() {
             clientDateCombinations.splice(50);
         }
         
-        console.log('🔄 [FRONTEND] Checking file status for ' + clientDateCombinations.length + ' client+date combinations...');
+        console.log('INFO [FRONTEND] Checking file status for ' + clientDateCombinations.length + ' client+date combinations...');
         
         // Debug: Check if New Poultry Retailer is in the combinations
         const newPoultryCombinations = clientDateCombinations.filter(c => c.client_name === 'New Poultry Retailer');
         if (newPoultryCombinations.length > 0) {
-            console.log('🔍 [DEBUG] Found New Poultry Retailer combinations:', newPoultryCombinations);
+            console.log('DEBUG [DEBUG] Found New Poultry Retailer combinations:', newPoultryCombinations);
         } else {
-            console.log('❌ [DEBUG] New Poultry Retailer NOT found in combinations');
-            console.log('🔍 [DEBUG] Available client names:', clientDateCombinations.map(c => c.client_name));
+            console.log('ERROR [DEBUG] New Poultry Retailer NOT found in combinations');
+            console.log('DEBUG [DEBUG] Available client names:', clientDateCombinations.map(c => c.client_name));
         }
         
         // Clear any caches before checking file status
@@ -2839,15 +2937,15 @@ async function updateAllViewFilesButtonColors() {
         const result = await response.json();
         
         if (result.success) {
-            console.log('✅ Received file status data for all client+date combinations');
-            console.log('🔍 [DEBUG] Full server response for delayed update:', result);
+            console.log('SUCCESS Received file status data for all client+date combinations');
+            console.log('DEBUG [DEBUG] Full server response for delayed update:', result);
             
             // Debug: Check if New Poultry Retailer is in the response
             const newPoultryStatuses = Object.entries(result.combination_statuses).filter(([key, data]) => data.client_name === 'New Poultry Retailer');
             if (newPoultryStatuses.length > 0) {
-                console.log('🔍 [DEBUG] Found New Poultry Retailer in response:', newPoultryStatuses);
+                console.log('DEBUG [DEBUG] Found New Poultry Retailer in response:', newPoultryStatuses);
                 newPoultryStatuses.forEach(([key, data]) => {
-                    console.log(`🔍 [DEBUG] New Poultry Retailer ${key}:`, {
+                    console.log(`DEBUG [DEBUG] New Poultry Retailer ${key}:`, {
                         client_name: data.client_name,
                         inspection_date: data.inspection_date,
                         file_status: data.file_status,
@@ -2863,9 +2961,9 @@ async function updateAllViewFilesButtonColors() {
             // Debug: Check Jusmar Farm Eggs specifically
             const jusmarStatuses = Object.entries(result.combination_statuses).filter(([key, data]) => data.client_name === 'Jusmar Farm Eggs (Pty) Ltd.');
             if (jusmarStatuses.length > 0) {
-                console.log('🔍 [DEBUG] Found Jusmar Farm Eggs in response:', jusmarStatuses);
+                console.log('DEBUG [DEBUG] Found Jusmar Farm Eggs in response:', jusmarStatuses);
                 jusmarStatuses.forEach(([key, data]) => {
-                    console.log(`🔍 [DEBUG] Jusmar Farm Eggs ${key}:`, {
+                    console.log(`DEBUG [DEBUG] Jusmar Farm Eggs ${key}:`, {
                         client_name: data.client_name,
                         inspection_date: data.inspection_date,
                         file_status: data.file_status,
@@ -2877,27 +2975,27 @@ async function updateAllViewFilesButtonColors() {
                     });
                 });
             } else {
-                console.log('🔍 [DEBUG] Jusmar Farm Eggs NOT found in server response');
+                console.log('DEBUG [DEBUG] Jusmar Farm Eggs NOT found in server response');
             }
             
             if (newPoultryStatuses.length === 0) {
-                console.log('❌ [DEBUG] New Poultry Retailer NOT found in response');
-                console.log('🔍 [DEBUG] Available clients in response:', Object.values(result.combination_statuses).map(d => d.client_name));
+                console.log('ERROR [DEBUG] New Poultry Retailer NOT found in response');
+                console.log('DEBUG [DEBUG] Available clients in response:', Object.values(result.combination_statuses).map(d => d.client_name));
             }
             
             // Update button colors for each client+date combination
             Object.entries(result.combination_statuses).forEach(([uniqueKey, statusData]) => {
-                console.log('🎨 Updating colors for ' + uniqueKey + ': ' + statusData.file_status);
+                console.log('COLOR Updating colors for ' + uniqueKey + ': ' + statusData.file_status);
                 updateViewFilesButtonColorSpecific(statusData.client_name, statusData.inspection_date, statusData.file_status);
             });
             
-            console.log('🎨 Completed automatic color update for all buttons');
+            console.log('COLOR Completed automatic color update for all buttons');
         } else {
-            console.error('❌ Error getting file status:', result.error);
+            console.error('ERROR Error getting file status:', result.error);
         }
         
     } catch (error) {
-        console.error('❌ Error updating View Files button colors:', error);
+        console.error('ERROR Error updating View Files button colors:', error);
     } finally {
         statusCheckInProgress = false;
     }
@@ -2910,14 +3008,14 @@ function getCurrentPageClientData() {
     // Only get rows that are actually visible on the current page
     const visibleShipmentRows = document.querySelectorAll('tbody .shipment-row[data-client-name]:not([style*="display: none"])');
     
-    console.log('🔍 [PAGE] Scanning visible rows on current page...');
-    console.log('🔍 [PAGE] Found ' + visibleShipmentRows.length + ' visible shipment rows');
+    console.log('DEBUG [PAGE] Scanning visible rows on current page...');
+    console.log('DEBUG [PAGE] Found ' + visibleShipmentRows.length + ' visible shipment rows');
     
     visibleShipmentRows.forEach((row, index) => {
         const clientName = row.getAttribute('data-client-name');
         const inspectionDate = row.getAttribute('data-inspection-date');
         
-        console.log(`🔍 [PAGE] Row ${index + 1}: "${clientName}" on ${inspectionDate}`);
+        console.log(`DEBUG [PAGE] Row ${index + 1}: "${clientName}" on ${inspectionDate}`);
         
         if (clientName && inspectionDate) {
             const combination = {
@@ -2933,15 +3031,15 @@ function getCurrentPageClientData() {
         }
     });
     
-    console.log('📄 [PAGE] Final result: ' + clientDateCombinations.length + ' unique client+date combinations on current visible page');
-    console.log('📄 [PAGE] Combinations: ' + clientDateCombinations.map(c => c.unique_key).join(', '));
+    console.log('FILES [PAGE] Final result: ' + clientDateCombinations.length + ' unique client+date combinations on current visible page');
+    console.log('FILES [PAGE] Combinations: ' + clientDateCombinations.map(c => c.unique_key).join(', '));
     
     return clientDateCombinations;
 }
 
 // Function to check if upload buttons should be enabled/disabled based on actual files
 function validateUploadButtonStates() {
-    console.log('🔍 Validating upload button states against actual files...');
+    console.log('DEBUG Validating upload button states against actual files...');
     
     // Get all RFI and Invoice buttons
     const rfiButtons = document.querySelectorAll('button[id^="rfi-"]');
@@ -2975,7 +3073,7 @@ function validateUploadButtonStates() {
 
 // Initialize upload button states based on existing files
 async function initializeUploadButtonStates() {
-    console.log('🔍 Initializing upload button states based on existing files...');
+    console.log('DEBUG Initializing upload button states based on existing files...');
     
     // Get all lab, lab form, retest, and RFI buttons
     const allButtons = document.querySelectorAll('button[id^="lab-"], button[id^="retest-"], button[id^="rfi-"]');
@@ -2984,7 +3082,7 @@ async function initializeUploadButtonStates() {
     const retestButtons = Array.from(document.querySelectorAll('button[id^="retest-"]'));
     const rfiButtons = Array.from(document.querySelectorAll('button[id^="rfi-"]'));
     
-    console.log(`🔍 Found ${labButtons.length} lab buttons, ${labFormButtons.length} lab form buttons, ${retestButtons.length} retest buttons, ${rfiButtons.length} RFI buttons`);
+    console.log(`DEBUG Found ${labButtons.length} lab buttons, ${labFormButtons.length} lab form buttons, ${retestButtons.length} retest buttons, ${rfiButtons.length} RFI buttons`);
     
     // Process each button type
     await processButtonGroup(labButtons, 'lab');
@@ -2992,7 +3090,7 @@ async function initializeUploadButtonStates() {
     await processButtonGroup(retestButtons, 'retest');
     await processRFIButtons(rfiButtons);
     
-    console.log('✅ Upload button state initialization complete');
+    console.log('SUCCESS Upload button state initialization complete');
 }
 
 // Process a group of buttons to check for existing files
@@ -3022,9 +3120,9 @@ async function processButtonGroup(buttons, documentType) {
                 }
                 
                 // Check if files exist for this inspection
-                console.log(`🔍 Checking files for ${documentType} button ${button.id}: ${clientName} on ${inspectionDate} (inspection ID: ${inspectionId})`);
+                console.log(`DEBUG Checking files for ${documentType} button ${button.id}: ${clientName} on ${inspectionDate} (inspection ID: ${inspectionId})`);
                 const hasFiles = await checkFilesExist(clientName, inspectionDate, documentType, inspectionId);
-                console.log(`🔍 Files exist for ${documentType} button ${button.id}: ${hasFiles}`);
+                console.log(`DEBUG Files exist for ${documentType} button ${button.id}: ${hasFiles}`);
                 
                 if (hasFiles) {
                     // Update button to green success state
@@ -3039,10 +3137,10 @@ async function processButtonGroup(buttons, documentType) {
                         button.innerHTML = originalText.replace(/>([^<]+)</, '>$1 ✓<');
                     }
                     
-                    console.log(`✅ Updated ${documentType} button ${button.id} to success state`);
+                    console.log(`SUCCESS Updated ${documentType} button ${button.id} to success state`);
                 }
             } catch (error) {
-                console.error(`❌ Error processing ${documentType} button ${button.id}:`, error);
+                console.error(`ERROR Error processing ${documentType} button ${button.id}:`, error);
             }
         }));
         
@@ -3083,7 +3181,7 @@ async function checkFilesExist(clientName, inspectionDate, documentType, inspect
         clearTimeout(timeoutId);
         
         if (!response.ok) {
-            console.error(`❌ Failed to check files for ${documentType}:`, response.status);
+            console.error(`ERROR Failed to check files for ${documentType}:`, response.status);
             return false;
         }
         
@@ -3091,17 +3189,17 @@ async function checkFilesExist(clientName, inspectionDate, documentType, inspect
         
         if (data.success && data.files) {
             const files = data.files[documentType] || [];
-            console.log(`🔍 Found ${files.length} ${documentType} files for ${clientName} on ${inspectionDate}`);
+            console.log(`DEBUG Found ${files.length} ${documentType} files for ${clientName} on ${inspectionDate}`);
             return files.length > 0;
         }
         
-        console.log(`🔍 No files found for ${documentType} - ${clientName} on ${inspectionDate}`);
+        console.log(`DEBUG No files found for ${documentType} - ${clientName} on ${inspectionDate}`);
         return false;
     } catch (error) {
         if (error.name === 'AbortError') {
-            console.warn(`⏰ Timeout checking files for ${documentType} - ${clientName} on ${inspectionDate}`);
+            console.warn(`TIMER Timeout checking files for ${documentType} - ${clientName} on ${inspectionDate}`);
         } else {
-            console.error(`❌ Error checking files for ${documentType}:`, error);
+            console.error(`ERROR Error checking files for ${documentType}:`, error);
         }
         return false;
     }
@@ -3109,10 +3207,22 @@ async function checkFilesExist(clientName, inspectionDate, documentType, inspect
 
 // Process RFI buttons to check for existing files and set colors - SIMPLE VERSION
 async function processRFIButtons(rfiButtons) {
-    console.log(`🔍 Processing ${rfiButtons.length} RFI buttons...`);
+    console.log(`DEBUG Processing ${rfiButtons.length} RFI buttons...`);
     
     for (const button of rfiButtons) {
         const buttonId = button.id;
+        
+        // Skip buttons that were just marked as file-deleted to prevent race condition
+        const fileDeleted = button.getAttribute('data-file-deleted');
+        const lastUpdated = button.getAttribute('data-last-updated');
+        if (fileDeleted === 'true' && lastUpdated) {
+            const timeSinceUpdate = Date.now() - parseInt(lastUpdated);
+            if (timeSinceUpdate < 5000) { // Skip if updated within last 5 seconds
+                console.log(`SKIP Skipping ${buttonId} - recently marked as file-deleted`);
+                continue;
+            }
+        }
+        
         const groupId = buttonId.replace('rfi-', '');
         
         // Extract client name and date from groupId
@@ -3134,7 +3244,7 @@ async function processRFIButtons(rfiButtons) {
             clientName = clientName.replace(/_/g, ' ');
         }
         
-        console.log(`🔍 Checking RFI files for: ${clientName} on ${inspectionDate}`);
+        console.log(`DEBUG Checking RFI files for: ${clientName} on ${inspectionDate}`);
         
         try {
             // Check if RFI files exist
@@ -3155,7 +3265,7 @@ async function processRFIButtons(rfiButtons) {
                 const data = await response.json();
                 if (data.success && data.files) {
                     const hasRFI = data.files.rfi && data.files.rfi.length > 0;
-                    console.log(`🔍 RFI file check result for ${clientName}: ${hasRFI}`);
+                    console.log(`DEBUG RFI file check result for ${clientName}: ${hasRFI}`);
                     
                     if (hasRFI) {
                         // Update to green success state
@@ -3167,7 +3277,7 @@ async function processRFIButtons(rfiButtons) {
                         button.innerHTML = 'RFI ✓';
                         button.title = 'RFI file exists';
                         button.onclick = null;
-                        console.log(`✅ Updated RFI button to GREEN for: ${clientName}`);
+                        console.log(`SUCCESS Updated RFI button to GREEN for: ${clientName}`);
                     } else {
                         // Update to grey state (no file)
                         button.disabled = false;
@@ -3178,29 +3288,429 @@ async function processRFIButtons(rfiButtons) {
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI file';
                         button.onclick = () => uploadRFI(groupId);
-                        console.log(`⚪ Updated RFI button to GREY for: ${clientName}`);
+                        console.log(`GREY Updated RFI button to GREY for: ${clientName}`);
                     }
                 }
             } else {
                 console.warn(`⚠️ Failed to check RFI files for ${clientName}: ${response.status}`);
             }
         } catch (error) {
-            console.error(`❌ Error checking RFI files for ${clientName}:`, error);
+            console.error(`ERROR Error checking RFI files for ${clientName}:`, error);
         }
         
         // Small delay between requests
         await new Promise(resolve => setTimeout(resolve, 50));
     }
     
-    console.log('✅ RFI button processing complete');
+    console.log('SUCCESS RFI button processing complete');
+}
+
+// IMMEDIATE TARGETED RFI BUTTON CHECK - For specific inspection after file deletion
+function immediateRFIButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted RFI check for: ${clientName} on ${inspectionDate}`);
+    
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+        
+        // Make immediate API call to check RFI status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasRFI = result.files.rfi && result.files.rfi.length > 0;
+                console.log(`🎯 [IMMEDIATE] RFI file check result for ${clientName}: ${hasRFI}`);
+                
+                const buttonId = 'rfi-' + groupId;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    if (hasRFI) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'RFI ✓';
+                        button.title = 'RFI file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated RFI button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'RFI';
+                        button.title = 'Upload RFI file';
+                        button.onclick = () => uploadRFI(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated RFI button to GREY for: ${clientName}`);
+                    }
+                    
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] RFI button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking RFI files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
+}
+
+// IMMEDIATE TARGETED INVOICE BUTTON CHECK - For specific inspection after file deletion
+function immediateInvoiceButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted Invoice check for: ${clientName} on ${inspectionDate}`);
+    
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+        
+        // Make immediate API call to check Invoice status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasInvoice = result.files.invoice && result.files.invoice.length > 0;
+                console.log(`🎯 [IMMEDIATE] Invoice file check result for ${clientName}: ${hasInvoice}`);
+                
+                const buttonId = 'invoice-' + groupId;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    if (hasInvoice) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Invoice ✓';
+                        button.title = 'Invoice file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated Invoice button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Invoice';
+                        button.title = 'Upload Invoice file';
+                        button.onclick = () => uploadInvoice(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated Invoice button to GREY for: ${clientName}`);
+                    }
+                    
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] Invoice button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking Invoice files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
+}
+
+// IMMEDIATE TARGETED LAB BUTTON CHECK - For specific inspection after file deletion
+function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted Lab check for: ${clientName} on ${inspectionDate}`);
+    
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+        
+        // Make immediate API call to check Lab status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasLab = result.files.lab && result.files.lab.length > 0;
+                console.log(`🎯 [IMMEDIATE] Lab file check result for ${clientName}: ${hasLab}`);
+                
+                const buttonId = 'lab-' + groupId;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    if (hasLab) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Lab ✓';
+                        button.title = 'Lab file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated Lab button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Lab';
+                        button.title = 'Upload Lab file';
+                        button.onclick = () => uploadLab(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated Lab button to GREY for: ${clientName}`);
+                    }
+                    
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] Lab button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking Lab files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
+}
+
+// IMMEDIATE TARGETED RETEST BUTTON CHECK - For specific inspection after file deletion
+function immediateRetestButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted Retest check for: ${clientName} on ${inspectionDate}`);
+    
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+        
+        // Make immediate API call to check Retest status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasRetest = result.files.retest && result.files.retest.length > 0;
+                console.log(`🎯 [IMMEDIATE] Retest file check result for ${clientName}: ${hasRetest}`);
+                
+                const buttonId = 'retest-' + groupId;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    if (hasRetest) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Retest ✓';
+                        button.title = 'Retest file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated Retest button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Retest';
+                        button.title = 'Upload Retest file';
+                        button.onclick = () => uploadRetest(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated Retest button to GREY for: ${clientName}`);
+                    }
+                    
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] Retest button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking Retest files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
+}
+
+// IMMEDIATE TARGETED LAB FORM BUTTON CHECK - For specific inspection after file deletion
+function immediateLabFormButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted Lab Form check for: ${clientName} on ${inspectionDate}`);
+    
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+        
+        // Make immediate API call to check Lab Form status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasLabForm = result.files.lab_form && result.files.lab_form.length > 0;
+                console.log(`🎯 [IMMEDIATE] Lab Form file check result for ${clientName}: ${hasLabForm}`);
+                
+                const buttonId = 'lab-form-' + groupId;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    if (hasLabForm) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Lab Form ✓';
+                        button.title = 'Lab Form file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated Lab Form button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Lab Form';
+                        button.title = 'Upload Lab Form file';
+                        button.onclick = () => uploadLabForm(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated Lab Form button to GREY for: ${clientName}`);
+                    }
+                    
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] Lab Form button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking Lab Form files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
 }
 
 // SIMPLE RFI BUTTON INITIALIZATION - Direct and fast
 async function initializeRFIButtonsSimple() {
-    console.log('🔍 [SIMPLE] Initializing RFI buttons...');
+    console.log('DEBUG [SIMPLE] Initializing RFI buttons...');
     
     const rfiButtons = document.querySelectorAll('button[id^="rfi-"]');
-    console.log(`🔍 [SIMPLE] Found ${rfiButtons.length} RFI buttons`);
+    console.log(`DEBUG [SIMPLE] Found ${rfiButtons.length} RFI buttons`);
     
     for (const button of rfiButtons) {
         const buttonId = button.id;
@@ -3249,7 +3759,7 @@ async function initializeRFIButtonsSimple() {
                         button.innerHTML = 'RFI ✓';
                         button.title = 'RFI file exists';
                         button.onclick = null;
-                        console.log(`✅ [SIMPLE] Set ${clientName} RFI button to GREEN`);
+                        console.log(`SUCCESS [SIMPLE] Set ${clientName} RFI button to GREEN`);
                     } else {
                         // GREY - No RFI file
                         button.disabled = false;
@@ -3260,24 +3770,24 @@ async function initializeRFIButtonsSimple() {
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI file';
                         button.onclick = () => uploadRFI(groupId);
-                        console.log(`⚪ [SIMPLE] Set ${clientName} RFI button to GREY`);
+                        console.log(`GREY [SIMPLE] Set ${clientName} RFI button to GREY`);
                     }
                 }
             }
         } catch (error) {
-            console.error(`❌ [SIMPLE] Error checking RFI for ${clientName}:`, error);
+            console.error(`ERROR [SIMPLE] Error checking RFI for ${clientName}:`, error);
         }
     }
     
-    console.log('✅ [SIMPLE] RFI button initialization complete');
+    console.log('SUCCESS [SIMPLE] RFI button initialization complete');
 }
 
 // SIMPLE INVOICE BUTTON INITIALIZATION - Direct and fast
 async function initializeInvoiceButtonsSimple() {
-    console.log('🔍 [SIMPLE] Initializing Invoice buttons...');
+    console.log('DEBUG [SIMPLE] Initializing Invoice buttons...');
     
     const invoiceButtons = document.querySelectorAll('button[id^="invoice-"]');
-    console.log(`🔍 [SIMPLE] Found ${invoiceButtons.length} Invoice buttons`);
+    console.log(`DEBUG [SIMPLE] Found ${invoiceButtons.length} Invoice buttons`);
     
     for (const button of invoiceButtons) {
         const buttonId = button.id;
@@ -3326,7 +3836,7 @@ async function initializeInvoiceButtonsSimple() {
                         button.innerHTML = 'Invoice ✓';
                         button.title = 'Invoice file exists';
                         button.onclick = null;
-                        console.log(`✅ [SIMPLE] Set ${clientName} Invoice button to GREEN`);
+                        console.log(`SUCCESS [SIMPLE] Set ${clientName} Invoice button to GREEN`);
                     } else {
                         // GREY - No Invoice file
                         button.disabled = false;
@@ -3337,16 +3847,16 @@ async function initializeInvoiceButtonsSimple() {
                         button.innerHTML = 'Invoice';
                         button.title = 'Upload Invoice file';
                         button.onclick = () => uploadInvoice(groupId);
-                        console.log(`⚪ [SIMPLE] Set ${clientName} Invoice button to GREY`);
+                        console.log(`GREY [SIMPLE] Set ${clientName} Invoice button to GREY`);
                     }
                 }
             }
         } catch (error) {
-            console.error(`❌ [SIMPLE] Error checking Invoice for ${clientName}:`, error);
+            console.error(`ERROR [SIMPLE] Error checking Invoice for ${clientName}:`, error);
         }
     }
     
-    console.log('✅ [SIMPLE] Invoice button initialization complete');
+    console.log('SUCCESS [SIMPLE] Invoice button initialization complete');
 }
 
 // Simple function to immediately make View Files button ORANGE after file upload
@@ -3445,7 +3955,7 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
 
 // Immediately update View Files button after file deletion without backend check
 function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
-    console.log(`🎨 [IMMEDIATE] Updating View Files button for ${clientName} on ${inspectionDate} after file deletion`);
+    console.log(`COLOR [IMMEDIATE] Updating View Files button for ${clientName} on ${inspectionDate} after file deletion`);
     
     // Clean the inspection date - handle both escaped and unescaped formats
     let cleanDate = inspectionDate;
@@ -3473,13 +3983,13 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
                dataInspectionDate === cleanDate;
     });
     
-    console.log(`🔍 [IMMEDIATE] Found ${matchingButtons.length} View Files buttons for ${clientName} on ${cleanDate}`);
+    console.log(`DEBUG [IMMEDIATE] Found ${matchingButtons.length} View Files buttons for ${clientName} on ${cleanDate}`);
     
     // Debug: Log all buttons to see what we're working with
     if (matchingButtons.length === 0) {
-        console.log(`🔍 [DEBUG] No matching buttons found. Searching all buttons...`);
+        console.log(`DEBUG [DEBUG] No matching buttons found. Searching all buttons...`);
         const allButtons = document.querySelectorAll('button');
-        console.log(`🔍 [DEBUG] Total buttons found: ${allButtons.length}`);
+        console.log(`DEBUG [DEBUG] Total buttons found: ${allButtons.length}`);
         
         allButtons.forEach((button, index) => {
             const buttonText = button.textContent.trim();
@@ -3487,12 +3997,12 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
             
             if (buttonText.includes('Files')) {
-                console.log(`🔍 [DEBUG] Button ${index}: text="${buttonText}", data-client-name="${dataClientName}", data-inspection-date="${dataInspectionDate}"`);
+                console.log(`DEBUG [DEBUG] Button ${index}: text="${buttonText}", data-client-name="${dataClientName}", data-inspection-date="${dataInspectionDate}"`);
             }
         });
         
         // Fallback: Try to find buttons by partial matching with better date handling
-        console.log(`🔍 [DEBUG] Trying fallback search with partial matching...`);
+        console.log(`DEBUG [DEBUG] Trying fallback search with partial matching...`);
         const fallbackButtons = Array.from(allButtons).filter(button => {
             const buttonText = button.textContent.trim();
             const dataClientName = button.getAttribute('data-client-name') || '';
@@ -3512,7 +4022,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         });
         
         if (fallbackButtons.length > 0) {
-            console.log(`🔍 [DEBUG] Found ${fallbackButtons.length} buttons with fallback search`);
+            console.log(`DEBUG [DEBUG] Found ${fallbackButtons.length} buttons with fallback search`);
             matchingButtons.push(...fallbackButtons);
         }
     }
@@ -3555,7 +4065,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             
             // Update the button colors immediately - bypass the skip logic for file deletion
             matchingButtons.forEach(button => {
-                console.log(`🎨 [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
+                console.log(`COLOR [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
                 
                 // Remove existing color classes including the problematic btn-files-none
                 button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
@@ -3572,7 +4082,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
                             statusIcon.className = 'fas fa-check-circle';
                             statusIcon.style.color = '#059669';
                         }
-                        console.log('   ✅ Applied GREEN color to button');
+                        console.log('   SUCCESS Applied GREEN color to button');
                         break;
                     case 'compliance_only':
                         button.classList.add('btn-view-files-orange');
@@ -3611,7 +4121,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             // No files found - set to red
             console.log(`📊 [IMMEDIATE] No files found after deletion - setting to no_files`);
             matchingButtons.forEach(button => {
-                console.log(`🎨 [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
+                console.log(`COLOR [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
                 
                 // Remove existing color classes including the problematic btn-files-none
                 button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
@@ -3631,10 +4141,10 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         }
     })
     .catch(error => {
-        console.error(`❌ [IMMEDIATE] Error checking file status after deletion:`, error);
+        console.error(`ERROR [IMMEDIATE] Error checking file status after deletion:`, error);
         // Fallback to no_files status
         matchingButtons.forEach(button => {
-            console.log(`🎨 [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
+            console.log(`COLOR [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
             
             // Remove existing color classes including the problematic btn-files-none
             button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
@@ -3656,7 +4166,13 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
 
 // Update button state after file deletion
 function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
-    console.log(`🔄 Updating ${documentType} button after deletion for ${clientName}`);
+    console.log(`INFO Updating ${documentType} button after deletion for ${clientName}`);
+    
+    // For lab, lab form, and retest buttons, we need to find the specific inspection ID from the file path
+    if (documentType === 'lab' || documentType === 'lab_form' || documentType === 'retest') {
+        console.log(`INFO ${documentType} button deletion - specific button should already be reset by immediate reset above`);
+        return; // Skip for now, the immediate reset above should handle it
+    }
     
     // Use the current group ID from the popup context
     const groupId = window.currentFilesGroupId;
@@ -3666,7 +4182,7 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     }
     
     const buttonId = `${documentType}-${groupId}`;
-    console.log(`🔍 Looking for button with ID: ${buttonId}`);
+    console.log(`DEBUG Looking for button with ID: ${buttonId}`);
     
     // Try multiple methods to find the button
     let button = null;
@@ -3674,17 +4190,17 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     // Method 1: Direct ID lookup
     button = document.getElementById(buttonId);
     if (button) {
-        console.log(`✅ Found button by direct ID: ${buttonId}`);
+        console.log(`SUCCESS Found button by direct ID: ${buttonId}`);
     } else {
         // Method 2: Search all buttons with pattern
-        console.log(`🔍 Button not found by ID, searching by pattern...`);
+        console.log(`DEBUG Button not found by ID, searching by pattern...`);
         const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
-        console.log(`🔍 Found ${allButtons.length} buttons with pattern "${documentType}-"`);
+        console.log(`DEBUG Found ${allButtons.length} buttons with pattern "${documentType}-"`);
         
         for (let btn of allButtons) {
             if (btn.id === buttonId) {
                 button = btn;
-                console.log(`✅ Found button by pattern search: ${btn.id}`);
+                console.log(`SUCCESS Found button by pattern search: ${btn.id}`);
                 break;
             }
         }
@@ -3692,13 +4208,13 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     
     // Method 3: Search in all tables and modals
     if (!button) {
-        console.log(`🔍 Button still not found, searching in all containers...`);
+        console.log(`DEBUG Button still not found, searching in all containers...`);
         const containers = document.querySelectorAll('table, .modal, .popup, [id*="detail"]');
         for (let container of containers) {
             const foundButton = container.querySelector(`#${buttonId}`);
             if (foundButton) {
                 button = foundButton;
-                console.log(`✅ Found button in container: ${container.tagName} ${container.className || container.id}`);
+                console.log(`SUCCESS Found button in container: ${container.tagName} ${container.className || container.id}`);
                 break;
             }
         }
@@ -3706,19 +4222,19 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     
     // Method 4: Search by data attributes
     if (!button) {
-        console.log(`🔍 Searching by data attributes...`);
+        console.log(`DEBUG Searching by data attributes...`);
         const buttonsWithData = document.querySelectorAll(`button[data-client-name="${clientName}"], button[data-inspection-date*="${inspectionDate}"]`);
         for (let btn of buttonsWithData) {
             if (btn.id.includes(documentType) && btn.id.includes(groupId.split('_')[0])) {
                 button = btn;
-                console.log(`✅ Found button by data attributes: ${btn.id}`);
+                console.log(`SUCCESS Found button by data attributes: ${btn.id}`);
                 break;
             }
         }
     }
     
     if (button) {
-        console.log(`✅ Found ${documentType} button: ${buttonId}`);
+        console.log(`SUCCESS Found ${documentType} button: ${buttonId}`);
             
             // Reset button to default state (no files)
             button.disabled = false;
@@ -3741,10 +4257,10 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
                 button.onclick = function() { uploadInvoice(groupId); };
             }
             
-        console.log(`✅ ${documentType.toUpperCase()} button reset to uploadable state for ${clientName}`);
+        console.log(`SUCCESS ${documentType.toUpperCase()} button reset to uploadable state for ${clientName}`);
     } else {
         console.log(`⚠️ Button still not found: ${buttonId}`);
-        console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
+        console.log(`DEBUG Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
         
         // Store the update for when the popup closes
         if (!window.pendingButtonUpdates) {
@@ -3766,7 +4282,7 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     
     // Force refresh the View Files popup to show updated file count
     if (window.currentFilesClient && window.currentFilesDate) {
-        console.log(`🔄 Refreshing View Files popup to show updated file count`);
+        console.log(`INFO Refreshing View Files popup to show updated file count`);
         setTimeout(() => {
             openFilesPopup(groupId, window.currentFilesClient, window.currentFilesDate);
         }, 500);
@@ -3776,13 +4292,13 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
 // Refresh inspection data for a specific inspection (like page refresh but targeted)
 async function refreshInspectionData(groupId, clientName, inspectionDate) {
     try {
-        console.log(`🔄 Refreshing inspection data for: ${clientName} on ${inspectionDate}`);
+        console.log(`INFO Refreshing inspection data for: ${clientName} on ${inspectionDate}`);
         
         // Clean the client name and date
         const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
         const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
         
-        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        console.log(`DEBUG Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
         
         // Make API call to get fresh file data for this inspection
         const response = await fetch('/inspections/files/', {
@@ -3799,18 +4315,18 @@ async function refreshInspectionData(groupId, clientName, inspectionDate) {
         });
         
         if (!response.ok) {
-            console.error('❌ Failed to refresh inspection files:', response.status);
+            console.error('ERROR Failed to refresh inspection files:', response.status);
             return;
         }
         
         const data = await response.json();
-        console.log(`🔄 Fresh inspection data received:`, data);
+        console.log(`INFO Fresh inspection data received:`, data);
         
         if (data.success && data.files) {
             const rfiFiles = data.files.rfi || [];
             const invoiceFiles = data.files.invoice || [];
             
-            console.log(`🔄 Found ${rfiFiles.length} RFI files and ${invoiceFiles.length} Invoice files`);
+            console.log(`INFO Found ${rfiFiles.length} RFI files and ${invoiceFiles.length} Invoice files`);
             
             // Update RFI button based on file count
             await updateButtonForInspection(groupId, 'rfi', rfiFiles.length > 0, clientName);
@@ -3818,17 +4334,17 @@ async function refreshInspectionData(groupId, clientName, inspectionDate) {
             // Update Invoice button based on file count
             await updateButtonForInspection(groupId, 'invoice', invoiceFiles.length > 0, clientName);
             
-            console.log(`✅ Inspection data refreshed for ${clientName}`);
+            console.log(`SUCCESS Inspection data refreshed for ${clientName}`);
         }
     } catch (error) {
-        console.error('❌ Error refreshing inspection data:', error);
+        console.error('ERROR Error refreshing inspection data:', error);
     }
 }
 
 // Update a specific button for an inspection based on file existence
 async function updateButtonForInspection(groupId, buttonType, hasFiles, clientName) {
     const buttonId = `${buttonType}-${groupId}`;
-    console.log(`🔄 Updating ${buttonType} button: ${buttonId}, hasFiles: ${hasFiles}`);
+    console.log(`INFO Updating ${buttonType} button: ${buttonId}, hasFiles: ${hasFiles}`);
     
     // Try multiple methods to find the button with retries
     let button = null;
@@ -3837,12 +4353,12 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
     
     while (!button && attempts < maxAttempts) {
         attempts++;
-        console.log(`🔍 Attempt ${attempts} to find ${buttonType} button: ${buttonId}`);
+        console.log(`DEBUG Attempt ${attempts} to find ${buttonType} button: ${buttonId}`);
         
         // Method 1: Direct ID search
         button = document.getElementById(buttonId);
         if (button) {
-            console.log(`✅ Found ${buttonType} button by direct ID on attempt ${attempts}`);
+            console.log(`SUCCESS Found ${buttonType} button by direct ID on attempt ${attempts}`);
             break;
         }
         
@@ -3850,7 +4366,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
         const allButtons = Array.from(document.querySelectorAll('button'));
         button = allButtons.find(b => b.id === buttonId);
         if (button) {
-            console.log(`✅ Found ${buttonType} button by searching all buttons on attempt ${attempts}`);
+            console.log(`SUCCESS Found ${buttonType} button by searching all buttons on attempt ${attempts}`);
             break;
         }
         
@@ -3860,7 +4376,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
             (b.id.includes(buttonType) || b.innerHTML.toLowerCase().includes(buttonType))
         );
         if (button) {
-            console.log(`✅ Found ${buttonType} button by group ID pattern on attempt ${attempts}`);
+            console.log(`SUCCESS Found ${buttonType} button by group ID pattern on attempt ${attempts}`);
             break;
         }
         
@@ -3871,7 +4387,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
                 b.id.includes(groupId)
             );
             if (button) {
-                console.log(`✅ Found ${buttonType} button by Developer text search on attempt ${attempts}`);
+                console.log(`SUCCESS Found ${buttonType} button by Developer text search on attempt ${attempts}`);
                 break;
             }
         }
@@ -3879,10 +4395,10 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
         // Method 5: Search for any button with the group ID
         button = allButtons.find(b => b.id.includes(groupId));
         if (button) {
-            console.log(`✅ Found button with group ID on attempt ${attempts}: ${button.id}`);
+            console.log(`SUCCESS Found button with group ID on attempt ${attempts}: ${button.id}`);
             // Check if this might be the right button type
             if (button.id.includes(buttonType) || button.innerHTML.toLowerCase().includes(buttonType)) {
-                console.log(`✅ This appears to be the ${buttonType} button`);
+                console.log(`SUCCESS This appears to be the ${buttonType} button`);
                 break;
             } else {
                 console.log(`⚠️ Found group button but not ${buttonType} type: ${button.id}`);
@@ -3898,11 +4414,11 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
     }
     
     if (button) {
-        console.log(`✅ Found ${buttonType} button: ${button.id}`);
+        console.log(`SUCCESS Found ${buttonType} button: ${button.id}`);
         
         if (hasFiles) {
             // Files exist - button should show uploader's name (or stay as is if already showing name)
-            console.log(`🔍 Button current innerHTML: "${button.innerHTML}", expected: "${buttonType.toUpperCase()}"`);
+            console.log(`DEBUG Button current innerHTML: "${button.innerHTML}", expected: "${buttonType.toUpperCase()}"`);
             if (button.innerHTML === buttonType.toUpperCase()) {
                 // Button is still showing "RFI" or "Invoice" - update to show uploader
                 button.disabled = true;
@@ -3914,7 +4430,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
                 button.innerHTML = 'Developer'; // Or get actual uploader name
                 button.title = `${buttonType.toUpperCase()} uploaded by Developer`;
                 button.onclick = null;
-                console.log(`✅ Updated ${buttonType} button to show uploaded state`);
+                console.log(`SUCCESS Updated ${buttonType} button to show uploaded state`);
             } else {
                 console.log(`ℹ️ ${buttonType} button already shows uploader name: "${button.innerHTML}"`);
             }
@@ -3937,14 +4453,14 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
                 button.onclick = function() { uploadInvoice(groupId); };
             }
             
-            console.log(`✅ Reset ${buttonType} button to uploadable state`);
+            console.log(`SUCCESS Reset ${buttonType} button to uploadable state`);
         }
     } else {
         console.log(`⚠️ ${buttonType} button not found: ${buttonId}`);
         
         // Enhanced debugging - show all available buttons
         const allButtons = Array.from(document.querySelectorAll('button'));
-        console.log(`🔍 All available buttons:`, allButtons.map(b => ({
+        console.log(`DEBUG All available buttons:`, allButtons.map(b => ({
             id: b.id,
             text: b.innerHTML.trim(),
             classes: b.className,
@@ -3957,7 +4473,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
         const shipmentsTable = document.getElementById('shipmentsTable');
         if (shipmentsTable) {
             const tableButtons = Array.from(shipmentsTable.querySelectorAll('button'));
-            console.log(`🔍 Buttons in shipments table:`, tableButtons.map(b => ({
+            console.log(`DEBUG Buttons in shipments table:`, tableButtons.map(b => ({
                 id: b.id,
                 text: b.innerHTML.trim(),
                 classes: b.className,
@@ -3973,7 +4489,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
             b.id.includes(buttonType) ||
             b.innerHTML.toLowerCase().includes(buttonType)
         );
-        console.log(`🔍 Similar buttons found:`, similarButtons.map(b => ({
+        console.log(`DEBUG Similar buttons found:`, similarButtons.map(b => ({
             id: b.id,
             text: b.innerHTML.trim(),
             classes: b.className
@@ -3981,7 +4497,7 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
         
         // Look specifically for any RFI buttons
         const rfiButtons = allButtons.filter(b => b.id.toLowerCase().includes('rfi'));
-        console.log(`🔍 All RFI buttons found:`, rfiButtons.map(b => ({
+        console.log(`DEBUG All RFI buttons found:`, rfiButtons.map(b => ({
             id: b.id,
             text: b.innerHTML.trim(),
             classes: b.className,
@@ -3993,13 +4509,13 @@ async function updateButtonForInspection(groupId, buttonType, hasFiles, clientNa
 // Check specific inspection for RFI files and update button accordingly
 async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionDate) {
     try {
-        console.log(`🔍 Checking RFI status for specific inspection: ${clientName} on ${inspectionDate}`);
+        console.log(`DEBUG Checking RFI status for specific inspection: ${clientName} on ${inspectionDate}`);
         
         // Clean the client name and date
         const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
         const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
         
-        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        console.log(`DEBUG Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
         
         // Make API call to check files for this specific inspection
         const response = await fetch('/inspections/files/', {
@@ -4016,32 +4532,32 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
         });
         
         if (!response.ok) {
-            console.error('❌ Failed to check inspection files:', response.status);
+            console.error('ERROR Failed to check inspection files:', response.status);
             return;
         }
         
         const data = await response.json();
-        console.log(`🔍 File check response for ${clientName}:`, data);
-        console.log(`🔍 Full API response:`, JSON.stringify(data, null, 2));
+        console.log(`DEBUG File check response for ${clientName}:`, data);
+        console.log(`DEBUG Full API response:`, JSON.stringify(data, null, 2));
         
         if (data.success && data.files) {
             const rfiFiles = data.files.rfi || [];
-            console.log(`🔍 Found ${rfiFiles.length} RFI files for ${clientName}`);
-            console.log(`🔍 RFI files:`, rfiFiles);
-            console.log(`🔍 All files object:`, data.files);
+            console.log(`DEBUG Found ${rfiFiles.length} RFI files for ${clientName}`);
+            console.log(`DEBUG RFI files:`, rfiFiles);
+            console.log(`DEBUG All files object:`, data.files);
             
             // Find the RFI button for this specific inspection
             const buttonId = `rfi-${groupId}`;
-            console.log(`🔍 Looking for RFI button with ID: ${buttonId}`);
+            console.log(`DEBUG Looking for RFI button with ID: ${buttonId}`);
             const button = document.getElementById(buttonId);
             
             if (button) {
-                console.log(`✅ Found RFI button: ${buttonId}`);
-                console.log(`🔍 Current button state - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
+                console.log(`SUCCESS Found RFI button: ${buttonId}`);
+                console.log(`DEBUG Current button state - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
                 
                 if (rfiFiles.length === 0) {
                     // No RFI files - reset button to "RFI"
-                    console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                    console.log(`INFO No RFI files found - resetting button to "RFI" for ${clientName}`);
                     button.disabled = false;
                     button.classList.remove('uploaded');
                     button.classList.add('btn-rfi', 'btn-sm');
@@ -4055,29 +4571,29 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                     // Re-enable onclick functionality
                     button.onclick = function() { uploadRFI(groupId); };
                     
-                    console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
-                    console.log(`🔍 Button after reset - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
+                    console.log(`SUCCESS Reset RFI button to "RFI" for ${clientName}`);
+                    console.log(`DEBUG Button after reset - disabled: ${button.disabled}, innerHTML: "${button.innerHTML}"`);
                 } else {
                     // RFI files exist - button should show uploader's name
                     console.log(`ℹ️ RFI files exist - button should already show uploader's name for ${clientName}`);
                 }
             } else {
                 console.log(`⚠️ RFI button not found for ${clientName}: ${buttonId}`);
-                console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes('rfi')));
-                console.log(`🔍 All buttons with 'rfi' in ID:`, Array.from(document.querySelectorAll('button[id*="rfi"]')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                console.log(`DEBUG Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes('rfi')));
+                console.log(`DEBUG All buttons with 'rfi' in ID:`, Array.from(document.querySelectorAll('button[id*="rfi"]')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
                 
                 // Try to find button by searching in the main table
-                console.log(`🔍 Trying to find button in main table...`);
+                console.log(`DEBUG Trying to find button in main table...`);
                 const mainTable = document.querySelector('table.table');
                 if (mainTable) {
-                    console.log(`🔍 Main table found, searching for button...`);
+                    console.log(`DEBUG Main table found, searching for button...`);
                     const tableButton = mainTable.querySelector(`#${buttonId}`);
                     if (tableButton) {
-                        console.log(`✅ Found RFI button in main table: ${buttonId}`);
+                        console.log(`SUCCESS Found RFI button in main table: ${buttonId}`);
                         const button = tableButton;
                         
                         if (rfiFiles.length === 0) {
-                            console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                            console.log(`INFO No RFI files found - resetting button to "RFI" for ${clientName}`);
                             button.disabled = false;
                             button.classList.remove('uploaded');
                             button.classList.add('btn-rfi', 'btn-sm');
@@ -4088,29 +4604,29 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                             button.innerHTML = 'RFI';
                             button.title = 'Upload RFI';
                             button.onclick = function() { uploadRFI(groupId); };
-                            console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                            console.log(`SUCCESS Reset RFI button to "RFI" for ${clientName}`);
                         }
                     } else {
                         console.log(`⚠️ Button still not found in main table`);
-                        console.log(`🔍 All buttons in main table:`, Array.from(mainTable.querySelectorAll('button')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                        console.log(`DEBUG All buttons in main table:`, Array.from(mainTable.querySelectorAll('button')).map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
                     }
                 } else {
                     console.log(`⚠️ Main table not found`);
                 }
                 
                 // Try to find button by searching for any button with the group ID
-                console.log(`🔍 Trying to find button by group ID pattern...`);
+                console.log(`DEBUG Trying to find button by group ID pattern...`);
                 const groupButtons = Array.from(document.querySelectorAll('button')).filter(b => b.id.includes(groupId));
-                console.log(`🔍 Buttons containing group ID ${groupId}:`, groupButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                console.log(`DEBUG Buttons containing group ID ${groupId}:`, groupButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
                 
                 // Check if any of these group buttons is the RFI button
                 const rfiGroupButton = groupButtons.find(b => b.id.includes('rfi'));
                 if (rfiGroupButton) {
-                    console.log(`✅ Found RFI button in group buttons:`, rfiGroupButton.id);
+                    console.log(`SUCCESS Found RFI button in group buttons:`, rfiGroupButton.id);
                     const button = rfiGroupButton;
                     
                     if (rfiFiles.length === 0) {
-                        console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                        console.log(`INFO No RFI files found - resetting button to "RFI" for ${clientName}`);
                         button.disabled = false;
                         button.classList.remove('uploaded');
                         button.classList.add('btn-rfi', 'btn-sm');
@@ -4121,27 +4637,27 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI';
                         button.onclick = function() { uploadRFI(groupId); };
-                        console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                        console.log(`SUCCESS Reset RFI button to "RFI" for ${clientName}`);
                     }
                 }
                 
                 // Try to find button by searching for buttons with 'rfi' in the text
-                console.log(`🔍 Trying to find button by text content...`);
+                console.log(`DEBUG Trying to find button by text content...`);
                 const rfiButtons = Array.from(document.querySelectorAll('button')).filter(b => 
                     b.innerHTML.toLowerCase().includes('rfi') || 
                     b.innerHTML.toLowerCase().includes('developer') ||
                     b.innerHTML.toLowerCase().includes('upload')
                 );
-                console.log(`🔍 Buttons with RFI-related text:`, rfiButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
+                console.log(`DEBUG Buttons with RFI-related text:`, rfiButtons.map(b => ({id: b.id, text: b.innerHTML, disabled: b.disabled})));
                 
                 // Check if any of these text-based buttons is the RFI button
                 const rfiTextButton = rfiButtons.find(b => b.id.includes('rfi') || b.innerHTML.toLowerCase().includes('developer'));
                 if (rfiTextButton) {
-                    console.log(`✅ Found RFI button by text search:`, rfiTextButton.id);
+                    console.log(`SUCCESS Found RFI button by text search:`, rfiTextButton.id);
                     const button = rfiTextButton;
                     
                     if (rfiFiles.length === 0) {
-                        console.log(`🔄 No RFI files found - resetting button to "RFI" for ${clientName}`);
+                        console.log(`INFO No RFI files found - resetting button to "RFI" for ${clientName}`);
                         button.disabled = false;
                         button.classList.remove('uploaded');
                         button.classList.add('btn-rfi', 'btn-sm');
@@ -4152,14 +4668,14 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI';
                         button.onclick = function() { uploadRFI(groupId); };
-                        console.log(`✅ Reset RFI button to "RFI" for ${clientName}`);
+                        console.log(`SUCCESS Reset RFI button to "RFI" for ${clientName}`);
                     }
                 }
                 
                 // Last resort: Try to find any button that might be the RFI button
-                console.log(`🔍 Last resort: Searching for any button that might be RFI...`);
+                console.log(`DEBUG Last resort: Searching for any button that might be RFI...`);
                 const allButtons = Array.from(document.querySelectorAll('button'));
-                console.log(`🔍 Total buttons found: ${allButtons.length}`);
+                console.log(`DEBUG Total buttons found: ${allButtons.length}`);
                 
                 // Look for buttons that might be RFI buttons (containing group ID or showing "Developer")
                 const potentialRfiButtons = allButtons.filter(b => 
@@ -4169,9 +4685,9 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                     b.innerHTML.toLowerCase().includes('upload')
                 );
                 
-                console.log(`🔍 Potential RFI buttons found: ${potentialRfiButtons.length}`);
+                console.log(`DEBUG Potential RFI buttons found: ${potentialRfiButtons.length}`);
                 potentialRfiButtons.forEach((btn, index) => {
-                    console.log(`🔍 Button ${index + 1}:`, {
+                    console.log(`DEBUG Button ${index + 1}:`, {
                         id: btn.id,
                         text: btn.innerHTML,
                         disabled: btn.disabled,
@@ -4187,11 +4703,11 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                 );
                 
                 if (developerButton) {
-                    console.log(`✅ Found Developer button that might be RFI:`, developerButton.id);
+                    console.log(`SUCCESS Found Developer button that might be RFI:`, developerButton.id);
                     const button = developerButton;
                     
                     if (rfiFiles.length === 0) {
-                        console.log(`🔄 No RFI files found - resetting Developer button to "RFI" for ${clientName}`);
+                        console.log(`INFO No RFI files found - resetting Developer button to "RFI" for ${clientName}`);
                         button.disabled = false;
                         button.classList.remove('uploaded');
                         button.classList.add('btn-rfi', 'btn-sm');
@@ -4202,28 +4718,28 @@ async function checkSpecificInspectionRFIStatus(groupId, clientName, inspectionD
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI';
                         button.onclick = function() { uploadRFI(groupId); };
-                        console.log(`✅ Reset Developer button to "RFI" for ${clientName}`);
+                        console.log(`SUCCESS Reset Developer button to "RFI" for ${clientName}`);
                     }
                 }
             }
         } else {
-            console.log(`❌ API call failed or no files data:`, data);
+            console.log(`ERROR API call failed or no files data:`, data);
         }
     } catch (error) {
-        console.error('❌ Error checking specific inspection RFI status:', error);
+        console.error('ERROR Error checking specific inspection RFI status:', error);
     }
 }
 
 // Check specific inspection for Invoice files and update button accordingly
 async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspectionDate) {
     try {
-        console.log(`🔍 Checking Invoice status for specific inspection: ${clientName} on ${inspectionDate}`);
+        console.log(`DEBUG Checking Invoice status for specific inspection: ${clientName} on ${inspectionDate}`);
         
         // Clean the client name and date
         const cleanClientName = clientName.replace(/[^a-zA-Z0-9\s]/g, '').trim();
         const cleanDate = inspectionDate.replace(/[^0-9-]/g, '').replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
         
-        console.log(`🔍 Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
+        console.log(`DEBUG Cleaned client name: ${cleanClientName}, Cleaned date: ${cleanDate}`);
         
         // Make API call to check files for this specific inspection
         const response = await fetch('/inspections/files/', {
@@ -4240,19 +4756,19 @@ async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspect
         });
         
         if (!response.ok) {
-            console.error('❌ Failed to check inspection files:', response.status);
+            console.error('ERROR Failed to check inspection files:', response.status);
             return;
         }
         
         const data = await response.json();
-        console.log(`🔍 File check response for ${clientName}:`, data);
-        console.log(`🔍 Full API response:`, JSON.stringify(data, null, 2));
+        console.log(`DEBUG File check response for ${clientName}:`, data);
+        console.log(`DEBUG Full API response:`, JSON.stringify(data, null, 2));
         
         if (data.success && data.files) {
             const invoiceFiles = data.files.invoice || [];
-            console.log(`🔍 Found ${invoiceFiles.length} Invoice files for ${clientName}`);
-            console.log(`🔍 Invoice files:`, invoiceFiles);
-            console.log(`🔍 All files object:`, data.files);
+            console.log(`DEBUG Found ${invoiceFiles.length} Invoice files for ${clientName}`);
+            console.log(`DEBUG Invoice files:`, invoiceFiles);
+            console.log(`DEBUG All files object:`, data.files);
             
             // Find the Invoice button for this specific inspection
             const buttonId = `invoice-${groupId}`;
@@ -4261,7 +4777,7 @@ async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspect
             if (button) {
                 if (invoiceFiles.length === 0) {
                     // No Invoice files - reset button to "Invoice"
-                    console.log(`🔄 No Invoice files found - resetting button to "Invoice" for ${clientName}`);
+                    console.log(`INFO No Invoice files found - resetting button to "Invoice" for ${clientName}`);
                     button.disabled = false;
                     button.classList.remove('uploaded');
                     button.classList.add('btn-invoice', 'btn-sm');
@@ -4275,7 +4791,7 @@ async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspect
                     // Re-enable onclick functionality
                     button.onclick = function() { uploadInvoice(groupId); };
                     
-                    console.log(`✅ Reset Invoice button to "Invoice" for ${clientName}`);
+                    console.log(`SUCCESS Reset Invoice button to "Invoice" for ${clientName}`);
                 } else {
                     // Invoice files exist - button should show uploader's name
                     console.log(`ℹ️ Invoice files exist - button should already show uploader's name for ${clientName}`);
@@ -4285,19 +4801,19 @@ async function checkSpecificInspectionInvoiceStatus(groupId, clientName, inspect
             }
         }
     } catch (error) {
-        console.error('❌ Error checking specific inspection Invoice status:', error);
+        console.error('ERROR Error checking specific inspection Invoice status:', error);
     }
 }
 
 // Process pending button updates when popup closes
 function processPendingButtonUpdates() {
     if (window.pendingButtonUpdates && window.pendingButtonUpdates.length > 0) {
-        console.log(`🔄 Processing ${window.pendingButtonUpdates.length} pending button updates`);
+        console.log(`INFO Processing ${window.pendingButtonUpdates.length} pending button updates`);
         
         window.pendingButtonUpdates.forEach(update => {
             const button = document.getElementById(update.buttonId);
             if (button) {
-                console.log(`✅ Processing pending update for: ${update.buttonId}`);
+                console.log(`SUCCESS Processing pending update for: ${update.buttonId}`);
                 
                 if (update.action === 'reset') {
                     // Reset button to uploadable state
@@ -4317,7 +4833,7 @@ function processPendingButtonUpdates() {
                         button.onclick = function() { uploadInvoice(update.groupId); };
                     }
                     
-                    console.log(`✅ Processed pending reset update for: ${update.buttonId}`);
+                    console.log(`SUCCESS Processed pending reset update for: ${update.buttonId}`);
                 } else if (update.action === 'upload') {
                     // Update button to show uploaded state with username
                     button.disabled = true;
@@ -4338,7 +4854,7 @@ function processPendingButtonUpdates() {
                     // Remove the onclick handler since button is now disabled
                     button.onclick = null;
                     
-                    console.log(`✅ Processed pending upload update for: ${update.buttonId} with username: ${update.username}`);
+                    console.log(`SUCCESS Processed pending upload update for: ${update.buttonId} with username: ${update.username}`);
                 }
             } else {
                 console.log(`⚠️ Button still not found for pending update: ${update.buttonId}`);
@@ -4347,7 +4863,7 @@ function processPendingButtonUpdates() {
         
         // Clear pending updates
         window.pendingButtonUpdates = [];
-        console.log(`✅ Cleared all pending button updates`);
+        console.log(`SUCCESS Cleared all pending button updates`);
     }
 }
 
@@ -4356,27 +4872,27 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
     console.log(`🔧 Resetting ${documentType} button immediately for group ${groupId}`);
     
     const buttonId = `${documentType}-${groupId}`;
-    console.log(`🔍 Looking for button with ID: ${buttonId}`);
+    console.log(`DEBUG Looking for button with ID: ${buttonId}`);
     
     // Try multiple methods to find the button
     let button = document.getElementById(buttonId);
     
     if (!button) {
-        console.log(`🔍 Button not found by ID, searching by pattern...`);
+        console.log(`DEBUG Button not found by ID, searching by pattern...`);
         const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
-        console.log(`🔍 Found ${allButtons.length} buttons with pattern "${documentType}-"`);
+        console.log(`DEBUG Found ${allButtons.length} buttons with pattern "${documentType}-"`);
         
         for (let btn of allButtons) {
             if (btn.id === buttonId) {
                 button = btn;
-                console.log(`✅ Found button by pattern search: ${btn.id}`);
+                console.log(`SUCCESS Found button by pattern search: ${btn.id}`);
                 break;
             }
         }
     }
     
     if (button) {
-        console.log(`✅ Found ${documentType} button: ${buttonId}`);
+        console.log(`SUCCESS Found ${documentType} button: ${buttonId}`);
         
         // Reset button to default state (uploadable)
         button.disabled = false;
@@ -4400,18 +4916,20 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadInvoice(groupId); };
         } else if (documentType === 'lab') {
             button.onclick = function() { uploadLab(groupId); };
+        } else if (documentType === 'lab_form') {
+            button.onclick = function() { uploadLabForm(groupId); };
         } else if (documentType === 'retest') {
             button.onclick = function() { uploadRetest(groupId); };
         }
         
-        console.log(`✅ ${documentType.toUpperCase()} button reset to uploadable state`);
+        console.log(`SUCCESS ${documentType.toUpperCase()} button reset to uploadable state`);
         
         // Also update any buttons in the main table (not just in popup)
         updateMainTableButtons(documentType, groupId, clientName, inspectionDate);
         
     } else {
         console.log(`⚠️ Button not found: ${buttonId}`);
-        console.log(`🔍 Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
+        console.log(`DEBUG Available buttons:`, Array.from(document.querySelectorAll('button')).map(b => b.id).filter(id => id.includes(documentType)));
         
         // Store the update for when the popup closes
         if (!window.pendingButtonUpdates) {
@@ -4443,7 +4961,7 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
     const button = groupRow.querySelector(`#${buttonId}`);
     
     if (button) {
-        console.log(`✅ Found main table button: ${buttonId}`);
+        console.log(`SUCCESS Found main table button: ${buttonId}`);
         
         // Reset button to default state
         button.disabled = false;
@@ -4467,11 +4985,13 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadInvoice(groupId); };
         } else if (documentType === 'lab') {
             button.onclick = function() { uploadLab(groupId); };
+        } else if (documentType === 'lab_form') {
+            button.onclick = function() { uploadLabForm(groupId); };
         } else if (documentType === 'retest') {
             button.onclick = function() { uploadRetest(groupId); };
         }
         
-        console.log(`✅ Main table ${documentType} button reset to uploadable state`);
+        console.log(`SUCCESS Main table ${documentType} button reset to uploadable state`);
     } else {
         console.log(`⚠️ Main table button not found: ${buttonId}`);
     }
@@ -4534,7 +5054,7 @@ async function downloadAllFiles() {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
             
-            console.log('✅ Download completed:', filename);
+            console.log('SUCCESS Download completed:', filename);
         } else {
             const errorData = await response.json();
             alert('Download failed: ' + (errorData.error || 'Unknown error'));
@@ -4678,7 +5198,7 @@ function validateRequiredFunctions() {
             return false;
         }
         
-        console.log('✅ All functions validated successfully');
+        console.log('SUCCESS All functions validated successfully');
         return true;
     } catch (error) {
         console.error('Error validating functions:', error);
