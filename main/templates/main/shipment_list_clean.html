@@ -2774,19 +2774,22 @@
             transition: all 0.2s ease;
         }
         
-        /* Product name input styling */
-        .product-name-input {
-            background-color: #e8f5e8 !important; /* Light green background for SQL Server data */
-            border-color: #28a745 !important;
+        /* Product name text styling - read-only from SQL Server */
+        .product-name-text {
+            font-size: 0.7rem;
+            color: #28a745; /* Green color to indicate SQL Server data */
             font-weight: 500;
+            text-align: left;
+            padding: 4px 6px;
+            background-color: #e8f5e8; /* Light green background */
+            border: 1px solid #28a745;
+            border-radius: 3px;
+            display: inline-block;
+            min-width: 120px;
+            max-width: 150px;
         }
         
-        .product-name-input:focus {
-            background-color: #d4edda !important;
-            border-color: #1e7e34 !important;
-            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
-        }
-        
+        /* Manual input styling - editable when no product name */
         .manual-input {
             background-color: #fff3cd !important; /* Light yellow background for manual entry */
             border-color: #ffc107 !important;
@@ -4046,18 +4049,14 @@
                                                     </td>
                                                     <td class="col-km">
                                                         {% if product.product_name %}
-                                                            <input type="text" class="km-input product-name-input" 
-                                                                   data-inspection-id="{{ product.remote_id }}" 
-                                                                   value="{{ product.product_name }}"
-                                                                   onchange="updateProductName(this)"
-                                                                   title="Product name from SQL Server - click to edit">
+                                                            <span class="product-name-text">{{ product.product_name }}</span>
                                                         {% else %}
                                                             <input type="text" class="km-input manual-input" 
                                                                    data-inspection-id="{{ product.remote_id }}" 
                                                                    value=""
                                                                    placeholder="Enter product name"
                                                                    onchange="updateProductName(this)"
-                                                                   title="Manual entry - no product name found">
+                                                                   title="Enter product name manually">
                                                         {% endif %}
                                                     </td>
                                                     <td>
