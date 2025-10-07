@@ -497,6 +497,45 @@ class ScheduledSyncService:
                 
         except Exception as e:
             return False, f"Error in {sync_type} sync: {e}"
+    
+    def get_configuration(self):
+        """Get service configuration."""
+        try:
+            settings = self.get_system_settings()
+            return {
+                'sync_interval': settings.get('sync_interval_hours', 24),
+                'google_sheets_enabled': settings.get('google_sheets_enabled', True),
+                'sql_server_enabled': settings.get('sql_server_enabled', True),
+                'is_running': self.is_running
+            }
+        except Exception as e:
+            print(f"Error getting configuration: {e}")
+            return {
+                'sync_interval': 24,
+                'google_sheets_enabled': False,
+                'sql_server_enabled': False,
+                'is_running': False
+            }
+    
+    def get_status(self):
+        """Get current service status."""
+        try:
+            self._load_stats()
+            return {
+                'running': self.is_running,
+                'last_sync_time': self.sync_stats.get('last_sync_time'),
+                'next_sync_time': self.sync_stats.get('next_sync_time'),
+                'total_syncs': self.sync_stats.get('total_syncs', 0),
+                'successful_syncs': self.sync_stats.get('successful_syncs', 0),
+                'failed_syncs': self.sync_stats.get('failed_syncs', 0),
+                'configuration': self.get_configuration()
+            }
+        except Exception as e:
+            print(f"Error getting status: {e}")
+            return {
+                'running': False,
+                'error': str(e)
+            }
 
 
 # Global service instance

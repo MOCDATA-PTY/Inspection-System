@@ -267,6 +267,9 @@ def user_login(request):
                     if user_role == 'admin':
                         # Redirect administrators to inspection page
                         return redirect('shipment_list')
+                    elif user_role == 'inspector':
+                        # Redirect inspectors to inspector dashboard
+                        return redirect('inspector_dashboard')
                     else:
                         # All other users go to home page
                         return redirect('home')
@@ -309,7 +312,18 @@ def register(request):
                     request.session['last_activity'] = timezone.now().isoformat()
                     request.session.set_expiry(0)
                     messages.success(request, f"Registration successful! Welcome, {user.username}!")
-                    return redirect('home')
+                    
+                    # Role-based redirect logic
+                    user_role = getattr(user, 'role', 'inspector')
+                    if user_role == 'admin':
+                        # Redirect administrators to inspection page
+                        return redirect('shipment_list')
+                    elif user_role == 'inspector':
+                        # Redirect inspectors to inspector dashboard
+                        return redirect('inspector_dashboard')
+                    else:
+                        # All other users go to home page
+                        return redirect('home')
                 else:
                     messages.error(request, "Registration successful but login failed. Please try logging in manually.")
                     return redirect('login')
@@ -982,10 +996,8 @@ def shipment_list(request):
         'sent_by__username', 'sent_by__first_name', 'sent_by__last_name'
     )
     
-    # Filter to only show inspections from the last 6 months
-    from datetime import datetime, timedelta
-    six_months_ago = datetime.now() - timedelta(days=180)  # Approximately 6 months
-    inspections = inspections.filter(date_of_inspection__gte=six_months_ago)
+    # All inspections are now from October 2025 onwards after cleanup
+    # No additional date filtering needed since old data has been removed
     
     # No automatic background fetching - only manual via settings button
     
@@ -2248,7 +2260,54 @@ def upload_document(request):
             # Generate unique filename with timestamp
             file_extension = os.path.splitext(uploaded_file.name)[1]
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{identifier}_{document_type}_{timestamp}{file_extension}"
+            
+            # Special naming for specific document types: Client name-date-type
+            if document_type in ['rfi', 'invoice', 'lab', 'lab_form', 'retest']:
+                # Clean client name for filename (remove special characters)
+                import re
+                clean_client_name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', client_name)
+                clean_client_name = clean_client_name.replace(' ', '-').replace('_', '-')
+                clean_client_name = re.sub(r'-+', '-', clean_client_name).strip('-')
+                
+                # Get date from group_id or inspection
+                if group_id:
+                    parts = group_id.split('_')
+                    if len(parts) >= 2:
+                        date_str = parts[-1]
+                        if len(date_str) == 8:
+                            # Convert YYYYMMDD to YYYY-MM-DD format
+                            try:
+                                date_obj = datetime.strptime(date_str, '%Y%m%d')
+                                formatted_date = date_obj.strftime('%Y-%m-%d')
+                            except ValueError:
+                                formatted_date = datetime.now().strftime('%Y-%m-%d')
+                        else:
+                            formatted_date = datetime.now().strftime('%Y-%m-%d')
+                    else:
+                        formatted_date = datetime.now().strftime('%Y-%m-%d')
+                elif inspection_id:
+                    # Get date from inspection
+                    inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
+                    if inspection and inspection.date_of_inspection:
+                        formatted_date = inspection.date_of_inspection.strftime('%Y-%m-%d')
+                    else:
+                        formatted_date = datetime.now().strftime('%Y-%m-%d')
+                else:
+                    formatted_date = datetime.now().strftime('%Y-%m-%d')
+                
+                # Map document types to their naming suffixes
+                type_mapping = {
+                    'rfi': 'rfi',
+                    'invoice': 'invoice',
+                    'lab': 'lab',
+                    'lab_form': 'lab-form',
+                    'retest': 'retest'
+                }
+                
+                type_suffix = type_mapping.get(document_type, document_type)
+                filename = f"{clean_client_name}-{formatted_date}-{type_suffix}{file_extension}"
+            else:
+                filename = f"{identifier}_{document_type}_{timestamp}{file_extension}"
             
             # Log the filename for debugging
             print(f"Generated filename: {filename}")
@@ -3698,29 +3757,22 @@ def home(request):
             return False
     
     def check_google_sheets_status():
-        """Check Google Sheets API connectivity"""
+        """Check Google Sheets API connectivity with automatic token refresh"""
         try:
             from ..services.google_sheets_service import GoogleSheetsService
-            import pickle
-            import os
             
             service = GoogleSheetsService()
-            # Try to authenticate without user interaction
-            if os.path.exists(service.token_path):
-                with open(service.token_path, 'rb') as token:
-                    creds = pickle.load(token)
-                    if creds and creds.valid:
-                        # Try to make a simple API call to verify connection
-                        try:
-                            # Use the correct method name
-                            service.authenticate()
-                            if service.service:
-                                return True
-                        except:
-                            pass
-            return False
+            is_connected, message = service.check_connection_status()
+            
+            if is_connected:
+                print(f"✅ Google Sheets: {message}")
+                return True
+            else:
+                print(f"❌ Google Sheets: {message}")
+                return False
+                
         except Exception as e:
-            print(f"Google Sheets status check failed: {e}")
+            print(f"❌ Google Sheets status check failed: {e}")
             return False
     
     
@@ -3766,8 +3818,13 @@ def home(request):
         sql_server_online = check_sql_server_status()
         cache.set('status_sql_server', sql_server_online, 30)
     
+    # Check if we should force refresh the Google Sheets status
+    force_refresh = request.GET.get('refresh_status') == 'true'
+    
     google_sheets_online = cache.get('status_google_sheets')
-    if google_sheets_online is None:
+    if google_sheets_online is None or force_refresh:
+        if force_refresh:
+            cache.delete('status_google_sheets')
         google_sheets_online = check_google_sheets_status()
         cache.set('status_google_sheets', google_sheets_online, 30)
     
@@ -3803,11 +3860,174 @@ def home(request):
 
 
 @login_required
+def inspector_dashboard(request):
+    """Display inspector-specific analytics dashboard with only their data."""
+    # Only allow inspectors to access this dashboard
+    if request.user.role != 'inspector':
+        return redirect('analytics_dashboard')
+    
+    from ..models import Client, Inspection, FoodSafetyAgencyInspection
+    from django.db.models import Count, Q
+    from datetime import datetime, timedelta
+    
+    # Get inspector's name for filtering
+    inspector_name = request.user.get_full_name() or request.user.username
+    
+    # Get inspector-specific statistics
+    inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
+        inspector_name__icontains=inspector_name
+    )
+    
+    total_inspections = inspector_inspections.count()
+    
+    # Get recent activity (last 30 days) for this inspector
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    recent_inspections = inspector_inspections.filter(
+        date_of_inspection__gte=thirty_days_ago
+    ).count()
+    
+    # Get this month's inspections for this inspector
+    current_month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    this_month_inspections = inspector_inspections.filter(
+        date_of_inspection__gte=current_month_start
+    ).count()
+    
+    # Get average inspections per month (Oct 2025 to Apr 2026) for this inspector
+    start_date = date(2025, 10, 1)
+    end_date = date(2026, 4, 1)
+    avg_monthly_inspections = inspector_inspections.filter(
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lt=end_date
+    ).count() / 6
+    
+    # Get commodity breakdown for this inspector
+    commodity_stats = inspector_inspections.values('commodity').annotate(
+        count=Count('commodity')
+    ).order_by('-count')
+    
+    # Get top clients by inspection count for this inspector
+    top_clients = inspector_inspections.values('client_name').annotate(
+        count=Count('client_name')
+    ).order_by('-count')[:10]
+    
+    # Calculate percentages for top clients
+    total_inspections_for_percentage = sum(client['count'] for client in top_clients)
+    for client in top_clients:
+        if total_inspections_for_percentage > 0:
+            client['percentage'] = (client['count'] / total_inspections_for_percentage) * 100
+        else:
+            client['percentage'] = 0
+    
+    # Get monthly trends (Oct 2025 to Apr 2026) for this inspector
+    monthly_trends = inspector_inspections.filter(
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lt=end_date
+    ).extra(
+        select={'month': "EXTRACT(month FROM date_of_inspection)"}
+    ).values('month').annotate(
+        count=Count('id')
+    ).order_by('month')
+    
+    # Convert month numbers to month names
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    for trend in monthly_trends:
+        month_num = int(trend['month']) - 1  # Convert to 0-based index
+        if 0 <= month_num < 12:
+            trend['month_name'] = month_names[month_num]
+        else:
+            trend['month_name'] = 'Unknown'
+    
+    # Get inspections over time (monthly for last 12 months) for this inspector
+    from django.db.models.functions import TruncMonth
+    monthly_inspections = inspector_inspections.filter(
+        date_of_inspection__gte=datetime.now() - timedelta(days=365)
+    ).annotate(
+        month=TruncMonth('date_of_inspection')
+    ).values('month').annotate(
+        count=Count('id')
+    ).order_by('month')
+    
+    # Get compliance statistics for this inspector
+    # Compliant inspections are those where direction is NOT present
+    compliant_inspections = inspector_inspections.filter(
+        is_direction_present_for_this_inspection=False
+    ).count()
+    
+    # Non-compliant inspections are those where direction IS present
+    non_compliant_inspections = inspector_inspections.filter(
+        is_direction_present_for_this_inspection=True
+    ).count()
+    
+    compliance_rate = 0
+    if total_inspections > 0:
+        compliance_rate = (compliant_inspections / total_inspections) * 100
+    
+    # Get recent inspections list for this inspector
+    recent_inspections_list = inspector_inspections.order_by('-date_of_inspection')[:10]
+    
+    # Simple forecasting for next 3 months for this inspector
+    if monthly_inspections:
+        # Calculate average monthly growth rate
+        recent_months = list(monthly_inspections)[-6:]  # Last 6 months
+        if len(recent_months) >= 2:
+            # Calculate average monthly change
+            total_change = recent_months[-1]['count'] - recent_months[0]['count']
+            avg_monthly_change = total_change / (len(recent_months) - 1)
+            
+            # Generate forecast for next 3 months
+            last_count = recent_months[-1]['count']
+            forecast_data = []
+            for i in range(1, 4):
+                forecast_count = max(0, last_count + (avg_monthly_change * i))
+                forecast_data.append({
+                    'month': f'Forecast {i}',
+                    'count': round(forecast_count, 0)
+                })
+        else:
+            forecast_data = []
+    else:
+        forecast_data = []
+    
+    # Debug: Print some values to see what's happening
+    print(f"Debug - Inspector: {inspector_name}")
+    print(f"Debug - Total inspections for inspector: {total_inspections}")
+    print(f"Debug - Monthly inspections count: {len(monthly_inspections)}")
+    print(f"Debug - Compliance rate: {compliance_rate:.1f}%")
+    
+    # Convert QuerySets to lists for proper JSON serialization
+    import json
+    from django.core.serializers.json import DjangoJSONEncoder
+    
+    context = {
+        'inspector_name': inspector_name,
+        'total_inspections': total_inspections,
+        'recent_inspections': recent_inspections,
+        'this_month_inspections': this_month_inspections,
+        'avg_monthly_inspections': round(avg_monthly_inspections, 1),
+        'monthly_inspections': json.dumps(list(monthly_inspections), cls=DjangoJSONEncoder),
+        'top_clients': json.dumps(list(top_clients), cls=DjangoJSONEncoder),
+        'forecast_data': json.dumps(forecast_data, cls=DjangoJSONEncoder),
+        'commodity_stats': json.dumps(list(commodity_stats), cls=DjangoJSONEncoder),
+        'compliant_inspections': compliant_inspections,
+        'non_compliant_inspections': non_compliant_inspections,
+        'compliance_rate': round(compliance_rate, 1),
+        'recent_inspections_list': recent_inspections_list,
+    }
+    
+    return render(request, 'main/inspector_dashboard.html', context)
+
+
+@login_required
 def analytics_dashboard(request):
     """Display the Power BI analytics dashboard with basic analytics data."""
     # Block administrators from accessing analytics dashboard
     if request.user.role == 'admin':
         return redirect('home')
+    
+    # Redirect inspectors to their specific dashboard
+    if request.user.role == 'inspector':
+        return redirect('inspector_dashboard')
+    
     from ..models import Client, Inspection, FoodSafetyAgencyInspection
     from django.db.models import Count, Q
     from datetime import datetime, timedelta
@@ -3829,10 +4049,12 @@ def analytics_dashboard(request):
         date_of_inspection__gte=current_month_start
     ).count()
     
-    # Get average inspections per month (last 6 months)
-    six_months_ago = datetime.now() - timedelta(days=180)
+    # Get average inspections per month (Oct 2025 to Apr 2026)
+    start_date = date(2025, 10, 1)
+    end_date = date(2026, 4, 1)
     avg_monthly_inspections = FoodSafetyAgencyInspection.objects.filter(
-        date_of_inspection__gte=six_months_ago
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lt=end_date
     ).count() / 6
     
     # Get commodity breakdown
@@ -3853,10 +4075,10 @@ def analytics_dashboard(request):
         else:
             client['percentage'] = 0
     
-    # Get monthly trends (last 6 months)
-    six_months_ago = datetime.now() - timedelta(days=180)
+    # Get monthly trends (Oct 2025 to Apr 2026)
     monthly_trends = FoodSafetyAgencyInspection.objects.filter(
-        date_of_inspection__gte=six_months_ago
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lt=end_date
     ).extra(
         select={'month': "EXTRACT(month FROM date_of_inspection)"}
     ).values('month').annotate(
@@ -4259,6 +4481,62 @@ def export_analytics_pdf(data):
     response = HttpResponse(output.getvalue(), content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="analytics_report_{datetime.now().strftime("%Y%m%d")}.pdf"'
     return response
+
+
+@login_required(login_url='login')
+def inspector_settings_view(request):
+    """Inspector-specific settings page view."""
+    clear_messages(request)
+    
+    # Only allow inspectors to access this page
+    user_role = getattr(request.user, 'role', 'inspector')
+    if user_role != 'inspector':
+        messages.error(request, "Access denied. This page is only available to inspectors.")
+        return redirect('home')
+    
+    # Get or create settings
+    from ..models import Settings, SystemSettings
+    settings = Settings.get_settings()
+    system_settings = SystemSettings.get_settings()
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'save_theme':
+            # Handle theme toggle
+            theme_mode = request.POST.get('theme_mode')
+            if theme_mode == 'on':
+                system_settings.dark_mode = True
+            else:
+                system_settings.dark_mode = False
+            system_settings.save()
+            # Message removed - theme now saves automatically via JavaScript
+            
+        elif action == 'update_profile':
+            # Handle profile updates
+            user = request.user
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email and email != user.email:
+                user.email = email
+                
+            user.save()
+            messages.success(request, "Profile updated successfully!")
+            
+    
+    context = {
+        'settings': settings,
+        'system_settings': system_settings,
+        'user': request.user,
+    }
+    
+    return render(request, 'main/inspector_settings.html', context)
 
 
 @login_required(login_url='login')
@@ -5235,6 +5513,96 @@ def update_group_additional_email(request):
     })
 
 
+def update_group_approved(request):
+    """Update approved_status field for all inspections in a group"""
+    if request.method == 'POST':
+        try:
+            group_id = request.POST.get('group_id')
+            approved_status = request.POST.get('approved_status')
+
+            # Parse group_id to extract client_name and date_of_inspection
+            # group_id format: "client_name_date_of_inspection"
+            if '_' not in group_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid group ID format'
+                })
+
+            # Split the group_id to get client_name and date
+            parts = group_id.split('_')
+            if len(parts) < 2:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid group ID format'
+                })
+
+            # Reconstruct client_name (may contain underscores) and date
+            date_part = parts[-1]
+            client_name_parts = parts[:-1]
+            client_name = '_'.join(client_name_parts)
+
+            # Convert date string to date object (support YYYY-MM-DD and YYYYMMDD)
+            from datetime import datetime
+            date_of_inspection = None
+            for fmt in ('%Y-%m-%d', '%Y%m%d'):
+                try:
+                    date_of_inspection = datetime.strptime(date_part, fmt).date()
+                    break
+                except ValueError:
+                    continue
+            if not date_of_inspection:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid date format in group ID: {date_part}'
+                })
+
+            # Find all inspections in this group using normalized client name
+            import re as _re
+            def _normalize(n):
+                return _re.sub(r'[^a-zA-Z0-9]', '', (n or '')).lower()
+
+            raw_key = _normalize(client_name)
+            candidate_qs = FoodSafetyAgencyInspection.objects.filter(
+                date_of_inspection=date_of_inspection
+            )
+            matching_ids = [ins.id for ins in candidate_qs if _normalize(ins.client_name) == raw_key]
+            inspections = FoodSafetyAgencyInspection.objects.filter(id__in=matching_ids)
+
+            if not inspections.exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': f'No inspections found for group: {group_id}'
+                })
+
+            # Validate approved_status
+            valid_statuses = ['PENDING', 'YES']
+            if approved_status not in valid_statuses:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid approved status. Must be one of: {", ".join(valid_statuses)}'
+                })
+
+            # Update approved_status for all inspections in the group
+            updated_count = inspections.update(approved_status=approved_status)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Approved status updated successfully for {updated_count} inspections in group',
+                'approved_status': approved_status
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error updating group approved status: {str(e)}'
+            })
+
+    return JsonResponse({
+        'success': False,
+        'error': 'Invalid request method'
+    })
+
+
 @login_required
 @role_required(['developer'])
 def compliance_documents(request):
@@ -5357,15 +5725,11 @@ def get_inspection_data(request):
         from ..models import FoodSafetyAgencyInspection, Client
         from django.core.cache import cache
         
-        # Get inspections from January 2025 onwards only
-        from datetime import date
-        cutoff_date = date(2025, 1, 1)
-        print("Loading inspections from January 2025 onwards...")
-        inspections = FoodSafetyAgencyInspection.objects.select_related().filter(
-            date_of_inspection__gte=cutoff_date
-        ).order_by('-date_of_inspection')
+        # All inspections are now from October 2025 onwards after cleanup
+        print("Loading inspections from October 2025 onwards...")
+        inspections = FoodSafetyAgencyInspection.objects.select_related().order_by('-date_of_inspection')
         total_inspections_count = inspections.count()
-        print(f"Found {total_inspections_count} inspections from Jan 2025 onwards")
+        print(f"Found {total_inspections_count} inspections from October 2025 onwards")
         
         # Build client mapping from ALL clients in database (business name -> account code)
         print("Loading ALL client data from database...")
@@ -5497,28 +5861,36 @@ def process_document_links(request):
         batch_size = data.get('batch_size', 100)
         date_range = data.get('date_range', 'recent')
         
-        # Get inspections from January 2025 onwards, then apply additional filters
+        # Get inspections from October 2025 ± 6 months, then apply additional filters
         from datetime import date
-        cutoff_date = date(2025, 1, 1)
+        start_date = date(2025, 10, 1)
+        end_date = date(2026, 4, 1)
         
         if date_range == 'recent':
             date_filter = datetime.now() - timedelta(days=30)
-            # Use the more recent of cutoff_date or recent filter
-            final_date = max(cutoff_date, date_filter.date())
+            # Use the more recent of start_date or recent filter, but not beyond end_date
+            final_start_date = max(start_date, date_filter.date())
             inspections = FoodSafetyAgencyInspection.objects.filter(
-                date_of_inspection__gte=final_date
+                date_of_inspection__gte=final_start_date,
+                date_of_inspection__lt=end_date
             ).order_by('-date_of_inspection')
         elif date_range == 'month':
             now = datetime.now()
-            inspections = FoodSafetyAgencyInspection.objects.filter(
-                date_of_inspection__gte=cutoff_date,
-                date_of_inspection__year=now.year,
-                date_of_inspection__month=now.month
-            ).order_by('-date_of_inspection')
+            # Only show current month if it's within our date range
+            if start_date <= now.date() < end_date:
+                inspections = FoodSafetyAgencyInspection.objects.filter(
+                    date_of_inspection__gte=start_date,
+                    date_of_inspection__lt=end_date,
+                    date_of_inspection__year=now.year,
+                    date_of_inspection__month=now.month
+                ).order_by('-date_of_inspection')
+            else:
+                inspections = FoodSafetyAgencyInspection.objects.none()
         else:
-            # All dates from Jan 2025 onwards
+            # All dates from Oct 2025 to Apr 2026
             inspections = FoodSafetyAgencyInspection.objects.filter(
-                date_of_inspection__gte=cutoff_date
+                date_of_inspection__gte=start_date,
+                date_of_inspection__lt=end_date
             ).order_by('-date_of_inspection')
         
         # Apply batch size limit if not processing all
@@ -5997,10 +6369,12 @@ def download_compliance_documents(request):
         date_range = data.get('date_range', 'recent')
         download_all = data.get('download_all', False)
         
-        # Get inspections with links found
-        cutoff_date = date(2025, 1, 1)
+        # Get inspections with links found from Oct 2025 to Apr 2026
+        start_date = date(2025, 10, 1)
+        end_date = date(2026, 4, 1)
         inspections = FoodSafetyAgencyInspection.objects.filter(
-            date_of_inspection__gte=cutoff_date
+            date_of_inspection__gte=start_date,
+            date_of_inspection__lt=end_date
         ).order_by('-date_of_inspection')
         
         if commodity_filter != 'all':
@@ -6972,10 +7346,12 @@ def populate_six_month_files(request):
         import os
         from ..models import FoodSafetyAgencyInspection
         
-        # Get inspections from last 6 months
-        six_months_ago = datetime.now() - timedelta(days=180)
+        # Get inspections from Oct 2025 to Apr 2026
+        start_date = date(2025, 10, 1)
+        end_date = date(2026, 4, 1)
         recent_inspections = FoodSafetyAgencyInspection.objects.filter(
-            date_of_inspection__gte=six_months_ago
+            date_of_inspection__gte=start_date,
+            date_of_inspection__lt=end_date
         ).values('client_name', 'date_of_inspection').distinct()
         
         # Use the correct inspection structure: media/inspection/YYYY/Month/ClientName/
@@ -7038,14 +7414,16 @@ def pull_six_month_data_from_google_drive(request):
         print("STARTING 6-MONTH GOOGLE DRIVE DATA PULL")
         print("=" * 60)
         
-        # Get inspections from last 6 months
-        six_months_ago = datetime.now() - timedelta(days=180)
+        # Get inspections from Oct 2025 to Apr 2026
+        start_date = date(2025, 10, 1)
+        end_date = date(2026, 4, 1)
         recent_inspections = FoodSafetyAgencyInspection.objects.filter(
-            date_of_inspection__gte=six_months_ago
+            date_of_inspection__gte=start_date,
+            date_of_inspection__lt=end_date
         ).order_by('-date_of_inspection')
         
         total_inspections = recent_inspections.count()
-        print(f" Found {total_inspections:,} inspections from the last 6 months")
+        print(f" Found {total_inspections:,} inspections from Oct 2025 to Apr 2026")
         
         if total_inspections == 0:
             return JsonResponse({
@@ -10622,6 +11000,10 @@ def delete_inspector_mapping(request, pk):
 @login_required
 def update_bought_sample(request):
     """Update bought sample value for an inspection."""
+    print(f"[DEBUG] update_bought_sample called - Method: {request.method}")
+    print(f"[DEBUG] User: {request.user}")
+    print(f"[DEBUG] POST data: {dict(request.POST)}")
+    
     if request.method == 'POST':
         try:
             from ..models import FoodSafetyAgencyInspection, InspectorMapping
@@ -10630,12 +11012,17 @@ def update_bought_sample(request):
             inspection_id = request.POST.get('inspection_id')
             bought_sample_value = request.POST.get('bought_sample')
             
+            print(f"[DEBUG] inspection_id: {inspection_id}")
+            print(f"[DEBUG] bought_sample_value: {bought_sample_value}")
+            
             if not inspection_id:
                 return JsonResponse({'success': False, 'error': 'Inspection ID is required'})
             
             # Find the inspection
             inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
+            print(f"[DEBUG] Found inspection: {inspection}")
             if not inspection:
+                print(f"[DEBUG] Inspection not found for ID: {inspection_id}")
                 return JsonResponse({'success': False, 'error': 'Inspection not found'})
             
             # Check if user has permission to edit this inspection
@@ -10662,22 +11049,34 @@ def update_bought_sample(request):
             
             # For admin, super_admin, financial, and scientist roles, allow editing any inspection
             # (no additional permission check needed)
+            print(f"[DEBUG] User role: {getattr(request.user, 'role', 'No role set')}")
+            print(f"[DEBUG] Permission check passed")
             
             # Update the bought sample value
+            print(f"[DEBUG] Current bought_sample value: {inspection.bought_sample}")
             if bought_sample_value == '' or bought_sample_value is None:
                 # If empty, set to None (will show as "No" in template)
+                print(f"[DEBUG] Setting bought_sample to None (empty value)")
                 inspection.bought_sample = None
             else:
                 try:
-                    inspection.bought_sample = float(bought_sample_value)
+                    new_value = float(bought_sample_value)
+                    print(f"[DEBUG] Setting bought_sample to: {new_value}")
+                    inspection.bought_sample = new_value
                 except ValueError:
+                    print(f"[DEBUG] Invalid bought sample value: {bought_sample_value}")
                     return JsonResponse({'success': False, 'error': 'Invalid bought sample value'})
             
+            print(f"[DEBUG] Saving inspection...")
             inspection.save()
+            print(f"[DEBUG] Inspection saved. New bought_sample value: {inspection.bought_sample}")
             
             return JsonResponse({'success': True, 'message': 'Bought sample updated successfully'})
             
         except Exception as e:
+            print(f"[DEBUG] Exception in update_bought_sample: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request method'})

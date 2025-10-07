@@ -2066,7 +2066,8 @@
                 
                 if (result.success) {
                     alert(`✅ ${result.message}`);
-                    loadLastComplianceSyncTime(); // Refresh last sync time
+                    // Force refresh all statuses to ensure UI is updated
+                    forceRefreshAllStatuses();
                 } else {
                     alert(`❌ Error: ${result.message || result.error}`);
                 }
@@ -2094,11 +2095,12 @@
                      }
                  });
                  
-                 const result = await response.json();
-                 
+                const result = await response.json();
+                
                 if (result.success) {
                     alert(`✅ ${result.message}`);
-                    loadLastComplianceSyncTime(); // Refresh last sync time
+                    // Force refresh all statuses to ensure UI is updated
+                    forceRefreshAllStatuses();
                 } else {
                     alert(`❌ Error: ${result.message || result.error}`);
                 }
@@ -2111,12 +2113,21 @@
          }
          
          
-         function displayDailySyncStatus(status) {
-             const statusDiv = document.getElementById('dailySyncStatus');
-             const contentDiv = document.getElementById('dailySyncStatusContent');
-             
-             const statusText = status.is_running ? '🟢 Running' : '🔴 Stopped';
-             const lastSync = status.last_sync_time ? new Date(status.last_sync_time).toLocaleString() : 'Never';
+        function displayDailySyncStatus(status) {
+            console.log('displayDailySyncStatus called with:', status);
+            
+            const statusDiv = document.getElementById('dailySyncStatus');
+            const contentDiv = document.getElementById('dailySyncStatusContent');
+            
+            if (!statusDiv || !contentDiv) {
+                console.error('Status display elements not found');
+                return;
+            }
+            
+            const statusText = status.is_running ? '🟢 Running' : '🔴 Stopped';
+            const lastSync = status.last_sync_time ? new Date(status.last_sync_time).toLocaleString() : 'Never';
+            
+            console.log('Status display - is_running:', status.is_running, 'statusText:', statusText);
              
              contentDiv.innerHTML = `
                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
@@ -2499,7 +2510,9 @@
         
         // Load and display last compliance sync time
         function loadLastComplianceSyncTime() {
-            fetch('/daily-sync/status/', {
+            // Add cache-busting parameter to prevent stale data
+            const timestamp = new Date().getTime();
+            fetch(`/daily-sync/status/?t=${timestamp}`, {
                 method: 'GET',
                 headers: {
                     'X-CSRFToken': getCsrfToken(),
@@ -2507,6 +2520,8 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Daily sync status response:', data);
+                
                 if (data.success && data.status.last_sync_time) {
                     const lastSyncTime = new Date(data.status.last_sync_time).toLocaleString();
                     document.getElementById('lastComplianceSyncTime').textContent = lastSyncTime;
@@ -2516,7 +2531,10 @@
                 
                 // Also display the daily sync status
                 if (data.success && data.status) {
+                    console.log('Updating daily sync status display:', data.status);
                     displayDailySyncStatus(data.status);
+                } else {
+                    console.error('Invalid status response:', data);
                 }
             })
             .catch(error => {
@@ -2978,6 +2996,10 @@
                 if (data.success) {
                     showNotification('All services started successfully!', 'success');
                     refreshServiceStatus();
+                    // Also refresh individual service statuses
+                    loadSyncServiceStatus();
+                    checkBackupStatus();
+                    loadLastComplianceSyncTime();
                 } else {
                     const errorMsg = data.message || 'Unknown error';
                     showNotification('Error starting services: ' + errorMsg, 'error');
@@ -3001,6 +3023,10 @@
                 if (data.success) {
                     showNotification('All services stopped successfully!', 'success');
                     refreshServiceStatus();
+                    // Also refresh individual service statuses
+                    loadSyncServiceStatus();
+                    checkBackupStatus();
+                    loadLastComplianceSyncTime();
                 } else {
                     const errorMsg = data.message || 'Unknown error';
                     showNotification('Error stopping services: ' + errorMsg, 'error');
@@ -3025,6 +3051,15 @@
             .catch(error => {
                 console.error('Error fetching service status:', error);
             });
+        }
+        
+        // Force refresh all service statuses
+        function forceRefreshAllStatuses() {
+            console.log('Force refreshing all service statuses...');
+            loadSyncServiceStatus();
+            checkBackupStatus();
+            loadLastComplianceSyncTime();
+            refreshServiceStatus();
         }
         
         function updateMasterServiceStatus(data) {

@@ -593,7 +593,18 @@ def user_login(request):
            if user.is_active:
                login(request, user)
                request.session.set_expiry(0)  # Expire session on browser close
-               return redirect('home')
+               
+               # Role-based redirect logic
+               user_role = getattr(user, 'role', 'inspector')
+               if user_role == 'admin':
+                   # Redirect administrators to inspection page
+                   return redirect('shipment_list')
+               elif user_role == 'inspector':
+                   # Redirect inspectors to inspector dashboard
+                   return redirect('inspector_dashboard')
+               else:
+                   # All other users go to home page
+                   return redirect('home')
        else:
            messages.error(request, "Invalid username or password. Please try again.")
    else:
@@ -612,7 +623,18 @@ def register(request):
            user = form.save()
            login(request, user)
            request.session.set_expiry(0)
-           return redirect('home')
+           
+           # Role-based redirect logic
+           user_role = getattr(user, 'role', 'inspector')
+           if user_role == 'admin':
+               # Redirect administrators to inspection page
+               return redirect('shipment_list')
+           elif user_role == 'inspector':
+               # Redirect inspectors to inspector dashboard
+               return redirect('inspector_dashboard')
+           else:
+               # All other users go to home page
+               return redirect('home')
        else:
            messages.error(request, "Error in form submission.")
    else:

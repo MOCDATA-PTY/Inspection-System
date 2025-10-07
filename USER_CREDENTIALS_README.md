@@ -34,7 +34,8 @@
 ### 👨‍💼 Administrative Users
 | Username | Password | Role | Access Level | Email |
 |----------|----------|------|--------------|-------|
-| **mpho** | `5tOPdoba&#rV` | admin | Staff | Not Set |
+| **mpho** | `opne drive
+` | admin | Staff | Not Set |
 | **test_admin** | `gf0TB%Zl5vu7` | inspector | Staff | test@example.com |
 
 ### 👨‍🔬 Active Inspector Users

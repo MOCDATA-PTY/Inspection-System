@@ -3,7 +3,7 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <title>User Management - Food Safety Agency</title>
     <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
@@ -164,25 +164,51 @@
             min-height: 100vh;
         }
         
-        /* Sidebar */
-        .sidebar {
-            width: 280px;
-            background: var(--sidebar-bg);
-            color: var(--sidebar-text);
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed !important;
+            top: 12px !important;
+            left: 12px !important;
+            z-index: 99999 !important;
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+            border: none !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+            width: 48px !important;
+            height: 48px !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
+        
+        .mobile-menu-btn:active {
+            transform: translate3d(0, 0, 0) scale(0.95);
+        }
+        
+        .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15) !important;
+        }
+        
+        /* Sidebar positioning */
+        #sidebar {
             position: fixed;
-            height: 100vh;
+            top: 0;
             left: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            flex-direction: column;
+            height: 100vh;
+            z-index: 9998;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .sidebar-header {
-            padding: 2rem;
+            padding: 0 2rem 2rem;
             border-bottom: 1px solid #334155;
-            flex-shrink: 0;
+            margin-bottom: 2rem;
         }
         
         .logo {
@@ -206,9 +232,7 @@
         
         .nav-menu {
             list-style: none;
-            padding: 1rem;
-            flex: 1;
-            overflow-y: auto;
+            padding: 0 1rem;
         }
         
         .nav-item {
@@ -243,6 +267,24 @@
             color: white;
         }
         
+        /* Sidebar overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9997;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        
         /* Logout Button */
         .logout-section {
             flex-shrink: 0;
@@ -264,38 +306,50 @@
         /* Main Content */
         .main-content {
             flex: 1;
-            margin-left: 280px;
-            padding: 2rem;
+            width: 100%;
+            padding: 1rem;
             transition: margin-left 0.3s ease;
         }
         
         .header {
-            padding: 2rem 0;
+            padding: 4rem 0 2rem;
             text-align: center;
             margin-bottom: 2rem;
-            position: relative;
+            background: linear-gradient(135deg, rgba(0, 120, 144, 0.1), rgba(236, 52, 60, 0.1));
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .header h1 {
             color: white;
-            font-size: 1.75rem;
-            font-weight: 600;
+            font-size: 2rem;
+            font-weight: 700;
             margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         
         .header h2 {
-            color: white;
-            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.1rem;
             font-weight: 400;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
         
         
         .card {
             background: var(--card-bg);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
             border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
         
         .card-header {
@@ -306,15 +360,22 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 1rem;
+            background: linear-gradient(135deg, rgba(0, 120, 144, 0.05), rgba(236, 52, 60, 0.05));
+            border-radius: 12px 12px 0 0;
         }
         
         .card-title {
             font-size: 1.25rem;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text);
             display: flex;
             align-items: center;
             gap: 0.75rem;
+        }
+        
+        .card-title i {
+            color: var(--primary);
+            font-size: 1.1rem;
         }
         
         .card-body {
@@ -327,6 +388,11 @@
             margin-bottom: 2rem;
             flex-wrap: wrap;
             align-items: center;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
         }
         
         .btn {
@@ -335,61 +401,87 @@
             justify-content: center;
             gap: 0.5rem;
             padding: 0.75rem 1.5rem;
-            border-radius: var(--radius);
+            border-radius: 8px;
             border: none;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.875rem;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
-            box-shadow: var(--shadow);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             min-height: 44px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn-primary {
-            background-color: var(--primary);
+            background: linear-gradient(135deg, var(--primary), #005a6b);
             color: white;
         }
         
         .btn-primary:hover {
-            background-color: #005a6b;
-            transform: translateY(-1px);
+            background: linear-gradient(135deg, #005a6b, var(--primary));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 120, 144, 0.3);
         }
         
         .btn-secondary {
-            background-color: #6b7280;
+            background: linear-gradient(135deg, #6b7280, #4b5563);
             color: white;
         }
         
         .btn-secondary:hover {
-            background-color: #4b5563;
+            background: linear-gradient(135deg, #4b5563, #6b7280);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(107, 114, 128, 0.3);
         }
         
         .btn-success {
-            background-color: #10b981;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: white;
         }
         
         .btn-success:hover {
-            background-color: #059669;
+            background: linear-gradient(135deg, #059669, #10b981);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
         }
         
         .btn-warning {
-            background-color: var(--warning);
+            background: linear-gradient(135deg, var(--warning), #d97706);
             color: white;
         }
         
         .btn-warning:hover {
-            background-color: #d97706;
+            background: linear-gradient(135deg, #d97706, var(--warning));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
         }
         
         .btn-danger {
-            background-color: var(--danger);
+            background: linear-gradient(135deg, var(--danger), #d42e35);
             color: white;
         }
         
         .btn-danger:hover {
-            background-color: #d42e35;
+            background: linear-gradient(135deg, #d42e35, var(--danger));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(236, 52, 60, 0.3);
         }
         
         .btn-sm {
@@ -483,48 +575,56 @@
         
         .table-responsive {
             overflow-x: auto;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: var(--card-bg);
+            border: 1px solid var(--border);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.7rem;
+            font-size: 0.875rem;
             min-width: 800px;
             max-width: 100%;
+            background: var(--card-bg);
         }
         
         th {
-            background-color: var(--primary-light);
+            background: linear-gradient(135deg, var(--primary-light), rgba(0, 120, 144, 0.1));
             color: var(--primary);
             text-align: left;
-            padding: 6px 8px;
-            font-weight: 600;
+            padding: 12px 16px;
+            font-weight: 700;
             white-space: nowrap;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.7rem;
+            border-bottom: 2px solid var(--primary);
+            font-size: 0.875rem;
             position: sticky;
             top: 0;
             z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         tr:nth-child(even) {
-            background-color: #f8fafc;
+            background-color: rgba(0, 120, 144, 0.02);
         }
         
         tr:hover {
-            background-color: var(--primary-light);
+            background: linear-gradient(135deg, var(--primary-light), rgba(0, 120, 144, 0.05));
+            transform: scale(1.01);
+            transition: all 0.2s ease;
         }
         
         td {
-            padding: 6px 8px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border);
-            font-size: 0.7rem;
+            font-size: 0.875rem;
             white-space: nowrap;
             max-width: 120px;
             overflow: hidden;
             text-overflow: ellipsis;
+            vertical-align: middle;
         }
         
         .col-actions td {
@@ -542,97 +642,132 @@
         .col-actions { min-width: 280px; }
         
         .status-badge {
-            padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .status-active {
-            background-color: #10b981;
+            background: linear-gradient(135deg, #10b981, #059669);
             color: #ffffff;
             border: 1px solid #059669;
         }
         
         .status-inactive {
-            background-color: #ef4444;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: #ffffff;
             border: 1px solid #dc2626;
         }
         
         .status-staff {
-            background-color: #fef3c7;
+            background: linear-gradient(135deg, #fef3c7, #fbbf24);
             color: #d97706;
+            border: 1px solid #fbbf24;
         }
         
         .role-badge {
-            padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 500;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .role-inspector {
-            background-color: #dbeafe;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
             color: #1e40af;
+            border: 1px solid #93c5fd;
         }
         
         .role-admin {
-            background-color: #fef3c7;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
             color: #d97706;
+            border: 1px solid #fbbf24;
         }
         
         .role-super_admin {
-            background-color: #fecaca;
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
             color: #dc2626;
+            border: 1px solid #f87171;
         }
         
         .role-financial {
-            background-color: #d1fae5;
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
             color: #065f46;
+            border: 1px solid #6ee7b7;
         }
         
         .role-scientist {
-            background-color: #e0e7ff;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
             color: #3730a3;
+            border: 1px solid #a5b4fc;
         }
         
         .inspector-id-badge {
-            padding: 2px 6px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            background-color: #fef3c7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
             color: #d97706;
             border: 1px solid #fbbf24;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         .action-cell {
             white-space: nowrap;
             display: flex;
-            gap: 0.2rem;
+            gap: 0.5rem;
             align-items: center;
             flex-wrap: nowrap;
+            justify-content: center;
         }
         
         .action-cell.compact {
-            gap: 0.1rem;
+            gap: 0.25rem;
         }
         
         .action-cell.compact .btn {
-            padding: 0.15rem 0.3rem;
-            font-size: 0.6rem;
-            min-height: 20px;
-            min-width: 20px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            min-height: 32px;
+            min-width: 32px;
+            border-radius: 6px;
+        }
+        
+        .action-cell .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-cell .btn:hover {
+            transform: translateY(-1px);
         }
         
         .empty-message {
             text-align: center;
             color: var(--text-light);
-            padding: 3rem 2rem;
-            background-color: #f8fafc;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(0, 120, 144, 0.05), rgba(236, 52, 60, 0.05));
+            border-radius: 12px;
+            border: 2px dashed var(--border);
+        }
+        
+        .empty-message i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+            color: var(--primary);
+        }
+        
+        .empty-message p {
+            font-size: 1.1rem;
+            font-weight: 500;
         }
         
         /* Modal styles */
@@ -654,11 +789,12 @@
             transform: translate(-50%, -50%);
             background: var(--card-bg);
             padding: 2rem;
-            border-radius: var(--radius);
+            border-radius: 16px;
             min-width: 400px;
             max-width: 90%;
             border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
         
         .modal-content.wide {
@@ -667,15 +803,18 @@
         }
         
         .modal-header {
+            border-bottom: 2px solid var(--primary-light);
             margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
         }
         
         .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: var(--text);
             margin-bottom: 0.5rem;
         }
+        
         
         .modal-body {
             margin-bottom: 2rem;
@@ -701,19 +840,28 @@
         }
         
         .form-control {
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
             font-size: 0.875rem;
             transition: all 0.3s ease;
             color: var(--text);
             background-color: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
         
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 122, 144, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 122, 144, 0.1), 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
         }
         
         .form-text {
@@ -728,89 +876,62 @@
             justify-content: flex-end;
         }
         
-        /* Mobile Responsive */
+        /* Mobile styles */
         @media (max-width: 1024px) {
-            .sidebar {
-                left: -280px;
+            .mobile-menu-btn {
+                display: flex !important;
             }
             
-            .sidebar.open {
-                left: 0;
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                width: 280px;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
             }
             
             .main-content {
-                margin-left: 0;
-                padding: 1rem;
-            }
-            
-            .mobile-menu-toggle {
-                position: fixed;
-                top: 1rem;
-                left: 1rem;
-                z-index: 1001;
-                background: var(--primary);
-                color: white;
-                border: none;
-                border-radius: var(--radius);
-                padding: 0.75rem;
-                font-size: 1.2rem;
-                cursor: pointer;
-                box-shadow: var(--shadow-lg);
-                transition: all 0.3s ease;
-                min-width: 44px;
-                min-height: 44px;
-                display: block;
-            }
-            
-            .mobile-menu-toggle:hover {
-                background: #005a6b;
-                transform: scale(1.05);
+                margin-left: 0 !important;
+                padding: 1rem !important;
             }
             
             .header {
-                padding: 4rem 0 2rem;
+                padding-top: 5rem !important;
+                padding-bottom: 1.5rem !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
             }
             
             .header h1 {
-                font-size: 1.5rem;
-            }
-        }
-        
-        @media (min-width: 1025px) {
-            .mobile-menu-toggle {
-                display: none;
-            }
-        }
-        
-        @media (max-width: 1200px) {
-            table {
-                min-width: 600px;
+                font-size: 1.5rem !important;
             }
             
-            .col-username { min-width: 80px; }
-            .col-email { min-width: 100px; }
-            .col-name { min-width: 80px; }
-            .col-role { min-width: 70px; }
-            .col-inspector-id { min-width: 70px; }
-            .col-status { min-width: 50px; }
-            .col-staff { min-width: 50px; }
-            .col-actions { min-width: 240px; }
-        }
-        
-        @media (max-width: 768px) {
-            table {
-                min-width: 500px;
+            .header h2 {
+                font-size: 0.95rem !important;
+            }
+            
+            .form-group {
+                grid-template-columns: 1fr !important;
             }
             
             .action-bar {
                 flex-direction: column;
-                align-items: stretch;
                 gap: 0.75rem;
             }
             
-            .action-bar .btn {
+            .action-bar .btn,
+            .action-bar form,
+            .action-bar form button {
                 width: 100%;
-                justify-content: center;
+            }
+            
+            .action-bar .btn {
+                padding: 0.75rem 1rem;
+                min-height: 48px;
+                font-size: 0.9rem;
             }
             
             .filter-controls {
@@ -863,190 +984,554 @@
                 justify-content: center;
             }
             
-            .action-cell {
-                flex-direction: row;
-                gap: 0.125rem;
-                flex-wrap: nowrap;
-                justify-content: center;
-            }
-            
-            .action-cell .btn {
-                width: auto;
-                text-align: center;
-                font-size: 0.6rem;
-                padding: 0.2rem 0.4rem;
-                min-width: 28px;
-            }
-            
             .form-group {
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
             
-            .col-username { min-width: 70px; }
-            .col-email { min-width: 90px; }
-            .col-name { min-width: 70px; }
-            .col-role { min-width: 60px; }
-            .col-inspector-id { min-width: 60px; }
-            .col-status { min-width: 40px; }
-            .col-staff { min-width: 40px; }
-            .col-actions { min-width: 200px; }
+            .card {
+                margin-left: 0.5rem;
+                margin-right: 0.5rem;
+                overflow: hidden;
+                max-width: calc(100% - 1rem);
+            }
+
+            .card-body {
+                overflow: hidden;
+                max-width: 100%;
+                padding: 1rem;
+            }
             
-            /* Better table scrolling on mobile */
+            /* Mobile: Card-based layout for users table */
             .table-responsive {
-                -webkit-overflow-scrolling: touch;
-                border-radius: var(--radius);
-            }
-            
-            /* Improve header spacing on mobile */
-            .header {
-                padding: 4rem 1rem 2rem;
-                text-align: center;
-            }
-            
-            .header h1 {
-                font-size: 1.5rem;
-                margin-bottom: 0.5rem;
-            }
-            
-            .header h2 {
-                font-size: 0.9rem;
-            }
-        }
-        
-        /* Small mobile devices */
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 0.75rem;
-            }
-            
-            .header {
-                padding: 4rem 0.5rem 1.5rem;
-            }
-            
-            .header h1 {
-                font-size: 1.25rem;
-            }
-            
-            .header h2 {
-                font-size: 0.85rem;
+                overflow-x: visible;
+                overflow-y: hidden;
+                background: transparent;
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
             }
             
             table {
-                min-width: 450px;
-                font-size: 0.65rem;
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                background: transparent;
+                margin: 0;
+                padding: 0;
             }
             
-            th, td {
-                padding: 4px 6px;
-                font-size: 0.65rem;
-            }
-            
-            .action-cell .btn {
-                font-size: 0.55rem;
-                padding: 0.15rem 0.3rem;
-                min-width: 24px;
-                min-height: 24px;
-            }
-            
-            .modal-content {
-                margin: 0.25rem;
-                max-width: calc(100% - 0.5rem);
-                padding: 1.5rem;
-            }
-            
-            .modal-title {
-                font-size: 1.1rem;
-            }
-            
-            .form-control {
-                padding: 0.65rem;
-                font-size: 0.85rem;
-            }
-            
-            .btn {
-                padding: 0.65rem 1.25rem;
-                font-size: 0.85rem;
-            }
-            
-            /* Hide less critical columns on very small screens */
-            .col-staff {
+            thead {
                 display: none;
             }
             
-            .col-inspector-id {
-                min-width: 50px;
+            tbody {
+                display: block;
+                width: 100%;
+                max-width: 100%;
             }
             
-            /* Compact action buttons */
+            tr {
+                display: block;
+                margin-bottom: 1rem;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: var(--card-bg);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+                padding: 1rem;
+                transition: all 0.3s ease;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+                overflow: hidden;
+                position: relative;
+            }
+            
+            tr:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            }
+            
+            td {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                padding: 0.75rem 0;
+                border: none;
+                border-bottom: 1px solid var(--border);
+                font-size: 0.875rem;
+                white-space: normal;
+                max-width: 100%;
+                text-overflow: clip;
+                overflow: hidden;
+                width: 100%;
+                box-sizing: border-box;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+            
+            td:last-child {
+                border-bottom: none;
+            }
+            
+            td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: var(--primary);
+                margin-right: 1rem;
+                flex-shrink: 0;
+                min-width: 80px;
+                max-width: 120px;
+                text-transform: uppercase;
+                font-size: 0.75rem;
+                letter-spacing: 0.5px;
+                word-wrap: break-word;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            td > span {
+                text-align: right;
+                word-break: break-word;
+                flex: 1;
+                min-width: 0;
+                max-width: calc(100% - 120px);
+                overflow-wrap: break-word;
+                word-wrap: break-word;
+            }
+            
             .action-cell {
-                gap: 0.1rem;
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: stretch;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .action-cell .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.5rem 1rem;
+                min-height: 40px;
+                font-size: 0.8rem;
+                box-sizing: border-box;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            .action-cell .btn i {
+                margin-right: 0.25rem;
+            }
+            
+            .empty-row {
+                display: block !important;
+            }
+            
+            .empty-row td {
+                display: block !important;
+                text-align: center;
+                padding: 2rem;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .empty-row td::before {
+                display: none !important;
+            }
+        }
+        
+        /* Tablet styles */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 85%;
+                max-width: 320px;
+            }
+            
+            .main-content {
+                padding: 0.75rem !important;
+            }
+            
+            .header {
+                padding-top: 4.5rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.375rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.9rem !important;
             }
             
             .card {
-                margin-bottom: 1.5rem;
+                margin-left: 0.375rem;
+                margin-right: 0.375rem;
+                overflow: hidden;
+                max-width: calc(100% - 0.75rem);
+            }
+
+            .card-header {
+                padding: 12px;
+            }
+
+            .card-body {
+                padding: 12px;
+                overflow: hidden;
+                max-width: 100%;
+            }
+            
+            .card-title {
+                font-size: 0.95rem;
+            }
+            
+            /* Improve mobile card layout on tablets */
+            .card {
+                overflow: hidden;
             }
             
             .card-body {
-                padding: 1rem;
-            }
-        }
-        
-        /* Extra small devices */
-        @media (max-width: 360px) {
-            .main-content {
-                padding: 0.5rem;
+                overflow: hidden;
+                max-width: 100%;
             }
             
-            table {
-                min-width: 400px;
-                font-size: 0.6rem;
+            tr {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+                max-width: 100%;
+                overflow: hidden;
             }
             
-            th, td {
-                padding: 3px 4px;
-                font-size: 0.6rem;
+            td {
+                padding: 0.5rem 0;
+                font-size: 0.8rem;
+                max-width: 100%;
+                overflow: hidden;
             }
             
-            /* Hide email column on very small screens */
-            .col-email {
-                display: none;
+            td::before {
+                min-width: 70px;
+                max-width: 100px;
+                font-size: 0.7rem;
             }
             
-            .col-name {
-                min-width: 80px;
+            td > span {
+                max-width: calc(100% - 100px);
             }
             
             .action-cell .btn {
-                font-size: 0.5rem;
-                padding: 0.1rem 0.2rem;
-                min-width: 20px;
-                min-height: 20px;
+                padding: 0.4rem 0.8rem;
+                min-height: 36px;
+                font-size: 0.75rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+        }
+        
+        /* Small mobile styles */
+        @media (max-width: 640px) {
+            .mobile-menu-btn {
+                top: 10px !important;
+                left: 10px !important;
+                width: 44px !important;
+                height: 44px !important;
             }
             
-            .modal-content {
-                padding: 1rem;
+            #sidebar {
+                width: 90%;
+            }
+            
+            .header {
+                padding-top: 4rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.875rem !important;
+            }
+            
+            .card {
+                margin-left: 0.25rem;
+                margin-right: 0.25rem;
+                overflow: hidden;
+                max-width: calc(100% - 0.5rem);
+            }
+
+            .card-body {
+                overflow: hidden;
+                max-width: 100%;
             }
             
             .btn {
-                padding: 0.6rem 1rem;
                 font-size: 0.8rem;
+                padding: 0.75rem 1rem;
+            }
+            
+            /* Optimize mobile cards for small screens */
+            .card {
+                overflow: hidden;
+            }
+            
+            .card-body {
+                overflow: hidden;
+                max-width: 100%;
+            }
+            
+            tr {
+                padding: 0.5rem;
+                margin-bottom: 0.5rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            td {
+                padding: 0.4rem 0;
+                font-size: 0.75rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            td::before {
+                min-width: 60px;
+                max-width: 80px;
+                font-size: 0.65rem;
+                margin-right: 0.5rem;
+            }
+            
+            td > span {
+                max-width: calc(100% - 80px);
+            }
+            
+            .action-cell {
+                gap: 0.25rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            .action-cell .btn {
+                padding: 0.3rem 0.6rem;
+                min-height: 32px;
+                font-size: 0.7rem;
+                max-width: 100%;
+                overflow: hidden;
             }
         }
+        
+        /* Extra small mobile styles */
+        @media (max-width: 480px) {
+            #sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                top: 8px !important;
+                left: 8px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .main-content {
+                padding: 0.5rem !important;
+            }
+            
+            .header {
+                padding-top: 3.5rem !important;
+                padding-bottom: 1rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.125rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.8rem !important;
+            }
+            
+            .card {
+                margin-left: 0.125rem;
+                margin-right: 0.125rem;
+            }
+            
+            .card-header {
+                padding: 10px;
+            }
+            
+            .card-body {
+                padding: 10px;
+            }
+            
+            .card-title {
+                font-size: 0.875rem;
+            }
+            
+            .btn {
+                font-size: 0.75rem;
+                padding: 0.625rem 0.875rem;
+            }
+            
+            .form-label {
+                font-size: 0.8rem;
+            }
+            
+            .form-control {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+            
+            /* Ultra-compact mobile cards */
+            .card {
+                overflow: hidden;
+            }
+            
+            .card-body {
+                overflow: hidden;
+                max-width: 100%;
+            }
+            
+            tr {
+                padding: 0.4rem;
+                margin-bottom: 0.4rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            td {
+                padding: 0.3rem 0;
+                font-size: 0.7rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            td::before {
+                min-width: 50px;
+                max-width: 70px;
+                font-size: 0.6rem;
+                margin-right: 0.4rem;
+            }
+            
+            td > span {
+                max-width: calc(100% - 70px);
+            }
+            
+            .action-cell {
+                gap: 0.2rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            .action-cell .btn {
+                padding: 0.25rem 0.5rem;
+                min-height: 28px;
+                font-size: 0.65rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            /* Stack action buttons in two columns on very small screens */
+            .action-cell {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.3rem;
+                max-width: 100%;
+                overflow: hidden;
+            }
+            
+            .action-cell .btn {
+                font-size: 0.6rem;
+                padding: 0.2rem 0.4rem;
+                min-height: 26px;
+                max-width: 100%;
+                overflow: hidden;
+            }
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 1025px) {
+            .main-content {
+                margin-left: 16rem;
+                padding: 2rem;
+            }
+            
+            .header {
+                padding: 2rem 0;
+            }
+            
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .header h2 {
+                font-size: 1rem;
+            }
+            
+            .action-bar {
+                flex-direction: row;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            
+            .action-bar .btn,
+            .action-bar form {
+                width: auto;
+            }
+            
+            .action-bar .btn {
+                padding: 0.5rem 1rem;
+                min-height: auto;
+                font-size: 0.875rem;
+            }
+            
+            .filter-controls {
+                flex-direction: row;
+                gap: 0.75rem;
+                flex-wrap: wrap;
+            }
+            
+            .filter-controls .btn {
+                width: auto;
+                padding: 0.5rem 1rem;
+                min-height: auto;
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            button, a, .btn, .nav-link {
+                min-height: 44px !important;
+            }
+            
+            #sidebar a:hover {
+                background-color: transparent !important;
+            }
+            
+            #sidebar a:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        }
+        
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
     <div class="page-container">
-        <!-- Mobile Menu Toggle -->
-        <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
-        
-        <!-- Mobile Backdrop -->
-        <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden" onclick="toggleSidebar()"></div>
-        
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed left-0 w-64 h-screen transition-all duration-300 z-50 shadow-2xl flex flex-col">
+        <div id="sidebar" class="w-64 h-screen flex flex-col">
             <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
                 <div class="text-center mb-2">
                     <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
@@ -1056,71 +1541,56 @@
                 </div>
             </div>
             
-            <div class="flex-1 flex flex-col justify-between">
+            <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
-                    <!-- Dashboard -->
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Dashboard
                         </a>
                     </li>
-                    
-                    <!-- Clients -->
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-users mr-2 w-4 text-center"></i>
                             Clients
                         </a>
                     </li>
-                    
-                    <!-- Inspections -->
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
-                    
-                    <!-- User Management -->
                     <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-primary">
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] bg-primary">
                             <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
                             User Management
                         </a>
                     </li>
-                    
-                    <!-- System Logs -->
                     <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
                             System Logs
                         </a>
                     </li>
-                    
-                    <!-- OneDrive View (Developer only) -->
                     {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center"></i>
                             OneDrive View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Server View (Developer and Super Admin) -->
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
                             Server View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Settings -->
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cog mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -1128,11 +1598,11 @@
                 </ul>
             </div>
             
-            <!-- Logout Button - Fixed at bottom -->
+            <!-- Logout Button -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                         <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
                         Logout
                     </button>
@@ -1216,48 +1686,62 @@
                             <tbody>
                                 {% for user in users %}
                                 <tr>
-                                    <td class="col-username">{{ user.username }}</td>
-                                    <td class="col-email">{{ user.email }}</td>
-                                    <td class="col-name">
-                                        {% if user.first_name or user.last_name %}
-                                            {{ user.first_name|title }} {{ user.last_name|title }}
-                                        {% else %}
-                                            <span style="color: var(--text-light); font-style: italic;">Not provided</span>
-                                        {% endif %}
+                                    <td class="col-username" data-label="Username">
+                                        <span>{{ user.username }}</span>
                                     </td>
-                                    <td class="col-role">
-                                        {% if user.role %}
-                                            <span class="role-badge role-{{ user.role }}">{{ user.get_role_display }}</span>
-                                        {% else %}
-                                            <span style="color: var(--text-light);">Inspector</span>
-                                        {% endif %}
+                                    <td class="col-email" data-label="Email">
+                                        <span>{{ user.email }}</span>
                                     </td>
-                                    <td class="col-inspector-id">
-                                        {% if user.role == 'inspector' %}
-                                            {% if user.inspector_id %}
-                                                <span class="inspector-id-badge">{{ user.inspector_id }}</span>
+                                    <td class="col-name" data-label="Full Name">
+                                        <span>
+                                            {% if user.first_name or user.last_name %}
+                                                {{ user.first_name|title }} {{ user.last_name|title }}
                                             {% else %}
-                                                <span style="color: var(--text-light); font-style: italic;">Not assigned</span>
+                                                <span style="color: var(--text-light); font-style: italic;">Not provided</span>
                                             {% endif %}
-                                        {% else %}
-                                            <span style="color: var(--text-light);">-</span>
-                                        {% endif %}
+                                        </span>
                                     </td>
-                                    <td class="col-status">
-                                        {% if user.is_active %}
-                                            <span class="status-badge status-active">Active</span>
-                                        {% else %}
-                                            <span class="status-badge status-inactive">Inactive</span>
-                                        {% endif %}
+                                    <td class="col-role" data-label="Role">
+                                        <span>
+                                            {% if user.role %}
+                                                <span class="role-badge role-{{ user.role }}">{{ user.get_role_display }}</span>
+                                            {% else %}
+                                                <span style="color: var(--text-light);">Inspector</span>
+                                            {% endif %}
+                                        </span>
                                     </td>
-                                    <td class="col-staff">
-                                        {% if user.is_staff %}
-                                            <span class="status-badge status-staff">Staff</span>
-                                        {% else %}
-                                            <span style="color: var(--text-light);">-</span>
-                                        {% endif %}
+                                    <td class="col-inspector-id" data-label="Inspector ID">
+                                        <span>
+                                            {% if user.role == 'inspector' %}
+                                                {% if user.inspector_id %}
+                                                    <span class="inspector-id-badge">{{ user.inspector_id }}</span>
+                                                {% else %}
+                                                    <span style="color: var(--text-light); font-style: italic;">Not assigned</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span style="color: var(--text-light);">-</span>
+                                            {% endif %}
+                                        </span>
                                     </td>
-                                    <td class="col-actions">
+                                    <td class="col-status" data-label="Status">
+                                        <span>
+                                            {% if user.is_active %}
+                                                <span class="status-badge status-active">Active</span>
+                                            {% else %}
+                                                <span class="status-badge status-inactive">Inactive</span>
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="col-staff" data-label="Staff">
+                                        <span>
+                                            {% if user.is_staff %}
+                                                <span class="status-badge status-staff">Staff</span>
+                                            {% else %}
+                                                <span style="color: var(--text-light);">-</span>
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="col-actions" data-label="Actions">
                                         <div class="action-cell compact">
                                             <form method="post" style="display: inline;">
                                                 {% csrf_token %}
@@ -1314,12 +1798,10 @@
                                     </td>
                                 </tr>
                                 {% empty %}
-                                <tr>
-                                    <td colspan="8">
-                                        <div class="empty-message">
-                                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                                            <p>No users found.</p>
-                                        </div>
+                                <tr class="empty-row">
+                                    <td colspan="8" class="empty-message" style="display: table-cell;">
+                                        <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                                        <p>No users found.</p>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -1661,25 +2143,52 @@
         }
         
         
-        function toggleSidebar() {
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
             
-            sidebar.classList.toggle('open');
-            
-            // Show/hide backdrop on mobile
-            if (window.innerWidth <= 1024) {
-                if (sidebar.classList.contains('open')) {
-                    backdrop.classList.remove('hidden');
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+                
+                const icon = mobileMenuBtn.querySelector('i');
+                if (sidebar.classList.contains('show')) {
+                    icon.className = 'fas fa-times text-xl';
                 } else {
-                    backdrop.classList.add('hidden');
+                    icon.className = 'fas fa-bars text-xl';
                 }
             }
-        }
-        
-        
-        // Initialize theme and other functions on page load
-        document.addEventListener('DOMContentLoaded', function() {
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleSidebar);
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', toggleSidebar);
+            }
+            
+            const navLinks = sidebar.querySelectorAll('a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    if (mobileMenuBtn) {
+                        const icon = mobileMenuBtn.querySelector('i');
+                        icon.className = 'fas fa-bars text-xl';
+                    }
+                }
+            });
+            
             initTheme();
             
             // Initialize CSRF protection
@@ -1735,31 +2244,6 @@
                     showChangeRoleModal(userId, username, role);
                 });
             });
-        });
-        
-        // Close sidebar when clicking outside on mobile
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            const mobileToggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 1024) {
-                if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target)) {
-                    sidebar.classList.remove('open');
-                    backdrop.classList.add('hidden');
-                }
-            }
-        });
-        
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            
-            if (window.innerWidth > 1024) {
-                sidebar.classList.remove('open');
-                backdrop.classList.add('hidden');
-            }
         });
         
         // Modal Functions
@@ -1934,4 +2418,5 @@
         }
     </script>
 </body>
+</html>
 </html>

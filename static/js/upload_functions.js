@@ -4170,8 +4170,63 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     
     // For lab, lab form, and retest buttons, we need to find the specific inspection ID from the file path
     if (documentType === 'lab' || documentType === 'lab_form' || documentType === 'retest') {
-        console.log(`INFO ${documentType} button deletion - specific button should already be reset by immediate reset above`);
-        return; // Skip for now, the immediate reset above should handle it
+        console.log(`INFO ${documentType} button deletion - finding button by group ID`);
+        
+        // Use the current group ID from the popup context
+        const groupId = window.currentFilesGroupId;
+        if (!groupId) {
+            console.log(`⚠️ No group ID available for button update`);
+            return;
+        }
+        
+        // Find button by group ID for individual inspection buttons
+        const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
+        let button = null;
+        
+        for (let btn of allButtons) {
+            const btnGroupId = btn.getAttribute('data-group-id');
+            if (btnGroupId === groupId) {
+                button = btn;
+                console.log(`SUCCESS Found ${documentType} button by group ID: ${btn.id} (group: ${btnGroupId})`);
+                break;
+            }
+        }
+        
+        if (button) {
+            // Reset button to grey state
+            button.disabled = false;
+            button.classList.remove('uploaded', 'btn-success');
+            button.classList.add('btn-outline-secondary', 'btn-sm');
+            button.style.background = '';
+            button.style.color = '';
+            button.style.border = '';
+            button.style.cursor = 'pointer';
+            
+            // Set appropriate content based on document type
+            if (documentType === 'lab') {
+                button.innerHTML = '<i class="fas fa-flask"></i> Lab';
+                button.title = 'Lab result upload available';
+            } else if (documentType === 'lab_form') {
+                button.innerHTML = '<i class="fas fa-file-alt"></i> Lab Form';
+                button.title = 'Lab form upload available';
+            } else if (documentType === 'retest') {
+                button.innerHTML = '<i class="fas fa-redo"></i> Retest';
+                button.title = 'Retest upload available';
+            } else {
+                button.innerHTML = documentType.toUpperCase();
+                button.title = `Upload ${documentType.toUpperCase()}`;
+            }
+            
+            // Mark button as file-deleted to prevent UI updates from overriding this state
+            button.setAttribute('data-file-deleted', 'true');
+            button.setAttribute('data-last-updated', Date.now().toString());
+            
+            console.log(`SUCCESS Reset ${documentType} button to grey state`);
+        } else {
+            console.log(`⚠️ Could not find ${documentType} button for group ${groupId}`);
+        }
+        
+        return;
     }
     
     // Use the current group ID from the popup context
@@ -4882,11 +4937,24 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
         const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
         console.log(`DEBUG Found ${allButtons.length} buttons with pattern "${documentType}-"`);
         
-        for (let btn of allButtons) {
-            if (btn.id === buttonId) {
-                button = btn;
-                console.log(`SUCCESS Found button by pattern search: ${btn.id}`);
-                break;
+        // For individual inspection buttons (lab, lab_form, retest), search by group data attribute
+        if (documentType === 'lab' || documentType === 'lab_form' || documentType === 'retest') {
+            for (let btn of allButtons) {
+                const btnGroupId = btn.getAttribute('data-group-id');
+                if (btnGroupId === groupId) {
+                    button = btn;
+                    console.log(`SUCCESS Found ${documentType} button by group ID: ${btn.id} (group: ${btnGroupId})`);
+                    break;
+                }
+            }
+        } else {
+            // For group buttons (rfi, invoice), use exact ID match
+            for (let btn of allButtons) {
+                if (btn.id === buttonId) {
+                    button = btn;
+                    console.log(`SUCCESS Found button by pattern search: ${btn.id}`);
+                    break;
+                }
             }
         }
     }
@@ -4902,8 +4970,21 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
         button.style.color = '';
         button.style.border = '';
         button.style.cursor = 'pointer';
-        button.innerHTML = documentType.toUpperCase();
-        button.title = `Upload ${documentType.toUpperCase()}`;
+        
+        // Set appropriate content based on document type
+        if (documentType === 'lab') {
+            button.innerHTML = '<i class="fas fa-flask"></i> Lab';
+            button.title = 'Lab result upload available';
+        } else if (documentType === 'lab_form') {
+            button.innerHTML = '<i class="fas fa-file-alt"></i> Lab Form';
+            button.title = 'Lab form upload available';
+        } else if (documentType === 'retest') {
+            button.innerHTML = '<i class="fas fa-redo"></i> Retest';
+            button.title = 'Retest upload available';
+        } else {
+            button.innerHTML = documentType.toUpperCase();
+            button.title = `Upload ${documentType.toUpperCase()}`;
+        }
         
         // Mark button as file-deleted to prevent UI updates from overriding this state
         button.setAttribute('data-file-deleted', 'true');
@@ -4915,7 +4996,9 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
         } else if (documentType === 'invoice') {
             button.onclick = function() { uploadInvoice(groupId); };
         } else if (documentType === 'lab') {
-            button.onclick = function() { uploadLab(groupId); };
+            // For lab buttons, use the inspection ID from the button's data attributes
+            const inspectionId = button.getAttribute('data-inspection-id') || button.id.replace('lab-', '');
+            button.onclick = function() { uploadLab(inspectionId); };
         } else if (documentType === 'lab_form') {
             button.onclick = function() { uploadLabForm(groupId); };
         } else if (documentType === 'retest') {

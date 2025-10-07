@@ -3,7 +3,7 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Server View - Food Safety Agency</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -140,14 +140,59 @@
         }
 
         body {
-            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             color: var(--text);
             line-height: 1.5;
             overflow-x: hidden;
             min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center fixed;
+            background-size: cover;
+            opacity: 1.0;
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed !important;
+            top: 12px !important;
+            left: 12px !important;
+            z-index: 99999 !important;
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+            border: none !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+            width: 48px !important;
+            height: 48px !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
+        
+        .mobile-menu-btn:active {
+            transform: translate3d(0, 0, 0) scale(0.95);
+        }
+        
+        .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.15) !important;
         }
         
         /* Mobile-first layout */
@@ -156,7 +201,18 @@
             min-height: 100vh;
         }
         
-        /* Main Content - Full width on mobile */
+        /* Sidebar positioning */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 9998;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Main Content */
         .main-content {
             flex: 1;
             width: 100%;
@@ -475,10 +531,284 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Tablet and Desktop Responsive */
-        @media (min-width: 768px) {
+        /* Sidebar overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9997;
+            display: none;
+            backdrop-filter: blur(2px);
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+            
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+                width: 280px;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+                padding: 1rem !important;
+            }
+            
+            .header {
+                padding-top: 5rem !important;
+                padding-bottom: 1.5rem !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.95rem !important;
+            }
+            
+            .breadcrumb-nav {
+                margin-left: 1rem;
+                margin-right: 1rem;
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+            }
+            
+            .breadcrumb-link, .breadcrumb-current {
+                font-size: 0.875rem;
+            }
+        }
+        
+        /* Tablet styles */
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 85%;
+                max-width: 320px;
+            }
+            
+            .main-content {
+                padding: 0.75rem !important;
+            }
+            
+            .header {
+                padding-top: 4.5rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.375rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.9rem !important;
+            }
+            
+            .chart-container {
+                padding: 1.25rem !important;
+                margin-top: 1rem !important;
+            }
+            
+            .chart-container h3 {
+                font-size: 1.1rem !important;
+            }
+            
+            .file-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.875rem !important;
+            }
+            
+            .file-item {
+                padding: 0.875rem !important;
+            }
+            
+            .file-icon {
+                font-size: 1.5rem !important;
+                margin-right: 0.875rem !important;
+            }
+            
+            .file-name {
+                font-size: 0.9rem !important;
+            }
+            
+            .file-details {
+                font-size: 0.8rem !important;
+            }
+            
+            .metric-card {
+                padding: 1.25rem !important;
+            }
+            
+            .breadcrumb-nav {
+                flex-wrap: wrap;
+                gap: 0.375rem;
+                padding: 0.625rem 0.875rem;
+            }
+        }
+        
+        /* Small mobile styles */
+        @media (max-width: 640px) {
+            .mobile-menu-btn {
+                top: 10px !important;
+                left: 10px !important;
+                width: 44px !important;
+                height: 44px !important;
+            }
+            
+            #sidebar {
+                width: 90%;
+            }
+            
+            .header {
+                padding-top: 4rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.25rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.875rem !important;
+            }
+            
+            .chart-container {
+                padding: 1rem !important;
+            }
+            
+            .chart-container h3 {
+                font-size: 1rem !important;
+            }
+            
+            .file-item {
+                padding: 0.75rem !important;
+            }
+            
+            .metric-card {
+                padding: 1rem !important;
+            }
+            
+            .refresh-btn {
+                bottom: 1rem;
+                right: 1rem;
+                width: 52px;
+                height: 52px;
+            }
+        }
+        
+        /* Extra small mobile styles */
+        @media (max-width: 480px) {
+            #sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                top: 8px !important;
+                left: 8px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .main-content {
+                padding: 0.5rem !important;
+            }
+            
+            .header {
+                padding-top: 3.5rem !important;
+                padding-bottom: 1rem !important;
+            }
+            
+            .header h1 {
+                font-size: 1.125rem !important;
+            }
+            
+            .header h2 {
+                font-size: 0.8rem !important;
+            }
+            
+            .chart-container {
+                padding: 0.875rem !important;
+                margin-top: 0.75rem !important;
+            }
+            
+            .chart-container h3 {
+                font-size: 0.95rem !important;
+                margin-bottom: 0.75rem !important;
+            }
+            
+            .file-item {
+                padding: 0.625rem !important;
+                flex-wrap: wrap;
+            }
+            
+            .file-icon {
+                font-size: 1.25rem !important;
+                margin-right: 0.625rem !important;
+            }
+            
+            .file-name {
+                font-size: 0.85rem !important;
+            }
+            
+            .file-details {
+                font-size: 0.75rem !important;
+                flex-wrap: wrap;
+            }
+            
+            .file-preview img {
+                max-width: 40px !important;
+                max-height: 40px !important;
+            }
+            
+            .metric-card {
+                padding: 0.875rem !important;
+            }
+            
+            .metric-value {
+                font-size: 2rem !important;
+            }
+            
+            .refresh-btn {
+                bottom: 0.875rem;
+                right: 0.875rem;
+                width: 48px;
+                height: 48px;
+                font-size: 1rem;
+            }
+            
+            .breadcrumb-nav {
+                padding: 0.5rem 0.625rem;
+                font-size: 0.75rem;
+                gap: 0.25rem;
+            }
+            
+            .breadcrumb-link, .breadcrumb-current {
+                font-size: 0.75rem;
+                padding: 0.125rem 0.375rem;
+            }
+        }
+        
+        /* Desktop styles */
+        @media (min-width: 1025px) {
             .main-content {
                 padding: 2rem;
+                margin-left: 16rem;
             }
             
             .header {
@@ -501,6 +831,10 @@
             .metric-card {
                 padding: 2rem;
             }
+            
+            .chart-container {
+                padding: 2rem;
+            }
         }
         
         @media (min-width: 1200px) {
@@ -509,46 +843,42 @@
             }
         }
         
-        /* Small mobile adjustments */
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 0.5rem;
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            button, a, .file-item {
+                min-height: 44px !important;
             }
             
-            .metric-card {
-                padding: 1rem;
+            #sidebar a:hover {
+                background-color: transparent !important;
             }
             
-            .header {
-                padding: 3rem 0 1rem;
+            #sidebar a:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
             }
             
-            .header h1 {
-                font-size: 1.25rem;
+            .file-item:hover {
+                transform: none;
             }
             
-            .header h2 {
-                font-size: 0.9rem;
-            }
-            
-            .metric-value {
-                font-size: 2rem;
-            }
-            
-            .refresh-btn {
-                bottom: 1rem;
-                right: 1rem;
-                width: 50px;
-                height: 50px;
-                font-size: 1rem;
+            .file-item:active {
+                transform: scale(0.98);
             }
         }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
     <div class="page-container">
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed left-0 w-64 h-screen transition-all duration-300 z-50 shadow-2xl flex flex-col">
+        <div id="sidebar" class="w-64 h-screen flex flex-col">
             <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
                 <div class="text-center mb-2">
                     <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
@@ -558,71 +888,56 @@
                 </div>
             </div>
             
-            <div class="flex-1 flex flex-col justify-between">
+            <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
-                    <!-- Dashboard -->
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Dashboard
                         </a>
                     </li>
-                    
-                    <!-- Clients -->
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-users mr-2 w-4 text-center"></i>
                             Clients
                         </a>
                     </li>
-                    
-                    <!-- Inspections -->
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
-                    
-                    <!-- User Management -->
                     <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
                             User Management
                         </a>
                     </li>
-                    
-                    <!-- System Logs -->
                     <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
                             System Logs
                         </a>
                     </li>
-                    
-                    <!-- OneDrive View (Developer only) -->
                     {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center"></i>
                             OneDrive View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Server View (Developer and Super Admin) -->
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-primary">
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] bg-primary">
                             <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
                             Server View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Settings -->
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2  hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cog mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -630,11 +945,11 @@
                 </ul>
             </div>
             
-            <!-- Logout Button - Fixed at bottom -->
+            <!-- Logout Button -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                         <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
                         Logout
                     </button>
@@ -740,27 +1055,68 @@
     </button>
 
     <script>
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+                
+                const icon = mobileMenuBtn.querySelector('i');
+                if (sidebar.classList.contains('show')) {
+                    icon.className = 'fas fa-times text-xl';
+                } else {
+                    icon.className = 'fas fa-bars text-xl';
+                }
+            }
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleSidebar);
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', toggleSidebar);
+            }
+            
+            const navLinks = sidebar.querySelectorAll('a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    if (mobileMenuBtn) {
+                        const icon = mobileMenuBtn.querySelector('i');
+                        icon.className = 'fas fa-bars text-xl';
+                    }
+                }
+            });
+            
+            initTheme();
+        });
+
         // Refresh functionality
         function refreshData() {
             const refreshBtn = document.querySelector('.refresh-btn');
             const icon = refreshBtn.querySelector('i');
             
-            // Add spinning animation
             refreshBtn.classList.add('spinning');
             icon.classList.remove('fa-sync-alt');
             icon.classList.add('fa-spinner');
             
-            // Reload page after short delay
             setTimeout(() => {
                 location.reload();
             }, 1000);
         }
-
-        // Initialize page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize theme
-            initTheme();
-        });
 
         // Theme management
         function initTheme() {

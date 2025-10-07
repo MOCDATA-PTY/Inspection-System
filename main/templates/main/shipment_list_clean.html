@@ -6,9 +6,10 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Expires" content="-1">
+    <!-- CACHE BUSTER: 20251003-040900 -->
     <title>Claims Records Management</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -43,6 +44,9 @@
             --primary-light: #1a3a40;
             --light-black: #ffffff;
             --grey: #b0b0b0;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #f1f5f9;
+            --sidebar-hover: #1e293b;
         }
         
         /* Dark mode specific overrides */
@@ -99,6 +103,105 @@
         [data-theme="dark"] .btn-files-checking {
             background-color: #6b7280 !important;
             border-color: #4b5563 !important;
+            color: white !important;
+        }
+        
+        /* Dark mode for main content areas */
+        [data-theme="dark"] body {
+            background: var(--background) !important;
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .container {
+            background: var(--background) !important;
+        }
+        
+        [data-theme="dark"] .header {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .form-group {
+            background: var(--card-bg) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .form-control {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .form-control:focus {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--primary) !important;
+        }
+        
+        [data-theme="dark"] .form-label {
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .card {
+            background: var(--card-bg) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .card-header {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .card-body {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .table {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .table th {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .table td {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .btn {
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .btn-primary {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+        }
+        
+        [data-theme="dark"] .btn-secondary {
+            background: #6b7280 !important;
+            border-color: #4b5563 !important;
+        }
+        
+        [data-theme="dark"] .pagination {
+            background: var(--card-bg) !important;
+        }
+        
+        [data-theme="dark"] .pagination a {
+            background: var(--card-bg) !important;
+            color: var(--text) !important;
+            border-color: var(--border) !important;
+        }
+        
+        [data-theme="dark"] .pagination .current {
+            background: var(--primary) !important;
             color: white !important;
         }
         
@@ -447,6 +550,16 @@
             background-color: #4b5563;
         }
         
+        .btn-analytics {
+            background-color: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-analytics:hover {
+            background-color: #7c3aed;
+            color: white;
+        }
+        
         /* Dark mode button overrides */
         [data-theme="dark"] .btn-secondary {
             background-color: #4b5563;
@@ -455,6 +568,15 @@
         
         [data-theme="dark"] .btn-secondary:hover {
             background-color: #374151;
+        }
+        
+        [data-theme="dark"] .btn-analytics {
+            background-color: #7c3aed;
+            color: white;
+        }
+        
+        [data-theme="dark"] .btn-analytics:hover {
+            background-color: #6d28d9;
         }
         
         .messages {
@@ -665,6 +787,7 @@
             .col-km { width: 55px; min-width: 55px; max-width: 55px; }
             .col-hours { width: 55px; min-width: 55px; max-width: 55px; }
             .col-additional-email { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-approved { width: 60px; min-width: 60px; max-width: 60px; }
             .col-send { width: 95px; min-width: 95px; max-width: 95px; }
             
             .btn-sm {
@@ -739,7 +862,7 @@
             .col-account-code { width: 110px; min-width: 110px; max-width: 110px; white-space: nowrap; }
             .col-date { width: 62px; min-width: 62px; max-width: 62px; }
             .col-compliance { width: 85px; min-width: 85px; max-width: 85px; text-align: center; }
-            .col-email { width: 160px; min-width: 160px; max-width: 160px; white-space: nowrap; overflow: visible; }
+            .col-email { width: 160px; min-width: 160px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .col-inspector { width: 70px; min-width: 70px; max-width: 70px; }
             .col-view-files { width: 50px; min-width: 50px; max-width: 50px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
@@ -747,6 +870,7 @@
             .col-km { width: 70px; min-width: 70px; max-width: 70px; }
             .col-hours { width: 70px; min-width: 70px; max-width: 70px; }
             .col-additional-email { width: 90px; min-width: 90px; max-width: 90px; }
+            .col-approved { width: 80px; min-width: 80px; max-width: 80px; }
             .col-send { width: 120px; min-width: 120px; max-width: 120px; }
             
             /* Tablet-specific detail content optimizations */
@@ -817,7 +941,7 @@
             .col-account-code { width: 140px; min-width: 140px; max-width: 140px; white-space: nowrap; }
             .col-date { width: 70px; min-width: 70px; max-width: 70px; }
             .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
-            .col-email { width: 200px; min-width: 200px; max-width: 200px; white-space: nowrap; overflow: visible; }
+            .col-email { width: 200px; min-width: 200px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .col-inspector { width: 75px; min-width: 75px; max-width: 75px; }
             .col-view-files { width: 55px; min-width: 55px; max-width: 55px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
@@ -825,6 +949,7 @@
             .col-km { width: 75px; min-width: 75px; max-width: 75px; }
             .col-hours { width: 75px; min-width: 75px; max-width: 75px; }
             .col-additional-email { width: 110px; min-width: 110px; max-width: 110px; }
+            .col-approved { width: 90px; min-width: 90px; max-width: 90px; }
             .col-send { width: 140px; min-width: 140px; max-width: 140px; }
             
             /* Large desktop detail content */
@@ -996,7 +1121,18 @@
             max-width: 200px !important; 
             flex: none !important;
             white-space: nowrap !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            position: relative;
+        }
+        
+        /* Email line styling to prevent overflow */
+        .email-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: block;
         }
         .col-compliance { 
             width: 100px !important; 
@@ -1050,9 +1186,250 @@
             flex: none !important;
         }
         .col-additional-email { 
-            width: 180px !important; 
-            min-width: 180px !important; 
-            max-width: 180px !important; 
+            width: 250px !important; 
+            min-width: 250px !important; 
+            max-width: 250px !important; 
+            text-align: center;
+            flex: none !important;
+        }
+        
+        /* Multiple email inputs styling */
+        .additional-emails-container {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .email-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .email-input-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .email-input-row .group-additional-email-input {
+            flex: 1;
+            font-size: 0.7rem;
+            padding: 2px 4px;
+        }
+        
+        .remove-email-btn {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            font-size: 12px;
+            line-height: 1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .add-email-btn {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            margin-top: 2px;
+            align-self: flex-start;
+        }
+        
+        /* Additional email inputs - no colored borders */
+        .group-additional-email-input {
+            border: 1px solid var(--border) !important;
+        }
+        
+        .group-additional-email-input:not(:placeholder-shown),
+        .group-additional-email-input[value]:not([value=""]) {
+            border-color: var(--border) !important;
+        }
+        
+        /* Date picker styling for DD/MM/YYYY format */
+        .date-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .date-picker {
+            font-family: monospace;
+            text-align: center;
+            letter-spacing: 1px;
+            padding-right: 40px;
+            background-color: #F9F9FA;
+            border: 1px solid #E5E7EB;
+            border-radius: var(--radius) 0 0 var(--radius);
+        }
+        
+        .date-picker::placeholder {
+            color: #999;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        
+        .date-picker:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.2);
+        }
+        
+        .date-picker-btn {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 40px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .date-picker-btn:hover {
+            background: #005a6b;
+        }
+        
+        .date-picker-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.3);
+        }
+        
+        /* Calendar popup styling */
+        .calendar-popup {
+            position: fixed;
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            padding: 15px;
+            min-width: 280px;
+            max-width: 320px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .calendar-nav {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .calendar-nav:hover {
+            background: #005a6b;
+        }
+        
+        .calendar-month-year {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        
+        .calendar-day-header {
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            padding: 5px 0;
+        }
+        
+        .calendar-day {
+            text-align: center;
+            padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .calendar-day:hover {
+            background: var(--primary-light);
+        }
+        
+        .calendar-day.selected {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .calendar-day.other-month {
+            color: #ccc;
+        }
+        
+        .calendar-day.today {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        /* Approved column styling */
+        .approved-dropdown {
+            width: 100%;
+            padding: 2px 4px;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-size: 0.65rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+            text-align: center;
+        }
+        
+        .approved-dropdown:hover {
+            border-color: var(--primary);
+        }
+        
+        .approved-dropdown:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.2);
+        }
+        
+        .approved-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .approved-yes {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .approved-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .col-approved { 
+            width: 100px !important; 
+            min-width: 100px !important; 
+            max-width: 100px !important; 
             text-align: center;
             flex: none !important;
         }
@@ -1461,6 +1838,20 @@
             padding: 2px 4px;
             white-space: nowrap;
             flex-shrink: 0;
+        }
+        
+        /* Red border by default for group inputs */
+        .group-km-input,
+        .group-hours-input {
+            border: 1px solid #dc3545 !important;
+        }
+        
+        /* Green border when group input has value */
+        .group-km-input:not(:placeholder-shown),
+        .group-hours-input:not(:placeholder-shown),
+        .group-km-input[value]:not([value=""]),
+        .group-hours-input[value]:not([value=""]) {
+            border-color: #28a745 !important;
         }
         
         .upload-info {
@@ -2723,6 +3114,20 @@
             text-align: center;
         }
         
+        /* Class dropdown border styling */
+        .product-class-select {
+            border: 2px solid #dc3545; /* Red border by default (no selection) */
+            transition: border-color 0.3s ease;
+        }
+        
+        .product-class-select.has-value {
+            border-color: #28a745; /* Green border when value is selected */
+        }
+        
+        .product-class-select:disabled {
+            border-color: #6c757d; /* Gray border when disabled */
+        }
+        
         /* Test columns (Fat, Protein, Calcium, DNA) - increased width */
         .detail-table th:nth-child(9),
         .detail-table td:nth-child(9),
@@ -2765,7 +3170,7 @@
         .km-input, .hours-input, .bought-sample-input {
             width: 100%;
             padding: 4px 6px;
-            border: 1px solid var(--border);
+            border: 1px solid #dc3545; /* Red border by default (empty) */
             border-radius: 3px;
             font-size: 0.7rem;
             background-color: var(--card-bg);
@@ -2774,16 +3179,31 @@
             transition: all 0.2s ease;
         }
         
+        /* Green border when input has value */
+        .km-input:not(:placeholder-shown),
+        .hours-input:not(:placeholder-shown),
+        .bought-sample-input:not(:placeholder-shown),
+        .km-input[value]:not([value=""]),
+        .hours-input[value]:not([value=""]),
+        .bought-sample-input[value]:not([value=""]) {
+            border-color: #28a745; /* Green border when has value */
+        }
+        
+        /* Focus state */
+        .km-input:focus,
+        .hours-input:focus,
+        .bought-sample-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
         /* Product name text styling - read-only from SQL Server */
         .product-name-text {
             font-size: 0.7rem;
-            color: #28a745; /* Green color to indicate SQL Server data */
+            color: var(--text); /* Black text like client name */
             font-weight: 500;
             text-align: left;
             padding: 4px 6px;
-            background-color: #e8f5e8; /* Light green background */
-            border: 1px solid #28a745;
-            border-radius: 3px;
             display: inline-block;
             min-width: 120px;
             max-width: 150px;
@@ -3143,6 +3563,28 @@
             background: var(--primary-light);
         }
         
+        
+        /* Mobile Navigation Dark Mode */
+        [data-theme="dark"] .mobile-nav {
+            background: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+        }
+        
+        [data-theme="dark"] .mobile-nav-header {
+            background: var(--primary) !important;
+            color: white !important;
+        }
+        
+        [data-theme="dark"] .mobile-nav-links a,
+        [data-theme="dark"] .mobile-nav-links button {
+            color: var(--sidebar-text) !important;
+        }
+        
+        [data-theme="dark"] .mobile-nav-links a:hover,
+        [data-theme="dark"] .mobile-nav-links button:hover {
+            background: var(--sidebar-hover) !important;
+        }
+        
         /* Mobile Overlay */
         .mobile-overlay {
             display: none;
@@ -3471,6 +3913,7 @@
                 padding: 1px;
             }
         }
+        
     </style>
 </head>
 <body>
@@ -3512,7 +3955,7 @@
             </a>
             
             <a href="{% url 'analytics_dashboard' %}">
-                <i class="fas fa-chart-line"></i> Analytics
+                <i class="fas fa-chart-line"></i> Home
             </a>
             {% endif %}
             
@@ -3536,6 +3979,16 @@
             <button onclick="collapseAll()">
                 <i class="fas fa-compress-alt"></i> Collapse All
             </button>
+            
+            {% if request.user.role == 'inspector' %}
+            <a href="{% url 'inspector_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
+                <i class="fas fa-chart-line"></i> My Home
+            </a>
+            {% else %}
+            <a href="{% url 'analytics_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
+                <i class="fas fa-chart-line"></i> Home
+            </a>
+            {% endif %}
             
             <form action="{% url 'logout' %}" method="post" style="margin: 0;">
                 {% csrf_token %}
@@ -3566,6 +4019,27 @@
         <!-- User Context Message - Removed to hide status reset notifications -->
      
         <div class="action-bar">
+            <!-- Home Dashboard Button - Redirects based on user role (FIRST) -->
+            {% if request.user.role == 'inspector' %}
+            <a href="{% url 'inspector_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-chart-line"></i> My Home
+            </a>
+            {% else %}
+            <a href="{% url 'analytics_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-chart-line"></i> Home
+            </a>
+            {% endif %}
+            
+            <!-- Expand All Button (SECOND) -->
+            <button type="button" class="btn btn-secondary" onclick="expandAll()">
+                <i class="fas fa-expand-alt"></i> Expand All
+            </button>
+            
+            <!-- Collapse All Button -->
+            <button type="button" class="btn btn-secondary" onclick="collapseAll()">
+                <i class="fas fa-compress-alt"></i> Collapse All
+            </button>
+            
             <!-- Home Button -->
             {% if request.user.role != 'inspector' and request.user.role != 'scientist' and request.user.role != 'admin' %}
             <a href="{% url 'home' %}" class="btn" style="background: #10b981; color: white;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
@@ -3583,21 +4057,6 @@
             </form>
             {% endif %}
             
-            <!-- Expand/Collapse All Buttons -->
-            <button type="button" class="btn btn-secondary" onclick="expandAll()">
-                <i class="fas fa-expand-alt"></i> Expand All
-            </button>
-            <button type="button" class="btn btn-secondary" onclick="collapseAll()">
-                <i class="fas fa-compress-alt"></i> Collapse All
-            </button>
-            
-            <!-- Analytics Dashboard Button (NEW) - Hidden for administrators -->
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' and request.user.role != 'admin' %}
-            <a href="{% url 'analytics_dashboard' %}" class="btn btn-analytics">
-                <i class="fas fa-chart-line"></i> Analytics Dashboard
-            </a>
-            {% endif %}
-            
             <!-- Manage Clients Button -->
             {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
             <a href="{% url 'client_allocation' %}" class="btn btn-allocation">
@@ -3611,6 +4070,7 @@
                 <i class="fas fa-list-alt"></i> System Logs
             </a>
             {% endif %}
+            
             
             <!-- Logout Button (Matching Other Buttons) -->
             <form action="{% url 'logout' %}" method="post" class="logout-form" style="display: inline;">
@@ -3657,11 +4117,23 @@
                     <div class="form-group" style="display: flex; gap: 15px; margin-bottom: 20px;">
                         <div class="form-field" style="flex: 1;">
                             <label class="form-label">Date From</label>
-                            <input type="date" class="form-control" name="inspection_date_from" value="{{ request.GET.inspection_date_from }}">
+                            <div class="date-input-container">
+                                <input type="text" class="form-control date-picker" name="inspection_date_from_display" placeholder="DD/MM/YYYY" value="{% if request.GET.inspection_date_from %}{{ request.GET.inspection_date_from|date:"d/m/Y" }}{% endif %}" readonly>
+                                <input type="hidden" name="inspection_date_from" value="{{ request.GET.inspection_date_from }}">
+                                <button type="button" class="date-picker-btn" onclick="openDatePicker('inspection_date_from_display')">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-field" style="flex: 1;">
                             <label class="form-label">Date To</label>
-                            <input type="date" class="form-control" name="inspection_date_to" value="{{ request.GET.inspection_date_to }}">
+                            <div class="date-input-container">
+                                <input type="text" class="form-control date-picker" name="inspection_date_to_display" placeholder="DD/MM/YYYY" value="{% if request.GET.inspection_date_to %}{{ request.GET.inspection_date_to|date:"d/m/Y" }}{% endif %}" readonly>
+                                <input type="hidden" name="inspection_date_to" value="{{ request.GET.inspection_date_to }}">
+                                <button type="button" class="date-picker-btn" onclick="openDatePicker('inspection_date_to_display')">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-field" style="flex: 1;">
                             <label class="form-label">Sent Status</label>
@@ -3748,6 +4220,7 @@
                                 {% endif %}
                                 <th class="col-km">Distance (Km)</th>
                                 <th class="col-hours">Hours Worked</th>
+                                <th class="col-approved">Approved</th>
                                 <th class="col-send">Sent Status</th>
                             </tr>
                         </thead>
@@ -3772,7 +4245,7 @@
                                     </div>
                                 </td>
                                 <td class="col-account-code">{{ shipment.internal_account_code|default:"-" }}</td>
-                                <td class="col-date">{{ shipment.date_of_inspection|date:"m/d/y"|default:"-" }}</td>
+                                <td class="col-date">{{ shipment.date_of_inspection|date:"d/m/Y"|default:"-" }}</td>
                                 <td class="col-compliance">
                                     {% if shipment.inspection_compliance_status == 'compliant' %}
                                         <span class="compliance-status compliant">Compliant</span>
@@ -3783,7 +4256,7 @@
                                 <td class="col-email">
                                     {% if shipment.client_emails %}
                                         {% for item in shipment.client_emails %}
-                                            <div class="email-line">
+                                            <div class="email-line" title="{{ item.email }}">
                                                 <span>{{ item.email }}</span>
                                                 {% if item.removable %}
                                                     <button class="btn btn-xs" title="Remove" onclick="deleteClientEmail('{{ shipment.client_name }}', '{{ item.email }}')">×</button>
@@ -3797,21 +4270,77 @@
                                 <!-- Additional Email Column -->
                                 <td class="col-additional-email">
                                     {% if request.user.role == 'inspector' %}
+                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
+                                            <div class="email-inputs">
+                                                {% if shipment.additional_email %}
+                                                    <div class="email-input-row">
                                         <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                               data-group-id="{{ fallback_group_id }}" 
-                                               value="{{ shipment.additional_email|default:'' }}" 
+                                                               value="{{ shipment.additional_email }}" 
                                                placeholder="email@example.com" 
-                                               onchange="updateGroupAdditionalEmail(this)"
-                                               onblur="updateGroupAdditionalEmail(this)"
+                                                               onchange="updateGroupAdditionalEmails(this)"
+                                                               onblur="updateGroupAdditionalEmails(this)"
                                                title="Additional email for this inspection group">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                                                                onclick="removeEmailInput(this)" title="Remove this email">
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="email-input-row">
+                                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                                                               value="" 
+                                                               placeholder="email@example.com" 
+                                                               onchange="updateGroupAdditionalEmails(this)"
+                                                               onblur="updateGroupAdditionalEmails(this)"
+                                                               title="Additional email for this inspection group">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                                                                onclick="removeEmailInput(this)" title="Remove this email">
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary add-email-btn" 
+                                                    onclick="addEmailInput(this)" title="Add another email">
+                                                + Add Email
+                                            </button>
+                                        </div>
                                     {% elif request.user.role != 'scientist' %}
+                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
+                                            <div class="email-inputs">
+                                                {% if shipment.additional_email %}
+                                                    <div class="email-input-row">
                                         <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                               data-group-id="{{ fallback_group_id }}" 
-                                               value="{{ shipment.additional_email|default:'' }}" 
+                                                               value="{{ shipment.additional_email }}" 
                                                placeholder="email@example.com" 
-                                               onchange="updateGroupAdditionalEmail(this)"
-                                               onblur="updateGroupAdditionalEmail(this)"
+                                                               onchange="updateGroupAdditionalEmails(this)"
+                                                               onblur="updateGroupAdditionalEmails(this)"
                                                title="Additional email for this inspection group">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                                                                onclick="removeEmailInput(this)" title="Remove this email">
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="email-input-row">
+                                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                                                               value="" 
+                                                               placeholder="email@example.com" 
+                                                               onchange="updateGroupAdditionalEmails(this)"
+                                                               onblur="updateGroupAdditionalEmails(this)"
+                                                               title="Additional email for this inspection group">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                                                                onclick="removeEmailInput(this)" title="Remove this email">
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary add-email-btn" 
+                                                    onclick="addEmailInput(this)" title="Add another email">
+                                                + Add Email
+                                            </button>
+                                        </div>
                                     {% else %}
                                         {{ shipment.additional_email|default:"-" }}
                                     {% endif %}
@@ -3950,6 +4479,26 @@
                                     {% endif %}
                                 </td>
                                 
+                                <!-- Approved Column -->
+                                <td class="col-approved">
+                                    {% if request.user.role == 'inspector' or request.user.role == 'admin' or request.user.role == 'super_admin' %}
+                                        <select class="form-control form-control-sm approved-dropdown" 
+                                                data-group-id="{{ fallback_group_id }}" 
+                                                onchange="updateGroupApproved(this)"
+                                                onblur="updateGroupApproved(this)"
+                                                title="Approval status for this inspection group">
+                                            <option value="PENDING" {% if shipment.approved_status == 'PENDING' or not shipment.approved_status %}selected{% endif %}>Pending</option>
+                                            <option value="YES" {% if shipment.approved_status == 'YES' %}selected{% endif %}>Yes</option>
+                                        </select>
+                                    {% else %}
+                                        {% if shipment.approved_status == 'YES' %}
+                                            <span class="approved-badge approved-yes">Yes</span>
+                                        {% else %}
+                                            <span class="approved-badge approved-pending">Pending</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                
                                 <!-- Sent Status Column -->
                                 <td class="col-send">
                                     {% if user_role != 'inspector' and user_role != 'scientist' %}
@@ -4003,9 +4552,9 @@
                             </tr>
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
-                                <td colspan="{% if user.role == 'inspector' %}13{% else %}14{% endif %}" class="detail-cell">
+                                <td colspan="{% if user.role == 'inspector' %}14{% else %}15{% endif %}" class="detail-cell">
                                     <div class="detail-content">
-                                        <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"m/d/y" }} 
+                                        <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"d/m/Y" }} 
                                             <small style="color: #666; font-size: 0.8em;">
                                                 ({{ shipment.products|length }} products)
                                             </small>
@@ -4068,20 +4617,19 @@
                                                     </td>
                                                     <td>
                                                         <select class="form-control form-control-sm needs-retest-dropdown" data-inspection-id="{{ product.remote_id }}" onchange="updateNeedsRetest(this)" {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - retest not possible"{% endif %}>
-                                                            <option value="">Select...</option>
+                                                            <option value="NO" {% if product.needs_retest == 'NO' or not product.is_sample_taken or not product.needs_retest %}selected{% endif %}>No</option>
                                                             <option value="YES" {% if product.needs_retest == 'YES' %}selected{% endif %}>Yes</option>
-                                                            <option value="NO" {% if product.needs_retest == 'NO' or not product.is_sample_taken %}selected{% endif %}>No</option>
                                                         </select>
                                                     </td>
                                                     <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
                                                         {% with lower_commodity=product.commodity|default:''|lower %}
-                                                        <select class="km-input product-class-select" 
+                                                        <select class="km-input product-class-select {% if product.product_class %}has-value{% endif %}" 
                                                                 data-inspection-id="{{ product.remote_id }}"
                                                                 data-commodity="{{ lower_commodity }}"
                                                                 data-current-class="{{ product.product_class }}"
                                                                 onchange="updateProductClass(this)"
                                                                 {% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}disabled style="opacity: 0.5; cursor: not-allowed;" title="Class not applicable for Egg/Poultry"{% endif %}>
-                                                            <option value="">Select Class...</option>
+                                                                <option value="">Select Class...</option>
                                                             <!-- Options will be populated by JavaScript filterClassOptions function -->
                                                         {% endwith %}
                                                         </select>
@@ -4110,6 +4658,7 @@
                                                                step="0.01" 
                                                                min="0" 
                                                                onchange="updateBoughtSample(this)"
+                                                               onblur="updateBoughtSample(this)"
                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - cannot enter bought sample"{% endif %}>
                                                     </td>
                                                     <td class="col-lab-dropdown">
@@ -4589,9 +5138,11 @@
     </style>
 
     <!-- Load sent status functionality from external file -->
-    <script src="{% static 'js/sent_status.js' %}?v=20251001-SYNTAX-FIXED"></script>
+    <script src="{% static 'js/sent_status.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20251001-SYNTAX-FIXED"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20251003-FINAL-FIX"></script>
+    <!-- Load bought sample functionality -->
+    <script src="{% static 'js/bought_sample.js' %}?v=20251003-FINAL-FIX"></script>
     <script>
         // Set global CSRF token for upload functions
         try {
@@ -4603,8 +5154,11 @@
         
         // CLASS DROPDOWN FUNCTION - Must be defined early to avoid syntax errors
         window.filterClassOptions = function(dropdown) {
-            console.log('[CLASS] Populating dropdown');
+            console.log('[CLASS] Populating dropdown - function called');
+            console.log('[CLASS] Dropdown element:', dropdown);
+            console.log('[CLASS] Dropdown classes:', dropdown.className);
             const currentValue = dropdown.getAttribute('data-current-class') || dropdown.value;
+            console.log('[CLASS] Current value:', currentValue);
             
             const allClassOptions = ['Raw species sausage / wors','Extra Lean Mince','Lean Mince','Regular Mince','Raw Flavoured Ground Meat','Raw Flavoured Ground Meat & Offal','Raw Flavoured mixed species Ground Meat','Raw Flavoured mixed species Ground Meat & Offal','Raw Boerewors','Raw mixed species sausage / wors','Ground Burger / Ground patty = Extra Lean','Ground Burger / Ground patty = Lean','Ground Burger / Ground patty = Regular','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean','Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular','Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel','Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger','Raw Banger / Griller','Raw Bratwurst / Sizzler','Whole Muscle, uncured and heat / partial heat treated products','Whole muscle, uncured, no or partial heat treated and air dried products','Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)','Whole muscle, dry cured, no or partial heat treated products','Whole muscle, cured and no or partial heat treated products','Whole muscle, cured, no or partial heat treated and air dried products','Whole muscle, dry cured, no or partial heat treated and dried products','Comminuted, cured and heat treated products','Comminuted, uncured, no or partial heat treated and dried products','Comminuted, cured, no or partial heat treated, dried and fermented products','Comminuted, uncured and heat treated products','Reformed, uncured and no or partial heat treated products','Reformed, cured, heat treated products from single species','Reformed, cured, heat treated products from mixed species','Reformed, cured and no or partial heat treated products','Liver spreads, pâté and terrines','Products in aspic: Brawn','Product in aspic: Souse, Other products containing cured meat pieces in aspic','Products made from blood','Coated Processed Meat Products','Unspecified processed meat products'];
             
@@ -4626,7 +5180,22 @@
                 dropdown.value = currentValue;
             }
             
+            // Apply border styling based on current value
+            console.log('[BORDER DEBUG] Dropdown value:', dropdown.value);
+            console.log('[BORDER DEBUG] Is empty?', !dropdown.value || dropdown.value === '');
+            console.log('[BORDER DEBUG] Is placeholder?', dropdown.value === 'Select Class...');
+            
+            if (dropdown.value && dropdown.value !== '' && dropdown.value !== 'Select Class...') {
+                dropdown.classList.add('has-value');
+                console.log('[BORDER DEBUG] Added has-value class - should be GREEN');
+            } else {
+                dropdown.classList.remove('has-value');
+                console.log('[BORDER DEBUG] Removed has-value class - should be RED');
+            }
+            
             console.log('[CLASS] Dropdown now has', dropdown.options.length, 'options');
+            console.log('[CLASS] First few options:', Array.from(dropdown.options).slice(0, 5).map(opt => opt.textContent));
+            console.log('[CLASS] Dropdown value after population:', dropdown.value);
         };
         
         // Initialize class dropdowns when DOM is ready
@@ -4635,6 +5204,25 @@
             const dropdowns = document.querySelectorAll('select.product-class-select');
             console.log('[CLASS] Found', dropdowns.length, 'dropdowns');
             dropdowns.forEach(window.filterClassOptions);
+            
+            // Observe the table for dynamic changes and re-apply filters
+            const table = document.getElementById('shipmentsTable');
+            if (table && 'MutationObserver' in window) {
+                console.log('[CLASS] Setting up MutationObserver...');
+                const observer = new MutationObserver(() => {
+                    console.log('[CLASS] Table changed, re-filtering dropdowns...');
+                    document.querySelectorAll('select.product-class-select').forEach(window.filterClassOptions);
+                });
+                observer.observe(table, { childList: true, subtree: true });
+            }
+            
+            // Fallback: periodic re-filter shortly after load in case of late rendering
+            setTimeout(() => {
+                console.log('[CLASS] Fallback timeout - re-filtering dropdowns...');
+                const fallbackDropdowns = document.querySelectorAll('select.product-class-select');
+                console.log('[CLASS] Fallback found', fallbackDropdowns.length, 'dropdowns');
+                fallbackDropdowns.forEach(window.filterClassOptions);
+            }, 500);
             
             // Re-populate after expand (for dynamically shown rows)
             setTimeout(function() {
@@ -4667,19 +5255,19 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('✅ KM saved successfully:', data);
+                    console.log('[SUCCESS] KM saved successfully:', data);
                     // Show success feedback
                     input.style.backgroundColor = '#d4edda';
                 setTimeout(() => {
                         input.style.backgroundColor = '';
                     }, 500);
                     } else {
-                    console.error('❌ Error saving KM:', data.error);
+                    console.error('[ERROR] Error saving KM:', data.error);
                     alert('Error updating KM: ' + data.error);
                 }
             })
             .catch(error => {
-                console.error('❌ Network error saving KM:', error);
+                console.error('[ERROR] Network error saving KM:', error);
                 alert('Error updating KM: ' + error.message);
             });
         };
@@ -4707,22 +5295,24 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('✅ Hours saved successfully:', data);
+                    console.log('[SUCCESS] Hours saved successfully:', data);
                     // Show success feedback
                     input.style.backgroundColor = '#d4edda';
                     setTimeout(() => {
                         input.style.backgroundColor = '';
                     }, 500);
             } else {
-                    console.error('❌ Error saving Hours:', data.error);
+                    console.error('[ERROR] Error saving Hours:', data.error);
                     alert('Error updating Hours: ' + data.error);
                 }
             })
             .catch(error => {
-                console.error('❌ Network error saving Hours:', error);
+                console.error('[ERROR] Network error saving Hours:', error);
                 alert('Error updating Hours: ' + error.message);
             });
         };
+        
+        // Bought Sample function is now loaded from bought_sample.js
         
         window.updateGroupAdditionalEmail = function(input) {
             const groupId = input.getAttribute('data-group-id');
@@ -4763,6 +5353,276 @@
                 alert('Error updating additional email: ' + error.message);
             });
         };
+        
+        // Debounce function to delay validation
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // New functions for multiple additional emails
+        window.updateGroupAdditionalEmails = debounce(function(input) {
+            const container = input.closest('.additional-emails-container');
+            const groupId = container.getAttribute('data-group-id');
+            
+            // Collect all email values
+            const emailInputs = container.querySelectorAll('.group-additional-email-input');
+            const emails = Array.from(emailInputs)
+                .map(input => input.value.trim())
+                .filter(email => email.length > 0);
+            
+            // Only validate if there are emails and they look complete
+            const atSymbol = String.fromCharCode(64); // '@' symbol
+            const hasIncompleteEmails = emails.some(email => 
+                email.includes(atSymbol) && (!email.includes('.') || email.endsWith(atSymbol) || email.endsWith('.'))
+            );
+            
+            // If there are incomplete emails, don't validate yet
+            if (hasIncompleteEmails) {
+                console.log('[WAIT] Skipping validation - incomplete email detected');
+                return;
+            }
+            
+            const emailValue = emails.join(',');
+            
+            console.log('[STORAGE] Updating Group Additional Emails - Group ID:', groupId, 'Emails:', emails);
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('group_id', groupId);
+            formData.append('additional_email', emailValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            // Send update request
+            fetch('/update-group-additional-email/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('[SUCCESS] Additional emails saved successfully:', data);
+                    // Show success feedback
+                    input.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        input.style.backgroundColor = '';
+                    }, 500);
+                } else {
+                    console.error('[ERROR] Error saving additional emails:', data.error);
+                    // Only show alert for actual validation errors, not incomplete emails
+                    if (!data.error.includes('Invalid email format') || emails.length > 0) {
+                        alert('Error updating additional emails: ' + data.error);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] Network error saving additional emails:', error);
+                alert('Error updating additional emails: ' + error.message);
+            });
+        };, 1000); // 1 second delay
+        
+        window.addEmailInput = function(button) {
+            const container = button.closest('.additional-emails-container');
+            const emailInputs = container.querySelector('.email-inputs');
+            
+            // Check if the first input has comma-separated emails
+            const firstInput = emailInputs.querySelector('.group-additional-email-input');
+            if (firstInput && firstInput.value.includes(',')) {
+                // Split the comma-separated emails into separate inputs
+                const emails = firstInput.value.split(',').map(email => email.trim()).filter(email => email);
+                
+                // Clear the container
+                emailInputs.innerHTML = '';
+                
+                // Create input rows for each email
+                emails.forEach((email, index) => {
+                    const newRow = document.createElement('div');
+                    newRow.className = 'email-input-row';
+                    newRow.innerHTML = `
+                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                               value="${email}" 
+                               placeholder="email@example.com" 
+                               onchange="updateGroupAdditionalEmails(this)"
+                               onblur="updateGroupAdditionalEmails(this)"
+                               title="Additional email for this inspection group">
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                                onclick="removeEmailInput(this)" title="Remove this email">
+                            ×
+                        </button>
+                    `;
+                    emailInputs.appendChild(newRow);
+                });
+                
+                // Add one empty row for new email
+                const emptyRow = document.createElement('div');
+                emptyRow.className = 'email-input-row';
+                emptyRow.innerHTML = `
+                    <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                           value="" 
+                           placeholder="email@example.com" 
+                           onchange="updateGroupAdditionalEmails(this)"
+                           onblur="updateGroupAdditionalEmails(this)"
+                           title="Additional email for this inspection group">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                            onclick="removeEmailInput(this)" title="Remove this email">
+                        ×
+                    </button>
+                `;
+                emailInputs.appendChild(emptyRow);
+                
+                // Show remove buttons for all rows
+                const allRows = emailInputs.querySelectorAll('.email-input-row');
+                allRows.forEach(row => {
+                    const removeBtn = row.querySelector('.remove-email-btn');
+                    if (removeBtn) {
+                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
+                    }
+                });
+                
+                // Focus the empty input
+                const emptyInput = emptyRow.querySelector('.group-additional-email-input');
+                emptyInput.focus();
+            } else {
+                // Create new email input row
+                const newRow = document.createElement('div');
+                newRow.className = 'email-input-row';
+                newRow.innerHTML = `
+                    <input type="email" class="form-control form-control-sm group-additional-email-input" 
+                           value="" 
+                           placeholder="email@example.com" 
+                           onchange="updateGroupAdditionalEmails(this)"
+                           onblur="updateGroupAdditionalEmails(this)"
+                           title="Additional email for this inspection group">
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
+                            onclick="removeEmailInput(this)" title="Remove this email">
+                        ×
+                    </button>
+                `;
+                
+                // Insert before the add button
+                emailInputs.appendChild(newRow);
+                
+                // Focus the new input
+                const newInput = newRow.querySelector('.group-additional-email-input');
+                newInput.focus();
+                
+                // Show remove buttons for all rows if there are multiple
+                const allRows = emailInputs.querySelectorAll('.email-input-row');
+                allRows.forEach(row => {
+                    const removeBtn = row.querySelector('.remove-email-btn');
+                    if (removeBtn) {
+                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
+                    }
+                });
+            }
+        };
+        
+        window.removeEmailInput = function(button) {
+            const row = button.closest('.email-input-row');
+            const container = button.closest('.additional-emails-container');
+            const emailInputs = container.querySelector('.email-inputs');
+            
+            // Don't remove if it's the only row
+            const allRows = emailInputs.querySelectorAll('.email-input-row');
+            if (allRows.length <= 1) {
+                return;
+            }
+            
+            // Remove the row
+            row.remove();
+            
+            // Update the database
+            updateGroupAdditionalEmails(container.querySelector('.group-additional-email-input'));
+            
+            // Show/hide remove buttons based on remaining rows
+            const remainingRows = emailInputs.querySelectorAll('.email-input-row');
+            remainingRows.forEach((row, index) => {
+                const removeBtn = row.querySelector('.remove-email-btn');
+                if (removeBtn) {
+                    // Show remove button if there are multiple rows, hide if only one
+                    removeBtn.style.display = remainingRows.length > 1 ? 'flex' : 'none';
+                }
+            });
+        };
+        
+        // Function to update input border colors based on value
+        function updateInputBorderColor(input) {
+            if (input.value && input.value.trim() !== '') {
+                input.style.borderColor = '#28a745'; // Green when has value
+            } else {
+                input.style.borderColor = '#dc3545'; // Red when empty
+            }
+        }
+        
+        // Add event listeners to all input fields for dynamic border updates
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update borders for all input fields
+            const allInputs = document.querySelectorAll('.km-input, .hours-input, .bought-sample-input, .group-km-input, .group-hours-input, .group-additional-email-input');
+            allInputs.forEach(input => {
+                // Set initial border color
+                updateInputBorderColor(input);
+                
+                // Add event listeners for real-time updates
+                input.addEventListener('input', function() {
+                    updateInputBorderColor(this);
+                });
+                
+                input.addEventListener('blur', function() {
+                    updateInputBorderColor(this);
+                });
+            });
+        };);
+        
+        // Function to update approved status
+        window.updateGroupApproved = function(select) {
+            const groupId = select.getAttribute('data-group-id');
+            const approvedValue = select.value;
+            
+            console.log('[STORAGE] Updating Group Approved Status - Group ID:', groupId, 'Value:', approvedValue);
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('group_id', groupId);
+            formData.append('approved_status', approvedValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            // Send update request
+            fetch('/update-group-approved/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('✅ Approved status saved successfully:', data);
+                    // Show success feedback
+                    select.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        select.style.backgroundColor = '';
+                    }, 500);
+                } else {
+                    console.error('❌ Error saving approved status:', data.error);
+                    alert('Error updating approved status: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('❌ Network error saving approved status:', error);
+                alert('Error updating approved status: ' + error.message);
+            });
+        };;
     </script>
     <script>
         // Global error handler to catch any uncaught exceptions
@@ -4799,46 +5659,58 @@
             }
         });
 
-        // Theme functionality
+        // Theme management (using same system as inspector settings)
         function initTheme() {
-            try {
-                const savedTheme = localStorage.getItem('theme');
-                const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
-                const theme = savedTheme || serverTheme;
-                
-                document.documentElement.setAttribute('data-theme', theme);
-            } catch (error) {
-                console.error('Error initializing theme:', error);
+            const savedTheme = localStorage.getItem('theme');
+            
+            // Default to light mode first
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
             }
+            
+            document.documentElement.setAttribute('data-theme', activeTheme);
+            console.log('Theme initialized:', activeTheme);
         }
         
         function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark;';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-            
-            // Save theme preference to server
-            saveThemeToServer(newTheme);
+            const themeMode = document.getElementById('theme_mode');
+            if (themeMode) {
+                const newTheme = themeMode.checked ? 'dark' : 'light';
+                console.log('Switching to theme:', newTheme);
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                
+                try {
+                    localStorage.setItem('theme', newTheme);
+                    console.log('Theme saved to localStorage:', newTheme);
+                } catch (e) {
+                    console.log('Could not save theme to localStorage:', e);
+                }
+            }
         }
         
-        
-        function saveThemeToServer(theme) {
-            fetch('{% url "save_system_settings" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({
-                    theme_mode: theme
-                })
-            }).catch(error => {
-                console.error('Error saving theme:', error);
+        // Listen for theme changes from other pages
+        function listenForThemeChanges() {
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'theme') {
+                    console.log('Theme changed from another page:', e.newValue);
+                    document.documentElement.setAttribute('data-theme', e.newValue || 'light');
+                }
             });
         }
+        
+        // Force theme application (can be called manually)
+        function forceThemeApplication() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            console.log('Theme force applied:', savedTheme);
+        }
+        
+        // Make theme functions globally available
+        window.initTheme = initTheme;
+        window.forceThemeApplication = forceThemeApplication;
+        
 
         // Global expand/collapse functions
         function expandAll() {
@@ -4867,7 +5739,7 @@
                     icon.classList.add('fa-chevron-down');
                 }
             });
-        }
+        };
         
         function collapseAll() {
             const detailRows = document.querySelectorAll('.detail-row');
@@ -4895,7 +5767,7 @@
                     icon.classList.add('fa-chevron-right');
                 }
             });
-        }
+        };
 
         // Global toggle function
         function toggleGroup(e, groupId) {
@@ -4935,6 +5807,33 @@
                     icon.classList.remove('fa-chevron-right');
                     icon.classList.add('fa-chevron-down');
                 }
+                
+                // Populate class dropdowns when expanding
+                console.log('[TOGGLE] Expanding - populating class dropdowns...');
+                const classDropdowns = detailRow.querySelectorAll('select.product-class-select');
+                console.log('[TOGGLE] Found', classDropdowns.length, 'class dropdowns in expanded row');
+                
+                if (classDropdowns.length > 0) {
+                    console.log('[TOGGLE] Calling filterClassOptions for each dropdown...');
+                    classDropdowns.forEach((dropdown, index) => {
+                        console.log(`[TOGGLE] Processing dropdown ${index + 1}:`, dropdown);
+                        console.log(`[TOGGLE] Dropdown classes:`, dropdown.className);
+                        console.log(`[TOGGLE] Dropdown data attributes:`, {
+                            'data-inspection-id': dropdown.getAttribute('data-inspection-id'),
+                            'data-commodity': dropdown.getAttribute('data-commodity'),
+                            'data-current-class': dropdown.getAttribute('data-current-class')
+                        });
+                        window.filterClassOptions(dropdown);
+                    });
+                } else {
+                    console.log('[TOGGLE] No class dropdowns found in expanded row');
+                    // Try to find any select elements
+                    const allSelects = detailRow.querySelectorAll('select');
+                    console.log('[TOGGLE] All select elements found:', allSelects.length);
+                    allSelects.forEach((select, index) => {
+                        console.log(`[TOGGLE] Select ${index + 1}:`, select.className, select);
+                    });
+                }
             } else {
                 // Collapse
                 detailRow.style.display = 'none';
@@ -4952,6 +5851,9 @@
             
             // Initialize theme
             initTheme();
+            
+            // Listen for theme changes from other pages
+            listenForThemeChanges();
             
             // Setup expand buttons
             setupExpandButtons();
@@ -5013,7 +5915,7 @@
                     icon.className = 'fas fa-bars';
                 }
             });
-        });
+        };);
         
         // CSRF functions now defined at top of script section
         
@@ -5352,7 +6254,7 @@
                     hideSuggestions();
                 }
             });
-        });
+        };);
         
         // Show loading indicator for large datasets and check OneDrive status after page is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -5417,7 +6319,7 @@
                 // Add new event listener
                 link.addEventListener('click', handlePaginationClick);
             });
-        }
+        };
         
         // Handle pagination click
         function handlePaginationClick(e) {
@@ -5562,7 +6464,7 @@
                     }
                 }
             });
-        }
+        };
         
         // Function to initialize disabled rows for already sent items
         function initializeDisabledRows() {
@@ -6266,7 +7168,7 @@
                     updateRFIAndInvoiceButtonColors(clientName, inspectionDate);
                 }
             });
-        }
+        };
 
         function updateRFIAndInvoiceButtonColors(clientName, inspectionDate) {
             console.log('[DEBUG] [API] ===== CALLING API FOR BUTTON COLORS =====');
@@ -6386,7 +7288,7 @@
                 console.error('❌ [API] Network error checking file status:', error);
                 console.error('❌ [API] Error details:', error.message);
             });
-        }
+        };
 
         function displayClientAllFiles(files, categories, totalFiles, inspectionsFound, message = null, fileStatus = null) {
             const filesList = document.getElementById('filesList');
@@ -6457,7 +7359,7 @@
                     
                     periodFiles.forEach(file => {
                         const fileSize = formatFileSize(file.size);
-                        const modifiedDate = new Date(file.modified_time * 1000).toLocaleDateString();
+                        const modifiedDate = new Date(file.modified_time * 1000).toLocaleDateString('en-GB');
                         
                         // Set background color based on category
                         const backgroundColor = categoryKey === 'compliance' ? '#fef3c7' : 'white;'; // Yellow background for compliance
@@ -7087,7 +7989,7 @@
                     }
                 }
             });
-        }
+        };
         
         function checkFileExists(buttonId, fileInfo) {
             // Make a lightweight request to check if file exists
@@ -7178,7 +8080,7 @@
                         localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
                     }
                 });
-        }
+        };
         
         // Make markAsUploaded globally available
         window.markAsUploaded = function markAsUploaded(buttonId) {
@@ -7204,10 +8106,10 @@
                 console.log('[DEBUG] [DEBUG] User name length:', currentUserName.length);
                 console.log('[DEBUG] [DEBUG] User name type:', typeof currentUserName);
                 
-                const currentDate = new Date().toLocaleDateString('en-US', { 
-                    month: 'numeric', 
-                    day: 'numeric', 
-                    year: '2-digit' 
+                const currentDate = new Date().toLocaleDateString('en-GB', { 
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric' 
                 });
                 console.log('[DEBUG] [DEBUG] Current date:', currentDate);
                 
@@ -7433,7 +8335,7 @@
                 button.removeEventListener('click', handleExpandClick);
                 button.addEventListener('click', handleExpandClick);
             });
-        }
+        };
         
         // Handle expand button click
         function handleExpandClick(e) {
@@ -7499,7 +8401,7 @@
             window.addEventListener('resize', function() {
                 setTimeout(fixHeaderPositions, 100);
             });
-        }
+        };
         
         // Function to force header positions to stay in place
         function fixHeaderPositions() {
@@ -7975,10 +8877,10 @@
         
         
         // Update test result function
-        function updateTestResult(checkbox) {
+        window.updateTestResult = function(checkbox) {
             const inspectionId = checkbox.getAttribute('data-inspection-id');
             const testType = checkbox.getAttribute('data-test-type');
-            const isChecked = checkbox.checke;d;
+            const isChecked = checkbox.checked;
             
             // Get CSRF token
             const csrfToken = getCSRFToken();
@@ -8014,10 +8916,10 @@
                 checkbox.checked = !isChecked;
                 alert('Error updating test result: ' + error.message);
             });
-        }
+        };
         
         // Update needs retest function
-        function updateNeedsRetest(dropdown) {
+        window.updateNeedsRetest = function(dropdown) {
             const inspectionId = dropdown.getAttribute('data-inspection-id');
             const needsRetest = dropdown.value;
             
@@ -8062,7 +8964,7 @@
                 dropdown.value = '';
                 alert('Error updating needs retest: ' + error.message);
             });
-        }
+        };
         
         // Update Km Traveled function
         function updateKmTraveled(input) {
@@ -8098,43 +9000,9 @@
             .catch(error => {
                 alert('Error updating Km Traveled: ' + error.message);
             });
-        }
+        };
         
-        // Update Bought Sample function
-        function updateBoughtSample(input) {
-            const inspectionId = input.getAttribute('data-inspection-id');
-            const boughtSampleValue = input.value;
-            
-            // Get CSRF token
-            const csrfToken = getCSRFToken();
-            
-            // Create form data
-            const formData = new FormData();
-            formData.append('inspection_id', inspectionId);
-            formData.append('bought_sample', boughtSampleValue);
-            formData.append('csrfmiddlewaretoken', csrfToken);
-            
-            // Send update request
-            fetch('/update-bought-sample/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Show success feedback
-                    input.style.backgroundColor = '#d4edda';
-                    setTimeout(() => {
-                        input.style.backgroundColor = '';
-                    }, 500);
-                } else {
-                    alert('Error updating Bought Sample: ' + data.error);
-                }
-            })
-            .catch(error => {
-                alert('Error updating Bought Sample: ' + error.message);
-            });
-        }
+        // Bought Sample function is now defined earlier in the file (line ~4942)
         
         // Get CSRF Token function
         function getCSRFToken() {
@@ -8146,15 +9014,16 @@
             return token;
         }
         
-        // KM and Hours functions are now defined earlier in the file (lines 4456-4534)
-        console.log('✅ KM and Hours update functions ready');
+        // KM, Hours, and Bought Sample functions are now defined earlier in the file (lines 4861-4980)
+        console.log('✅ KM, Hours, and Bought Sample update functions ready');
         console.log('[DEBUG] updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
         console.log('[DEBUG] updateGroupHours:', typeof window.updateGroupHours);
+        console.log('[DEBUG] updateBoughtSample:', typeof window.updateBoughtSample);
         
         
         
         // Update Product Name
-        function updateProductName(input) {
+        window.updateProductName = function(input) {
             // Check if field is disabled (no sample taken)
             if (input.disabled) {
                 console.log('Product name update blocked - no sample taken');
@@ -8179,7 +9048,7 @@
         }
 
         // Update Product Class - Simplified to only handle RAW and PMP
-        function updateProductClass(dropdown) {
+        window.updateProductClass = function(dropdown) {
             // Check if field is disabled (no sample taken)
             if (dropdown.disabled) {
                 console.log('Product class update blocked - no sample taken');
@@ -8190,8 +9059,23 @@
             const commodity = (dropdown.getAttribute('data-commodity') || '').toLowerCase();
             if (['egg', 'eggs', 'poultry', 'chicken'].includes(commodity)) {
                 dropdown.value = '';
+                // Remove has-value class for disabled dropdowns
+                dropdown.classList.remove('has-value');
                 alert('Product class is not applicable for Egg/Poultry commodities.');
                 return;
+            }
+
+            // Update border styling based on selection
+            console.log('[BORDER DEBUG] updateProductClass - Dropdown value:', dropdown.value);
+            console.log('[BORDER DEBUG] updateProductClass - Is empty?', !dropdown.value || dropdown.value === '');
+            console.log('[BORDER DEBUG] updateProductClass - Is placeholder?', dropdown.value === 'Select Class...');
+            
+            if (dropdown.value && dropdown.value !== '' && dropdown.value !== 'Select Class...') {
+                dropdown.classList.add('has-value');
+                console.log('[BORDER DEBUG] updateProductClass - Added has-value class - should be GREEN');
+            } else {
+                dropdown.classList.remove('has-value');
+                console.log('[BORDER DEBUG] updateProductClass - Removed has-value class - should be RED');
             }
 
             // Simplified logic: Only RAW and PMP are allowed
@@ -8215,122 +9099,78 @@
             }).catch(err => alert('Error updating product class: ' + (err?.message || err)));
         }
 
-        // Filter helper that does NOT submit updates; used on page load to ensure all dropdowns are filtered
-        function filterClassOptions(dropdown) {
-            console.log('[DEBUG] [CLASS DROPDOWN] filterClassOptions called for dropdown:', dropdown);
+        // Manual trigger function for class dropdown population
+        window.populateAllClassDropdowns = function() {
+            console.log('[MANUAL] Manually populating all class dropdowns...');
+            const allDropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[MANUAL] Found', allDropdowns.length, 'class dropdowns');
+            allDropdowns.forEach(window.filterClassOptions);
+        };
+
+        // Debug function to test class dropdown population
+        window.debugClassDropdowns = function() {
+            console.log('[DEBUG] === CLASS DROPDOWN DEBUG ===');
+            const allDropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[DEBUG] Total class dropdowns found:', allDropdowns.length);
             
-            // Get the current value from the data attribute or the dropdown value
-            const currentValue = dropdown.getAttribute('data-current-class') || dropdown.value;
-            console.log('[DEBUG] [CLASS DROPDOWN] Current value:', currentValue);
-            
-            // Complete list of all class options
-            const allClassOptions = [
-                'Raw species sausage / wors',
-                'Extra Lean Mince',
-                'Lean Mince',
-                'Regular Mince',
-                'Raw Flavoured Ground Meat',
-                'Raw Flavoured Ground Meat & Offal',
-                'Raw Flavoured mixed species Ground Meat',
-                'Raw Flavoured mixed species Ground Meat & Offal',
-                'Raw Boerewors',
-                'Raw mixed species sausage / wors',
-                'Ground Burger / Ground patty = Extra Lean',
-                'Ground Burger / Ground patty = Lean',
-                'Ground Burger / Ground patty = Regular',
-                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean',
-                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean',
-                'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular',
-                'Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel',
-                'Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger',
-                'Raw Banger / Griller',
-                'Raw Bratwurst / Sizzler',
-                'Whole Muscle, uncured and heat / partial heat treated products',
-                'Whole muscle, uncured, no or partial heat treated and air dried products',
-                'Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
-                'Whole muscle, dry cured, no or partial heat treated products',
-                'Whole muscle, cured and no or partial heat treated products',
-                'Whole muscle, cured, no or partial heat treated and air dried products',
-                'Whole muscle, dry cured, no or partial heat treated and dried products',
-                'Comminuted, cured and heat treated products',
-                'Comminuted, uncured, no or partial heat treated and dried products',
-                'Comminuted, cured, no or partial heat treated, dried and fermented products',
-                'Comminuted, uncured and heat treated products',
-                'Reformed, uncured and no or partial heat treated products',
-                'Reformed, cured, heat treated products from single species',
-                'Reformed, cured, heat treated products from mixed species',
-                'Reformed, cured and no or partial heat treated products',
-                'Liver spreads, pâté and terrines',
-                'Products in aspic: Brawn',
-                'Product in aspic: Souse, Other products containing cured meat pieces in aspic',
-                'Products made from blood',
-                'Coated Processed Meat Products',
-                'Unspecified processed meat products'
-            ];
-            
-            console.log('[DEBUG] [CLASS DROPDOWN] Total options to add:', allClassOptions.length);
-            
-            // Rebuild dropdown with all options
-            dropdown.innerHTML = '';
-            
-            // Add placeholder option
-            const placeholder = document.createElement('option');
-            placeholder.value = '';
-            placeholder.textContent = 'Select Class...';
-            dropdown.appendChild(placeholder);
-            
-            // Add all class options
-            allClassOptions.forEach(optionText => {
-                const option = document.createElement('option');
-                option.value = optionText;
-                option.textContent = optionText;
-                if (optionText === currentValue) {
-                    option.selected = true;
-                }
-                dropdown.appendChild(option);
+            allDropdowns.forEach((dropdown, index) => {
+                console.log(`[DEBUG] Dropdown ${index + 1}:`, {
+                    element: dropdown,
+                    classes: dropdown.className,
+                    options: dropdown.options.length,
+                    value: dropdown.value,
+                    dataAttributes: {
+                        'data-inspection-id': dropdown.getAttribute('data-inspection-id'),
+                        'data-commodity': dropdown.getAttribute('data-commodity'),
+                        'data-current-class': dropdown.getAttribute('data-current-class')
+                    }
+                });
             });
             
-            console.log('[DEBUG] [CLASS DROPDOWN] Dropdown now has', dropdown.options.length, 'options');
-            
-            // Restore current value if it matches one of the options
-            if (currentValue && allClassOptions.includes(currentValue)) {
-                dropdown.value = currentValue;
-                console.log('[DEBUG] [CLASS DROPDOWN] Restored value:', currentValue);
-            } else {
-                dropdown.value = '';
-                console.log('[DEBUG] [CLASS DROPDOWN] No value to restore, set to empty');
-            }
-        }
+            // Test populating all dropdowns
+            console.log('[DEBUG] Testing population...');
+            allDropdowns.forEach(window.filterClassOptions);
+        };
 
-        // Ensure all visible dropdowns are filtered at page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('[DEBUG] [CLASS DROPDOWN] DOMContentLoaded - Initializing class dropdowns...');
-            const dropdowns = document.querySelectorAll('select.product-class-select');
-            console.log('[DEBUG] [CLASS DROPDOWN] Found', dropdowns.length, 'class dropdowns');
-            dropdowns.forEach(filterClassOptions);
+        // Test function for border styling
+        window.testBorderStyling = function() {
+            console.log('[TEST] === BORDER STYLING TEST ===');
+            const allDropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[TEST] Found', allDropdowns.length, 'class dropdowns');
             
-            // Observe the table for dynamic changes and re-apply filters
-            const table = document.getElementById('shipmentsTable');
-            if (table && 'MutationObserver' in window) {
-                console.log('[DEBUG] [CLASS DROPDOWN] Setting up MutationObserver...');
-                const observer = new MutationObserver(() => {
-                    console.log('[DEBUG] [CLASS DROPDOWN] Table changed, re-filtering dropdowns...');
-                    document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
-                });
-                observer.observe(table, { childList: true, subtree: true });
-            }
-            
-            // Fallback: periodic re-filter shortly after load in case of late rendering
-            setTimeout(() => {
-                console.log('[DEBUG] [CLASS DROPDOWN] Fallback timeout - re-filtering dropdowns...');
-                const fallbackDropdowns = document.querySelectorAll('select.product-class-select');
-                console.log('[DEBUG] [CLASS DROPDOWN] Fallback found', fallbackDropdowns.length, 'dropdowns');
-                fallbackDropdowns.forEach(filterClassOptions);
-            }, 500);
-        });
+            allDropdowns.forEach((dropdown, index) => {
+                console.log(`[TEST] Testing dropdown ${index + 1}:`);
+                console.log(`[TEST] - Current value: "${dropdown.value}"`);
+                console.log(`[TEST] - Has has-value class: ${dropdown.classList.contains('has-value')}`);
+                console.log(`[TEST] - Computed border color:`, window.getComputedStyle(dropdown).borderColor);
+                
+                // Test setting to empty
+                console.log(`[TEST] - Setting to empty...`);
+                dropdown.value = '';
+                window.updateProductClass(dropdown);
+                console.log(`[TEST] - After empty: has-value class = ${dropdown.classList.contains('has-value')}`);
+                
+                // Test setting to placeholder
+                console.log(`[TEST] - Setting to placeholder...`);
+                dropdown.value = 'Select Class...';
+                window.updateProductClass(dropdown);
+                console.log(`[TEST] - After placeholder: has-value class = ${dropdown.classList.contains('has-value')}`);
+                
+                // Test setting to real value
+                console.log(`[TEST] - Setting to real value...`);
+                dropdown.value = 'Raw species sausage / wors';
+                window.updateProductClass(dropdown);
+                console.log(`[TEST] - After real value: has-value class = ${dropdown.classList.contains('has-value')}`);
+                
+                console.log(`[TEST] - Final computed border color:`, window.getComputedStyle(dropdown).borderColor);
+                console.log('---');
+            });
+        };
+
+        // Note: Duplicate filterClassOptions function removed - using window.filterClassOptions defined earlier
 
         // Update Lab function
-        function updateLab(dropdown) {
+        window.updateLab = function(dropdown) {
             const inspectionId = dropdown.getAttribute('data-inspection-id');
             const labValue = dropdown.value;
             
@@ -8366,7 +9206,7 @@
             .catch(error => {
                 alert('Error updating Lab: ' + (error?.message || error));
             });
-        }
+        };
         
         // Function to handle sample status changes and update retest accordingly
         function handleSampleStatusChange(inspectionId, isSampleTaken) {
@@ -8560,7 +9400,7 @@
                     countdownText.style.color = '#ef4444';
                 }
             });
-        }
+        };
         
         // Make updateOneDriveCountdown globally available
         window.updateOneDriveCountdown = updateOneDriveCountdown;
@@ -8776,7 +9616,7 @@
                 urlParam: sampleStatus,
                 dropdownValue: dropdown ? dropdown.value : null
             });
-        }
+        };
         
         // Function to force apply filter manually
         function forceApplyFilter(filterType) {
@@ -9140,6 +9980,415 @@
         // Initialize theme on page load
         initTheme();
         
+        // Manual class dropdown fix - run this in console if dropdowns don't work
+        window.fixClassDropdowns = function() {
+            console.log('[FIX] Manually fixing class dropdowns...');
+            const allDropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[FIX] Found', allDropdowns.length, 'class dropdowns');
+            
+            allDropdowns.forEach((dropdown, index) => {
+                console.log(`[FIX] Fixing dropdown ${index + 1}:`, dropdown);
+                
+                // Clear existing options
+                dropdown.innerHTML = '';
+                
+                // Add placeholder
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = 'Select Class...';
+                dropdown.appendChild(placeholder);
+                
+                // Add all class options
+                const allClassOptions = [
+                    'Raw species sausage / wors',
+                    'Extra Lean Mince',
+                    'Lean Mince',
+                    'Regular Mince',
+                    'Raw Flavoured Ground Meat',
+                    'Raw Flavoured Ground Meat & Offal',
+                    'Raw Flavoured mixed species Ground Meat',
+                    'Raw Flavoured mixed species Ground Meat & Offal',
+                    'Raw Boerewors',
+                    'Raw mixed species sausage / wors',
+                    'Ground Burger / Ground patty = Extra Lean',
+                    'Ground Burger / Ground patty = Lean',
+                    'Ground Burger / Ground patty = Regular',
+                    'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean',
+                    'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean',
+                    'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular',
+                    'Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel',
+                    'Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger',
+                    'Raw Banger / Griller',
+                    'Raw Bratwurst / Sizzler',
+                    'Whole Muscle, uncured and heat / partial heat treated products',
+                    'Whole muscle, uncured, no or partial heat treated and air dried products',
+                    'Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
+                    'Whole muscle, dry cured, no or partial heat treated products',
+                    'Whole muscle, cured and no or partial heat treated products',
+                    'Whole muscle, cured, no or partial heat treated and air dried products',
+                    'Whole muscle, dry cured, no or partial heat treated and dried products',
+                    'Comminuted, cured and heat treated products',
+                    'Comminuted, uncured, no or partial heat treated and dried products',
+                    'Comminuted, cured, no or partial heat treated, dried and fermented products',
+                    'Comminuted, uncured and heat treated products',
+                    'Reformed, uncured and no or partial heat treated products',
+                    'Reformed, cured, heat treated products from single species',
+                    'Reformed, cured, heat treated products from mixed species',
+                    'Reformed, cured and no or partial heat treated products',
+                    'Liver spreads, pâté and terrines',
+                    'Products in aspic: Brawn',
+                    'Product in aspic: Souse, Other products containing cured meat pieces in aspic',
+                    'Products made from blood',
+                    'Coated Processed Meat Products',
+                    'Unspecified processed meat products'
+                ];
+                
+                allClassOptions.forEach(optionText => {
+                    const option = document.createElement('option');
+                    option.value = optionText;
+                    option.textContent = optionText;
+                    dropdown.appendChild(option);
+                });
+                
+                console.log(`[FIX] Dropdown ${index + 1} now has ${dropdown.options.length} options`);
+            });
+            
+            console.log('[FIX] Class dropdown fix completed!');
+        };
+        
+    </script>
+    
+    <!-- REBUILT CLASS DROPDOWN SYSTEM - Clean Implementation -->
+    <script>
+        console.log('[CLASS DROPDOWN] Loading rebuilt class dropdown system...');
+        
+        // Class options array - complete list
+        const CLASS_OPTIONS = [
+            'Raw species sausage / wors',
+            'Extra Lean Mince',
+            'Lean Mince',
+            'Regular Mince',
+            'Raw Flavoured Ground Meat',
+            'Raw Flavoured Ground Meat & Offal',
+            'Raw Flavoured mixed species Ground Meat',
+            'Raw Flavoured mixed species Ground Meat & Offal',
+            'Raw Boerewors',
+            'Raw mixed species sausage / wors',
+            'Ground Burger / Ground patty = Extra Lean',
+            'Ground Burger / Ground patty = Lean',
+            'Ground Burger / Ground patty = Regular',
+            'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean',
+            'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean',
+            'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular',
+            'Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel',
+            'Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger',
+            'Raw Banger / Griller',
+            'Raw Bratwurst / Sizzler',
+            'Whole Muscle, uncured and heat / partial heat treated products',
+            'Whole muscle, uncured, no or partial heat treated and air dried products',
+            'Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)',
+            'Whole muscle, dry cured, no or partial heat treated products',
+            'Whole muscle, cured and no or partial heat treated products',
+            'Whole muscle, cured, no or partial heat treated and air dried products',
+            'Whole muscle, dry cured, no or partial heat treated and dried products',
+            'Comminuted, cured and heat treated products',
+            'Comminuted, uncured, no or partial heat treated and dried products',
+            'Comminuted, cured, no or partial heat treated, dried and fermented products',
+            'Comminuted, uncured and heat treated products',
+            'Reformed, uncured and no or partial heat treated products',
+            'Reformed, cured, heat treated products from single species',
+            'Reformed, cured, heat treated products from mixed species',
+            'Reformed, cured and no or partial heat treated products',
+            'Liver spreads, pâté and terrines',
+            'Products in aspic: Brawn',
+            'Product in aspic: Souse, Other products containing cured meat pieces in aspic',
+            'Products made from blood',
+            'Coated Processed Meat Products',
+            'Unspecified processed meat products'
+        ];
+        
+        // Function to populate a single dropdown
+        function populateClassDropdown(dropdown) {
+            console.log('[CLASS DROPDOWN] Populating dropdown:', dropdown);
+            
+            // Clear existing options
+            dropdown.innerHTML = '';
+            
+            // Add placeholder
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Select Class...';
+            dropdown.appendChild(placeholder);
+            
+            // Add all class options
+            CLASS_OPTIONS.forEach(optionText => {
+                const option = document.createElement('option');
+                option.value = optionText;
+                option.textContent = optionText;
+                dropdown.appendChild(option);
+            });
+            
+            console.log('[CLASS DROPDOWN] Dropdown populated with', dropdown.options.length, 'options');
+        }
+        
+        // Function to populate all class dropdowns
+        function populateAllClassDropdowns() {
+            console.log('[CLASS DROPDOWN] Populating all class dropdowns...');
+            const dropdowns = document.querySelectorAll('select.product-class-select');
+            console.log('[CLASS DROPDOWN] Found', dropdowns.length, 'class dropdowns');
+            
+            dropdowns.forEach((dropdown, index) => {
+                console.log(`[CLASS DROPDOWN] Processing dropdown ${index + 1}`);
+                populateClassDropdown(dropdown);
+            });
+            
+            console.log('[CLASS DROPDOWN] All dropdowns populated successfully!');
+        }
+        
+        // Function to handle expand button clicks
+        function handleExpandClick(groupId) {
+            console.log('[CLASS DROPDOWN] Expand clicked for group:', groupId);
+            
+            // Wait a bit for the detail row to be shown
+            setTimeout(function() {
+                const detailRow = document.getElementById('detail-' + groupId);
+                if (detailRow) {
+                    const dropdowns = detailRow.querySelectorAll('select.product-class-select');
+                    console.log('[CLASS DROPDOWN] Found', dropdowns.length, 'dropdowns in expanded row');
+                    dropdowns.forEach(populateClassDropdown);
+                }
+            }, 100);
+        }
+        
+        // Make functions globally available
+        window.populateAllClassDropdowns = populateAllClassDropdowns;
+        window.populateClassDropdown = populateClassDropdown;
+        window.fixClassDropdowns = populateAllClassDropdowns; // Alias for compatibility
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[CLASS DROPDOWN] DOM loaded, initializing...');
+            
+            // Populate existing dropdowns
+            populateAllClassDropdowns();
+            
+            // Set up expand button monitoring
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.expand-btn')) {
+                    const button = e.target.closest('.expand-btn');
+                    const groupId = button.getAttribute('data-group-id');
+                    if (groupId) {
+                        handleExpandClick(groupId);
+                    }
+                }
+            });
+            
+            // Monitor for dynamically added dropdowns
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) { // Element node
+                                const dropdowns = node.querySelectorAll ? node.querySelectorAll('select.product-class-select') : [];
+                                dropdowns.forEach(populateClassDropdown);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            const table = document.getElementById('shipmentsTable');
+            if (table) {
+                observer.observe(table, { childList: true, subtree: true });
+                console.log('[CLASS DROPDOWN] MutationObserver set up for dynamic content');
+            }
+        });
+        
+        // Fallback initialization after page load
+        window.addEventListener('load', function() {
+            console.log('[CLASS DROPDOWN] Page fully loaded, running fallback...');
+            setTimeout(populateAllClassDropdowns, 1000);
+        });
+        
+        console.log('[CLASS DROPDOWN] Rebuilt class dropdown system loaded successfully!');
+    </script>
+    
+    <script>
+        // Date picker functionality with DD/MM/YYYY format
+        let currentCalendar = null;
+        let currentInput = null;
+        
+        function openDatePicker(inputName) {
+            // Close any existing calendar
+            if (currentCalendar) {
+                currentCalendar.remove();
+            }
+            
+            currentInput = document.querySelector(`input[name="${inputName}"]`);
+            
+            // Create calendar popup
+            const calendar = document.createElement('div');
+            calendar.className = 'calendar-popup';
+            calendar.innerHTML = generateCalendarHTML();
+            
+            // Position calendar above the input
+            const inputRect = currentInput.getBoundingClientRect();
+            const calendarWidth = 320;
+            const calendarHeight = 350;
+            
+            // Calculate position
+            let left = inputRect.left + (inputRect.width / 2) - (calendarWidth / 2);
+            let top = inputRect.top - calendarHeight - 10;
+            
+            // Ensure calendar stays within viewport
+            if (left < 10) left = 10;
+            if (left + calendarWidth > window.innerWidth - 10) {
+                left = window.innerWidth - calendarWidth - 10;
+            }
+            if (top < 10) {
+                top = inputRect.bottom + 10; // Show below if no space above
+            }
+            
+            calendar.style.left = left + 'px';
+            calendar.style.top = top + 'px';
+            
+            document.body.appendChild(calendar);
+            currentCalendar = calendar;
+            
+            // Add event listeners
+            setupCalendarEvents(calendar);
+            
+            // Close calendar when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', closeCalendar);
+            }, 100);
+        }
+        
+        function closeCalendar(e) {
+            if (currentCalendar && (!e || !currentCalendar.contains(e.target) && !e.target.classList.contains('date-picker-btn'))) {
+                currentCalendar.remove();
+                currentCalendar = null;
+                currentInput = null;
+                document.removeEventListener('click', closeCalendar);
+            }
+        }
+        
+        function generateCalendarHTML() {
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            
+            let html = `
+                <div class="calendar-header">
+                    <button class="calendar-nav" onclick="changeMonth(-1)">‹</button>
+                    <div class="calendar-month-year">${monthNames[currentMonth]} ${currentYear}</div>
+                    <button class="calendar-nav" onclick="changeMonth(1)">›</button>
+                </div>
+                <div class="calendar-grid">
+            `;
+            
+            // Day headers
+            dayNames.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+            
+            // Calendar days
+            const firstDay = new Date(currentYear, currentMonth, 1);
+            const lastDay = new Date(currentYear, currentMonth + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            for (let i = 0; i < 42; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+                
+                const isCurrentMonth = date.getMonth() === currentMonth;
+                const isToday = date.toDateString() === today.toDateString();
+                const isSelected = currentInput.value === formatDateDDMMYYYY(date);
+                
+                let classes = 'calendar-day';
+                if (!isCurrentMonth) classes += ' other-month';
+                if (isToday) classes += ' today';
+                if (isSelected) classes += ' selected';
+                
+                html += `<div class="${classes}" onclick="selectDate('${formatDateYYYYMMDD(date)}')">${date.getDate()}</div>`;
+            }
+            
+            html += '</div>';
+            return html;
+        }
+        
+        function setupCalendarEvents(calendar) {
+            // Month navigation
+            window.changeMonth = function(direction) {
+                // This would need to be implemented to change months
+                // For now, just regenerate the calendar
+                calendar.innerHTML = generateCalendarHTML();
+                setupCalendarEvents(calendar);
+            };
+        }
+        
+        function selectDate(dateStr) {
+            const date = new Date(dateStr);
+            const formattedDate = formatDateDDMMYYYY(date);
+            
+            currentInput.value = formattedDate;
+            
+            // Update hidden input
+            const hiddenInput = currentInput.parentNode.querySelector('input[type="hidden"]');
+            if (hiddenInput) {
+                hiddenInput.value = dateStr;
+            }
+            
+            closeCalendar();
+        }
+        
+        function formatDateDDMMYYYY(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        
+        function formatDateYYYYMMDD(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Handle form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.querySelector('form[method="get"]');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function(e) {
+                    // Ensure hidden inputs are updated before submission
+                    const dateInputs = this.querySelectorAll('.date-picker');
+                    dateInputs.forEach(function(input) {
+                        if (input.value && input.value.includes('/')) {
+                            const parts = input.value.split('/');
+                            if (parts.length === 3) {
+                                const day = parts[0].padStart(2, '0');
+                                const month = parts[1].padStart(2, '0');
+                                const year = parts[2];
+                                
+                                const hiddenInput = input.parentNode.querySelector('input[type="hidden"]');
+                                if (hiddenInput) {
+                                    hiddenInput.value = year + '-' + month + '-' + day;
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+        });
     </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Home - Food Safety Agency</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -26,7 +26,7 @@
     </script>
     <style>
         :root {
-            /* Light theme (default) - matching settings.html exactly */
+            /* Light theme (default) */
             --primary: #007890;
             --primary-light: #e6f3f7;
             --secondary: #EC343C;
@@ -50,7 +50,7 @@
             --info: #3b82f6;
         }
 
-        /* Dark theme - #2D2D2D containers and sidebar */
+        /* Dark theme */
         [data-theme="dark"] {
             --primary: #007890;
             --primary-light: #1a3a40;
@@ -71,6 +71,19 @@
             --input-border: #404040;
             --success: #10b981;
             --info: #3b82f6;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+            height: 100%;
+        }
+        
+        /* Prevent horizontal scroll and fix background */
+        body {
+            overflow-x: hidden;
+            position: relative;
+            height: 100%;
         }
         
         /* Sidebar theme styles */
@@ -95,7 +108,7 @@
             color: var(--sidebar-text) !important;
         }
         
-        /* Force sidebar to be dark in light theme */
+        /* Force sidebar colors based on theme */
         [data-theme="light"] #sidebar {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
@@ -105,7 +118,6 @@
             color: #f1f5f9 !important;
         }
         
-        /* Force sidebar to be #2D2D2D in dark theme */
         [data-theme="dark"] #sidebar {
             background-color: #2D2D2D !important;
             color: #ffffff !important;
@@ -115,30 +127,25 @@
             color: #ffffff !important;
         }
         
-        /* Ensure smooth sidebar transitions */
-        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
-        }
-        
-        
-        /* Dark mode specific text overrides */
+        /* Dark mode text overrides */
         [data-theme="dark"] .text-gray-800,
         [data-theme="dark"] .text-gray-600,
         [data-theme="dark"] .text-gray-500 {
             color: #ffffff !important;
         }
         
-        /* Exception: Make Quick Actions links black in dark mode */
+        /* Quick Actions links - keep black in dark mode */
         [data-theme="dark"] .quick-action-link span {
             color: #000000 !important;
         }
         
-        /* Ensure smooth transitions between themes */
-        body, .container, .theme-toggle, .bg-white, .bg-card-bg, .text-gray-800, .text-gray-600 {
+        /* Smooth transitions */
+        body, .container, .theme-toggle, .bg-white, .bg-card-bg, .text-gray-800, .text-gray-600,
+        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
         
-        /* Theme-aware background classes */
+        /* Theme-aware background */
         .bg-card-bg {
             background-color: var(--card-bg);
         }
@@ -146,51 +153,116 @@
         body {
             background: transparent;
             color: var(--text);
+            min-height: 100vh;
+            position: relative;
         }
 
-        /* Background image at full opacity */
+        /* Background image - truly fixed */
         body::before {
             content: '';
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
             opacity: 1.0;
             z-index: -1;
+            pointer-events: none;
         }
         
-        
-        /* Mobile sidebar toggle */
-        .mobile-menu-btn {
+        /* Mobile menu button - ABSOLUTE FIXED POSITIONING */
+        .mobile-menu-btn,
+        #mobile-menu-btn,
+        button#mobile-menu-btn {
             display: none;
         }
         
-        /* Responsive sidebar and layout */
+        .mobile-menu-btn {
+            position: fixed !important;
+            top: 12px !important;
+            left: 12px !important;
+            z-index: 99999 !important;
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+            border: none !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+            width: 48px !important;
+            height: 48px !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
+        
+        .mobile-menu-btn:active {
+            transform: translate3d(0, 0, 0) scale(0.95);
+        }
+        
+        .mobile-menu-btn:hover {
+            background-color: var(--sidebar-hover) !important;
+        }
+        
+        /* Force fixed positioning on mobile */
         @media (max-width: 1024px) {
+            .mobile-menu-btn,
+            #mobile-menu-btn,
+            button#mobile-menu-btn {
+                display: flex !important;
+                position: fixed !important;
+                top: 12px !important;
+                left: 12px !important;
+                z-index: 99999 !important;
+                transform: translate3d(0, 0, 0) !important;
+            }
+        }
+        
+        /* Sidebar mobile positioning */
+        #sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 9998;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 1024px) {
+            /* Show mobile menu button */
             .mobile-menu-btn {
-                display: block;
+                display: flex !important;
             }
             
+            /* Hide sidebar by default on mobile */
             #sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
+                width: 280px;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
             
+            /* Show sidebar when active */
             #sidebar.show {
                 transform: translateX(0);
             }
             
+            /* Remove left margin on main content */
             #main-content {
-                margin-left: 0;
-                width: 100%;
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
             }
             
-            /* Add overlay when sidebar is open on mobile */
+            /* Sidebar overlay */
             .sidebar-overlay {
                 position: fixed;
                 top: 0;
@@ -198,55 +270,291 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: 40;
+                z-index: 9997;
                 display: none;
+                backdrop-filter: blur(2px);
             }
             
             .sidebar-overlay.show {
                 display: block;
             }
+            
+            /* Mobile background - keep it fixed */
+            body::before {
+                position: fixed;
+                background-attachment: fixed;
+            }
+            
+            /* Header mobile adjustments */
+            .header-section {
+                padding-top: 5rem !important;
+                padding-bottom: 1.5rem !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            
+            .header-title {
+                font-size: 1.5rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            .header-subtitle {
+                font-size: 0.95rem !important;
+                line-height: 1.4 !important;
+            }
         }
         
         @media (max-width: 768px) {
-            /* Further mobile optimizations */
+            /* Full width sidebar on tablet */
             #sidebar {
-                width: 280px;
+                width: 85%;
+                max-width: 320px;
             }
             
-            /* Adjust content padding on mobile */
-            .mobile-content-padding {
-                padding-left: 1rem;
-                padding-right: 1rem;
+            /* Content spacing */
+            .content-container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+            
+            /* Welcome section */
+            .welcome-section {
+                padding: 1.25rem !important;
+                margin: 0 0.75rem 1rem 0.75rem !important;
+            }
+            
+            .welcome-title {
+                font-size: 1.25rem !important;
+            }
+            
+            .welcome-text {
+                font-size: 0.875rem !important;
+                line-height: 1.6 !important;
+            }
+            
+            /* Sync buttons */
+            .sync-buttons {
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+            
+            .sync-button {
+                width: 100% !important;
+                min-height: 48px !important;
+                font-size: 0.9rem !important;
+            }
+            
+            /* Statistics grid */
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 0.75rem !important;
+                margin: 0 0.75rem 1rem 0.75rem !important;
+            }
+            
+            .stat-card {
+                padding: 1.25rem !important;
+            }
+            
+            .stat-number {
+                font-size: 2.25rem !important;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem !important;
+            }
+            
+            /* Content grid */
+            .content-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+                margin: 0 0.75rem !important;
+                padding-bottom: 2rem !important;
+            }
+            
+            .content-card {
+                padding: 1.25rem !important;
+            }
+            
+            .card-title {
+                font-size: 1.1rem !important;
+            }
+            
+            /* Quick actions */
+            .quick-action-link {
+                padding: 0.875rem !important;
+                min-height: 48px !important;
+            }
+            
+            .quick-action-icon {
+                font-size: 1.1rem !important;
+            }
+            
+            .quick-action-text {
+                font-size: 0.9rem !important;
             }
         }
         
         @media (max-width: 640px) {
-            /* Extra small mobile devices */
-            #sidebar {
-                width: 100%;
-                max-width: 300px;
+            /* Small mobile */
+            .mobile-menu-btn {
+                top: 10px !important;
+                left: 10px !important;
+                width: 44px !important;
+                height: 44px !important;
             }
             
-            /* Stack statistics cards on small mobile */
-            .stats-grid-mobile {
-                grid-template-columns: 1fr;
+            #sidebar {
+                width: 90%;
+            }
+            
+            .header-section {
+                padding-top: 4rem !important;
+            }
+            
+            .header-title {
+                font-size: 1.25rem !important;
+            }
+            
+            .header-subtitle {
+                font-size: 0.875rem !important;
+            }
+            
+            .welcome-section,
+            .stats-grid,
+            .content-grid {
+                margin-left: 0.5rem !important;
+                margin-right: 0.5rem !important;
+            }
+            
+            .welcome-section {
+                padding: 1rem !important;
+            }
+            
+            .stat-card,
+            .content-card {
+                padding: 1rem !important;
+            }
+            
+            .stat-number {
+                font-size: 2rem !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* Extra small devices */
+            #sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                top: 8px !important;
+                left: 8px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+            
+            .header-section {
+                padding-top: 3.5rem !important;
+                padding-bottom: 1rem !important;
+            }
+            
+            .header-title {
+                font-size: 1.125rem !important;
+            }
+            
+            .header-subtitle {
+                font-size: 0.8rem !important;
+            }
+            
+            .welcome-section,
+            .stats-grid,
+            .content-grid {
+                margin-left: 0.5rem !important;
+                margin-right: 0.5rem !important;
+            }
+            
+            .welcome-section {
+                padding: 0.875rem !important;
+            }
+            
+            .welcome-title {
+                font-size: 1rem !important;
+            }
+            
+            .welcome-text {
+                font-size: 0.8rem !important;
+            }
+            
+            .sync-button {
+                min-height: 44px !important;
+                font-size: 0.85rem !important;
+            }
+            
+            .stat-card {
+                padding: 0.875rem !important;
+            }
+            
+            .stat-number {
+                font-size: 1.75rem !important;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem !important;
+            }
+            
+            .content-card {
+                padding: 0.875rem !important;
+            }
+            
+            .card-title {
+                font-size: 0.95rem !important;
+            }
+            
+            .quick-action-link {
+                padding: 0.75rem !important;
+            }
+            
+            .quick-action-text {
+                font-size: 0.85rem !important;
+            }
+            
+            .status-item,
+            .activity-item {
+                font-size: 0.8rem !important;
+            }
+        }
+        
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            /* Increase touch targets */
+            button, a, .quick-action-link, .sync-button {
+                min-height: 44px !important;
+            }
+            
+            /* Remove hover effects on touch devices */
+            #sidebar a:hover {
+                background-color: transparent !important;
+            }
+            
+            #sidebar a:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
             }
         }
     </style>
 </head>
-<body class="min-h-screen text-gray-800 overflow-x-hidden">
+<body class="min-h-screen text-gray-800">
     <!-- Mobile Menu Button -->
-    <button id="mobile-menu-btn" class="mobile-menu-btn fixed top-4 left-4 z-50 bg-sidebar-bg text-white p-3 rounded-lg shadow-lg lg:hidden">
-        <i class="fas fa-bars text-lg"></i>
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+        <i class="fas fa-bars text-xl"></i>
     </button>
     
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
     
     <div class="flex min-h-screen">
-        
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed left-0 w-64 h-screen bg-sidebar-bg text-sidebar-text transition-all duration-300 z-50 shadow-2xl flex flex-col">
+        <div id="sidebar" class="w-64 h-screen bg-sidebar-bg text-sidebar-text flex flex-col">
             <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
                 <div class="text-center mb-2">
                     <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
@@ -256,71 +564,56 @@
                 </div>
             </div>
             
-            <div class="flex-1 flex flex-col justify-between">
+            <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
-                    <!-- Dashboard -->
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Dashboard
                         </a>
                     </li>
-                    
-                    <!-- Clients -->
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-users mr-2 w-4 text-center"></i>
                             Clients
                         </a>
                     </li>
-                    
-                    <!-- Inspections -->
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
-                    
-                    <!-- User Management -->
                     <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
                             User Management
                         </a>
                     </li>
-                    
-                    <!-- System Logs -->
                     <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
                             System Logs
                         </a>
                     </li>
-                    
-                    <!-- OneDrive View (Developer only) -->
                     {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center"></i>
                             OneDrive View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Server View (Developer and Super Admin) -->
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
                             Server View
                         </a>
                     </li>
                     {% endif %}
-                    
-                    <!-- Settings -->
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cog mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -328,11 +621,11 @@
                 </ul>
             </div>
             
-            <!-- Logout Button - Fixed at bottom -->
+            <!-- Logout Button -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                         <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
                         Logout
                     </button>
@@ -341,112 +634,112 @@
         </div>
         
         <!-- Main Content -->
-        <div id="main-content" class="flex-1 w-full lg:ml-64 transition-all duration-300">
-            
+        <div id="main-content" class="flex-1 w-full lg:ml-64">
             <!-- Header -->
-            <div class="pt-16 lg:pt-16 pb-8 text-center mb-4 lg:mb-8 px-4">
-                <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold mb-2" style="color: #ffffff;">Welcome to Food Safety Agency</h1>
-                <h2 class="text-base sm:text-lg md:text-xl font-normal" style="color: #ffffff;">Your comprehensive food safety management platform</h2>
+            <div class="header-section pt-16 lg:pt-16 pb-8 text-center mb-4 lg:mb-8 px-4">
+                <h1 class="header-title text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style="color: #ffffff;">Welcome to Food Safety Agency</h1>
+                <h2 class="header-subtitle text-base sm:text-lg lg:text-xl font-normal" style="color: #ffffff;">Your comprehensive food safety management platform</h2>
             </div>
             
-            <!-- Messages - Disabled -->
-            
             <!-- Welcome Section -->
-            <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 xl:p-8 mb-4 lg:mb-8 mx-4 lg:mx-8">
-                <h2 class="text-lg lg:text-xl xl:text-2xl font-semibold text-gray-800 mb-3 lg:mb-4">Getting Started</h2>
-                <p class="text-gray-600 text-sm lg:text-base leading-relaxed mb-4 lg:mb-6">
+            <div class="welcome-section bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 mb-6 mx-4 lg:mx-8">
+                <h2 class="welcome-title text-xl font-semibold text-gray-800 mb-4">Getting Started</h2>
+                <p class="welcome-text text-gray-600 leading-relaxed mb-6">
                     Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different sections of the platform. 
                     You can manage clients, track inspections, handle inspections, and integrate with Google Sheets for data management.
                 </p>
                 
-                <!-- Sync Buttons Section - Hidden for administrators -->
                 {% if request.user.role != 'admin' %}
-                <div class="flex flex-col sm:flex-row gap-3 lg:gap-4">
-                    <button id="sync-clients-btn" onclick="syncClients()" class="flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none min-h-[44px] text-sm lg:text-base">
+                <div class="sync-buttons flex flex-col sm:flex-row gap-4">
+                    <button id="sync-clients-btn" onclick="syncClients()" class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
                         <i class="fas fa-sync-alt"></i>
                         <span id="sync-clients-text">Sync Clients</span>
                     </button>
                     
-                    <button id="sync-inspections-btn" onclick="syncInspections()" class="flex items-center justify-center gap-2 px-4 lg:px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none min-h-[44px] text-sm lg:text-base">
+                    <button id="sync-inspections-btn" onclick="syncInspections()" class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
                         <i class="fas fa-clipboard-check"></i>
                         <span id="sync-inspections-text">Sync Inspections</span>
                     </button>
                 </div>
                 {% endif %}
                 
-                <!-- Sync Status Messages -->
                 <div id="sync-status" class="mt-4"></div>
             </div>
             
             <!-- Statistics Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4 xl:gap-6 mb-4 lg:mb-8 mx-4 lg:mx-8">
-                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 text-center">
-                    <h3 class="text-primary text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">{{ total_clients|default:"0" }}</h3>
-                    <p class="text-gray-500 text-xs lg:text-sm uppercase tracking-wide font-medium">Total Clients</p>
+            <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 mx-4 lg:mx-8">
+                <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_clients|default:"0" }}</h3>
+                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Clients</p>
                 </div>
-                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6 text-center">
-                    <h3 class="text-primary text-2xl lg:text-3xl xl:text-4xl font-bold mb-2">{{ total_inspections|default:"0" }}</h3>
-                    <p class="text-gray-500 text-xs lg:text-sm uppercase tracking-wide font-medium">Total Inspections</p>
+                <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_inspections|default:"0" }}</h3>
+                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Inspections</p>
                 </div>
             </div>
             
             <!-- Content Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6 mx-4 lg:mx-8 pb-8">
-                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Quick Actions</h3>
-                    <div class="space-y-2 lg:space-y-3">
-                        <a href="{% url 'client_list' %}" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 quick-action-link">
+            <div class="content-grid grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mx-4 lg:mx-8 pb-8">
+                <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="card-title text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
+                    <div class="quick-actions space-y-3">
+                        <a href="{% url 'client_list' %}" class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-users text-primary"></i>
-                                <span class="font-medium text-sm lg:text-base">View All Clients</span>
+                                <i class="quick-action-icon fas fa-users text-primary"></i>
+                                <span class="quick-action-text font-medium">View All Clients</span>
                             </div>
                         </a>
-                        <a href="{% url 'shipment_list' %}" class="block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200 quick-action-link">
+                        <a href="{% url 'shipment_list' %}" class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                             <div class="flex items-center gap-3">
-                                <i class="fas fa-clipboard-check text-primary"></i>
-                                <span class="font-medium text-sm lg:text-base">View All Inspections</span>
+                                <i class="quick-action-icon fas fa-clipboard-check text-primary"></i>
+                                <span class="quick-action-text font-medium">View All Inspections</span>
                             </div>
                         </a>
                     </div>
                 </div>
                 
-                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">System Status</h3>
-                    <div class="space-y-2 lg:space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">PostgreSQL</span>
-                            <span class="flex items-center gap-2 {% if system_status.postgresql_online %}text-green-600{% else %}text-red-600{% endif %}">
+                <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="card-title text-lg font-semibold text-gray-800">System Status</h3>
+                        <a href="?refresh_status=true" class="btn btn-sm bg-blue-500 text-white hover:bg-blue-600 px-3 py-1 rounded text-sm">
+                            <i class="fas fa-sync-alt mr-1"></i> Refresh
+                        </a>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="status-item flex items-center justify-between">
+                            <span class="status-label text-gray-600">PostgreSQL</span>
+                            <span class="status-value flex items-center gap-2 {% if system_status.postgresql_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span class="text-sm lg:text-base">{% if system_status.postgresql_online %}Online{% else %}Offline{% endif %}</span>
+                                <span>{% if system_status.postgresql_online %}Online{% else %}Offline{% endif %}</span>
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">SQL Server</span>
-                            <span class="flex items-center gap-2 {% if system_status.sql_server_online %}text-green-600{% else %}text-red-600{% endif %}">
+                        <div class="status-item flex items-center justify-between">
+                            <span class="status-label text-gray-600">SQL Server</span>
+                            <span class="status-value flex items-center gap-2 {% if system_status.sql_server_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span class="text-sm lg:text-base">{% if system_status.sql_server_online %}Online{% else %}Offline{% endif %}</span>
+                                <span>{% if system_status.sql_server_online %}Online{% else %}Offline{% endif %}</span>
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">Google Sheets</span>
-                            <span class="flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
+                        <div class="status-item flex items-center justify-between">
+                            <span class="status-label text-gray-600">Google Sheets</span>
+                            <span class="status-value flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span class="text-sm lg:text-base">{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif %}</span>
+                                <span>{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif %}</span>
                             </span>
                         </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-gray-600 text-sm lg:text-base">Last Sync</span>
-                            <span class="text-gray-500 text-xs lg:text-sm">{{ system_status.last_sync }}</span>
+                        <div class="status-item flex items-center justify-between">
+                            <span class="status-label text-gray-600">Last Sync</span>
+                            <span class="status-value text-gray-500 text-sm">{{ system_status.last_sync }}</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-card-bg rounded-lg shadow-sm border border-gray-200 p-4 lg:p-6">
-                    <h3 class="text-base lg:text-lg font-semibold text-gray-800 mb-3 lg:mb-4">Recent Activity</h3>
-                    <div class="space-y-2 lg:space-y-3">
+                <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="card-title text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+                    <div class="space-y-3">
                         {% if recent_activities %}
                             {% for activity in recent_activities %}
-                                <div class="text-xs lg:text-sm text-gray-600">
+                                <div class="activity-item text-sm text-gray-600">
                                     {% if activity.action == 'SYNC' %}
                                         <i class="fas fa-sync text-green-500 mr-2"></i>
                                         Data synced successfully
@@ -495,7 +788,7 @@
                                 </div>
                             {% endfor %}
                         {% else %}
-                            <div class="text-xs lg:text-sm text-gray-500 italic">
+                            <div class="activity-item text-sm text-gray-500 italic">
                                 No recent activity
                             </div>
                         {% endif %}
@@ -504,6 +797,8 @@
             </div>
         </div>
     </div>
+
+    {% csrf_token %}
 
     <script>
         // Mobile Menu Toggle
@@ -516,22 +811,17 @@
                 sidebar.classList.toggle('show');
                 sidebarOverlay.classList.toggle('show');
                 
-                // Update menu button icon
                 const icon = mobileMenuBtn.querySelector('i');
                 if (sidebar.classList.contains('show')) {
-                    icon.className = 'fas fa-times text-lg';
+                    icon.className = 'fas fa-times text-xl';
                 } else {
-                    icon.className = 'fas fa-bars text-lg';
+                    icon.className = 'fas fa-bars text-xl';
                 }
             }
             
-            // Toggle sidebar when menu button is clicked
             mobileMenuBtn.addEventListener('click', toggleSidebar);
-            
-            // Close sidebar when overlay is clicked
             sidebarOverlay.addEventListener('click', toggleSidebar);
             
-            // Close sidebar when a navigation link is clicked (on mobile)
             const navLinks = sidebar.querySelectorAll('a');
             navLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -541,18 +831,20 @@
                 });
             });
             
-            // Handle window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 1024) {
                     sidebar.classList.remove('show');
                     sidebarOverlay.classList.remove('show');
                     const icon = mobileMenuBtn.querySelector('i');
-                    icon.className = 'fas fa-bars text-lg';
+                    icon.className = 'fas fa-bars text-xl';
                 }
             });
+            
+            initTheme();
+            clearStuckSyncStatus();
         });
 
-        // Sync Clients Function
+        // Sync Functions
         function syncClients() {
             const btn = document.getElementById('sync-clients-btn');
             const text = document.getElementById('sync-clients-text');
@@ -573,18 +865,15 @@
                 }
             })
             .then(response => {
-                // Check if we got redirected to login (302/401/403)
                 if (response.status === 302 || response.status === 401 || response.status === 403) {
                     throw new Error('Authentication required. Please refresh the page and log in again.');
                 }
                 
                 if (response.ok) {
-                    // Check if response is actually JSON
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.includes('application/json')) {
                         return response.json();
                     } else {
-                        // Got HTML instead of JSON - likely redirected to login
                         throw new Error('Session expired. Please refresh the page and log in again.');
                     }
                 } else {
@@ -593,7 +882,6 @@
             })
             .then(data => {
                 if (data.success) {
-                    // Client sync completed successfully - just refresh without showing message
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
@@ -625,13 +913,11 @@
             }
         }
 
-        // Sync Inspections Function
         function syncInspections() {
             const btn = document.getElementById('sync-inspections-btn');
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
-            // Check if button is already stuck in syncing state
             if (text.textContent === 'Syncing...') {
                 const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
                 if (userConfirm) {
@@ -648,13 +934,12 @@
             statusDiv.innerHTML = '';
 
             let pollCount = 0;
-            const maxPolls = 1800; // 60 minutes max (1800 * 2 seconds) - handles 100k+ records
+            const maxPolls = 1800;
             
-            // Set a maximum timeout to ensure button resets even if something goes wrong
             const maxTimeout = setTimeout(() => {
                 console.log('Sync timeout reached - resetting button');
                 resetButton();
-            }, 3600000); // 60 minutes max timeout
+            }, 3600000);
 
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
 
@@ -667,18 +952,15 @@
                 }
             })
             .then(response => {
-                // Check if we got redirected to login (302/401/403)
                 if (response.status === 302 || response.status === 401 || response.status === 403) {
                     throw new Error('Authentication required. Please refresh the page and log in again.');
                 }
                 
                 if (response.ok) {
-                    // Check if response is actually JSON
                     const contentType = response.headers.get('content-type');
                     if (contentType && contentType.includes('application/json')) {
                         return response.json();
                     } else {
-                        // Got HTML instead of JSON - likely redirected to login
                         throw new Error('Session expired. Please refresh the page and log in again.');
                     }
                 } else {
@@ -687,12 +969,9 @@
             })
             .then(data => {
                 if (data.success && data.status === 'started') {
-                    // Background sync started - just start polling
                     pollSyncStatus();
                 } else if (data.success) {
-                    // Immediate success - just reset button, no message
                     resetButton();
-                    // Don't refresh page to avoid logout
                 } else {
                     statusDiv.innerHTML = `
                         <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
@@ -717,12 +996,10 @@
             function pollSyncStatus() {
                 pollCount++;
                 if (pollCount > maxPolls) {
-                    // Just reset silently - no annoying messages
                     resetButton();
                     return;
                 }
 
-                // Refresh session every 5 polls (10 seconds) to prevent logout during long syncs
                 if (pollCount % 5 === 0) {
                     fetch('{% url "session_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
                 }
@@ -737,7 +1014,6 @@
                 })
                 .then(data => {
                     if (data.success && data.message) {
-                        // Sync completed successfully
                         statusDiv.innerHTML = `
                             <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
                                 <i class="fas fa-check-circle mr-2"></i>
@@ -747,56 +1023,33 @@
                                 <br>Total processed: ${data.total_processed || 0} records
                             </div>
                         `;
-                        // Clear timeout and reset button immediately
                         clearTimeout(maxTimeout);
                         resetButton();
-                        // Refresh page after 2 seconds to show updated counts
                         setTimeout(() => {
                             window.location.reload();
                         }, 2000);
                     } else if (data.success === false && data.error) {
-                        // Sync failed with error
                         statusDiv.innerHTML = `
                             <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                                 <i class="fas fa-exclamation-circle mr-2"></i>
                                 ❌ Sync failed: ${data.error}
                             </div>
                         `;
-                        // Clear timeout and reset button immediately
                         clearTimeout(maxTimeout);
                         resetButton();
                     } else if (data.status === 'running' || data.message === 'Sync is still running...') {
-                        // Still running, continue polling
                         text.textContent = 'Syncing...';
-                        setTimeout(pollSyncStatus, 2000); // Poll every 2 seconds
+                        setTimeout(pollSyncStatus, 2000);
                     } else {
-                        // Unknown status - reset button and stop polling
                         resetButton();
                     }
                 })
                 .catch(error => {
-                    // Just reset silently on any error - no console spam
                     resetButton();
                 });
             }
-
-            function resetInspectionButton() {
-                btn.disabled = false;
-                text.textContent = 'Sync Inspections';
-                btn.style.opacity = '1';
-            }
-
-            function updatePageAfterSync() {
-                // Simply reload the page to show updated values
-                // This is the most reliable way to ensure all values are updated
-                window.location.reload();
-            }
         }
-    </script>
-    <!-- CSRF Token for theme saving -->
-    {% csrf_token %}
 
-    <script>
         // Theme management
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
@@ -812,7 +1065,6 @@
             document.documentElement.setAttribute('data-theme', activeTheme);
         }
         
-        
         function getCsrfToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
         }
@@ -827,22 +1079,11 @@
                     },
                     body: `action=save_theme&theme_mode=${theme === 'dark' ? 'on' : ''}`
                 });
-                
-                // Theme saved successfully
             } catch (error) {
-                // Theme save failed - continue silently
+                // Silent fail
             }
         }
         
-        // Initialize theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-            
-            // Clear any stuck sync status from previous session
-            clearStuckSyncStatus();
-        });
-        
-        // Global reset functions
         function resetButton() {
             const inspectionsBtn = document.getElementById('sync-inspections-btn');
             const inspectionsText = document.getElementById('sync-inspections-text');
@@ -870,9 +1111,7 @@
             }
         }
         
-        // Function to clear stuck sync status
         function clearStuckSyncStatus() {
-            // Check if there are any stuck sync buttons and reset them
             const syncInspectionsBtn = document.getElementById('sync-inspections-text');
             const syncClientsBtn = document.getElementById('sync-clients-text');
             

@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
 from .views.core_views import (
-    settings_view, session_status, refresh_shipments, refresh_clients, 
+    settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients, 
     refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment, 
     delete_inspection, upload_document, user_management, system_logs, 
-    update_bought_sample, dashboard, compliance_documents, onedrive_view, compliance_linking_page, 
+    update_bought_sample, update_group_approved, dashboard, compliance_documents, onedrive_view, compliance_linking_page, 
     get_inspection_data, process_document_links, download_compliance_documents, 
     process_all_compliance_documents, start_compliance_document_download, 
     get_inspection_files, download_inspection_file, download_all_inspection_files, get_zip_contents, 
@@ -17,7 +17,7 @@ from .views.core_views import (
     download_first_10_compliance_by_commodity, scheduled_sync_service_status, 
     start_scheduled_sync_service, stop_scheduled_sync_service, run_manual_sync, 
     save_system_settings, get_system_settings, start_daily_compliance_sync, stop_daily_compliance_sync, daily_compliance_sync_status, performance_monitor, server_status, 
-    check_compliance_documents_batch, populate_six_month_files, pull_six_month_data_from_google_drive, get_client_all_files, get_page_clients_files, get_page_clients_file_status, update_sent_status, client_autocomplete_api, onedrive_callback,
+    check_compliance_documents_batch, populate_six_month_files, pull_six_month_data_from_google_drive, get_client_all_files, get_page_clients_files, get_page_clients_file_status, update_sent_status, client_autocomplete_api, onedrive_callback, inspector_dashboard, analytics_dashboard,
     scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
@@ -73,10 +73,12 @@ urlpatterns = [
     path('update-hours/', views.update_hours, name='update_hours'),
     path('update-group-hours/', views.update_group_hours, name='update_group_hours'),
     path('update-group-additional-email/', views.update_group_additional_email, name='update_group_additional_email'),
+    path('update-group-approved/', update_group_approved, name='update_group_approved'),
     path('update-lab/', views.update_lab, name='update_lab'),
     path('update-product-name/', views.update_product_name, name='update_product_name'),
     path('update-product-class/', views.update_product_class, name='update_product_class'),
-    path('analytics-dashboard/', views.analytics_dashboard, name='analytics_dashboard'),
+    path('analytics-dashboard/', analytics_dashboard, name='analytics_dashboard'),
+    path('inspector-dashboard/', inspector_dashboard, name='inspector_dashboard'),
     path('export-analytics/<str:format_type>/', views.export_analytics, name='export_analytics'),
     path('export-shipments/', export_shipments, name='export_shipments'),
 
@@ -101,6 +103,7 @@ urlpatterns = [
     path('google-sheets/oauth2callback/', views.google_oauth_callback, name='google_oauth_callback'),
     path('onedrive/callback/', onedrive_callback, name='onedrive_callback'),
     path('settings/', settings_view, name='settings'),
+    path('inspector-settings/', inspector_settings_view, name='inspector_settings'),
     path('session-status/', session_status, name='session_status'),
     path('user-management/', user_management, name='user_management'),
     path('system-logs/', system_logs, name='system_logs'),

@@ -360,6 +360,11 @@ class FoodSafetyAgencyInspection(models.Model):
     km_traveled = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, help_text="Manual entry of kilometers traveled")
     hours = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Manual entry of hours worked")
     additional_email = models.EmailField(max_length=254, blank=True, null=True, help_text="Additional email for this specific inspection group")
+    approved_status = models.CharField(max_length=10, blank=True, null=True, help_text="Approval status for this inspection group",
+                                     choices=[
+                                         ('PENDING', 'Pending'),
+                                         ('YES', 'Yes')
+                                     ], default='PENDING')
     lab = models.CharField(max_length=20, blank=True, null=True, help_text="Laboratory used for testing",
                           choices=[
                               ('lab_a', 'Lab A'),

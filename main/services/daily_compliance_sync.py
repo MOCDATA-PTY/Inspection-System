@@ -128,6 +128,11 @@ class DailyComplianceSyncService:
     def load_drive_files_standalone(self):
         """Load Google Drive files without requiring a request object."""
         try:
+            # Check if force stop was requested
+            if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
+                print("🛑 Force stop requested - aborting file loading")
+                return None
+                
             from ..services.google_drive_service import GoogleDriveService
             import re
             from datetime import datetime
@@ -145,6 +150,17 @@ class DailyComplianceSyncService:
             file_count = 0
             
             for file in files:
+                # Check stop flag and force stop during file processing
+                if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
+                    print("🛑 Stop requested during file loading - aborting")
+                    break
+                
+                # Check global stop flag
+                import threading
+                if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                    print("🛑 Global stop flag detected during file loading - aborting")
+                    break
+                    
                 file_name = file.get('name', '')
                 file_id = file.get('id', '')
                 web_view_link = file.get('webViewLink', '')
@@ -217,6 +233,11 @@ class DailyComplianceSyncService:
         """Process compliance documents with skip logic."""
         print("🔄 Starting daily compliance document sync...")
         
+        # Check if force stop was requested
+        if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
+            print("🛑 Force stop requested - aborting sync")
+            return
+        
         settings = self.get_system_settings()
         if not settings or not settings.compliance_daily_sync_enabled:
             print("❌ Daily compliance sync is disabled.")
@@ -231,10 +252,13 @@ class DailyComplianceSyncService:
                 print("❌ Failed to load Google Drive files. Aborting sync.")
                 return
             
-            # Get all inspections from the last 6 months
-            six_months_ago = datetime.now() - timedelta(days=180)
+            # Get all inspections from Oct 2025 to Apr 2026
+            from datetime import date
+            start_date = date(2025, 10, 1)
+            end_date = date(2026, 4, 1)
             inspections = FoodSafetyAgencyInspection.objects.filter(
-                date_of_inspection__gte=six_months_ago
+                date_of_inspection__gte=start_date,
+                date_of_inspection__lt=end_date
             ).order_by('-date_of_inspection')
             
             print(f"📊 Found {inspections.count()} inspections to process")
@@ -243,6 +267,17 @@ class DailyComplianceSyncService:
             documents_skipped = 0
             
             for inspection in inspections:
+                # Check stop flag and force stop before processing each inspection
+                if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
+                    print("🛑 Stop requested during processing - aborting sync")
+                    break
+                
+                # Check global stop flag
+                import threading
+                if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                    print("🛑 Global stop flag detected during processing - aborting sync")
+                    break
+                    
                 document_id = self.generate_document_id(inspection)
                 
                 # Skip if already processed
@@ -341,35 +376,92 @@ class DailyComplianceSyncService:
         
         self.is_running = True
         self.manual_start = manual_start  # Store manual start flag
+        
+        # Reset global stop flag
+        import threading
+        if not hasattr(threading, '_global_stop_flag'):
+            threading._global_stop_flag = threading.Event()
+        threading._global_stop_flag.clear()
+        
         self.sync_thread = threading.Thread(target=self._run_daily_sync_loop, daemon=True)
         self.sync_thread.start()
         print("🚀 Daily compliance sync service started.")
     
     def stop_daily_sync(self):
         """Stop the daily sync service."""
+        print("🛑 Stopping daily compliance sync service...")
         self.is_running = False
-        if self.sync_thread:
-            self.sync_thread.join(timeout=5)
+        
+        # Force stop any ongoing operations
+        if hasattr(self, 'manual_start'):
+            self.manual_start = False
+        
+        # Set a stop timestamp for more aggressive checking
+        self.stop_requested_at = time.time()
+        
+        # Force stop the processing immediately
+        self._force_stop_processing = True
+        
+        # Set global stop flag for Google Drive service
+        import threading
+        if not hasattr(threading, '_global_stop_flag'):
+            threading._global_stop_flag = threading.Event()
+        threading._global_stop_flag.set()
+        
+        if self.sync_thread and self.sync_thread.is_alive():
+            print("🛑 Waiting for sync thread to finish...")
+            self.sync_thread.join(timeout=1)  # Very short timeout
+            
+            if self.sync_thread.is_alive():
+                print("⚠️  Sync thread did not stop gracefully, forcing stop...")
+                # Force stop all processing
+                self._force_stop_processing = True
+                print("🛑 Service marked as stopped - thread will exit on next check")
+        
         print("🛑 Daily compliance sync service stopped.")
     
     def _run_daily_sync_loop(self):
         """Main loop for daily sync service."""
-        while self.is_running:
+        while self.is_running and not (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
+            # Check global stop flag
+            import threading
+            if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                print("🛑 Global stop flag detected in main loop - stopping")
+                break
+                
             try:
                 # Check if we should run daily sync (use manual_start flag if available)
                 manual_start = getattr(self, 'manual_start', False)
                 if self.should_run_daily_sync(manual_start):
+                    print("🔄 Starting daily compliance document sync...")
                     self.process_compliance_documents()
                     # Reset manual start flag after first run
                     if manual_start:
                         self.manual_start = False
                 
-                # Wait 1 hour before checking again
-                time.sleep(3600)  # 1 hour
+                # Check stop flag more frequently during wait
+                wait_time = 0
+                while wait_time < 3600 and self.is_running and not (hasattr(self, '_force_stop_processing') and self._force_stop_processing):  # 1 hour total
+                    # Check global stop flag
+                    import threading
+                    if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                        print("🛑 Global stop flag detected during wait - stopping")
+                        break
+                    time.sleep(60)  # Check every minute
+                    wait_time += 60
                 
             except Exception as e:
                 print(f"❌ Error in daily sync loop: {e}")
-                time.sleep(300)  # Wait 5 minutes before retrying
+                # Check stop flag during error recovery too
+                wait_time = 0
+                while wait_time < 300 and self.is_running and not (hasattr(self, '_force_stop_processing') and self._force_stop_processing):  # 5 minutes total
+                    # Check global stop flag
+                    import threading
+                    if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                        print("🛑 Global stop flag detected during error recovery - stopping")
+                        break
+                    time.sleep(30)  # Check every 30 seconds
+                    wait_time += 30
     
     def get_status(self):
         """Get current status of the daily sync service."""

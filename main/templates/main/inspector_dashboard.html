@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspector Dashboard - Food Safety Agency</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        'sidebar-bg': '#0f172a',
+                        'sidebar-text': '#f1f5f9',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --spacing: 5px;
+            --sidebar-bg: #ffffff;
+            --sidebar-text: #1f2937;
+            --sidebar-hover: #f3f4f6;
+            --input-bg: #ffffff;
+            --input-border: #d1d5db;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+
+        [data-theme="dark"] {
+            --primary: #007890;
+            --primary-light: #1a3a40;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b;
+            --background: transparent;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-light: #cbd5e1;
+            --border: #475569;
+            --shadow: 0 1px 3px rgba(0,0,0,0.5);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.6), 0 2px 4px -1px rgba(0,0,0,0.4);
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #f1f5f9;
+            --sidebar-hover: #1e293b;
+            --input-bg: #1e293b;
+            --input-border: #475569;
+            --success: #10b981;
+            --info: #3b82f6;
+        }
+        
+        #sidebar {
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a {
+            color: var(--sidebar-text) !important;
+        }
+        
+        #sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        #sidebar .border-slate-600 {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+        }
+        
+        #sidebar .text-sidebar-text {
+            color: #f1f5f9 !important;
+        }
+        
+        #sidebar div {
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar a {
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="light"] #sidebar div {
+            color: #f1f5f9 !important;
+        }
+        
+        [data-theme="dark"] #sidebar {
+            background-color: #0f172a !important;
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] #sidebar a {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="dark"] #sidebar div {
+            color: #ffffff !important;
+        }
+        
+        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+        }
+        
+        [data-theme="dark"] .text-gray-800,
+        [data-theme="dark"] .text-gray-600,
+        [data-theme="dark"] .text-gray-500 {
+            color: var(--text) !important;
+        }
+        
+        [data-theme="dark"] .bg-gray-50 {
+            background-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .bg-gray-100 {
+            background-color: #475569 !important;
+        }
+        
+        [data-theme="dark"] .bg-gray-200 {
+            background-color: #64748b !important;
+        }
+        
+        [data-theme="dark"] .border-gray-200 {
+            border-color: var(--border) !important;
+        }
+        
+        body, .container, .bg-white, .bg-card-bg, .text-gray-800, .text-gray-600 {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        
+        .bg-card-bg {
+            background-color: var(--card-bg);
+        }
+        
+        body {
+            background: transparent;
+            color: var(--text);
+        }
+
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .loading-screen.active {
+            display: flex;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #007890;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .loading-subtext {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 1.0;
+            z-index: -1;
+        }
+        
+        /* Dashboard card styles */
+        .dashboard-card {
+            background-color: var(--card-bg);
+            border-color: var(--border);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        
+        .dashboard-card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+            transform: translateY(-2px);
+        }
+        
+        [data-theme="dark"] .dashboard-card {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        [data-theme="dark"] .dashboard-card:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+        
+        .dashboard-card h3 {
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dashboard-card p,
+        .dashboard-card label,
+        .dashboard-card span {
+            color: var(--text);
+        }
+        
+        .dashboard-card .text-gray-300,
+        .dashboard-card .text-gray-400 {
+            color: var(--text-light);
+        }
+        
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 120, 144, 0.15);
+        }
+        
+        [data-theme="dark"] .stat-card {
+            background: #1e293b;
+            border: 1px solid #475569;
+        }
+        
+        [data-theme="dark"] .stat-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 120, 144, 0.3);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+        }
+        
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            #sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+            
+            #main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .sidebar-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+                display: none;
+            }
+            
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #sidebar {
+                width: 280px;
+            }
+            
+            .mobile-content-padding {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .dashboard-card {
+                padding: 1.5rem !important;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 1.125rem;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            #sidebar {
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .dashboard-card {
+                padding: 1.25rem !important;
+            }
+            
+            .dashboard-card h3 {
+                font-size: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-800 overflow-x-hidden">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading Inspections</div>
+            <div class="loading-subtext">Please wait...</div>
+        </div>
+    </div>
+    
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn fixed top-4 left-4 z-50 bg-sidebar-bg text-white p-3 rounded-lg shadow-lg lg:hidden">
+        <i class="fas fa-bars text-lg"></i>
+    </button>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <div class="flex min-h-screen">
+        
+        <!-- Sidebar -->
+        <div id="sidebar" class="fixed left-0 w-64 h-screen bg-sidebar-bg text-sidebar-text transition-all duration-300 z-50 shadow-2xl flex flex-col">
+            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
+                <div class="text-center mb-2">
+                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
+                </div>
+                <div class="text-sidebar-text text-sm font-semibold text-center" style="color: #f1f5f9 !important;">
+                    Food Safety Agency (Pty) Ltd
+                </div>
+            </div>
+            
+            <div class="flex-1 flex flex-col justify-between">
+                <ul class="px-2 py-2 space-y-1">
+                    <!-- Inspections -->
+                    <li>
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                            Inspections
+                        </a>
+                    </li>
+                    
+                    <!-- My Analytics -->
+                    <li>
+                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-white bg-opacity-20">
+                            <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
+                            My Analytics
+                        </a>
+                    </li>
+                    
+                    <!-- Settings -->
+                    <li>
+                        <a href="{% url 'inspector_settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Logout Button - Fixed at bottom -->
+            <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
+                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+                    {% csrf_token %}
+                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div id="main-content" class="flex-1 w-full lg:ml-64 transition-all duration-300">
+            
+            <!-- Header -->
+            <div class="pt-16 lg:pt-20 pb-10 text-center mb-6 lg:mb-10 px-4">
+                <div class="max-w-6xl mx-auto">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 tracking-tight" style="color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">Inspector Analytics Dashboard</h1>
+                    <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl font-light mb-4" style="color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3);">Welcome back, {{ request.user.get_full_name|default:request.user.username }}!</h2>
+                    <div class="mt-6 inline-block px-6 py-2 rounded-full" style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px);">
+                        <div class="text-sm sm:text-base font-semibold" style="color: #ffffff !important;">
+                            Food Safety Agency (Pty) Ltd
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Section -->
+            {% if messages %}
+            <div class="mx-4 lg:mx-8 mb-6">
+                {% for message in messages %}
+                    <div class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-100 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-400 text-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-700 px-4 py-3 rounded mb-4">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <!-- Stats Overview -->
+            <div class="max-w-7xl mx-auto px-4 lg:px-8 pb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    
+                    <!-- Total Inspections -->
+                    <div class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="stat-icon bg-blue-100 text-blue-600">
+                                <i class="fas fa-clipboard-check"></i>
+                            </div>
+                            <div class="text-right">
+                                <div class="stat-number text-blue-600">{{ total_inspections|default:0 }}</div>
+                                <div class="text-sm opacity-70">Total Inspections</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-arrow-up text-green-500 mr-1"></i>
+                            <span class="text-green-500 font-medium">{{ this_month_inspections|default:0 }}</span>
+                            <span class="ml-2 opacity-70">this month</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="stat-icon bg-green-100 text-green-600">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="text-right">
+                                <div class="stat-number text-green-600">{{ recent_inspections|default:0 }}</div>
+                                <div class="text-sm opacity-70">Last 30 Days</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-calendar text-blue-500 mr-1"></i>
+                            <span class="text-blue-500 font-medium">{{ avg_monthly_inspections|default:0 }}</span>
+                            <span class="ml-2 opacity-70">avg/month</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Compliance Rate -->
+                    <div class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="stat-icon bg-purple-100 text-purple-600">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="text-right">
+                                <div class="stat-number text-purple-600">{{ compliance_rate|default:0 }}%</div>
+                                <div class="text-sm opacity-70">Compliance Rate</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-check-circle text-green-500 mr-1"></i>
+                            <span class="text-green-500 font-medium">{{ compliant_inspections|default:0 }}</span>
+                            <span class="ml-2 opacity-70">compliant</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Non-Compliant -->
+                    <div class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="stat-icon bg-red-100 text-red-600">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="text-right">
+                                <div class="stat-number text-red-600">{{ non_compliant_inspections|default:0 }}</div>
+                                <div class="text-sm opacity-70">Non-Compliant</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-arrow-down text-red-500 mr-1"></i>
+                            <span class="text-red-500 font-medium">{{ non_compliant_inspections|default:0 }}</span>
+                            <span class="ml-2 opacity-70">need attention</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts and Analytics -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    
+                    <!-- Inspection Trends Chart -->
+                    <div class="dashboard-card rounded-xl border p-8">
+                        <h3 class="text-xl font-bold mb-6">
+                            <i class="fas fa-chart-line text-primary mr-2"></i>
+                            <span>Inspection Trends</span>
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="inspectionTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Compliance Distribution -->
+                    <div class="dashboard-card rounded-xl border p-8">
+                        <h3 class="text-xl font-bold mb-6">
+                            <i class="fas fa-pie-chart text-primary mr-2"></i>
+                            <span>Compliance Distribution</span>
+                        </h3>
+                        <div class="chart-container">
+                            <canvas id="complianceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Activity and Performance Metrics -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <!-- Recent Inspections -->
+                    <div class="dashboard-card rounded-xl border p-8">
+                        <h3 class="text-xl font-bold mb-6">
+                            <i class="fas fa-history text-primary mr-2"></i>
+                            <span>Recent Inspections</span>
+                        </h3>
+                        <div class="space-y-4">
+                            {% for inspection in recent_inspections_list|slice:":5" %}
+                            <div class="flex items-center justify-between p-3 rounded-lg" style="background: rgba(0, 120, 144, 0.05);">
+                                <div class="flex items-center">
+                                    <div class="w-3 h-3 {% if not inspection.is_direction_present_for_this_inspection %}bg-green-500{% else %}bg-red-500{% endif %} rounded-full mr-3"></div>
+                                    <div>
+                                        <div class="font-medium text-sm">{{ inspection.client_name|default:"Unknown Client" }}</div>
+                                        <div class="text-xs opacity-70">{{ inspection.date_of_inspection|date:"M d, Y" }} - {{ inspection.commodity|default:"N/A" }}</div>
+                                    </div>
+                                </div>
+                                <span class="{% if not inspection.is_direction_present_for_this_inspection %}text-green-600{% else %}text-red-600{% endif %} text-sm font-medium">
+                                    {% if not inspection.is_direction_present_for_this_inspection %}Compliant{% else %}Non-Compliant{% endif %}
+                                </span>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-8 text-gray-500">
+                                <i class="fas fa-clipboard-list text-4xl mb-4"></i>
+                                <p>No recent inspections found</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Metrics -->
+                    <div class="dashboard-card rounded-xl border p-8">
+                        <h3 class="text-xl font-bold mb-6">
+                            <i class="fas fa-trophy text-primary mr-2"></i>
+                            <span>Performance Metrics</span>
+                        </h3>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">Compliance Rate</span>
+                                    <span class="text-sm font-bold text-green-600">{{ compliance_rate|default:0 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">Total Inspections</span>
+                                    <span class="text-sm font-bold text-blue-600">{{ total_inspections|default:0 }}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">This Month</span>
+                                    <span class="text-sm font-bold text-purple-600">{{ this_month_inspections|default:0 }}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-purple-500 h-2 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium">Average Monthly</span>
+                                    <span class="text-sm font-bold text-orange-600">{{ avg_monthly_inspections|default:0 }}</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-orange-500 h-2 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile Menu Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                sidebarOverlay.classList.toggle('show');
+                
+                const icon = mobileMenuBtn.querySelector('i');
+                if (sidebar.classList.contains('show')) {
+                    icon.className = 'fas fa-times text-lg';
+                } else {
+                    icon.className = 'fas fa-bars text-lg';
+                }
+            }
+            
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+            
+            const navLinks = sidebar.querySelectorAll('a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    const icon = mobileMenuBtn.querySelector('i');
+                    icon.className = 'fas fa-bars text-lg';
+                }
+            });
+        });
+
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = 'light';
+            
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+            }
+            
+            document.documentElement.setAttribute('data-theme', activeTheme);
+        }
+        
+        // Charts initialization
+        function initCharts() {
+            // Parse monthly data from Django context
+            const monthlyData = JSON.parse('{{ monthly_inspections|escapejs }}');
+            const commodityData = JSON.parse('{{ commodity_stats|escapejs }}');
+            
+            // Prepare monthly trends data
+            const monthlyLabels = [];
+            const monthlyCounts = [];
+            
+            if (monthlyData && monthlyData.length > 0) {
+                monthlyData.forEach(item => {
+                    const date = new Date(item.month);
+                    monthlyLabels.push(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+                    monthlyCounts.push(item.count);
+                });
+            } else {
+                // Fallback data if no real data available
+                monthlyLabels.push('No Data');
+                monthlyCounts.push(0);
+            }
+            
+            // Inspection Trends Chart
+            const trendsCtx = document.getElementById('inspectionTrendsChart').getContext('2d');
+            new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlyLabels,
+                    datasets: [{
+                        label: 'Inspections',
+                        data: monthlyCounts,
+                        borderColor: '#007890',
+                        backgroundColor: 'rgba(0, 120, 144, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Prepare compliance data
+            const compliantCount = parseInt('{{ compliant_inspections|default:0 }}');
+            const nonCompliantCount = parseInt('{{ non_compliant_inspections|default:0 }}');
+            const totalCount = compliantCount + nonCompliantCount;
+            
+            // Compliance Distribution Chart
+            const complianceCtx = document.getElementById('complianceChart').getContext('2d');
+            new Chart(complianceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Compliant', 'Non-Compliant'],
+                    datasets: [{
+                        data: [compliantCount, nonCompliantCount],
+                        backgroundColor: [
+                            '#10b981',
+                            '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+            initCharts();
+            
+            // Add loading screen functionality for navigation links
+            try {
+                const inspectionsLink = document.querySelector('a[href*="shipment_list"]');
+                if (inspectionsLink) {
+                    inspectionsLink.addEventListener('click', function(e) {
+                        try {
+                            const loadingScreen = document.getElementById('loadingScreen');
+                            if (loadingScreen) {
+                                loadingScreen.classList.add('active');
+                                console.log('Loading screen activated');
+                            } else {
+                                console.warn('Loading screen element not found');
+                            }
+                        } catch (error) {
+                            console.error('Error activating loading screen:', error);
+                        }
+                    });
+                } else {
+                    console.warn('Inspections link not found');
+                }
+            } catch (error) {
+                console.error('Error setting up loading screen:', error);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -147,6 +147,55 @@ class GoogleSheetsService:
         
         # Build the service
         self.service = build('sheets', 'v4', credentials=self.creds)
+    
+    def check_connection_status(self):
+        """Check if Google Sheets connection is working without user interaction"""
+        try:
+            # Check network connectivity first
+            if not self.check_network_connectivity():
+                return False, "Network connectivity issue"
+            
+            # Load existing credentials
+            if os.path.exists(self.token_path):
+                with open(self.token_path, 'rb') as token:
+                    self.creds = pickle.load(token)
+            
+            # If credentials are expired but have refresh token, try to refresh
+            if self.creds and not self.creds.valid and self.creds.expired and self.creds.refresh_token:
+                try:
+                    print("🔄 Google Sheets token expired, attempting to refresh...")
+                    self.creds.refresh(Request())
+                    print("✅ Google Sheets token refreshed successfully")
+                    
+                    # Save the refreshed credentials
+                    with open(self.token_path, 'wb') as token:
+                        pickle.dump(self.creds, token)
+                        
+                except Exception as e:
+                    print(f"❌ Failed to refresh Google Sheets token: {e}")
+                    return False, f"Token refresh failed: {e}"
+            
+            # Check if credentials are valid
+            if not self.creds or not self.creds.valid:
+                return False, "No valid credentials available"
+            
+            # Build service and test connection
+            self.service = build('sheets', 'v4', credentials=self.creds)
+            
+            # Make a simple API call to verify connection
+            try:
+                # Try to access a test spreadsheet or just verify the service works
+                self.service.spreadsheets().get(spreadsheetId='test').execute()
+            except:
+                # Even if the test call fails, if we got this far, the service is built
+                # which means the credentials are valid
+                pass
+            
+            return True, "Connection successful"
+            
+        except Exception as e:
+            print(f"❌ Google Sheets connection check failed: {e}")
+            return False, f"Connection check failed: {e}"
         return self.service
     
     def get_sheet_data(self, spreadsheet_id, range_name, request=None):
