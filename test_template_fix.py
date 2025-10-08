@@ -1,101 +1,105 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
-Test script to verify the template fix for compliance status.
-This simulates exactly what the template will show after the fix.
+Test the template fix by checking if the JavaScript preserves the database value
 """
 
 import os
 import sys
 import django
 
-# Setup Django environment
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
 from main.models import FoodSafetyAgencyInspection
+from django.test import Client
+from django.contrib.auth.models import User
+from bs4 import BeautifulSoup
 
 def test_template_fix():
-    """Test the template fix for specific Boxer inspections from the UI"""
-    print("=" * 80)
-    print("TEMPLATE FIX VERIFICATION")
-    print("=" * 80)
+    print("🧪 Testing Template Fix")
+    print("=" * 30)
     
-    # Test the specific inspections from the UI that should show different compliance
-    test_cases = [
-        {'id': 8905, 'expected': 'Non-Compliant', 'client': 'Boxer Superstore - Kwamashu 2'},
-        {'id': 8904, 'expected': 'Compliant', 'client': 'Boxer Superstore - Kwamashu 2'},
-        {'id': 8817, 'expected': 'Non-Compliant', 'client': 'Boxer Superstore Phola Park'},
-        {'id': 8818, 'expected': 'Compliant', 'client': 'Boxer Superstore Phola Park'},
-    ]
+    # Find inspection 9080
+    inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=9080).first()
     
-    print("🧪 Testing specific cases from UI:")
-    print("-" * 80)
+    if not inspection:
+        print("❌ Inspection 9080 not found")
+        return False
     
-    for case in test_cases:
-        try:
-            inspection = FoodSafetyAgencyInspection.objects.get(remote_id=case['id'])
-            
-            # Simulate the template logic (AFTER the fix)
-            if inspection.is_direction_present_for_this_inspection:
-                template_result = 'Non-Compliant'
-                css_class = 'compliance-status non-compliant'
-                title = 'Non-Compliant (Direction Present)'
-            else:
-                template_result = 'Compliant'
-                css_class = 'compliance-status compliant'
-                title = 'Compliant (No Direction)'
-            
-            # Check if it matches expected
-            status = "✅ CORRECT" if template_result == case['expected'] else "❌ WRONG"
-            
-            print(f"ID {case['id']}: {case['client']}")
-            print(f"  Direction Present: {inspection.is_direction_present_for_this_inspection}")
-            print(f"  Expected: {case['expected']}")
-            print(f"  Template Shows: {template_result}")
-            print(f"  CSS Class: {css_class}")
-            print(f"  Status: {status}")
-            print("-" * 40)
-            
-        except FoodSafetyAgencyInspection.DoesNotExist:
-            print(f"❌ ID {case['id']}: Not found in database")
-            print("-" * 40)
+    print(f"✅ Testing inspection: {inspection.remote_id}")
+    print(f"   Product Class: '{inspection.product_class}'")
     
-    # Show a broader sample to demonstrate the fix
-    print(f"\n📊 BROADER SAMPLE (First 10 Boxer inspections):")
-    print("-" * 80)
+    # Create test user and client
+    test_user = User.objects.filter(is_staff=True).first()
+    if not test_user:
+        print("❌ No staff user found")
+        return False
     
-    boxer_inspections = FoodSafetyAgencyInspection.objects.filter(
-        client_name__icontains='Boxer'
-    ).order_by('-remote_id')[:10]
+    client = Client()
+    client.force_login(test_user)
     
-    compliant_count = 0
-    non_compliant_count = 0
+    # Get just the first page to minimize load time
+    response = client.get('/inspections/?page=1&per_page=3')
     
-    for inspection in boxer_inspections:
-        # Simulate template logic
-        if inspection.is_direction_present_for_this_inspection:
-            template_result = 'Non-Compliant'
-            non_compliant_count += 1
-            icon = "🔴"
-        else:
-            template_result = 'Compliant'
-            compliant_count += 1
-            icon = "🟢"
+    if response.status_code != 200:
+        print(f"❌ Page failed to load: {response.status_code}")
+        return False
+    
+    print("✅ Page loaded successfully")
+    
+    # Parse HTML
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Find the product class select for inspection 9080
+    select_elements = soup.find_all('select', class_='product-class-select')
+    
+    test_select = None
+    for select in select_elements:
+        if select.get('data-inspection-id') == '9080':
+            test_select = select
+            break
+    
+    if not test_select:
+        print("❌ Could not find select for inspection 9080")
+        return False
+    
+    print("✅ Found product class select element")
+    
+    # Check if the template has the selected option
+    selected_option = test_select.find('option', selected=True)
+    if selected_option:
+        selected_value = selected_option.get('value')
+        expected_value = inspection.product_class
         
-        print(f"{icon} ID {inspection.remote_id}: {inspection.client_name[:30]}... | {template_result}")
-    
-    print(f"\n📈 SAMPLE SUMMARY:")
-    print(f"  🟢 Compliant: {compliant_count}")
-    print(f"  🔴 Non-Compliant: {non_compliant_count}")
-    print(f"  📊 Total: {compliant_count + non_compliant_count}")
-    
-    if non_compliant_count > 0:
-        print(f"\n✅ SUCCESS: Template fix will show both compliant AND non-compliant inspections!")
+        if selected_value == expected_value:
+            print(f"✅ Template correctly shows selected option: '{selected_value}'")
+            return True
+        else:
+            print(f"❌ Template shows wrong option: '{selected_value}' (expected: '{expected_value}')")
+            return False
     else:
-        print(f"\n⚠️  WARNING: No non-compliant inspections in this sample.")
+        print("❌ Template shows no selected option")
+        # Show what options are available
+        options = test_select.find_all('option')
+        print(f"   Available options ({len(options)}):")
+        for opt in options[:5]:  # Show first 5
+            print(f"     - '{opt.get('value')}' | '{opt.text.strip()}'")
+        return False
 
-if __name__ == "__main__":
-    print("🚀 Testing template fix for compliance status...\n")
-    test_template_fix()
-    print(f"\n🏁 Template fix verification completed!")
+if __name__ == '__main__':
+    try:
+        success = test_template_fix()
+        
+        print("\n" + "=" * 30)
+        if success:
+            print("🎉 TEMPLATE FIX WORKS!")
+        else:
+            print("❌ Template fix needs more work")
+                
+    except Exception as e:
+        print(f"\n❌ TEST FAILED WITH ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        
+    print("\n🏁 Test completed!")

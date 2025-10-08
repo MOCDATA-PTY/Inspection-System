@@ -5760,7 +5760,7 @@ def update_group_approved(request):
                 })
 
             # Validate approved_status
-            valid_statuses = ['PENDING', 'YES']
+            valid_statuses = ['PENDING', 'APPROVED']
             if approved_status not in valid_statuses:
                 return JsonResponse({
                     'success': False,

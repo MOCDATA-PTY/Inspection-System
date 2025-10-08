@@ -654,46 +654,44 @@
         });
         
         // Set up a periodic check to ensure sent status styling is maintained
-            setInterval(() => {
-                const sentRows = document.querySelectorAll('tr[data-sent-status="yes"]');
-                sentRows.forEach(row => {
-                    if (!row.classList.contains('inspection-complete') || 
-                        row.style.backgroundColor !== 'rgb(34, 197, 94)') {
-                        console.log('🔧 [SENT STATUS] Re-applying styling to row:', row.getAttribute('data-group-id'));
-                        row.classList.add('inspection-complete');
-                        row.style.setProperty('background-color', '#22c55e', 'important');
-                        row.style.setProperty('color', 'white', 'important');
-                        row.style.setProperty('border-color', '#16a34a', 'important');
-                        
-                        const tds = row.querySelectorAll('td');
-                        tds.forEach(td => {
-                            td.style.setProperty('background-color', '#22c55e', 'important');
-                            td.style.setProperty('color', 'white', 'important');
-                            td.style.setProperty('border-color', '#16a34a', 'important');
-                        });
-                    }
-                });
-            }, 5000); // Check every 5 seconds
-            
-            // Automatically check file status for all clients on page load
-            // Add a delay to ensure all buttons are fully rendered and prevent conflicts
-            console.log('🚀 [FRONTEND] Page loaded, starting automatic file status check...');
-            setTimeout(() => {
-                console.log('🔄 [FRONTEND] Starting delayed automatic file status check...');
-                checkAllClientFileStatus();
-            }, 1500); // Increased to 1500ms delay to ensure buttons are rendered
-            
-            // Also enable pagination if needed
-            setTimeout(() => {
-                const paginationLinks = document.querySelectorAll('.pagination a');
-                if (paginationLinks.length > 0) {
-                    enablePagination();
+        setInterval(() => {
+            const sentRows = document.querySelectorAll('tr[data-sent-status="yes"]');
+            sentRows.forEach(row => {
+                if (!row.classList.contains('inspection-complete') || 
+                    row.style.backgroundColor !== 'rgb(34, 197, 94)') {
+                    console.log('🔧 [SENT STATUS] Re-applying styling to row:', row.getAttribute('data-group-id'));
+                    row.classList.add('inspection-complete');
+                    row.style.setProperty('background-color', '#22c55e', 'important');
+                    row.style.setProperty('color', 'white', 'important');
+                    row.style.setProperty('border-color', '#16a34a', 'important');
+                    
+                    const tds = row.querySelectorAll('td');
+                    tds.forEach(td => {
+                        td.style.setProperty('background-color', '#22c55e', 'important');
+                        td.style.setProperty('color', 'white', 'important');
+                        td.style.setProperty('border-color', '#16a34a', 'important');
+                    });
                 }
-            }, 100);
-        });
+            });
+        }, 5000); // Check every 5 seconds
         
+        // Automatically check file status for all clients on page load
+        // Add a delay to ensure all buttons are fully rendered and prevent conflicts
+        console.log('🚀 [FRONTEND] Page loaded, starting automatic file status check...');
+        setTimeout(() => {
+            console.log('🔄 [FRONTEND] Starting delayed automatic file status check...');
+            checkAllClientFileStatus();
+        }, 1500); // Increased to 1500ms delay to ensure buttons are rendered
         
-                // Files popup management
+        // Also enable pagination if needed
+        setTimeout(() => {
+            const paginationLinks = document.querySelectorAll('.pagination a');
+            if (paginationLinks.length > 0) {
+                enablePagination();
+            }
+        }, 100);
+        
+        // Files popup management
         function openFilesPopup(groupId, clientName, inspectionDate) {
             const modal = document.getElementById('filesModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1260,22 +1258,21 @@
                         const backgroundColor = categoryKey === 'compliance' ? '#fef3c7' : 'white'; // Yellow background for compliance
                         const borderColor = categoryKey === 'compliance' ? '#fbbf24' : '#e5e7eb'; // Yellow border for compliance
                         
-                        html += '
-                            <div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ' + backgroundColor + '; border-radius: 4px; margin-bottom: 0.25rem; border: 1px solid ' + borderColor + ';">
-                                <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
-                                    <i class="fas fa-' + getFileIcon(file.name) + '" style="color: ' + (categoryKey === 'compliance' ? '#f59e0b' : '#6b7280') + ';"></i>
-                                    <div>
-                                        <div style="font-weight: 500; color: #374151;">' + file.name + '</div>
-                                        <div style="font-size: 0.75rem; color: #6b7280;">
-                                            ' + fileSize + ' • Modified: ' + modifiedDate + '
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="btn btn-sm" onclick="downloadFile(\'' + file.download_url + '\')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">
-                                    <i class="fas fa-download"></i> Download
-                                </button>
-                            </div>
-                        ';
+                        html += 
+                            '<div class="file-item" style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem; background: ' + backgroundColor + '; border-radius: 4px; margin-bottom: 0.25rem; border: 1px solid ' + borderColor + ';">' +
+                                '<div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">' +
+                                    '<i class="fas fa-' + getFileIcon(file.name) + '" style="color: ' + (categoryKey === 'compliance' ? '#f59e0b' : '#6b7280') + ';"></i>' +
+                                    '<div>' +
+                                        '<div style="font-weight: 500; color: #374151;">' + file.name + '</div>' +
+                                        '<div style="font-size: 0.75rem; color: #6b7280;">' +
+                                            fileSize + ' • Modified: ' + modifiedDate +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<button class="btn btn-sm" onclick="downloadFile(\'' + file.download_url + '\')" style="background: #3b82f6; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem;">' +
+                                    '<i class="fas fa-download"></i> Download' +
+                                '</button>' +
+                            '</div>';
                     });
                     
                     html += `</div>`; // Close inspection-period
@@ -1378,9 +1375,9 @@
             
             // Show success message if provided
             if (message) {
-                filesList.innerHTML = '<div class="success-message" style="background: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border: 1px solid #c3e6cb;">
-                    <i class="fas fa-check-circle"></i> ' + message + '
-                </div>';
+                filesList.innerHTML = '<div class="success-message" style="background: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 4px; border: 1px solid #c3e6cb;">' +
+                    '<i class="fas fa-check-circle"></i> ' + message +
+                '</div>';
             }
             
             // Check if there are actually any files (not just empty arrays)
@@ -1405,43 +1402,41 @@
             categories.forEach(category => {
                 const categoryFiles = files[category.key] || [];
                 
-                html += '
-                    <div class="file-category">
-                        <div class="file-category-header">
-                            <div class="category-title">
-                                <i class="' + category.icon + '"></i>
-                                ' + category.name + '
-                            </div>
-                            <div class="file-count">' + categoryFiles.length + '</div>
-                        </div>
-                        <div class="file-list">
-                ';
+                html += 
+                    '<div class="file-category">' +
+                        '<div class="file-category-header">' +
+                            '<div class="category-title">' +
+                                '<i class="' + category.icon + '"></i>' +
+                                category.name +
+                            '</div>' +
+                            '<div class="file-count">' + categoryFiles.length + '</div>' +
+                        '</div>' +
+                        '<div class="file-list">';
                 
                 if (categoryFiles.length === 0) {
                     html += '<div class="empty-category">No files in this category</div>';
                 } else {
                     categoryFiles.forEach(file => {
-                        html += '
-                            <div class="file-item">
-                                <div class="file-info">
-                                    <i class="file-icon ' + getFileIcon(file.name) + '"></i>
-                                    <div class="file-details">
-                                        <div class="file-name">' + file.name + '</div>
-                                        <div class="file-size">
-                                            <span>' + formatFileSize(file.size) + '</span>
-                                            <span>•</span>
-                                            <span>' + file.modified + '</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="file-actions">
-                                    ' + getViewButton(file) + '
-                                    <a href="' + file.url || `/download-inspection-file/?file=${encodeURIComponent(file.relative_path) + '&source=' + file.source || 'local'}" class="btn btn-file btn-secondary" title="Download File">
-                                        <i class="fas fa-download"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        `;
+                        html += 
+                            '<div class="file-item">' +
+                                '<div class="file-info">' +
+                                    '<i class="file-icon ' + getFileIcon(file.name) + '"></i>' +
+                                    '<div class="file-details">' +
+                                        '<div class="file-name">' + file.name + '</div>' +
+                                        '<div class="file-size">' +
+                                            '<span>' + formatFileSize(file.size) + '</span>' +
+                                            '<span>•</span>' +
+                                            '<span>' + file.modified + '</span>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="file-actions">' +
+                                    getViewButton(file) +
+                                    '<a href="' + (file.url || `/download-inspection-file/?file=${encodeURIComponent(file.relative_path)}&source=${file.source || 'local'}`) + '" class="btn btn-file btn-secondary" title="Download File">' +
+                                        '<i class="fas fa-download"></i>' +
+                                    '</a>' +
+                                '</div>' +
+                            '</div>';
                     });
                 }
                 
@@ -1468,11 +1463,9 @@
             
             // For ZIP files, show extract/contents button instead of view
             if (ext === 'zip' || ext === 'rar') {
-                return '
-                    <button class="btn btn-file btn-warning" onclick="showZipContents(\'' + file.relative_path + '\', \'' + (file.source || 'local') + '\')" title="Show ZIP Contents">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                ';
+                return '<button class="btn btn-file btn-warning" onclick="showZipContents(\'' + file.relative_path + '\', \'' + (file.source || 'local') + '\')" title="Show ZIP Contents">' +
+                        '<i class="fas fa-eye"></i>' +
+                    '</button>';
             }
             
             // For viewable files (PDF, images, etc.), show view button
@@ -1480,11 +1473,10 @@
             if (viewableTypes.includes(ext)) {
                 // Use OneDrive URL if available, otherwise use local URL
                 const viewUrl = file.url || '/download-inspection-file/?file=' + encodeURIComponent(file.relative_path) + '&source=' + file.source || 'local';
-                return '
-                    <a href="' + viewUrl + '" class="btn btn-file btn-primary" target="_blank" title="View File">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                ';
+                return 
+                    '<a href="' + viewUrl + '" class="btn btn-file btn-primary" target="_blank" title="View File">' +
+                        '<i class="fas fa-eye"></i>' +
+                    '</a>';
             }
             
             // For other files (Excel, Word), show download-only
@@ -1513,35 +1505,31 @@
                 
                 if (result.success) {
                     // Create styled ZIP contents popup matching shipment list design
-                    let contentsHtml = '
-                        <div class="file-category">
-                            <div class="file-category-header">
-                                <div class="category-title">
-                                    <i class="fas fa-file-archive"></i>
-                                    ZIP File Contents: ' + result.zip_name + '
-                                </div>
-                                <div class="file-count">' + result.total_files + '</div>
-                            </div>
-                            <div class="file-list">
-                    ';
+                    let contentsHtml = '<div class="file-category">' +
+                        '<div class="file-category-header">' +
+                            '<div class="category-title">' +
+                                '<i class="fas fa-file-archive"></i>' +
+                                'ZIP File Contents: ' + result.zip_name +
+                            '</div>' +
+                            '<div class="file-count">' + result.total_files + '</div>' +
+                        '</div>' +
+                        '<div class="file-list">';
                     
                     if (result.contents && result.contents.length > 0) {
                         result.contents.forEach(item => {
-                            contentsHtml += '
-                                <div class="file-item">
-                                    <div class="file-info">
-                                        <i class="file-icon ' + getFileIcon(item.name) + '"></i>
-                                        <div class="file-details">
-                                            <div class="file-name">' + item.name + '</div>
-                                            <div class="file-size">
-                                                <span>' + formatFileSize(item.size) + '</span>
-                                                <span>•</span>
-                                                <span>Compressed: ' + formatFileSize(item.compressed_size) + '</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ';
+                            contentsHtml += '<div class="file-item">' +
+                                '<div class="file-info">' +
+                                    '<i class="file-icon ' + getFileIcon(item.name) + '"></i>' +
+                                    '<div class="file-details">' +
+                                        '<div class="file-name">' + item.name + '</div>' +
+                                        '<div class="file-size">' +
+                                            '<span>' + formatFileSize(item.size) + '</span>' +
+                                            '<span>•</span>' +
+                                            '<span>Compressed: ' + formatFileSize(item.compressed_size) + '</span>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>';
                         });
                     } else {
                         contentsHtml += '<div class="empty-category">No files found in ZIP</div>';
@@ -2730,13 +2718,6 @@
             const groupId = input.getAttribute('data-group-id');
             const kmValue = input.value;
             
-            // Validate input
-            if (kmValue && (isNaN(kmValue) || parseFloat(kmValue) < 0)) {
-                alert('Please enter a valid positive number for kilometers.');
-                input.focus();
-                return;
-            }
-            
             // Get CSRF token
             const csrfToken = getCSRFToken();
             
@@ -2759,11 +2740,6 @@
                     setTimeout(() => {
                         input.style.backgroundColor = '';
                     }, 500);
-                    
-                    // Update totals display
-                    if (typeof updateTotalsDisplay === 'function') {
-                        updateTotalsDisplay();
-                    }
                 } else {
                     alert('Error updating Group Km Traveled: ' + data.error);
                 }
@@ -2777,13 +2753,6 @@
         function updateGroupHours(input) {
             const groupId = input.getAttribute('data-group-id');
             const hoursValue = input.value;
-            
-            // Validate input
-            if (hoursValue && (isNaN(hoursValue) || parseFloat(hoursValue) < 0)) {
-                alert('Please enter a valid positive number for hours.');
-                input.focus();
-                return;
-            }
             
             // Get CSRF token
             const csrfToken = getCSRFToken();
@@ -2807,11 +2776,6 @@
                     setTimeout(() => {
                         input.style.backgroundColor = '';
                     }, 500);
-                    
-                    // Update totals display
-                    if (typeof updateTotalsDisplay === 'function') {
-                        updateTotalsDisplay();
-                    }
                 } else {
                     alert('Error updating Group Hours: ' + data.error);
                 }
@@ -3368,69 +3332,61 @@
                 // Reload the page to show updated inspection data
                 window.location.reload();
             }
-        
-            console.log('JavaScript finished loading successfully!');
         }
         
-        // Expose functions to global scope to fix ReferenceError
+        // Update Group Approved function
+        function updateGroupApproved(select) {
+            const groupId = select.getAttribute('data-group-id');
+            const approvedValue = select.value;
+            
+            console.log('[APPROVED] Updating Group Approved Status - Group ID:', groupId, 'Value:', approvedValue);
+            
+            // Get CSRF token
+            const csrfToken = getCSRFToken();
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('group_id', groupId);
+            formData.append('approved_status', approvedValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+            
+            // Send update request
+            fetch('/update-group-approved/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('[APPROVED] Approved status saved successfully:', data);
+                    // Show success feedback
+                    select.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        select.style.backgroundColor = '';
+                    }, 500);
+                } else {
+                    console.error('[APPROVED] Error saving approved status:', data.error);
+                    alert('Error updating approved status: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('[APPROVED] Network error saving approved status:', error);
+                alert('Error updating approved status: ' + error.message);
+            });
+        }
+        
+        // Expose functions globally - OUTSIDE of any function scope
         window.updateGroupKmTraveled = updateGroupKmTraveled;
         window.updateGroupHours = updateGroupHours;
         window.getCSRFToken = getCSRFToken;
+        window.updateGroupApproved = updateGroupApproved;
         
-        // Add calculation functions for kilometers and hours totals
-        function calculateTotalKilometers() {
-            const kmInputs = document.querySelectorAll('.group-km-input');
-            let total = 0;
-            kmInputs.forEach(input => {
-                const value = parseFloat(input.value) || 0;
-                total += value;
-            });
-            return total;
-        }
-        
-        function calculateTotalHours() {
-            const hoursInputs = document.querySelectorAll('.group-hours-input');
-            let total = 0;
-            hoursInputs.forEach(input => {
-                const value = parseFloat(input.value) || 0;
-                total += value;
-            });
-            return total;
-        }
-        
-        function updateTotalsDisplay() {
-            const totalKm = calculateTotalKilometers();
-            const totalHours = calculateTotalHours();
-            
-            console.log('[CALCULATION] Total Kilometers:', totalKm.toFixed(1));
-            console.log('[CALCULATION] Total Hours:', totalHours.toFixed(1));
-            
-            // Update display elements if they exist
-            const kmTotalElement = document.getElementById('total-kilometers');
-            const hoursTotalElement = document.getElementById('total-hours');
-            
-            if (kmTotalElement) {
-                kmTotalElement.textContent = totalKm.toFixed(1) + ' km';
-            }
-            
-            if (hoursTotalElement) {
-                hoursTotalElement.textContent = totalHours.toFixed(1) + ' hours';
-            }
-            
-            return { totalKm, totalHours };
-        }
-        
-        // Expose calculation functions to global scope
-        window.calculateTotalKilometers = calculateTotalKilometers;
-        window.calculateTotalHours = calculateTotalHours;
-        window.updateTotalsDisplay = updateTotalsDisplay;
-        
-        // Debug logging to verify functions are available
-        console.log('[DEBUG] Functions exposed to global scope:');
-        console.log('updateGroupKmTraveled:', typeof window.updateGroupKmTraveled);
-        console.log('updateGroupHours:', typeof window.updateGroupHours);
-        console.log('calculateTotalKilometers:', typeof window.calculateTotalKilometers);
-        console.log('calculateTotalHours:', typeof window.calculateTotalHours);
-        console.log('updateTotalsDisplay:', typeof window.updateTotalsDisplay);
+        console.log('JavaScript finished loading successfully!');
+        console.log('Global functions exposed:', {
+            updateGroupKmTraveled: typeof window.updateGroupKmTraveled,
+            updateGroupHours: typeof window.updateGroupHours,
+            getCSRFToken: typeof window.getCSRFToken,
+            updateGroupApproved: typeof window.updateGroupApproved
+        });
     
 // === END SCRIPT BLOCK 3 ===

@@ -363,7 +363,7 @@ class FoodSafetyAgencyInspection(models.Model):
     approved_status = models.CharField(max_length=10, blank=True, null=True, help_text="Approval status for this inspection group",
                                      choices=[
                                          ('PENDING', 'Pending'),
-                                         ('YES', 'Yes')
+                                         ('APPROVED', 'Approved')
                                      ], default='PENDING')
     lab = models.CharField(max_length=20, blank=True, null=True, help_text="Laboratory used for testing",
                           choices=[

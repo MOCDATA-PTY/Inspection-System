@@ -3167,13 +3167,25 @@
         }
         
         /* New input and dropdown styling */
-        .km-input, .hours-input, .bought-sample-input {
+        .km-input, .hours-input {
             width: 100%;
             padding: 4px 6px;
             border: 1px solid #dc3545; /* Red border by default (empty) */
             border-radius: 3px;
             font-size: 0.7rem;
-            background-color: var(--card-bg);
+            background-color: #d4edda; /* Match compliant span background color */
+            color: var(--text);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        
+        .bought-sample-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: none; /* No border */
+            border-radius: 3px;
+            font-size: 0.7rem;
+            background-color: #d4edda; /* Match compliant span background color */
             color: var(--text);
             text-align: center;
             transition: all 0.2s ease;
@@ -3182,16 +3194,26 @@
         /* Green border when input has value */
         .km-input:not(:placeholder-shown),
         .hours-input:not(:placeholder-shown),
-        .bought-sample-input:not(:placeholder-shown),
         .km-input[value]:not([value=""]),
-        .hours-input[value]:not([value=""]),
-        .bought-sample-input[value]:not([value=""]) {
+        .hours-input[value]:not([value=""]) {
             border-color: #28a745; /* Green border when has value */
+        }
+        
+        /* Dark mode overrides for input background colors */
+        [data-theme="dark"] .km-input,
+        [data-theme="dark"] .hours-input,
+        [data-theme="dark"] .bought-sample-input {
+            background-color: #1e4d2b; /* Match dark mode compliant span background color */
         }
         
         /* Focus state */
         .km-input:focus,
-        .hours-input:focus,
+        .hours-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        
+        /* Focus state for bought-sample-input (no border, only outline) */
         .bought-sample-input:focus {
             outline: none;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
@@ -3211,14 +3233,14 @@
         
         /* Manual input styling - editable when no product name */
         .manual-input {
-            background-color: #fff3cd !important; /* Light yellow background for manual entry */
-            border-color: #ffc107 !important;
+            background-color: #d4edda !important; /* Light green background color */
+            border-color: #446f1e !important;
         }
         
         .manual-input:focus {
-            background-color: #ffeaa7 !important;
-            border-color: #e0a800 !important;
-            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+            background-color: #d4edda !important; /* Light green background color */
+            border-color: #446f1e !important;
+            box-shadow: 0 0 0 0.2rem #446f1e;
         }
         
         /* Greyed out groups for "New" clients */
@@ -4474,18 +4496,18 @@
                                 
                                 <!-- Approved Column -->
                                 <td class="col-approved">
-                                    {% if request.user.role == 'inspector' or request.user.role == 'admin' or request.user.role == 'super_admin' %}
+                                    {% if request.user.role == 'inspector' or request.user.role == 'admin' or request.user.role == 'super_admin' or request.user.role == 'developer' %}
                                         <select class="form-control form-control-sm approved-dropdown" 
                                                 data-group-id="{{ fallback_group_id }}" 
                                                 onchange="updateGroupApproved(this)"
                                                 onblur="updateGroupApproved(this)"
                                                 title="Approval status for this inspection group">
                                             <option value="PENDING" {% if shipment.approved_status == 'PENDING' or not shipment.approved_status %}selected{% endif %}>Pending</option>
-                                            <option value="YES" {% if shipment.approved_status == 'YES' %}selected{% endif %}>Yes</option>
+                                            <option value="APPROVED" {% if shipment.approved_status == 'APPROVED' %}selected{% endif %}>Approved</option>
                                         </select>
                                     {% else %}
-                                        {% if shipment.approved_status == 'YES' %}
-                                            <span class="approved-badge approved-yes">Yes</span>
+                                        {% if shipment.approved_status == 'APPROVED' %}
+                                            <span class="approved-badge approved-yes">Approved</span>
                                         {% else %}
                                             <span class="approved-badge approved-pending">Pending</span>
                                         {% endif %}
@@ -5136,6 +5158,10 @@
     <script src="{% static 'js/upload_functions.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load bought sample functionality -->
     <script src="{% static 'js/bought_sample.js' %}?v=20251003-FINAL-FIX"></script>
+    <!-- Load KM and Hours functions fix (before main JS to ensure functions are available) -->
+    <script src="/static/km_hours_fix.js"></script>
+    <!-- Load current rendered JavaScript functions -->
+    <script src="/static/current_rendered_js.js"></script>
     <script>
         // Set global CSRF token for upload functions
         try {
@@ -5615,7 +5641,7 @@
                 console.error('❌ Network error saving approved status:', error);
                 alert('Error updating approved status: ' + error.message);
             });
-        };;
+        };
     </script>
     <script>
         // Global error handler to catch any uncaught exceptions
@@ -10104,6 +10130,10 @@
         function populateClassDropdown(dropdown) {
             console.log('[CLASS DROPDOWN] Populating dropdown:', dropdown);
             
+            // Get the current class value from data attribute
+            const currentClass = dropdown.getAttribute('data-current-class');
+            console.log('[CLASS DROPDOWN] Current class value:', currentClass);
+            
             // Clear existing options
             dropdown.innerHTML = '';
             
@@ -10118,8 +10148,24 @@
                 const option = document.createElement('option');
                 option.value = optionText;
                 option.textContent = optionText;
+                
+                // Set as selected if it matches the current class
+                if (currentClass && currentClass === optionText) {
+                    option.selected = true;
+                    console.log('[CLASS DROPDOWN] Set option as selected:', optionText);
+                }
+                
                 dropdown.appendChild(option);
             });
+            
+            // Set the dropdown value to the current class if it exists
+            if (currentClass && currentClass !== 'None' && currentClass.trim() !== '') {
+                dropdown.value = currentClass;
+                console.log('[CLASS DROPDOWN] Set dropdown value to:', currentClass);
+            } else {
+                dropdown.value = '';
+                console.log('[CLASS DROPDOWN] No current class, cleared selection');
+            }
             
             console.log('[CLASS DROPDOWN] Dropdown populated with', dropdown.options.length, 'options');
         }

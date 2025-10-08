@@ -2032,6 +2032,31 @@
             text-align: center;
             min-width: 80px;
             max-width: 100px;
+            border: none !important;
+            border-bottom: none !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-width: 0 !important;
+            border-style: none !important;
+            border-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Additional aggressive border removal for bought sample */
+        .detail-table .col-bought-sample,
+        .detail-table td.col-bought-sample {
+            border: none !important;
+            border-bottom: none !important;
+            border-top: none !important;
+            border-left: none !important;
+            border-right: none !important;
+            border-width: 0 !important;
+            border-style: none !important;
+            border-color: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
         }
         
         .col-hours {
@@ -2114,18 +2139,53 @@
             max-width: 60px;
             text-align: center;
         }
+
+        .bought-sample-input{
+            border: none;
+        }
         
         /* New input and dropdown styling */
         .km-input, .hours-input, .bought-sample-input {
             width: 100%;
             padding: 4px 6px;
-            border: 1px solid var(--border);
             border-radius: 3px;
             font-size: 0.7rem;
             background-color: var(--card-bg);
             color: var(--text);
             text-align: center;
             transition: all 0.2s ease;
+        }
+        
+        /* Add border back for km-input and hours-input only (EXCEPT bought sample inputs) */
+        .km-input, .hours-input {
+                border: 1px solid var(--border);
+        }
+        
+        
+        
+        /* SIMPLE BOUGHT SAMPLE INPUT - Clean, no borders */
+        .simple-bought-sample {
+            width: 100%;
+            padding: 4px 6px;
+            border: none;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+            text-align: center;
+            transition: background-color 0.2s ease;
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .simple-bought-sample:focus {
+            background-color: var(--card-bg);
+            outline: none;
+            box-shadow: none;
+        }
+        
+        .simple-bought-sample:hover {
+            background-color: var(--card-bg);
         }
         
         /* Product name text styling */
@@ -3335,14 +3395,39 @@
                                                                 data-commodity="{{ lower_commodity }}"
                                                                 onchange="updateProductClass(this)"
                                                                 {% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}disabled style="opacity: 0.5; cursor: not-allowed;" title="Class not applicable for Egg/Poultry"{% endif %}>
-                                                            {% if lower_commodity == 'pmp' %}
-                                                                <option value="PMP" {% if product.product_class == 'PMP' %}selected{% endif %}>PMP</option>
-                                                            {% elif lower_commodity == 'raw' %}
-                                                                <option value="RAW" {% if product.product_class == 'RAW' %}selected{% endif %}>RAW</option>
-                                                            {% elif lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}
+                                                            {% if lower_commodity == 'egg' or lower_commodity == 'eggs' or lower_commodity == 'poultry' or lower_commodity == 'chicken' %}
                                                                 <option value="">No Class</option>
                                                             {% else %}
                                                                 <option value="">Select Class...</option>
+                                                                <option value="Raw species sausage / wors" {% if product.product_class == 'Raw species sausage / wors' %}selected{% endif %}>Raw species sausage / wors</option>
+                                                                <option value="Extra Lean Mince" {% if product.product_class == 'Extra Lean Mince' %}selected{% endif %}>Extra Lean Mince</option>
+                                                                <option value="Lean Mince" {% if product.product_class == 'Lean Mince' %}selected{% endif %}>Lean Mince</option>
+                                                                <option value="Regular Mince" {% if product.product_class == 'Regular Mince' %}selected{% endif %}>Regular Mince</option>
+                                                                <option value="Raw Flavoured Ground Meat" {% if product.product_class == 'Raw Flavoured Ground Meat' %}selected{% endif %}>Raw Flavoured Ground Meat</option>
+                                                                <option value="Raw Flavoured Ground Meat & Offal" {% if product.product_class == 'Raw Flavoured Ground Meat & Offal' %}selected{% endif %}>Raw Flavoured Ground Meat & Offal</option>
+                                                                <option value="Raw Flavoured mixed species Ground Meat" {% if product.product_class == 'Raw Flavoured mixed species Ground Meat' %}selected{% endif %}>Raw Flavoured mixed species Ground Meat</option>
+                                                                <option value="Raw Flavoured mixed species Ground Meat & Offal" {% if product.product_class == 'Raw Flavoured mixed species Ground Meat & Offal' %}selected{% endif %}>Raw Flavoured mixed species Ground Meat & Offal</option>
+                                                                <option value="Raw Boerewors" {% if product.product_class == 'Raw Boerewors' %}selected{% endif %}>Raw Boerewors</option>
+                                                                <option value="Raw mixed species sausage / wors" {% if product.product_class == 'Raw mixed species sausage / wors' %}selected{% endif %}>Raw mixed species sausage / wors</option>
+                                                                <option value="Ground Burger / Ground patty = Extra Lean" {% if product.product_class == 'Ground Burger / Ground patty = Extra Lean' %}selected{% endif %}>Ground Burger / Ground patty = Extra Lean</option>
+                                                                <option value="Ground Burger / Ground patty = Lean" {% if product.product_class == 'Ground Burger / Ground patty = Lean' %}selected{% endif %}>Ground Burger / Ground patty = Lean</option>
+                                                                <option value="Ground Burger / Ground patty = Regular" {% if product.product_class == 'Ground Burger / Ground patty = Regular' %}selected{% endif %}>Ground Burger / Ground patty = Regular</option>
+                                                                <option value="Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean" {% if product.product_class == 'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean' %}selected{% endif %}>Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Extra Lean</option>
+                                                                <option value="Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean" {% if product.product_class == 'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean' %}selected{% endif %}>Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Lean</option>
+                                                                <option value="Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular" {% if product.product_class == 'Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular' %}selected{% endif %}>Burger / Patty / Hamburger Patty / Meatball / Frikkadel = Regular</option>
+                                                                <option value="Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel" {% if product.product_class == 'Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel' %}selected{% endif %}>Value burger / Value patty / Value hamburger / Value meatball / Value frikkadel</option>
+                                                                <option value="Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger" {% if product.product_class == 'Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger' %}selected{% endif %}>Economy Burger / Econo Burger / Economy Patty / Econo Patty / Budget Burger</option>
+                                                                <option value="Raw Banger / Griller" {% if product.product_class == 'Raw Banger / Griller' %}selected{% endif %}>Raw Banger / Griller</option>
+                                                                <option value="Raw Bratwurst / Sizzler" {% if product.product_class == 'Raw Bratwurst / Sizzler' %}selected{% endif %}>Raw Bratwurst / Sizzler</option>
+                                                                <option value="Whole Muscle, uncured and heat / partial heat treated products" {% if product.product_class == 'Whole Muscle, uncured and heat / partial heat treated products' %}selected{% endif %}>Whole Muscle, uncured and heat / partial heat treated products</option>
+                                                                <option value="Whole muscle, uncured, no or partial heat treated and air dried products" {% if product.product_class == 'Whole muscle, uncured, no or partial heat treated and air dried products' %}selected{% endif %}>Whole muscle, uncured, no or partial heat treated and air dried products</option>
+                                                                <option value="Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)" {% if product.product_class == 'Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)' %}selected{% endif %}>Whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)</option>
+                                                                <option value="Whole muscle, dry cured, no or partial heat treated products" {% if product.product_class == 'Whole muscle, dry cured, no or partial heat treated products' %}selected{% endif %}>Whole muscle, dry cured, no or partial heat treated products</option>
+                                                                <option value="Whole muscle, cured and no or partial heat treated products" {% if product.product_class == 'Whole muscle, cured and no or partial heat treated products' %}selected{% endif %}>Whole muscle, cured and no or partial heat treated products</option>
+                                                                <option value="Whole muscle, cured, no or partial heat treated and air dried products" {% if product.product_class == 'Whole muscle, cured, no or partial heat treated and air dried products' %}selected{% endif %}>Whole muscle, cured, no or partial heat treated and air dried products</option>
+                                                                <option value="Whole muscle, dry cured, no or partial heat treated and dried products" {% if product.product_class == 'Whole muscle, dry cured, no or partial heat treated and dried products' %}selected{% endif %}>Whole muscle, dry cured, no or partial heat treated and dried products</option>
+                                                                <option value="PMP" {% if product.product_class == 'PMP' %}selected{% endif %}>PMP</option>
+                                                                <option value="RAW" {% if product.product_class == 'RAW' %}selected{% endif %}>RAW</option>
                                                             {% endif %}
                                                         {% endwith %}
                                                         </select>
@@ -3364,13 +3449,13 @@
                                                                {% if product.dna %}checked{% endif %} {% if not product.is_sample_taken %}disabled{% endif %} onchange="updateTestResult(this)">
                                                     </td>
                                                     <td class="col-bought-sample {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="number" class="form-control form-control-sm bought-sample-input" 
+                                                        <input type="number" class="simple-bought-sample" 
                                                                data-inspection-id="{{ product.remote_id }}" 
                                                                value="{{ product.bought_sample|default:'' }}" 
                                                                placeholder="0.00" 
-                                                               step="0.01" 
-                                                               min="0" 
-                                                               onchange="updateBoughtSample(this)"
+                                                               step="0.01"
+                                                               min="0"
+                                                               onchange="updateBoughtSample(this)" 
                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - cannot enter bought sample"{% endif %}>
                                                     </td>
                                                     <td class="col-lab-dropdown">
@@ -4678,6 +4763,16 @@
             
             // Initialize disabled rows for already sent items
             initializeDisabledRows();
+            
+            // Initialize bought sample input styling
+            console.log('🚀 [INIT] About to call initializeBoughtSampleStyling...');
+            console.log('🔍 [INIT] Function exists?', typeof initializeBoughtSampleStyling);
+            if (typeof initializeBoughtSampleStyling === 'function') {
+                console.log('✅ [INIT] Calling initializeBoughtSampleStyling...');
+                initializeBoughtSampleStyling();
+            } else {
+                console.error('❌ [INIT] initializeBoughtSampleStyling function not found!');
+            }
             
             // Initialize 15-minute timers for sent rows
             console.log('🔍 About to call initializeFifteenMinuteTimers...');
@@ -6989,6 +7084,26 @@
             const inspectionId = input.getAttribute('data-inspection-id');
             const boughtSampleValue = input.value;
             
+            // AGGRESSIVELY ensure NO borders are applied
+            input.style.border = '0';
+            input.style.borderWidth = '0';
+            input.style.borderStyle = 'none';
+            input.style.borderColor = 'transparent';
+            input.style.borderTop = '0';
+            input.style.borderRight = '0';
+            input.style.borderBottom = '0';
+            input.style.borderLeft = '0';
+            input.style.outline = 'none';
+            input.style.outlineWidth = '0';
+            input.style.outlineStyle = 'none';
+            input.style.outlineColor = 'transparent';
+            input.style.boxShadow = 'none';
+            input.style.webkitBoxShadow = 'none';
+            input.style.mozBoxShadow = 'none';
+            input.style.setProperty('border', '0', 'important');
+            input.style.setProperty('outline', 'none', 'important');
+            input.style.setProperty('box-shadow', 'none', 'important');
+            
             // Get CSRF token
             const csrfToken = getCSRFToken();
             
@@ -7019,6 +7134,385 @@
                 alert('Error updating Bought Sample: ' + error.message);
             });
         }
+        
+        // Initialize bought sample input styling
+        function initializeBoughtSampleStyling() {
+            console.log('🔍 [BOUGHT SAMPLE] Starting initializeBoughtSampleStyling...');
+            
+            const boughtSampleInputs = document.querySelectorAll('.clean-bought-sample-input, .col-bought-sample input');
+            console.log(`🔍 [BOUGHT SAMPLE] Found ${boughtSampleInputs.length} bought sample inputs`);
+            
+            // Also check for bought sample column cells
+            const boughtSampleCells = document.querySelectorAll('.col-bought-sample');
+            console.log(`🔍 [BOUGHT SAMPLE] Found ${boughtSampleCells.length} bought sample column cells`);
+            
+            // Debug: Check CSS rules affecting bought sample
+            console.log('🔍 [BOUGHT SAMPLE] Checking CSS rules and computed styles...');
+            boughtSampleCells.forEach((cell, index) => {
+                const computedStyle = window.getComputedStyle(cell);
+                console.log(`🔍 [BOUGHT SAMPLE] Cell ${index + 1} computed styles:`, {
+                    border: computedStyle.border,
+                    borderBottom: computedStyle.borderBottom,
+                    borderTop: computedStyle.borderTop,
+                    borderLeft: computedStyle.borderLeft,
+                    borderRight: computedStyle.borderRight,
+                    borderWidth: computedStyle.borderWidth,
+                    borderStyle: computedStyle.borderStyle,
+                    borderColor: computedStyle.borderColor
+                });
+            });
+            
+            boughtSampleInputs.forEach((input, index) => {
+                console.log(`🔍 [BOUGHT SAMPLE] Processing input ${index + 1}:`, input);
+                
+                // Log current computed styles before changes
+                const computedStyle = window.getComputedStyle(input);
+                console.log(`🔍 [BOUGHT SAMPLE] Input ${index + 1} current border:`, {
+                    border: computedStyle.border,
+                    borderWidth: computedStyle.borderWidth,
+                    borderStyle: computedStyle.borderStyle,
+                    borderColor: computedStyle.borderColor,
+                    borderBottom: computedStyle.borderBottom,
+                    outline: computedStyle.outline,
+                    boxShadow: computedStyle.boxShadow
+                });
+                
+                // AGGRESSIVELY remove ALL possible border styling
+                input.style.border = '0';
+                input.style.borderWidth = '0';
+                input.style.borderStyle = 'none';
+                input.style.borderColor = 'transparent';
+                input.style.borderTop = '0';
+                input.style.borderRight = '0';
+                input.style.borderBottom = '0';
+                input.style.borderLeft = '0';
+                input.style.outline = 'none';
+                input.style.outlineWidth = '0';
+                input.style.outlineStyle = 'none';
+                input.style.outlineColor = 'transparent';
+                input.style.boxShadow = 'none';
+                input.style.webkitBoxShadow = 'none';
+                input.style.mozBoxShadow = 'none';
+                input.style.setProperty('border', '0', 'important');
+                input.style.setProperty('outline', 'none', 'important');
+                input.style.setProperty('box-shadow', 'none', 'important');
+                
+                // Log styles after changes
+                const newComputedStyle = window.getComputedStyle(input);
+                console.log(`✅ [BOUGHT SAMPLE] Input ${index + 1} new border:`, {
+                    border: newComputedStyle.border,
+                    borderWidth: newComputedStyle.borderWidth,
+                    borderStyle: newComputedStyle.borderStyle,
+                    borderColor: newComputedStyle.borderColor,
+                    borderBottom: newComputedStyle.borderBottom,
+                    outline: newComputedStyle.outline,
+                    boxShadow: newComputedStyle.boxShadow
+                });
+            });
+            
+            // Also process the column cells themselves
+            boughtSampleCells.forEach((cell, index) => {
+                console.log(`🔍 [BOUGHT SAMPLE] Processing cell ${index + 1}:`, cell);
+                
+                // Log current computed styles before changes
+                const computedStyle = window.getComputedStyle(cell);
+                console.log(`🔍 [BOUGHT SAMPLE] Cell ${index + 1} current border:`, {
+                    border: computedStyle.border,
+                    borderWidth: computedStyle.borderWidth,
+                    borderStyle: computedStyle.borderStyle,
+                    borderColor: computedStyle.borderColor,
+                    borderBottom: computedStyle.borderBottom,
+                    backgroundColor: computedStyle.backgroundColor
+                });
+                
+                // AGGRESSIVE border removal - remove ALL possible borders
+                cell.style.border = 'none';
+                cell.style.borderBottom = 'none';
+                cell.style.borderTop = 'none';
+                cell.style.borderLeft = 'none';
+                cell.style.borderRight = 'none';
+                cell.style.borderWidth = '0';
+                cell.style.borderStyle = 'none';
+                cell.style.borderColor = 'transparent';
+                cell.style.outline = 'none';
+                cell.style.boxShadow = 'none';
+                
+                // Use setProperty with !important for maximum override
+                cell.style.setProperty('border', 'none', 'important');
+                cell.style.setProperty('border-bottom', 'none', 'important');
+                cell.style.setProperty('border-top', 'none', 'important');
+                cell.style.setProperty('border-left', 'none', 'important');
+                cell.style.setProperty('border-right', 'none', 'important');
+                cell.style.setProperty('border-width', '0', 'important');
+                cell.style.setProperty('border-style', 'none', 'important');
+                cell.style.setProperty('border-color', 'transparent', 'important');
+                cell.style.setProperty('outline', 'none', 'important');
+                cell.style.setProperty('box-shadow', 'none', 'important');
+                
+                // Also remove any inherited table cell borders
+                cell.style.setProperty('border-collapse', 'separate', 'important');
+                cell.style.setProperty('border-spacing', '0', 'important');
+                
+                // Log styles after changes
+                const newComputedStyle = window.getComputedStyle(cell);
+                console.log(`✅ [BOUGHT SAMPLE] Cell ${index + 1} new border:`, {
+                    border: newComputedStyle.border,
+                    borderWidth: newComputedStyle.borderWidth,
+                    borderStyle: newComputedStyle.borderStyle,
+                    borderColor: newComputedStyle.borderColor,
+                    borderBottom: newComputedStyle.borderBottom,
+                    backgroundColor: newComputedStyle.backgroundColor
+                });
+            });
+            
+            console.log('✅ [BOUGHT SAMPLE] Finished initializeBoughtSampleStyling');
+            
+            // Additional debugging: Check CSS rules affecting bought sample
+            debugBoughtSampleCSS();
+            
+            // Force remove borders as a final step
+            console.log('🔧 [BOUGHT SAMPLE] Running final aggressive border removal...');
+            forceRemoveBoughtSampleBorders();
+        }
+        
+        // Debug function to check CSS rules affecting bought sample
+        function debugBoughtSampleCSS() {
+            console.log('🔍 [CSS DEBUG] Checking CSS rules for bought sample...');
+            
+            const boughtSampleCells = document.querySelectorAll('.col-bought-sample');
+            if (boughtSampleCells.length > 0) {
+                const firstCell = boughtSampleCells[0];
+                const computedStyle = window.getComputedStyle(firstCell);
+                
+                console.log('🔍 [CSS DEBUG] First bought sample cell computed styles:', {
+                    border: computedStyle.border,
+                    borderBottom: computedStyle.borderBottom,
+                    borderWidth: computedStyle.borderWidth,
+                    borderStyle: computedStyle.borderStyle,
+                    borderColor: computedStyle.borderColor,
+                    backgroundColor: computedStyle.backgroundColor,
+                    color: computedStyle.color,
+                    padding: computedStyle.padding,
+                    margin: computedStyle.margin
+                });
+                
+                // Check if the cell is part of a table row
+                const parentRow = firstCell.closest('tr');
+                if (parentRow) {
+                    const rowStyle = window.getComputedStyle(parentRow);
+                    console.log('🔍 [CSS DEBUG] Parent row styles:', {
+                        border: rowStyle.border,
+                        borderBottom: rowStyle.borderBottom,
+                        backgroundColor: rowStyle.backgroundColor
+                    });
+                }
+                
+                // Check if the cell is part of a detail table
+                const detailTable = firstCell.closest('.detail-table');
+                if (detailTable) {
+                    const tableStyle = window.getComputedStyle(detailTable);
+                    console.log('🔍 [CSS DEBUG] Detail table styles:', {
+                        border: tableStyle.border,
+                        borderCollapse: tableStyle.borderCollapse,
+                        borderSpacing: tableStyle.borderSpacing
+                    });
+                }
+            }
+            
+            // Check for any CSS rules that might be overriding our styles
+            const styleSheets = document.styleSheets;
+            console.log(`🔍 [CSS DEBUG] Found ${styleSheets.length} stylesheets`);
+            
+            for (let i = 0; i < styleSheets.length; i++) {
+                try {
+                    const sheet = styleSheets[i];
+                    if (sheet.cssRules) {
+                        for (let j = 0; j < sheet.cssRules.length; j++) {
+                            const rule = sheet.cssRules[j];
+                            if (rule.selectorText && rule.selectorText.includes('bought-sample')) {
+                                console.log('🔍 [CSS DEBUG] Found bought-sample CSS rule:', {
+                                    selector: rule.selectorText,
+                                    style: rule.style.cssText
+                                });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('🔍 [CSS DEBUG] Could not access stylesheet', i, e.message);
+                }
+            }
+        }
+        
+        // Simple test function to check bought sample elements
+        window.testBoughtSample = function() {
+            console.log('🧪 [TEST] Testing bought sample elements...');
+            
+            const inputs = document.querySelectorAll('.bought-sample-input, .col-bought-sample input');
+            const cells = document.querySelectorAll('.col-bought-sample');
+            
+            console.log(`🧪 [TEST] Found ${inputs.length} inputs and ${cells.length} cells`);
+            
+            if (inputs.length > 0) {
+                const firstInput = inputs[0];
+                const inputStyle = window.getComputedStyle(firstInput);
+                console.log('🧪 [TEST] First input border:', inputStyle.border);
+                console.log('🧪 [TEST] First input borderBottom:', inputStyle.borderBottom);
+            }
+            
+            if (cells.length > 0) {
+                const firstCell = cells[0];
+                const cellStyle = window.getComputedStyle(firstCell);
+                console.log('🧪 [TEST] First cell border:', cellStyle.border);
+                console.log('🧪 [TEST] First cell borderBottom:', cellStyle.borderBottom);
+            }
+            
+            return { inputs: inputs.length, cells: cells.length };
+        };
+        
+        // Manual function to force remove borders
+        window.forceRemoveBoughtSampleBorders = function() {
+            console.log('🔧 [FORCE] Manually removing bought sample borders...');
+            
+            const inputs = document.querySelectorAll('.bought-sample-input, .col-bought-sample input, .simple-bought-sample');
+            const cells = document.querySelectorAll('.col-bought-sample');
+            
+            console.log(`🔧 [FORCE] Processing ${inputs.length} inputs and ${cells.length} cells`);
+            
+            // AGGRESSIVE border removal from inputs
+            inputs.forEach((input, index) => {
+                console.log(`🔧 [FORCE] Processing input ${index + 1}`);
+                
+                // Direct style properties
+                input.style.border = 'none';
+                input.style.borderBottom = 'none';
+                input.style.borderTop = 'none';
+                input.style.borderLeft = 'none';
+                input.style.borderRight = 'none';
+                input.style.borderWidth = '0';
+                input.style.borderStyle = 'none';
+                input.style.borderColor = 'transparent';
+                input.style.outline = 'none';
+                input.style.boxShadow = 'none';
+                
+                // setProperty with !important
+                input.style.setProperty('border', 'none', 'important');
+                input.style.setProperty('border-bottom', 'none', 'important');
+                input.style.setProperty('border-top', 'none', 'important');
+                input.style.setProperty('border-left', 'none', 'important');
+                input.style.setProperty('border-right', 'none', 'important');
+                input.style.setProperty('border-width', '0', 'important');
+                input.style.setProperty('border-style', 'none', 'important');
+                input.style.setProperty('border-color', 'transparent', 'important');
+                input.style.setProperty('outline', 'none', 'important');
+                input.style.setProperty('box-shadow', 'none', 'important');
+            });
+            
+            // AGGRESSIVE border removal from cells
+            cells.forEach((cell, index) => {
+                console.log(`🔧 [FORCE] Processing cell ${index + 1}`);
+                
+                // Direct style properties
+                cell.style.border = 'none';
+                cell.style.borderBottom = 'none';
+                cell.style.borderTop = 'none';
+                cell.style.borderLeft = 'none';
+                cell.style.borderRight = 'none';
+                cell.style.borderWidth = '0';
+                cell.style.borderStyle = 'none';
+                cell.style.borderColor = 'transparent';
+                cell.style.outline = 'none';
+                cell.style.boxShadow = 'none';
+                
+                // setProperty with !important
+                cell.style.setProperty('border', 'none', 'important');
+                cell.style.setProperty('border-bottom', 'none', 'important');
+                cell.style.setProperty('border-top', 'none', 'important');
+                cell.style.setProperty('border-left', 'none', 'important');
+                cell.style.setProperty('border-right', 'none', 'important');
+                cell.style.setProperty('border-width', '0', 'important');
+                cell.style.setProperty('border-style', 'none', 'important');
+                cell.style.setProperty('border-color', 'transparent', 'important');
+                cell.style.setProperty('outline', 'none', 'important');
+                cell.style.setProperty('box-shadow', 'none', 'important');
+                
+                // Also remove any inherited table cell borders
+                cell.style.setProperty('border-collapse', 'separate', 'important');
+                cell.style.setProperty('border-spacing', '0', 'important');
+            });
+            
+            console.log('✅ [FORCE] Aggressive border removal complete');
+        };
+        
+        // Manual debugging function - can be called from browser console
+        window.debugBoughtSample = function() {
+            console.log('🔍 [MANUAL DEBUG] Starting bought sample border debug...');
+            
+            const boughtSampleCells = document.querySelectorAll('.col-bought-sample');
+            console.log(`🔍 [MANUAL DEBUG] Found ${boughtSampleCells.length} bought sample cells`);
+            
+            boughtSampleCells.forEach((cell, index) => {
+                const computedStyle = window.getComputedStyle(cell);
+                console.log(`🔍 [MANUAL DEBUG] Cell ${index + 1}:`, {
+                    element: cell,
+                    border: computedStyle.border,
+                    borderBottom: computedStyle.borderBottom,
+                    borderWidth: computedStyle.borderWidth,
+                    borderStyle: computedStyle.borderStyle,
+                    borderColor: computedStyle.borderColor,
+                    backgroundColor: computedStyle.backgroundColor,
+                    classList: cell.classList.toString(),
+                    parentElement: cell.parentElement
+                });
+                
+                // Check if there are any inputs inside
+                const inputs = cell.querySelectorAll('input');
+                inputs.forEach((input, inputIndex) => {
+                    const inputStyle = window.getComputedStyle(input);
+                    console.log(`🔍 [MANUAL DEBUG] Cell ${index + 1} Input ${inputIndex + 1}:`, {
+                        element: input,
+                        border: inputStyle.border,
+                        borderBottom: inputStyle.borderBottom,
+                        borderWidth: inputStyle.borderWidth,
+                        borderStyle: inputStyle.borderStyle,
+                        borderColor: inputStyle.borderColor,
+                        classList: input.classList.toString()
+                    });
+                });
+            });
+            
+            // Check for any conflicting CSS rules
+            const allRules = [];
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                try {
+                    const sheet = document.styleSheets[i];
+                    if (sheet.cssRules) {
+                        for (let j = 0; j < sheet.cssRules.length; j++) {
+                            const rule = sheet.cssRules[j];
+                            if (rule.selectorText && (
+                                rule.selectorText.includes('bought-sample') ||
+                                rule.selectorText.includes('detail-table') ||
+                                rule.selectorText.includes('col-bought-sample')
+                            )) {
+                                allRules.push({
+                                    selector: rule.selectorText,
+                                    style: rule.style.cssText,
+                                    sheet: sheet.href || 'inline'
+                                });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Skip external stylesheets that can't be accessed
+                }
+            }
+            
+            console.log('🔍 [MANUAL DEBUG] All relevant CSS rules:', allRules);
+            
+            return {
+                cells: boughtSampleCells,
+                rules: allRules
+            };
+        };
         
         // Get CSRF Token function
         function getCSRFToken() {
@@ -7310,50 +7804,91 @@
             const pmpAllowed = new Set([
                 'whole muscle, cured, heat treated products','whole muscle, dry cured, heat treated products','whole muscle, uncured and heat / partial treated products','whole muscle, uncured, no or partial heat treated and air dried products','whole muscle, uncured, no or partial heat treated and air dried products undergoing a lengthy maturation period (minimum 21 days)','whole muscle, dry cured, no or partial heat treated products','whole muscle, cured and no or partial heat treated products','whole muscle, cured, no or partial heat treated and air dried products','whole muscle, dry cured, no or partial heat treated and dried products','comminuted, cured and heat treated products','liver spreads, pates and terrines','products in aspic: brawn','product in aspic: suelze','other products containing cured meat pieces in aspic','products made from blood','comminuted, uncured, no or partial heat treated and dried products','comminuted, cured, no or partial heat treated, dried and fermented products','comminuted, uncured and heat treated products','reformed, uncured and no or partial heat treated products','reformed, cured, heat treated products from single species','reformed, cured, heat treated products from mixed species','reformed, cured and no or partial heat treated products','coated processed meat products','unspecified processed meat products'
             ].map(normalizeLabel));
-            // Rebuild options strictly with allowed list
+            
+            // Get the current value from the selected option (preserve database value)
             const currentValue = dropdown.value;
+            const selectedOption = dropdown.querySelector('option[selected]');
+            const databaseValue = selectedOption ? selectedOption.value : currentValue;
+            
+            // Debug logging
+            console.log(`[CLASS FILTER] Inspection ${dropdown.getAttribute('data-inspection-id')}:`, {
+                commodity: commodity,
+                currentValue: currentValue,
+                databaseValue: databaseValue,
+                selectedOption: selectedOption ? selectedOption.text : 'none',
+                totalOptions: dropdown.options.length
+            });
+            
             const allOptions = Array.from(dropdown.options).map(opt => ({
                 text: opt.text,
                 value: opt.value,
                 norm: normalizeLabel(opt.text || ''),
+                selected: opt.selected
             }));
             const placeholder = allOptions[0];
             const allowedSet = isRaw ? rawAllowed : pmpAllowed;
             const filtered = allOptions.slice(1).filter(opt => allowedSet.has(opt.norm));
+            
+            // Rebuild dropdown
             dropdown.innerHTML = '';
             const ph = document.createElement('option');
             ph.value = placeholder.value || '';
             ph.textContent = placeholder.text || 'Select Class...';
             dropdown.appendChild(ph);
+            
             filtered.forEach(opt => {
                 const o = document.createElement('option');
                 o.value = opt.value || opt.text;
                 o.textContent = opt.text;
+                // Preserve the selected state from the original option
+                if (opt.value === databaseValue || opt.text === databaseValue) {
+                    o.selected = true;
+                }
                 dropdown.appendChild(o);
             });
-            if (filtered.some(opt => opt.value === currentValue || opt.text === currentValue)) {
-                dropdown.value = currentValue;
+            
+            // Set the value to the database value if it exists in filtered options
+            if (filtered.some(opt => opt.value === databaseValue || opt.text === databaseValue)) {
+                dropdown.value = databaseValue;
+                console.log(`[CLASS FILTER] Set value to existing option: ${databaseValue}`);
+            } else if (databaseValue && databaseValue.trim() !== '') {
+                // If database value exists but not in filtered options, add it
+                const o = document.createElement('option');
+                o.value = databaseValue;
+                o.textContent = databaseValue;
+                o.selected = true;
+                dropdown.appendChild(o);
+                dropdown.value = databaseValue;
+                console.log(`[CLASS FILTER] Added missing database value: ${databaseValue}`);
             } else {
                 dropdown.value = '';
+                console.log(`[CLASS FILTER] No database value, cleared selection`);
             }
         }
 
-        // Ensure all visible dropdowns are filtered at page load
+        // DISABLED: Old filterClassOptions system - replaced by [CLASS DROPDOWN] system
+        // The new system is working correctly and handling product class persistence
+        /*
         document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
-            // Observe the table for dynamic changes and re-apply filters
+            setTimeout(() => {
+                document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+            }, 1000);
+            
             const table = document.getElementById('shipmentsTable');
             if (table && 'MutationObserver' in window) {
                 const observer = new MutationObserver(() => {
-                    document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+                    setTimeout(() => {
+                        document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
+                    }, 100);
                 });
                 observer.observe(table, { childList: true, subtree: true });
             }
-            // Fallback: periodic re-filter shortly after load in case of late rendering
+            
             setTimeout(() => {
                 document.querySelectorAll('select.product-class-select').forEach(filterClassOptions);
-            }, 500);
+            }, 2000);
         });
+        */
 
         // Update Lab function
         function updateLab(dropdown) {
@@ -8118,5 +8653,6 @@
             }
         }
     </script>
+    
 </body>
 </html>

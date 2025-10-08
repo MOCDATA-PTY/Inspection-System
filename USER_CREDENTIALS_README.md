@@ -22,7 +22,7 @@
 ### 🔧 Developer Access
 | Username | Password | Role | Access Level |
 |----------|----------|------|--------------|
-| **developer** | `XHnj1C#QkFs9` | developer | Staff + Superuser |
+| **developer** | ` XHnj1C#QkFs9` | developer | Staff + Superuser |
 | **ethan** | `4aG*r&2o5KgW` | developer | Staff + Superuser |
 
 ### 👨‍💼 Super Admin Users
