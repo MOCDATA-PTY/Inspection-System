@@ -102,7 +102,9 @@ class OneDriveDirectUploadService:
                 print("⚠️ Access token is invalid, attempting refresh...")
                 return self._refresh_token(token_data)
             else:
-                print(f"🔑 OneDrive authentication required - please re-authenticate in Settings")
+                print(f"❌ OneDrive API error: {response.status_code}")
+                print(f"Response: {response.text[:200]}...")
+                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
                 return False
                 
         except Exception as e:

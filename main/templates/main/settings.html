@@ -3150,17 +3150,36 @@
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If not JSON, read as text to see what we got
+                    return response.text().then(text => {
+                        console.error('Non-JSON response received:', text);
+                        throw new Error('Server returned non-JSON response. Check server logs.');
+                    });
+                }
+            })
             .then(data => {
                 if (data.success) {
                     showNotification('OneDrive connection test successful!', 'success');
                     refreshOneDriveStatus();
                 } else {
                     const errorMsg = data.message || 'Connection test failed';
-                    showNotification('OneDrive connection test failed: ' + errorMsg, 'error');
+                    const needsReauth = data.needs_reauth || false;
+                    
+                    if (needsReauth) {
+                        showNotification('OneDrive needs re-authentication. Please use the "Re-authenticate OneDrive" button.', 'warning');
+                    } else {
+                        showNotification('OneDrive connection test failed: ' + errorMsg, 'error');
+                    }
                 }
             })
             .catch(error => {
+                console.error('OneDrive connection test error:', error);
                 showNotification('Error testing OneDrive connection: ' + error.message, 'error');
             });
         }

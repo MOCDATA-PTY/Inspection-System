@@ -3,33 +3,9 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Management - Food Safety Agency</title>
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        // Suppress Tailwind CSS CDN warning
-        window.tailwind = { config: {} };
-    </script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#007890',
-                        'primary-light': '#e6f3f7',
-                        secondary: '#EC343C',
-                        danger: '#EC343C',
-                        warning: '#f59e0b',
-                        'sidebar-bg': '#1e293b',
-                        'sidebar-text': '#f1f5f9',
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         :root {
             --primary: #007890;
@@ -42,8 +18,6 @@
             --text: #1f2937;
             --text-light: #6b7280;
             --border: #e5e7eb;
-            --sidebar-bg: #1e293b;
-            --sidebar-text: #f1f5f9;
             --radius: 6px;
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
             --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
@@ -61,83 +35,134 @@
             --text: #ffffff;
             --text-light: #b0b0b0;
             --border: #404040;
-            --sidebar-bg: #2D2D2D;
-            --sidebar-text: #ffffff;
             --primary-light: #1a3a40;
             --light-black: #ffffff;
             --grey: #b0b0b0;
         }
         
-        /* Sidebar theme styles */
-        #sidebar {
-            background-color: var(--sidebar-bg) !important;
-            color: var(--sidebar-text) !important;
-        }
-        
-        #sidebar a {
-            color: var(--sidebar-text) !important;
-        }
-        
-        #sidebar a:hover {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-        }
-        
-        #sidebar .border-slate-600 {
-            border-color: rgba(255, 255, 255, 0.2) !important;
-        }
-        
-        #sidebar .text-sidebar-text {
-            color: var(--sidebar-text) !important;
-        }
-        
-        /* Force sidebar to be dark in both themes */
-        [data-theme="light"] #sidebar {
-            background-color: #1e293b !important;
-            color: #f1f5f9 !important;
-        }
-        
-        [data-theme="light"] #sidebar a {
-            color: #f1f5f9 !important;
-        }
-        
-        [data-theme="dark"] #sidebar {
-            background-color: #2D2D2D !important;
-            color: #ffffff !important;
-        }
-        
-        [data-theme="dark"] #sidebar a {
-            color: #ffffff !important;
-        }
-        
-        /* Ensure smooth sidebar transitions */
-        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
-        }
-        
         /* Dark mode specific overrides */
         [data-theme="dark"] tr:nth-child(even) {
-            background-color: #363636;
+            background-color: #3a3a3a;
         }
         
         [data-theme="dark"] tr:hover {
-            background-color: var(--primary-light);
+            background-color: #4a4a4a;
         }
         
-        [data-theme="dark"] .view-btn {
-            background: var(--card-bg);
-            color: var(--text);
-            border-color: var(--border);
+        [data-theme="dark"] .empty-message {
+            background-color: #3a3a3a;
+            color: #b0b0b0;
         }
         
-        [data-theme="dark"] .tooltip:hover::after {
-            background-color: #000;
-            color: white;
+        [data-theme="dark"] .form-control {
+            background-color: #3a3a3a;
+            color: #ffffff;
+            border-color: #404040;
         }
         
-        /* Ensure smooth transitions between themes */
-        body, .page-container, .sidebar, .main-content, .card,
-        .form-control, .btn, .table-responsive {
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        [data-theme="dark"] .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.2);
+        }
+        
+        [data-theme="dark"] .card-title {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .table-info {
+            color: #b0b0b0;
+        }
+        
+        [data-theme="dark"] .page-info {
+            color: #b0b0b0;
+        }
+        
+        [data-theme="dark"] .message.success {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border-left: 3px solid #10b981;
+        }
+        
+        [data-theme="dark"] .message.error {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-left: 3px solid #ef4444;
+        }
+        
+        [data-theme="dark"] .message.warning {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+            border-left: 3px solid #f59e0b;
+        }
+        
+        [data-theme="dark"] .message.info {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+            border-left: 3px solid #3b82f6;
+        }
+        
+        [data-theme="dark"] th {
+            background-color: #1a3a40;
+            color: #ffffff;
+            border-bottom: 1px solid #404040;
+        }
+        
+        [data-theme="dark"] td {
+            border-bottom: 1px solid #404040;
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .table-responsive {
+            border: 1px solid #404040;
+        }
+        
+        [data-theme="dark"] .card {
+            border: 1px solid #404040;
+        }
+        
+        [data-theme="dark"] .card-header {
+            border-bottom: 1px solid #404040;
+        }
+        
+        /* Dark mode sidebar styles */
+        [data-theme="dark"] #sidebar {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .sidebar-header {
+            border-bottom: 1px solid #404040;
+        }
+        
+        [data-theme="dark"] .company-name {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .nav-link {
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        [data-theme="dark"] .nav-link.active {
+            background-color: var(--primary);
+            border-left-color: #ffffff;
+        }
+        
+        [data-theme="dark"] .logout-section {
+            border-top: 1px solid #404040;
+        }
+        
+        [data-theme="dark"] .mobile-menu-btn {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        
+        [data-theme="dark"] .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
         * {
@@ -154,11 +179,23 @@
             background-attachment: fixed;
             color: var(--text);
             line-height: 1.5;
+            padding: 0;
+            margin: 0;
+            position: relative;
             overflow-x: hidden;
-            min-height: 100vh;
         }
         
-        /* Mobile-first layout */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* Page Container */
         .page-container {
             display: flex;
             min-height: 100vh;
@@ -167,93 +204,86 @@
         /* Mobile menu button */
         .mobile-menu-btn {
             display: none;
-            position: fixed !important;
-            top: 12px !important;
-            left: 12px !important;
-            z-index: 99999 !important;
-            background-color: var(--sidebar-bg) !important;
-            color: var(--sidebar-text) !important;
-            border: none !important;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
-            border-radius: 8px !important;
-            width: 48px !important;
-            height: 48px !important;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            touch-action: manipulation;
-            transform: translate3d(0, 0, 0);
-            will-change: transform;
-        }
-        
-        .mobile-menu-btn:active {
-            transform: translate3d(0, 0, 0) scale(0.95);
+            transition: all 0.3s ease;
         }
         
         .mobile-menu-btn:hover {
-            background-color: rgba(255, 255, 255, 0.15) !important;
+            background-color: rgba(255, 255, 255, 0.1);
         }
         
-        /* Sidebar positioning */
+        /* Sidebar */
         #sidebar {
             position: fixed;
             top: 0;
             left: 0;
             height: 100vh;
-            z-index: 9998;
+            width: 256px;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            z-index: 1000;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
+            transition: transform 0.3s ease;
         }
         
         .sidebar-header {
-            padding: 0 2rem 2rem;
+            padding: 1rem;
             border-bottom: 1px solid #334155;
-            margin-bottom: 2rem;
-        }
-        
-        .logo {
             text-align: center;
-            margin-bottom: 1rem;
         }
         
-        .logo img {
-            max-height: 80px;
-            width: auto;
-            display: block;
-            margin: 0 auto;
+        .sidebar-header img {
+            max-height: 60px;
+            margin-bottom: 0.5rem;
         }
         
         .company-name {
-            font-size: 1.1rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            text-align: center;
-            color: var(--sidebar-text);
+            color: #f1f5f9;
         }
         
         .nav-menu {
             list-style: none;
-            padding: 0 1rem;
+            padding: 0;
+            margin: 0;
         }
         
         .nav-item {
-            margin-bottom: 0.5rem;
+            margin: 0;
         }
         
         .nav-link {
             display: flex;
             align-items: center;
             padding: 0.75rem 1rem;
-            color: var(--sidebar-text);
+            color: #f1f5f9;
             text-decoration: none;
-            border-radius: var(--radius);
             transition: all 0.3s ease;
-            font-weight: 500;
-            min-height: 44px;
+            border-left: 3px solid transparent;
         }
         
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(5px);
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .nav-link.active {
+            background-color: var(--primary);
+            border-left-color: #ffffff;
         }
         
         .nav-link i {
@@ -262,32 +292,11 @@
             text-align: center;
         }
         
-        .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        /* Sidebar overlay */
-        .sidebar-overlay {
-            position: fixed;
-            top: 0;
+        .logout-section {
+            position: absolute;
+            bottom: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9997;
-            display: none;
-            backdrop-filter: blur(2px);
-        }
-        
-        .sidebar-overlay.show {
-            display: block;
-        }
-        
-        
-        /* Logout Button */
-        .logout-section {
-            flex-shrink: 0;
             padding: 1rem;
             border-top: 1px solid #334155;
         }
@@ -295,212 +304,488 @@
         .logout-btn {
             width: 100%;
             background: var(--danger);
+            color: white;
             border: none;
+            padding: 0.75rem;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
         
         .logout-btn:hover {
-            background: #d42e35;
+            background: #dc2626;
         }
         
-        /* Main Content */
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+        
+        .sidebar-overlay.show {
+            display: block;
+        }
+        
+        /* Main content */
         .main-content {
             flex: 1;
-            width: 100%;
-            padding: 1rem;
+            margin-left: 256px;
+            padding: var(--spacing);
             transition: margin-left 0.3s ease;
         }
         
-        .header {
-            padding: 4rem 0 2rem;
+        .container {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            position: relative;
+        }
+        
+        .logo {
             text-align: center;
-            margin-bottom: 2rem;
-            background: linear-gradient(135deg, rgba(0, 120, 144, 0.1), rgba(236, 52, 60, 0.1));
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+        
+        .logo img {
+            max-height: 80px;
+        }
+        
+        .header {
+            padding: 10px 5px 20px;
+            margin-bottom: var(--spacing);
+            width: 100%;
+            text-align: center;
         }
         
         .header h1 {
             color: white;
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
         .header h2 {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.1rem;
+            color: white;
+            font-size: 1rem;
             font-weight: 400;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
-        
         
         .card {
             background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: var(--spacing);
             border: 1px solid var(--border);
-            backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            width: 100%;
         }
         
         .card-header {
-            padding: 1.5rem;
+            padding: 16px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
-            background: linear-gradient(135deg, rgba(0, 120, 144, 0.05), rgba(236, 52, 60, 0.05));
-            border-radius: 12px 12px 0 0;
         }
         
         .card-title {
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
             color: var(--text);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .card-title i {
-            color: var(--primary);
-            font-size: 1.1rem;
+            gap: 8px;
         }
         
         .card-body {
-            padding: 1.5rem;
+            padding: 16px;
         }
         
         .action-bar {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            align-items: center;
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--border);
+            gap: 12px;
+            margin-bottom: var(--spacing);
+            width: 100%;
         }
         
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--radius);
             border: none;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.15s ease;
             text-decoration: none;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            min-height: 44px;
-            position: relative;
-            overflow: hidden;
+            box-shadow: var(--shadow);
         }
         
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .btn:hover::before {
-            left: 100%;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #005a6b);
+        .btn-refresh {
+            background-color: var(--warning);
             color: white;
         }
         
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #005a6b, var(--primary));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 120, 144, 0.3);
+        .btn-refresh:hover {
+            background-color: #d97706;
+        }
+        
+        .btn-back {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-back:hover {
+            background-color: #dc2626;
         }
         
         .btn-secondary {
-            background: linear-gradient(135deg, #6b7280, #4b5563);
+            background-color: var(--text-light);
             color: white;
         }
         
         .btn-secondary:hover {
-            background: linear-gradient(135deg, #4b5563, #6b7280);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(107, 114, 128, 0.3);
+            background-color: #4b5563;
         }
         
         .btn-success {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background-color: #10b981;
             color: white;
         }
         
         .btn-success:hover {
-            background: linear-gradient(135deg, #059669, #10b981);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+            background-color: #059669;
         }
         
         .btn-warning {
-            background: linear-gradient(135deg, var(--warning), #d97706);
+            background-color: var(--warning);
             color: white;
         }
         
         .btn-warning:hover {
-            background: linear-gradient(135deg, #d97706, var(--warning));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
+            background-color: #d97706;
         }
         
         .btn-danger {
-            background: linear-gradient(135deg, var(--danger), #d42e35);
+            background-color: var(--danger);
             color: white;
         }
         
         .btn-danger:hover {
-            background: linear-gradient(135deg, #d42e35, var(--danger));
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(236, 52, 60, 0.3);
+            background-color: #dc2626;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #005a6b;
+        }
+        
+        .btn-info {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background-color: #2563eb;
         }
         
         .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.65rem;
-            min-height: 24px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
         }
         
         .btn-xs {
-            padding: 0.15rem 0.3rem;
-            font-size: 0.6rem;
-            min-height: 20px;
-            min-width: 20px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+        }
+        
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+        
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .form-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+        
+        .form-control {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+            color: var(--text);
+            background-color: var(--card-bg);
+            width: 100%;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+        
+        .messages {
+            margin-bottom: var(--spacing);
+            width: 100%;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            margin-bottom: var(--spacing);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .message.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+            border-left: 3px solid var(--secondary);
+        }
+        
+        .message.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border-left: 3px solid var(--danger);
+        }
+        
+        .message.warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border-left: 3px solid var(--warning);
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+            min-width: 800px;
+        }
+        
+        th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            text-align: left;
+            padding: 6px 8px;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .col-username { min-width: 100px; }
+        .col-email { min-width: 120px; }
+        .col-name { min-width: 100px; }
+        .col-role { min-width: 80px; }
+        .col-inspector-id { min-width: 80px; }
+        .col-status { min-width: 60px; }
+        .col-staff { min-width: 60px; }
+        .col-actions { min-width: 280px; }
+        
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+        
+        .view-options {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .view-options .btn {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .view-options .btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .view-options .btn.active:hover {
+            background-color: #005a6b;
+        }
+        
+        .table-info {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+        
+        .empty-message {
+            text-align: center;
+            color: var(--text-light);
+            padding: 40px 20px;
+            background-color: #f8fafc;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        
+        .page-info {
+            font-size: 0.875rem;
+            color: var(--text-light);
+        }
+        
+        /* Status and Role Badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-inactive {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .status-staff {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .role-inspector {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .role-admin {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .role-super_admin {
+            background-color: #fecaca;
+            color: #991b1b;
+        }
+        
+        .role-financial {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .role-scientist {
+            background-color: #e0e7ff;
+            color: #3730a3;
+        }
+        
+        .role-developer {
+            background-color: #f3e8ff;
+            color: #6b21a8;
+        }
+        
+        .inspector-id-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .action-cell {
+            white-space: nowrap;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+        
+        .action-cell .btn {
+            transition: all 0.2s ease;
+        }
+        
+        .action-cell .btn:hover {
+            transform: translateY(-1px);
         }
         
         /* Filter Controls */
         .filter-controls {
             display: flex;
-            gap: 1rem;
+            gap: 12px;
             align-items: center;
             flex-wrap: wrap;
             margin-left: auto;
@@ -509,19 +794,19 @@
         .filter-group {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
         }
         
         .filter-label {
             font-size: 0.875rem;
             font-weight: 500;
-            color: white;
+            color: var(--text);
             white-space: nowrap;
         }
         
         .filter-select,
         .filter-input {
-            padding: 0.5rem 0.75rem;
+            padding: 6px 12px;
             border: 1px solid var(--border);
             border-radius: var(--radius);
             font-size: 0.875rem;
@@ -534,240 +819,11 @@
         .filter-input:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 122, 144, 0.1);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
         
         .filter-input {
             min-width: 200px;
-        }
-        
-        .messages {
-            margin-bottom: 2rem;
-        }
-        
-        .message {
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius);
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border-left: 4px solid;
-        }
-        
-        .message.success {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--secondary);
-            border-left-color: var(--secondary);
-        }
-        
-        .message.error {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            border-left-color: var(--danger);
-        }
-        
-        .message.warning {
-            background-color: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
-            border-left-color: var(--warning);
-        }
-        
-        .table-responsive {
-            overflow-x: auto;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.875rem;
-            min-width: 800px;
-            max-width: 100%;
-            background: var(--card-bg);
-        }
-        
-        th {
-            background: linear-gradient(135deg, var(--primary-light), rgba(0, 120, 144, 0.1));
-            color: var(--primary);
-            text-align: left;
-            padding: 12px 16px;
-            font-weight: 700;
-            white-space: nowrap;
-            border-bottom: 2px solid var(--primary);
-            font-size: 0.875rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        tr:nth-child(even) {
-            background-color: rgba(0, 120, 144, 0.02);
-        }
-        
-        tr:hover {
-            background: linear-gradient(135deg, var(--primary-light), rgba(0, 120, 144, 0.05));
-            transform: scale(1.01);
-            transition: all 0.2s ease;
-        }
-        
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.875rem;
-            white-space: nowrap;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            vertical-align: middle;
-        }
-        
-        .col-actions td {
-            max-width: none;
-            white-space: nowrap;
-        }
-        
-        .col-username { min-width: 100px; }
-        .col-email { min-width: 120px; }
-        .col-name { min-width: 100px; }
-        .col-role { min-width: 80px; }
-        .col-inspector-id { min-width: 80px; }
-        .col-status { min-width: 60px; }
-        .col-staff { min-width: 60px; }
-        .col-actions { min-width: 280px; }
-        
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .status-active {
-            background: linear-gradient(135deg, #10b981, #059669);
-            color: #ffffff;
-            border: 1px solid #059669;
-        }
-        
-        .status-inactive {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: #ffffff;
-            border: 1px solid #dc2626;
-        }
-        
-        .status-staff {
-            background: linear-gradient(135deg, #fef3c7, #fbbf24);
-            color: #d97706;
-            border: 1px solid #fbbf24;
-        }
-        
-        .role-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .role-inspector {
-            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-            color: #1e40af;
-            border: 1px solid #93c5fd;
-        }
-        
-        .role-admin {
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #d97706;
-            border: 1px solid #fbbf24;
-        }
-        
-        .role-super_admin {
-            background: linear-gradient(135deg, #fecaca, #fca5a5);
-            color: #dc2626;
-            border: 1px solid #f87171;
-        }
-        
-        .role-financial {
-            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-            color: #065f46;
-            border: 1px solid #6ee7b7;
-        }
-        
-        .role-scientist {
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-            color: #3730a3;
-            border: 1px solid #a5b4fc;
-        }
-        
-        .inspector-id-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fef3c7, #fde68a);
-            color: #d97706;
-            border: 1px solid #fbbf24;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .action-cell {
-            white-space: nowrap;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            flex-wrap: nowrap;
-            justify-content: center;
-        }
-        
-        .action-cell.compact {
-            gap: 0.25rem;
-        }
-        
-        .action-cell.compact .btn {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.75rem;
-            min-height: 32px;
-            min-width: 32px;
-            border-radius: 6px;
-        }
-        
-        .action-cell .btn {
-            transition: all 0.2s ease;
-        }
-        
-        .action-cell .btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        .empty-message {
-            text-align: center;
-            color: var(--text-light);
-            padding: 4rem 2rem;
-            background: linear-gradient(135deg, rgba(0, 120, 144, 0.05), rgba(236, 52, 60, 0.05));
-            border-radius: 12px;
-            border: 2px dashed var(--border);
-        }
-        
-        .empty-message i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-            color: var(--primary);
-        }
-        
-        .empty-message p {
-            font-size: 1.1rem;
-            font-weight: 500;
         }
         
         /* Modal styles */
@@ -788,13 +844,12 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 16px;
+            padding: 24px;
+            border-radius: var(--radius);
             min-width: 400px;
             max-width: 90%;
             border: 1px solid var(--border);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
         }
         
         .modal-content.wide {
@@ -803,90 +858,41 @@
         }
         
         .modal-header {
-            border-bottom: 2px solid var(--primary-light);
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+            padding-bottom: 12px;
         }
         
         .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-        }
-        
-        
-        .modal-body {
-            margin-bottom: 2rem;
-        }
-        
-        .form-group {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-field {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .form-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text);
-        }
-        
-        .form-control {
-            padding: 0.75rem 1rem;
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-            color: var(--text);
-            background-color: var(--card-bg);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0, 122, 144, 0.1), 0 4px 8px rgba(0, 0, 0, 0.1);
-            transform: translateY(-1px);
-        }
-        
-        .form-label {
+            font-size: 1.25rem;
             font-weight: 600;
             color: var(--text);
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
         }
         
         .form-text {
             font-size: 0.75rem;
             color: var(--text-light);
-            margin-top: 0.25rem;
+            margin-top: 4px;
         }
         
-        .modal-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-        }
-        
-        /* Mobile styles */
         @media (max-width: 1024px) {
             .mobile-menu-btn {
-                display: flex !important;
+                display: flex;
             }
             
             #sidebar {
                 transform: translateX(-100%);
-                transition: transform 0.3s ease-in-out;
-                width: 280px;
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
             
             #sidebar.show {
@@ -894,63 +900,45 @@
             }
             
             .main-content {
-                margin-left: 0 !important;
-                padding: 1rem !important;
+                margin-left: 0;
+                padding: 1rem;
             }
             
             .header {
-                padding-top: 5rem !important;
-                padding-bottom: 1.5rem !important;
-                padding-left: 1rem !important;
-                padding-right: 1rem !important;
+                padding-top: 4rem;
+            }
             }
             
-            .header h1 {
-                font-size: 1.5rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.95rem !important;
-            }
-            
+        @media (max-width: 768px) {
             .form-group {
-                grid-template-columns: 1fr !important;
+                grid-template-columns: 1fr;
             }
             
             .action-bar {
                 flex-direction: column;
-                gap: 0.75rem;
-            }
-            
-            .action-bar .btn,
-            .action-bar form,
-            .action-bar form button {
-                width: 100%;
             }
             
             .action-bar .btn {
-                padding: 0.75rem 1rem;
-                min-height: 48px;
-                font-size: 0.9rem;
+                width: 100%;
             }
             
             .filter-controls {
                 flex-direction: column;
                 align-items: stretch;
                 margin-left: 0;
-                margin-top: 1rem;
-                gap: 0.75rem;
+                margin-top: 12px;
+                gap: 8px;
             }
             
             .filter-group {
                 justify-content: space-between;
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: 4px;
             }
             
             .filter-label {
                 color: var(--text);
-                font-size: 0.9rem;
+                font-size: 0.875rem;
             }
             
             .filter-select,
@@ -960,23 +948,17 @@
                 width: 100%;
             }
             
-            .card-header {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 1rem;
-            }
-            
             .modal-content {
                 min-width: 300px;
-                margin: 0.5rem;
-                max-width: calc(100% - 1rem);
-                max-height: calc(100vh - 1rem);
+                margin: 16px;
+                max-width: calc(100% - 32px);
+                max-height: calc(100vh - 32px);
                 overflow-y: auto;
             }
             
             .modal-actions {
                 flex-direction: column;
-                gap: 0.75rem;
+                gap: 8px;
             }
             
             .modal-actions .btn {
@@ -986,544 +968,15 @@
             
             .form-group {
                 grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            
-            .card {
-                margin-left: 0.5rem;
-                margin-right: 0.5rem;
-                overflow: hidden;
-                max-width: calc(100% - 1rem);
-            }
-
-            .card-body {
-                overflow: hidden;
-                max-width: 100%;
-                padding: 1rem;
-            }
-            
-            /* Mobile: Card-based layout for users table */
-            .table-responsive {
-                overflow-x: visible;
-                overflow-y: hidden;
-                background: transparent;
-                box-shadow: none;
-                border: none;
-                width: 100%;
-                max-width: 100%;
-                box-sizing: border-box;
-            }
-            
-            table {
-                display: block;
-                width: 100%;
-                max-width: 100%;
-                background: transparent;
-                margin: 0;
-                padding: 0;
-            }
-            
-            thead {
-                display: none;
-            }
-            
-            tbody {
-                display: block;
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            tr {
-                display: block;
-                margin-bottom: 1rem;
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                background: var(--card-bg);
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-                padding: 1rem;
-                transition: all 0.3s ease;
-                width: 100%;
-                max-width: 100%;
-                box-sizing: border-box;
-                overflow: hidden;
-                position: relative;
-            }
-            
-            tr:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-            }
-            
-            td {
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                padding: 0.75rem 0;
-                border: none;
-                border-bottom: 1px solid var(--border);
-                font-size: 0.875rem;
-                white-space: normal;
-                max-width: 100%;
-                text-overflow: clip;
-                overflow: hidden;
-                width: 100%;
-                box-sizing: border-box;
-                word-wrap: break-word;
-                word-break: break-word;
-            }
-            
-            td:last-child {
-                border-bottom: none;
-            }
-            
-            td::before {
-                content: attr(data-label);
-                font-weight: 700;
-                color: var(--primary);
-                margin-right: 1rem;
-                flex-shrink: 0;
-                min-width: 80px;
-                max-width: 120px;
-                text-transform: uppercase;
-                font-size: 0.75rem;
-                letter-spacing: 0.5px;
-                word-wrap: break-word;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            
-            td > span {
-                text-align: right;
-                word-break: break-word;
-                flex: 1;
-                min-width: 0;
-                max-width: calc(100% - 120px);
-                overflow-wrap: break-word;
-                word-wrap: break-word;
-            }
-            
-            .action-cell {
-                flex-direction: column;
-                gap: 0.5rem;
-                align-items: stretch;
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .action-cell .btn {
-                width: 100%;
-                justify-content: center;
-                padding: 0.5rem 1rem;
-                min-height: 40px;
-                font-size: 0.8rem;
-                box-sizing: border-box;
-                max-width: 100%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            
-            .action-cell .btn i {
-                margin-right: 0.25rem;
-            }
-            
-            .empty-row {
-                display: block !important;
-            }
-            
-            .empty-row td {
-                display: block !important;
-                text-align: center;
-                padding: 2rem;
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .empty-row td::before {
-                display: none !important;
+                gap: 12px;
             }
         }
-        
-        /* Tablet styles */
-        @media (max-width: 768px) {
-            #sidebar {
-                width: 85%;
-                max-width: 320px;
-            }
-            
-            .main-content {
-                padding: 0.75rem !important;
-            }
-            
-            .header {
-                padding-top: 4.5rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.375rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.9rem !important;
-            }
-            
-            .card {
-                margin-left: 0.375rem;
-                margin-right: 0.375rem;
-                overflow: hidden;
-                max-width: calc(100% - 0.75rem);
-            }
-
-            .card-header {
-                padding: 12px;
-            }
-
-            .card-body {
-                padding: 12px;
-                overflow: hidden;
-                max-width: 100%;
-            }
-            
-            .card-title {
-                font-size: 0.95rem;
-            }
-            
-            /* Improve mobile card layout on tablets */
-            .card {
-                overflow: hidden;
-            }
-            
-            .card-body {
-                overflow: hidden;
-                max-width: 100%;
-            }
-            
-            tr {
-                padding: 0.75rem;
-                margin-bottom: 0.75rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td {
-                padding: 0.5rem 0;
-                font-size: 0.8rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td::before {
-                min-width: 70px;
-                max-width: 100px;
-                font-size: 0.7rem;
-            }
-            
-            td > span {
-                max-width: calc(100% - 100px);
-            }
-            
-            .action-cell .btn {
-                padding: 0.4rem 0.8rem;
-                min-height: 36px;
-                font-size: 0.75rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-        }
-        
-        /* Small mobile styles */
-        @media (max-width: 640px) {
-            .mobile-menu-btn {
-                top: 10px !important;
-                left: 10px !important;
-                width: 44px !important;
-                height: 44px !important;
-            }
-            
-            #sidebar {
-                width: 90%;
-            }
-            
-            .header {
-                padding-top: 4rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.25rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.875rem !important;
-            }
-            
-            .card {
-                margin-left: 0.25rem;
-                margin-right: 0.25rem;
-                overflow: hidden;
-                max-width: calc(100% - 0.5rem);
-            }
-
-            .card-body {
-                overflow: hidden;
-                max-width: 100%;
-            }
-            
-            .btn {
-                font-size: 0.8rem;
-                padding: 0.75rem 1rem;
-            }
-            
-            /* Optimize mobile cards for small screens */
-            .card {
-                overflow: hidden;
-            }
-            
-            .card-body {
-                overflow: hidden;
-                max-width: 100%;
-            }
-            
-            tr {
-                padding: 0.5rem;
-                margin-bottom: 0.5rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td {
-                padding: 0.4rem 0;
-                font-size: 0.75rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td::before {
-                min-width: 60px;
-                max-width: 80px;
-                font-size: 0.65rem;
-                margin-right: 0.5rem;
-            }
-            
-            td > span {
-                max-width: calc(100% - 80px);
-            }
-            
-            .action-cell {
-                gap: 0.25rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            .action-cell .btn {
-                padding: 0.3rem 0.6rem;
-                min-height: 32px;
-                font-size: 0.7rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-        }
-        
-        /* Extra small mobile styles */
-        @media (max-width: 480px) {
-            #sidebar {
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .mobile-menu-btn {
-                top: 8px !important;
-                left: 8px !important;
-                width: 40px !important;
-                height: 40px !important;
-            }
-            
-            .main-content {
-                padding: 0.5rem !important;
-            }
-            
-            .header {
-                padding-top: 3.5rem !important;
-                padding-bottom: 1rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.125rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.8rem !important;
-            }
-            
-            .card {
-                margin-left: 0.125rem;
-                margin-right: 0.125rem;
-            }
-            
-            .card-header {
-                padding: 10px;
-            }
-            
-            .card-body {
-                padding: 10px;
-            }
-            
-            .card-title {
-                font-size: 0.875rem;
-            }
-            
-            .btn {
-                font-size: 0.75rem;
-                padding: 0.625rem 0.875rem;
-            }
-            
-            .form-label {
-                font-size: 0.8rem;
-            }
-            
-            .form-control {
-                font-size: 0.8rem;
-                padding: 6px 10px;
-            }
-            
-            /* Ultra-compact mobile cards */
-            .card {
-                overflow: hidden;
-            }
-            
-            .card-body {
-                overflow: hidden;
-                max-width: 100%;
-            }
-            
-            tr {
-                padding: 0.4rem;
-                margin-bottom: 0.4rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td {
-                padding: 0.3rem 0;
-                font-size: 0.7rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            td::before {
-                min-width: 50px;
-                max-width: 70px;
-                font-size: 0.6rem;
-                margin-right: 0.4rem;
-            }
-            
-            td > span {
-                max-width: calc(100% - 70px);
-            }
-            
-            .action-cell {
-                gap: 0.2rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            .action-cell .btn {
-                padding: 0.25rem 0.5rem;
-                min-height: 28px;
-                font-size: 0.65rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            /* Stack action buttons in two columns on very small screens */
-            .action-cell {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 0.3rem;
-                max-width: 100%;
-                overflow: hidden;
-            }
-            
-            .action-cell .btn {
-                font-size: 0.6rem;
-                padding: 0.2rem 0.4rem;
-                min-height: 26px;
-                max-width: 100%;
-                overflow: hidden;
-            }
-        }
-        
-        /* Desktop styles */
-        @media (min-width: 1025px) {
-            .main-content {
-                margin-left: 16rem;
-                padding: 2rem;
-            }
-            
-            .header {
-                padding: 2rem 0;
-            }
-            
-            .header h1 {
-                font-size: 1.75rem;
-            }
-            
-            .header h2 {
-                font-size: 1rem;
-            }
-            
-            .action-bar {
-                flex-direction: row;
-                gap: 0.75rem;
-                flex-wrap: wrap;
-            }
-            
-            .action-bar .btn,
-            .action-bar form {
-                width: auto;
-            }
-            
-            .action-bar .btn {
-                padding: 0.5rem 1rem;
-                min-height: auto;
-                font-size: 0.875rem;
-            }
-            
-            .filter-controls {
-                flex-direction: row;
-                gap: 0.75rem;
-                flex-wrap: wrap;
-            }
-            
-            .filter-controls .btn {
-                width: auto;
-                padding: 0.5rem 1rem;
-                min-height: auto;
-                font-size: 0.875rem;
-            }
-        }
-        
-        /* Touch-friendly adjustments */
-        @media (hover: none) and (pointer: coarse) {
-            button, a, .btn, .nav-link {
-                min-height: 44px !important;
-            }
-            
-            #sidebar a:hover {
-                background-color: transparent !important;
-            }
-            
-            #sidebar a:active {
-                background-color: rgba(255, 255, 255, 0.1) !important;
-            }
-        }
-        
     </style>
 </head>
 <body>
     <!-- Mobile Menu Button -->
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
-        <i class="fas fa-bars text-xl"></i>
+        <i class="fas fa-bars"></i>
     </button>
     
     <!-- Sidebar Overlay -->
@@ -1531,79 +984,72 @@
     
     <div class="page-container">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-64 h-screen flex flex-col">
-            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
-                <div class="text-center mb-2">
-                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
-                </div>
-                <div class="text-sm font-semibold text-center">
-                    Food Safety Agency (Pty) Ltd
-                </div>
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
+                <div class="company-name">Food Safety Agency (Pty) Ltd</div>
             </div>
             
-            <div class="flex-1 flex flex-col justify-between overflow-y-auto">
-                <ul class="px-2 py-2 space-y-1">
-                    <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-home mr-2 w-4 text-center"></i>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{% url 'home' %}" class="nav-link">
+                        <i class="fas fa-home"></i>
                             Dashboard
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-users mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'client_list' %}" class="nav-link">
+                        <i class="fas fa-users"></i>
                             Clients
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'shipment_list' %}" class="nav-link">
+                        <i class="fas fa-clipboard-check"></i>
                             Inspections
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] bg-primary">
-                            <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'user_management' %}" class="nav-link active">
+                        <i class="fas fa-users-cog"></i>
                             User Management
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'system_logs' %}" class="nav-link">
+                        <i class="fas fa-list-alt"></i>
                             System Logs
                         </a>
                     </li>
                     {% if request.user.role == 'developer' %}
-                    <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-cloud mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'onedrive_view' %}" class="nav-link">
+                        <i class="fas fa-cloud"></i>
                             OneDrive View
                         </a>
                     </li>
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
-                    <li>
-                        <a href="{% url 'performance_monitor' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'performance_monitor' %}" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
                             Server View
                         </a>
                     </li>
                     {% endif %}
-                    <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                <li class="nav-item">
+                    <a href="{% url 'settings' %}" class="nav-link">
+                        <i class="fas fa-cog"></i>
                             Settings
                         </a>
                     </li>
                 </ul>
-            </div>
             
-            <!-- Logout Button -->
-            <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
-                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+            <div class="logout-section">
+                <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
                         Logout
                     </button>
                 </form>
@@ -1611,14 +1057,23 @@
         </div>
         
         <!-- Main Content -->
-        <div class="main-content ml-64">
+        <div class="main-content">
+            <div class="container">
             <div class="header">
-                <h1>👥 User Management</h1>
+                    <h1>User Management</h1>
                 <h2>Manage user accounts, roles, and permissions</h2>
             </div>
 
             <!-- Messages Section -->
-            <!-- Messages - Disabled -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
          
             <div class="action-bar">
                 <!-- Add New User Button -->
@@ -1669,6 +1124,13 @@
                     </div>
                 </div>
                 <div class="card-body">
+                <div class="table-controls">
+                    <div class="table-info">
+                        Showing {{ users|length }} user{{ users|length|pluralize }}
+                    </div>
+                </div>
+                
+                {% if users %}
                     <div class="table-responsive">
                         <table>
                             <thead>
@@ -1686,32 +1148,25 @@
                             <tbody>
                                 {% for user in users %}
                                 <tr>
-                                    <td class="col-username" data-label="Username">
-                                        <span>{{ user.username }}</span>
+                                    <td class="col-username">
+                                        <strong>{{ user.username }}</strong>
                                     </td>
-                                    <td class="col-email" data-label="Email">
-                                        <span>{{ user.email }}</span>
-                                    </td>
-                                    <td class="col-name" data-label="Full Name">
-                                        <span>
+                                    <td class="col-email">{{ user.email|default:"-" }}</td>
+                                    <td class="col-name">
                                             {% if user.first_name or user.last_name %}
                                                 {{ user.first_name|title }} {{ user.last_name|title }}
                                             {% else %}
                                                 <span style="color: var(--text-light); font-style: italic;">Not provided</span>
                                             {% endif %}
-                                        </span>
                                     </td>
-                                    <td class="col-role" data-label="Role">
-                                        <span>
+                                    <td class="col-role">
                                             {% if user.role %}
                                                 <span class="role-badge role-{{ user.role }}">{{ user.get_role_display }}</span>
                                             {% else %}
                                                 <span style="color: var(--text-light);">Inspector</span>
                                             {% endif %}
-                                        </span>
                                     </td>
-                                    <td class="col-inspector-id" data-label="Inspector ID">
-                                        <span>
+                                    <td class="col-inspector-id">
                                             {% if user.role == 'inspector' %}
                                                 {% if user.inspector_id %}
                                                     <span class="inspector-id-badge">{{ user.inspector_id }}</span>
@@ -1721,28 +1176,23 @@
                                             {% else %}
                                                 <span style="color: var(--text-light);">-</span>
                                             {% endif %}
-                                        </span>
                                     </td>
-                                    <td class="col-status" data-label="Status">
-                                        <span>
+                                    <td class="col-status">
                                             {% if user.is_active %}
                                                 <span class="status-badge status-active">Active</span>
                                             {% else %}
                                                 <span class="status-badge status-inactive">Inactive</span>
                                             {% endif %}
-                                        </span>
                                     </td>
-                                    <td class="col-staff" data-label="Staff">
-                                        <span>
+                                    <td class="col-staff">
                                             {% if user.is_staff %}
                                                 <span class="status-badge status-staff">Staff</span>
                                             {% else %}
                                                 <span style="color: var(--text-light);">-</span>
                                             {% endif %}
-                                        </span>
                                     </td>
-                                    <td class="col-actions" data-label="Actions">
-                                        <div class="action-cell compact">
+                                    <td class="col-actions">
+                                        <div class="action-cell">
                                             <form method="post" style="display: inline;">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="action" value="toggle_user_status">
@@ -1797,18 +1247,16 @@
                                         </div>
                                     </td>
                                 </tr>
-                                {% empty %}
-                                <tr class="empty-row">
-                                    <td colspan="8" class="empty-message" style="display: table-cell;">
-                                        <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                                        <p>No users found.</p>
-                                    </td>
-                                </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
+                {% else %}
+                    <div class="empty-message">
+                        <i class="fas fa-users"></i>
+                        <p>No users found.</p>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -2042,208 +1490,31 @@
                     <i class="fas fa-times"></i> Cancel
                 </button>
             </div>
+            </div>
         </div>
     </div>
     
     <script>
-        // CSRF Token Management - Prevent CSRF failures
         function getCsrfToken() {
-            // Try multiple methods to get CSRF token
-            let token = null;
-            
-            // Method 1: From meta tag
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            if (metaTag) {
-                token = metaTag.getAttribute('content');
-            }
-            
-            // Method 2: From cookie
-            if (!token) {
-                const cookies = document.cookie.split(';');
-                for (let cookie of cookies) {
-                    const [name, value] = cookie.trim().split('=');
-                    if (name === 'csrftoken') {
-                        token = value;
-                        break;
-                    }
-                }
-            }
-            
-            // Method 3: From form input
-            if (!token) {
-                const csrfInput = document.querySelector('[name="csrfmiddlewaretoken"]');
-                if (csrfInput) {
-                    token = csrfInput.value;
-                }
-            }
-            
-            return token;
+            return document.querySelector('[name=csrfmiddlewaretoken]').value;
         }
-        
-        // Refresh CSRF token if needed
-        function refreshCsrfToken() {
-            fetch('/user-management/', {
-                method: 'GET',
-                credentials: 'same-origin'
-            }).then(response => {
-                if (response.ok) {
-                    // Token should be refreshed in cookies
-                    console.log('CSRF token refreshed');
-                }
-            }).catch(error => {
-                console.warn('Failed to refresh CSRF token:', error);
-            });
-        }
-        
-        // Setup CSRF protection for all forms
-        function setupCsrfProtection() {
-            // Add CSRF token to all forms that don't have it
-            const forms = document.querySelectorAll('form[method="post"]');
-            forms.forEach(form => {
-                const existingCsrfInput = form.querySelector('[name="csrfmiddlewaretoken"]');
-                if (!existingCsrfInput) {
-                    const csrfToken = getCsrfToken();
-                    if (csrfToken) {
-                        const csrfInput = document.createElement('input');
-                        csrfInput.type = 'hidden';
-                        csrfInput.name = 'csrfmiddlewaretoken';
-                        csrfInput.value = csrfToken;
-                        form.appendChild(csrfInput);
-                    }
-                }
-            });
-            
-            // Add form submission handler to refresh token if needed
-            forms.forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    const csrfInput = this.querySelector('[name="csrfmiddlewaretoken"]');
-                    if (!csrfInput || !csrfInput.value) {
-                        e.preventDefault();
-                        alert('Security token expired. Please refresh the page and try again.');
-                        window.location.reload();
-                        return false;
-                    }
-                });
-            });
-        }
-        
-        // Theme management
+
+        // Theme management - compatible with settings page
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
-            
-            let activeTheme = 'light';
-            if (savedTheme) {
-                activeTheme = savedTheme;
-            } else if (serverTheme) {
-                activeTheme = serverTheme;
-            }
-            
-            document.documentElement.setAttribute('data-theme', activeTheme);
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
         }
-        
-        
-        // Mobile Menu Toggle
+
+        // Apply theme on load
         document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const sidebar = document.getElementById('sidebar');
-            const sidebarOverlay = document.getElementById('sidebar-overlay');
-            
-            function toggleSidebar() {
-                sidebar.classList.toggle('show');
-                sidebarOverlay.classList.toggle('show');
-                
-                const icon = mobileMenuBtn.querySelector('i');
-                if (sidebar.classList.contains('show')) {
-                    icon.className = 'fas fa-times text-xl';
-                } else {
-                    icon.className = 'fas fa-bars text-xl';
-                }
-            }
-            
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', toggleSidebar);
-            }
-            
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', toggleSidebar);
-            }
-            
-            const navLinks = sidebar.querySelectorAll('a');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth <= 1024) {
-                        toggleSidebar();
-                    }
-                });
-            });
-            
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 1024) {
-                    sidebar.classList.remove('show');
-                    sidebarOverlay.classList.remove('show');
-                    if (mobileMenuBtn) {
-                        const icon = mobileMenuBtn.querySelector('i');
-                        icon.className = 'fas fa-bars text-xl';
-                    }
-                }
-            });
-            
             initTheme();
-            
-            // Initialize CSRF protection
-            setupCsrfProtection();
-            
-            // Hide inspector ID field initially
-            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-            if (inspectorIdGroup) {
-                inspectorIdGroup.style.display = 'none';
+        });
+
+        // Listen for theme changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'theme') {
+                document.documentElement.setAttribute('data-theme', e.newValue || 'light');
             }
-            
-            // Add event listener for role selection change
-            const newRoleSelect = document.getElementById('newRoleSelect');
-            if (newRoleSelect) {
-                newRoleSelect.addEventListener('change', function() {
-                    const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-                    console.log('Role changed to:', this.value);
-                    
-                    if (inspectorIdGroup) {
-                        if (this.value === 'inspector') {
-                            inspectorIdGroup.style.display = 'block';
-                            console.log('Showing Inspector ID field');
-                        } else {
-                            inspectorIdGroup.style.display = 'none';
-                            console.log('Hiding Inspector ID field for role:', this.value);
-                        }
-                    }
-                });
-            }
-            
-            // Add event listeners for edit user buttons
-            document.querySelectorAll('.edit-user-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-                    const username = this.getAttribute('data-username');
-                    const email = this.getAttribute('data-email');
-                    const firstName = this.getAttribute('data-first-name');
-                    const lastName = this.getAttribute('data-last-name');
-                    const role = this.getAttribute('data-role');
-                    const inspectorId = this.getAttribute('data-inspector-id');
-                    
-                    showEditUserModal(userId, username, email, firstName, lastName, role, inspectorId);
-                });
-            });
-            
-            // Add event listeners for change role buttons
-            document.querySelectorAll('.change-role-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-                    const username = this.getAttribute('data-username');
-                    const role = this.getAttribute('data-role');
-                    
-                    showChangeRoleModal(userId, username, role);
-                });
-            });
         });
         
         // Modal Functions
@@ -2329,16 +1600,11 @@
             const roleSelect = document.getElementById('editRole');
             const inspectorIdGroup = document.getElementById('editInspectorIdGroup');
             
-            console.log('toggleEditInspectorIdField called - Role selected:', roleSelect ? roleSelect.value : 'roleSelect not found');
-            console.log('editInspectorIdGroup found:', !!inspectorIdGroup);
-            
             if (roleSelect && inspectorIdGroup) {
                 if (roleSelect.value === 'inspector') {
                     inspectorIdGroup.style.display = 'block';
-                    console.log('Showing Edit Inspector ID field');
                 } else {
                     inspectorIdGroup.style.display = 'none';
-                    console.log('Hiding Edit Inspector ID field');
                 }
             }
         }
@@ -2416,6 +1682,113 @@
                 row.style.display = showRow ? '' : 'none';
             });
         }
+
+        // Mobile Menu Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+            
+            const icon = mobileBtn.querySelector('i');
+            if (sidebar.classList.contains('show')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleSidebar);
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', toggleSidebar);
+            }
+            
+            // Close sidebar when clicking on nav links on mobile
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    const mobileBtn = document.getElementById('mobile-menu-btn');
+                    
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                    
+                    if (mobileBtn) {
+                        const icon = mobileBtn.querySelector('i');
+                        icon.className = 'fas fa-bars';
+                    }
+                }
+            });
+            
+            // Hide inspector ID field initially
+            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
+            if (inspectorIdGroup) {
+                inspectorIdGroup.style.display = 'none';
+            }
+            
+            // Add event listener for role selection change
+            const newRoleSelect = document.getElementById('newRoleSelect');
+            if (newRoleSelect) {
+                newRoleSelect.addEventListener('change', function() {
+                    const inspectorIdGroup = document.getElementById('inspectorIdGroup');
+                    
+                    if (inspectorIdGroup) {
+                        if (this.value === 'inspector') {
+                            inspectorIdGroup.style.display = 'block';
+                        } else {
+                            inspectorIdGroup.style.display = 'none';
+                        }
+                    }
+                });
+            }
+            
+            // Add event listeners for edit user buttons
+            document.querySelectorAll('.edit-user-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    const email = this.getAttribute('data-email');
+                    const firstName = this.getAttribute('data-first-name');
+                    const lastName = this.getAttribute('data-last-name');
+                    const role = this.getAttribute('data-role');
+                    const inspectorId = this.getAttribute('data-inspector-id');
+                    
+                    showEditUserModal(userId, username, email, firstName, lastName, role, inspectorId);
+                });
+            });
+            
+            // Add event listeners for change role buttons
+            document.querySelectorAll('.change-role-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    const username = this.getAttribute('data-username');
+                    const role = this.getAttribute('data-role');
+                    
+                    showChangeRoleModal(userId, username, role);
+                });
+            });
+        });
     </script>
 </body>
 </html>

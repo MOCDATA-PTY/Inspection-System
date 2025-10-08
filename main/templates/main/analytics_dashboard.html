@@ -232,6 +232,133 @@
             font-size: 0.875rem;
         }
         
+        .stat-trend {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            color: var(--primary);
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+        
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .kpi-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .kpi-header {
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, #005a6b 100%);
+            color: white;
+        }
+        
+        .kpi-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 0;
+        }
+        
+        .kpi-content {
+            padding: 20px;
+        }
+        
+        .kpi-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .kpi-item:last-child {
+            border-bottom: none;
+        }
+        
+        .kpi-label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .kpi-value {
+            color: var(--text);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .chart-controls .form-control {
+            width: auto;
+            min-width: 120px;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .table th {
+            background-color: var(--primary-light);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .table td {
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+        
+        .table-responsive {
+            overflow-x: auto;
+        }
+        
+        .risk-high {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        
+        .risk-medium {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+        
+        .risk-low {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
         .charts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
@@ -422,14 +549,9 @@
             </a>
             {% endif %}
             
-            <!-- Back to Shipments Button -->
+            <!-- Back to Inspections Button -->
             <a href="{% url 'shipment_list' %}" class="btn btn-primary">
-                <i class="fas fa-arrow-left"></i> Back to Shipments
-            </a>
-            
-            <!-- Settings Button -->
-            <a href="{% url 'settings' %}" class="btn btn-secondary">
-                <i class="fas fa-cog"></i> Settings
+                <i class="fas fa-clipboard-check"></i> Back to Inspections
             </a>
             
             <!-- Logout Button -->
@@ -441,27 +563,115 @@
             </form>
         </div>
 
-        <!-- Stats Cards -->
+
+        <!-- Enhanced Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>{{ total_clients }}</h3>
                 <p>Total Clients</p>
+                <div class="stat-trend">
+                    <i class="fas fa-users"></i>
+                </div>
             </div>
             <div class="stat-card">
                 <h3>{{ total_food_safety_inspections }}</h3>
                 <p>Total Inspections</p>
+                <div class="stat-trend">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
             </div>
             <div class="stat-card">
                 <h3>{{ recent_inspections }}</h3>
                 <p>Recent (30 days)</p>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ this_week_inspections }}</h3>
+                <p>This Week</p>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar-week"></i>
+                </div>
             </div>
             <div class="stat-card">
                 <h3>{{ this_month_inspections }}</h3>
                 <p>This Month</p>
+                <div class="stat-trend">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
             </div>
             <div class="stat-card">
-                <h3>{{ avg_monthly_inspections }}</h3>
-                <p>Avg/Month (6m)</p>
+                <h3>{{ compliance_rate }}%</h3>
+                <p>Compliance Rate</p>
+                <div class="stat-trend">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ rfi_rate }}%</h3>
+                <p>RFI Rate</p>
+                <div class="stat-trend">
+                    <i class="fas fa-question-circle"></i>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>{{ month_growth_rate }}%</h3>
+                <p>Month Growth</p>
+                <div class="stat-trend">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Dashboard -->
+        <div class="kpi-dashboard">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <h3><i class="fas fa-tachometer-alt"></i> Performance KPIs</h3>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-item">
+                        <span class="kpi-label">Inspections per Day</span>
+                        <span class="kpi-value">{{ efficiency_metrics.inspections_per_day|floatformat:1 }}</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Avg Duration (hrs)</span>
+                        <span class="kpi-value">{{ hours_analysis.avg_hours|floatformat:1 }}</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Total Hours</span>
+                        <span class="kpi-value">{{ hours_analysis.total_hours|floatformat:0 }}</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Avg Distance (km)</span>
+                        <span class="kpi-value">{{ geographic_analysis.avg_distance|floatformat:1 }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Risk Assessment</h3>
+                </div>
+                <div class="kpi-content">
+                    <div class="kpi-item">
+                        <span class="kpi-label">High-Risk Clients</span>
+                        <span class="kpi-value" id="high-risk-count">-</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Non-Compliant</span>
+                        <span class="kpi-value">{{ compliance_stats.non_compliant }}</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">With RFI</span>
+                        <span class="kpi-value">{{ rfi_stats.with_rfi }}</span>
+                    </div>
+                    <div class="kpi-item">
+                        <span class="kpi-label">Max Distance</span>
+                        <span class="kpi-value">{{ geographic_analysis.max_distance|floatformat:0 }} km</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -485,7 +695,7 @@
             </div>
         </div>
 
-        <!-- Charts Grid -->
+        <!-- Advanced Charts Grid -->
         <div class="charts-grid">
             <!-- Inspections Over Time Chart -->
             <div class="chart-card">
@@ -494,9 +704,29 @@
                         <i class="fas fa-chart-line"></i>
                         Inspections Over Time
                     </h3>
+                    <div class="chart-controls">
+                        <select id="timeRange" class="form-control" style="width: 120px;">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="chart-body">
                     <canvas id="inspectionsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Compliance Analysis Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-shield-alt"></i>
+                        Compliance Analysis
+                    </h3>
+                </div>
+                <div class="chart-body">
+                    <canvas id="complianceChart" width="400" height="300"></canvas>
                 </div>
             </div>
 
@@ -505,11 +735,53 @@
                 <div class="chart-header">
                     <h3>
                         <i class="fas fa-user-tie"></i>
-                        Top Inspectors
+                        Inspector Performance
                     </h3>
                 </div>
                 <div class="chart-body">
                     <canvas id="inspectorsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Commodity Analysis Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-seedling"></i>
+                        Commodity Analysis
+                    </h3>
+                </div>
+                <div class="chart-body">
+                    <canvas id="commodityChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geographic and Risk Analysis -->
+        <div class="charts-grid">
+            <!-- Distance Analysis Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-map-marker-alt"></i>
+                        Geographic Analysis
+                    </h3>
+                </div>
+                <div class="chart-body">
+                    <canvas id="distanceChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Risk Assessment Chart -->
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Risk Assessment
+                    </h3>
+                </div>
+                <div class="chart-body">
+                    <canvas id="riskChart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
@@ -519,11 +791,45 @@
             <div class="chart-header">
                 <h3>
                     <i class="fas fa-building"></i>
-                    Major Companies
+                    Major Companies Performance
                 </h3>
+                <div class="chart-controls">
+                    <button class="btn btn-sm btn-primary" onclick="toggleCompanyView()">
+                        <i class="fas fa-exchange-alt"></i> Toggle View
+                    </button>
+                </div>
             </div>
             <div class="chart-body" style="min-height: 500px;">
                 <canvas id="companiesChart" width="400" height="400"></canvas>
+            </div>
+        </div>
+
+        <!-- High-Risk Clients Table -->
+        <div class="chart-card" style="margin-top: 20px;">
+            <div class="chart-header">
+                <h3>
+                    <i class="fas fa-exclamation-circle"></i>
+                    High-Risk Clients
+                </h3>
+            </div>
+            <div class="chart-body">
+                <div class="table-responsive">
+                    <table class="table" id="highRiskTable">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Total Inspections</th>
+                                <th>Compliance Rate</th>
+                                <th>Risk Score</th>
+                                <th>Last Inspection</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="highRiskTableBody">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -546,20 +852,88 @@
             }
         });
 
-        // Chart data from Django
+        // Enhanced chart data from Django
         const chartData = {
+            // Time series data
+            daily: {{ daily_inspections|safe }},
+            weekly: {{ weekly_inspections|safe }},
             monthly: {{ monthly_inspections|safe }},
-            inspectors: {{ top_inspectors|safe }},
+            
+            // Performance data
+            inspectors: {{ inspector_performance|safe }},
+            clients: {{ client_analytics|safe }},
+            commodities: {{ commodity_analysis|safe }},
+            
+            // Legacy data
             companies: {{ major_companies|safe }},
-            forecast: {{ forecast_data|safe }}
+            forecast: {{ forecast_data|safe }},
+            
+            // Risk data
+            highRiskClients: {{ high_risk_clients|safe }},
+            
+            // Statistics
+            complianceStats: {{ compliance_stats|safe }},
+            rfiStats: {{ rfi_stats|safe }},
+            efficiencyMetrics: {{ efficiency_metrics|safe }},
+            geographicAnalysis: {{ geographic_analysis|safe }},
+            hoursAnalysis: {{ hours_analysis|safe }}
+        };
+        
+        // Debug: Log chart data to console
+        console.log('Chart Data:', chartData);
+        console.log('Daily Inspections:', chartData.daily);
+        console.log('Monthly Inspections:', chartData.monthly);
+        console.log('Inspectors:', chartData.inspectors);
+        console.log('Compliance Stats:', chartData.complianceStats);
+        
+        // Validate data and handle any parsing errors
+        try {
+            // Ensure all data is properly parsed
+            if (typeof chartData.complianceStats === 'string') {
+                chartData.complianceStats = JSON.parse(chartData.complianceStats);
+            }
+            if (typeof chartData.rfiStats === 'string') {
+                chartData.rfiStats = JSON.parse(chartData.rfiStats);
+            }
+            if (typeof chartData.efficiencyMetrics === 'string') {
+                chartData.efficiencyMetrics = JSON.parse(chartData.efficiencyMetrics);
+            }
+            if (typeof chartData.geographicAnalysis === 'string') {
+                chartData.geographicAnalysis = JSON.parse(chartData.geographicAnalysis);
+            }
+            if (typeof chartData.hoursAnalysis === 'string') {
+                chartData.hoursAnalysis = JSON.parse(chartData.hoursAnalysis);
+            }
+            console.log('Data validation successful');
+        } catch (error) {
+            console.error('Error parsing chart data:', error);
+        }
+        
+        // Global variables
+        let currentTimeRange = 'monthly';
+        let companyViewType = 'bar';
+        
+        // Helper function to get week number
+        Date.prototype.getWeek = function() {
+            const onejan = new Date(this.getFullYear(), 0, 1);
+            return Math.ceil((((this - onejan) / 86400000) + onejan.getDay() + 1) / 7);
         };
 
-        // Create Inspections Over Time Chart with Forecasting
+        // Create Inspections Over Time Chart with Time Range Selection
         function createInspectionsChart() {
             const ctx = document.getElementById('inspectionsChart');
-            if (!ctx) return;
+            if (!ctx) {
+                console.error('Inspections chart canvas not found');
+                return;
+            }
 
-            if (!chartData.monthly || chartData.monthly.length === 0) {
+            const timeRange = currentTimeRange;
+            let data = chartData[timeRange];
+            
+            console.log(`Creating inspections chart for ${timeRange}:`, data);
+            
+            if (!data || data.length === 0) {
+                console.log('No data available for inspections chart');
                 ctx.parentElement.innerHTML = `
                     <div class="no-data">
                         <i class="fas fa-chart-line"></i>
@@ -570,34 +944,43 @@
                 return;
             }
 
-            // Prepare actual data
-            const actualLabels = chartData.monthly.map(item => {
-                const date = new Date(item.month);
-                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-            });
-            const actualData = chartData.monthly.map(item => item.count);
-
-            // Prepare forecast data
-            let forecastLabels = [];
-            let forecastData = [];
+            // Prepare data based on time range
+            let labels, inspectionData, compliantData, nonCompliantData;
             
-            if (chartData.forecast && chartData.forecast.length > 0) {
-                forecastLabels = chartData.forecast.map(item => item.month);
-                forecastData = chartData.forecast.map(item => item.count);
+            if (timeRange === 'daily') {
+                labels = data.map(item => {
+                    const date = new Date(item.day);
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+                inspectionData = data.map(item => item.count);
+                compliantData = data.map(item => item.compliant);
+                nonCompliantData = data.map(item => item.non_compliant);
+            } else if (timeRange === 'weekly') {
+                labels = data.map(item => {
+                    const date = new Date(item.week);
+                    return `Week ${date.getWeek()}`;
+                });
+                inspectionData = data.map(item => item.count);
+                compliantData = data.map(item => item.compliant);
+                nonCompliantData = data.map(item => item.non_compliant);
+            } else {
+                labels = data.map(item => {
+                    const date = new Date(item.month);
+                    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                });
+                inspectionData = data.map(item => item.count);
+                compliantData = data.map(item => item.compliant);
+                nonCompliantData = data.map(item => item.non_compliant);
             }
-
-            // Combine labels and data
-            const allLabels = [...actualLabels, ...forecastLabels];
-            const allData = [...actualData, ...forecastData];
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: allLabels,
+                    labels: labels,
                     datasets: [
                         {
-                            label: 'Actual Inspections',
-                            data: actualData,
+                            label: 'Total Inspections',
+                            data: inspectionData,
                             borderColor: '#007890',
                             backgroundColor: 'rgba(0, 120, 144, 0.1)',
                             borderWidth: 3,
@@ -605,12 +988,20 @@
                             tension: 0.4
                         },
                         {
-                            label: 'Forecast',
-                            data: [...Array(actualData.length).fill(null), ...forecastData],
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                            borderWidth: 3,
-                            borderDash: [5, 5],
+                            label: 'Compliant',
+                            data: compliantData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Non-Compliant',
+                            data: nonCompliantData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 2,
                             fill: false,
                             tension: 0.4
                         }
@@ -648,6 +1039,280 @@
                             },
                             ticks: {
                                 color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Compliance Analysis Chart
+        function createComplianceChart() {
+            const ctx = document.getElementById('complianceChart');
+            if (!ctx) {
+                console.error('Compliance chart canvas not found');
+                return;
+            }
+
+            const data = chartData.complianceStats;
+            console.log('Creating compliance chart with data:', data);
+            
+            if (!data || (!data.compliant && !data.non_compliant)) {
+                console.log('No compliance data available');
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>No Compliance Data</h3>
+                        <p>No compliance data available.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Compliant', 'Non-Compliant'],
+                    datasets: [{
+                        data: [data.compliant, data.non_compliant],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderColor: ['#059669', '#dc2626'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Commodity Analysis Chart
+        function createCommodityChart() {
+            const ctx = document.getElementById('commodityChart');
+            if (!ctx) return;
+
+            if (!chartData.commodities || chartData.commodities.length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-seedling"></i>
+                        <h3>No Commodity Data</h3>
+                        <p>No commodity data available.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = chartData.commodities.slice(0, 10); // Top 10 commodities
+            const labels = data.map(item => item.commodity || 'Unknown');
+            const counts = data.map(item => item.total_inspections);
+            const complianceRates = data.map(item => item.compliance_rate);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Inspections',
+                        data: counts,
+                        backgroundColor: '#007890',
+                        borderColor: '#005a6b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex;
+                                    return `Compliance Rate: ${complianceRates[index].toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Distance Analysis Chart
+        function createDistanceChart() {
+            const ctx = document.getElementById('distanceChart');
+            if (!ctx) return;
+
+            const data = chartData.geographicAnalysis;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Average', 'Maximum', 'Minimum'],
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: [
+                            data.avg_distance || 0,
+                            data.max_distance || 0,
+                            data.min_distance || 0
+                        ],
+                        backgroundColor: ['#3b82f6', '#ef4444', '#10b981'],
+                        borderColor: ['#2563eb', '#dc2626', '#059669'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.y.toFixed(1)} km`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create Risk Assessment Chart
+        function createRiskChart() {
+            const ctx = document.getElementById('riskChart');
+            if (!ctx) return;
+
+            if (!chartData.highRiskClients || chartData.highRiskClients.length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>No Risk Data</h3>
+                        <p>No high-risk client data available.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = chartData.highRiskClients.slice(0, 8); // Top 8 high-risk clients
+            const labels = data.map(item => item.client_name.length > 15 ? 
+                item.client_name.substring(0, 15) + '...' : item.client_name);
+            const riskScores = data.map(item => item.risk_score);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Risk Score',
+                        data: riskScores,
+                        backgroundColor: riskScores.map(score => {
+                            if (score >= 70) return '#ef4444';
+                            if (score >= 40) return '#f59e0b';
+                            return '#10b981';
+                        }),
+                        borderColor: riskScores.map(score => {
+                            if (score >= 70) return '#dc2626';
+                            if (score >= 40) return '#d97706';
+                            return '#059669';
+                        }),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Risk Score: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                maxRotation: 45
                             }
                         }
                     }
@@ -833,11 +1498,335 @@
             });
         }
 
-        // Initialize charts when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            createInspectionsChart();
-            createInspectorsChart();
+        // Enhanced Inspector Performance Chart
+        function createInspectorsChart() {
+            const ctx = document.getElementById('inspectorsChart');
+            if (!ctx) return;
+
+            if (!chartData.inspectors || chartData.inspectors.length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-user-tie"></i>
+                        <h3>No Inspector Data</h3>
+                        <p>No inspector data available.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = chartData.inspectors.slice(0, 10); // Top 10 inspectors
+            const labels = data.map(item => item.inspector_name || 'Unknown');
+            const inspections = data.map(item => item.total_inspections);
+            const complianceRates = data.map(item => item.compliance_rate);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Inspections',
+                        data: inspections,
+                        backgroundColor: '#007890',
+                        borderColor: '#005a6b',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex;
+                                    return `Compliance Rate: ${complianceRates[index].toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                maxRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Enhanced Major Companies Chart
+        function createCompaniesChart() {
+            const ctx = document.getElementById('companiesChart');
+            if (!ctx) return;
+
+            if (!chartData.companies || chartData.companies.length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-building"></i>
+                        <h3>No Company Data</h3>
+                        <p>No major company data available.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = chartData.companies;
+            const labels = data.map(item => item.client_name);
+            const counts = data.map(item => item.count);
+
+            new Chart(ctx, {
+                type: companyViewType,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Inspections',
+                        data: counts,
+                        backgroundColor: companyViewType === 'bar' ? '#446f1e' : [
+                            '#007890', '#EC343C', '#f59e0b', '#10b981', '#3b82f6',
+                            '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#f97316'
+                        ],
+                        borderColor: companyViewType === 'bar' ? '#365314' : '#ffffff',
+                        borderWidth: companyViewType === 'bar' ? 1 : 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: companyViewType === 'doughnut',
+                            position: 'bottom',
+                            labels: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (companyViewType === 'doughnut') {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                        return `${context.label}: ${context.parsed} (${percentage}%)`;
+                                    }
+                                    return `Inspections: ${context.parsed.y || context.parsed}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: companyViewType === 'bar' ? {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                maxRotation: 45
+                            }
+                        }
+                    } : {}
+                }
+            });
+        }
+
+        // Toggle Company View
+        function toggleCompanyView() {
+            companyViewType = companyViewType === 'bar' ? 'doughnut' : 'bar';
             createCompaniesChart();
+        }
+
+        // Time Range Change Handler
+        function handleTimeRangeChange() {
+            const select = document.getElementById('timeRange');
+            if (select) {
+                select.addEventListener('change', function() {
+                    currentTimeRange = this.value;
+                    createInspectionsChart();
+                });
+            }
+        }
+
+        // Populate High-Risk Clients Table
+        function populateHighRiskTable() {
+            const tbody = document.getElementById('highRiskTableBody');
+            if (!tbody || !chartData.highRiskClients) return;
+
+            const data = chartData.highRiskClients;
+            document.getElementById('high-risk-count').textContent = data.length;
+
+            tbody.innerHTML = data.map(client => {
+                const riskClass = client.risk_score >= 70 ? 'risk-high' : 
+                                 client.risk_score >= 40 ? 'risk-medium' : 'risk-low';
+                const lastInspection = client.last_inspection ? 
+                    new Date(client.last_inspection).toLocaleDateString() : 'Never';
+                
+                return `
+                    <tr>
+                        <td>${client.client_name}</td>
+                        <td>${client.total_inspections}</td>
+                        <td>${client.compliance_rate.toFixed(1)}%</td>
+                        <td><span class="${riskClass}">${client.risk_score.toFixed(1)}%</span></td>
+                        <td>${lastInspection}</td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="viewClientDetails('${client.client_name}')">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // View Client Details (placeholder)
+        function viewClientDetails(clientName) {
+            alert(`View details for ${clientName} - This would open a detailed client view.`);
+        }
+
+        // Enhanced Export functionality
+        function exportData() {
+            const format = document.getElementById('exportFormat').value;
+            const data = {
+                summary: {
+                    total_clients: {{ total_clients }},
+                    total_inspections: {{ total_food_safety_inspections }},
+                    compliance_rate: {{ compliance_rate }},
+                    rfi_rate: {{ rfi_rate }},
+                    month_growth_rate: {{ month_growth_rate }}
+                },
+                time_series: {
+                    daily: chartData.daily,
+                    weekly: chartData.weekly,
+                    monthly: chartData.monthly
+                },
+                performance: {
+                    inspectors: chartData.inspectors,
+                    clients: chartData.clients,
+                    commodities: chartData.commodities
+                },
+                risk_assessment: {
+                    high_risk_clients: chartData.highRiskClients
+                }
+            };
+
+            fetch(`/export-analytics/${format}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `comprehensive_analytics_report_${new Date().toISOString().split('T')[0]}.${format}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Export failed:', error);
+                alert('Export failed. Please try again.');
+            });
+        }
+
+        // Initialize all charts and components
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing analytics dashboard...');
+            
+            try {
+                createInspectionsChart();
+                console.log('Inspections chart created');
+            } catch (error) {
+                console.error('Error creating inspections chart:', error);
+            }
+            
+            try {
+                createComplianceChart();
+                console.log('Compliance chart created');
+            } catch (error) {
+                console.error('Error creating compliance chart:', error);
+            }
+            
+            try {
+                createInspectorsChart();
+                console.log('Inspectors chart created');
+            } catch (error) {
+                console.error('Error creating inspectors chart:', error);
+            }
+            
+            try {
+                createCommodityChart();
+                console.log('Commodity chart created');
+            } catch (error) {
+                console.error('Error creating commodity chart:', error);
+            }
+            
+            try {
+                createDistanceChart();
+                console.log('Distance chart created');
+            } catch (error) {
+                console.error('Error creating distance chart:', error);
+            }
+            
+            try {
+                createRiskChart();
+                console.log('Risk chart created');
+            } catch (error) {
+                console.error('Error creating risk chart:', error);
+            }
+            
+            try {
+                createCompaniesChart();
+                console.log('Companies chart created');
+            } catch (error) {
+                console.error('Error creating companies chart:', error);
+            }
+            
+            try {
+                populateHighRiskTable();
+                console.log('High risk table populated');
+            } catch (error) {
+                console.error('Error populating high risk table:', error);
+            }
+            
+            try {
+                handleTimeRangeChange();
+                console.log('Time range change handler initialized');
+            } catch (error) {
+                console.error('Error initializing time range change handler:', error);
+            }
+            
+            console.log('Analytics dashboard initialization complete');
         });
     </script>
 </body>

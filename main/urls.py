@@ -3,7 +3,7 @@ from . import views
 from .views.core_views import (
     settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients, 
     refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment, 
-    delete_inspection, upload_document, user_management, system_logs, 
+    delete_inspection, upload_document, user_management, system_logs, refresh_tokens,
     update_bought_sample, update_group_approved, dashboard, compliance_documents, onedrive_view, compliance_linking_page, 
     get_inspection_data, process_document_links, download_compliance_documents, 
     process_all_compliance_documents, start_compliance_document_download, 
@@ -107,6 +107,7 @@ urlpatterns = [
     path('session-status/', session_status, name='session_status'),
     path('user-management/', user_management, name='user_management'),
     path('system-logs/', system_logs, name='system_logs'),
+    path('api/refresh-tokens/', refresh_tokens, name='refresh_tokens'),
     path('developer/compliance-documents/', compliance_documents, name='compliance_documents'),
     path('developer/onedrive-view/', onedrive_view, name='onedrive_view'),
     path('developer/compliance-documents/linking/', compliance_linking_page, name='compliance_linking_page'),

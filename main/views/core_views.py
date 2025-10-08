@@ -4019,7 +4019,7 @@ def inspector_dashboard(request):
 
 @login_required
 def analytics_dashboard(request):
-    """Display the Power BI analytics dashboard with basic analytics data."""
+    """Display comprehensive analytics dashboard with advanced metrics and insights."""
     # Block administrators from accessing analytics dashboard
     if request.user.role == 'admin':
         return redirect('home')
@@ -4029,40 +4029,254 @@ def analytics_dashboard(request):
         return redirect('inspector_dashboard')
     
     from ..models import Client, Inspection, FoodSafetyAgencyInspection
-    from django.db.models import Count, Q
+    from django.db.models import Count, Q, Avg, Max, Min, Sum, Case, When, IntegerField
+    from django.db.models.functions import TruncMonth, TruncWeek, TruncDay, Extract
     from datetime import datetime, timedelta
+    import json
+    from django.core.serializers.json import DjangoJSONEncoder
     
-    # Get basic statistics
+    # Date ranges for analysis
+    now = datetime.now()
+    thirty_days_ago = now - timedelta(days=30)
+    seven_days_ago = now - timedelta(days=7)
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    last_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+    last_month_end = current_month_start - timedelta(days=1)
+    start_date = date(2025, 10, 1)
+    end_date = date(2026, 4, 1)
+    
+    # === BASIC STATISTICS ===
     total_clients = Client.objects.count()
     total_inspections = Inspection.objects.count()
     total_food_safety_inspections = FoodSafetyAgencyInspection.objects.count()
     
-    # Get recent activity (last 30 days)
-    thirty_days_ago = datetime.now() - timedelta(days=30)
+    # === TIME-BASED METRICS ===
     recent_inspections = FoodSafetyAgencyInspection.objects.filter(
         date_of_inspection__gte=thirty_days_ago
     ).count()
     
-    # Get this month's inspections
-    current_month_start = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    this_week_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=seven_days_ago
+    ).count()
+    
     this_month_inspections = FoodSafetyAgencyInspection.objects.filter(
         date_of_inspection__gte=current_month_start
     ).count()
     
-    # Get average inspections per month (Oct 2025 to Apr 2026)
-    start_date = date(2025, 10, 1)
-    end_date = date(2026, 4, 1)
+    last_month_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=last_month_start,
+        date_of_inspection__lte=last_month_end
+    ).count()
+    
+    # Calculate growth rates
+    month_growth_rate = 0
+    if last_month_inspections > 0:
+        month_growth_rate = ((this_month_inspections - last_month_inspections) / last_month_inspections) * 100
+    
+    # === COMPLIANCE ANALYTICS ===
+    compliance_stats = FoodSafetyAgencyInspection.objects.aggregate(
+        total=Count('id'),
+        compliant=Count('id', filter=Q(approved_status='YES')),
+        non_compliant=Count('id', filter=Q(approved_status='PENDING'))
+    )
+    
+    compliance_rate = 0
+    if compliance_stats['total'] > 0:
+        compliance_rate = (compliance_stats['compliant'] / compliance_stats['total']) * 100
+    
+    # === RFI (REQUEST FOR INFORMATION) ANALYTICS ===
+    rfi_stats = FoodSafetyAgencyInspection.objects.aggregate(
+        total=Count('id'),
+        with_rfi=Count('id', filter=Q(rfi_uploaded_date__isnull=False)),
+        without_rfi=Count('id', filter=Q(rfi_uploaded_date__isnull=True))
+    )
+    
+    rfi_rate = 0
+    if rfi_stats['total'] > 0:
+        rfi_rate = (rfi_stats['with_rfi'] / rfi_stats['total']) * 100
+    
+    # === INSPECTOR PERFORMANCE ===
+    inspector_performance = FoodSafetyAgencyInspection.objects.values('inspector_name').annotate(
+        total_inspections=Count('id'),
+        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        avg_hours=Avg('hours'),
+        avg_distance=Avg('km_traveled'),
+        last_inspection=Max('date_of_inspection')
+    ).order_by('-total_inspections')[:15]
+    
+    # Calculate compliance rate for each inspector
+    for inspector in inspector_performance:
+        if inspector['total_inspections'] > 0:
+            inspector['compliance_rate'] = (inspector['compliant_inspections'] / inspector['total_inspections']) * 100
+        else:
+            inspector['compliance_rate'] = 0
+    
+    # === CLIENT ANALYTICS ===
+    client_analytics = FoodSafetyAgencyInspection.objects.values('client_name').annotate(
+        total_inspections=Count('id'),
+        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        avg_hours=Avg('hours'),
+        avg_distance=Avg('km_traveled'),
+        last_inspection=Max('date_of_inspection'),
+        first_inspection=Min('date_of_inspection')
+    ).order_by('-total_inspections')[:20]
+    
+    # Calculate compliance rate and risk score for each client
+    for client in client_analytics:
+        if client['total_inspections'] > 0:
+            client['compliance_rate'] = (client['compliant_inspections'] / client['total_inspections']) * 100
+            # Risk score: lower compliance rate = higher risk
+            client['risk_score'] = max(0, 100 - client['compliance_rate'])
+        else:
+            client['compliance_rate'] = 0
+            client['risk_score'] = 100
+    
+    # === COMMODITY ANALYSIS ===
+    commodity_analysis = FoodSafetyAgencyInspection.objects.values('commodity').annotate(
+        total_inspections=Count('id'),
+        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        avg_hours=Avg('hours'),
+        avg_distance=Avg('km_traveled')
+    ).order_by('-total_inspections')
+    
+    for commodity in commodity_analysis:
+        if commodity['total_inspections'] > 0:
+            commodity['compliance_rate'] = (commodity['compliant_inspections'] / commodity['total_inspections']) * 100
+        else:
+            commodity['compliance_rate'] = 0
+    
+    # === GEOGRAPHIC ANALYSIS ===
+    geographic_analysis = FoodSafetyAgencyInspection.objects.exclude(
+        Q(km_traveled__isnull=True) | Q(km_traveled=0)
+    ).aggregate(
+        avg_distance=Avg('km_traveled'),
+        max_distance=Max('km_traveled'),
+        min_distance=Min('km_traveled'),
+        total_distance=Sum('km_traveled')
+    )
+    
+    # === TIME SERIES DATA ===
+    # Daily inspections for last 30 days
+    daily_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=thirty_days_ago
+    ).annotate(
+        day=TruncDay('date_of_inspection')
+    ).values('day').annotate(
+        count=Count('id'),
+        compliant=Count('id', filter=Q(approved_status='YES')),
+        non_compliant=Count('id', filter=Q(approved_status='PENDING'))
+    ).order_by('day')
+    
+    # Weekly inspections for last 12 weeks
+    weekly_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=now - timedelta(weeks=12)
+    ).annotate(
+        week=TruncWeek('date_of_inspection')
+    ).values('week').annotate(
+        count=Count('id'),
+        compliant=Count('id', filter=Q(approved_status='YES')),
+        non_compliant=Count('id', filter=Q(approved_status='PENDING'))
+    ).order_by('week')
+    
+    # Monthly inspections for last 12 months
+    monthly_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=now - timedelta(days=365)
+    ).annotate(
+        month=TruncMonth('date_of_inspection')
+    ).values('month').annotate(
+        count=Count('id'),
+        compliant=Count('id', filter=Q(approved_status='YES')),
+        non_compliant=Count('id', filter=Q(approved_status='PENDING'))
+    ).order_by('month')
+    
+    # === HOURS AND EFFICIENCY ANALYSIS ===
+    hours_analysis = FoodSafetyAgencyInspection.objects.exclude(
+        Q(hours__isnull=True) | Q(hours=0)
+    ).aggregate(
+        avg_hours=Avg('hours'),
+        max_hours=Max('hours'),
+        min_hours=Min('hours'),
+        total_hours=Sum('hours')
+    )
+    
+    # === TREND ANALYSIS ===
+    # Calculate moving averages
+    def calculate_moving_average(data, window=7):
+        if len(data) < window:
+            return data
+        result = []
+        for i in range(len(data)):
+            if i < window - 1:
+                result.append(data[i])
+            else:
+                avg = sum(data[i-window+1:i+1]) / window
+                result.append(avg)
+        return result
+    
+    # === FORECASTING ===
+    # Simple linear trend forecasting for next 3 months
+    if len(monthly_inspections) >= 3:
+        recent_counts = [item['count'] for item in monthly_inspections[-3:]]
+        if len(recent_counts) >= 2:
+            # Simple linear trend
+            trend = (recent_counts[-1] - recent_counts[0]) / (len(recent_counts) - 1)
+            forecast_data = []
+            for i in range(1, 4):  # Next 3 months
+                forecast_count = max(0, int(recent_counts[-1] + (trend * i)))
+                forecast_data.append({
+                    'month': (now + timedelta(days=30*i)).strftime('%Y-%m'),
+                    'count': forecast_count
+                })
+        else:
+            forecast_data = []
+    else:
+        forecast_data = []
+    
+    # === KPI CALCULATIONS ===
+    # Average inspections per month (Oct 2025 to Apr 2026)
     avg_monthly_inspections = FoodSafetyAgencyInspection.objects.filter(
         date_of_inspection__gte=start_date,
         date_of_inspection__lt=end_date
     ).count() / 6
     
-    # Get commodity breakdown
-    commodity_stats = FoodSafetyAgencyInspection.objects.values('commodity').annotate(
-        count=Count('commodity')
-    ).order_by('-count')
+    # Efficiency metrics
+    efficiency_metrics = {
+        'inspections_per_day': recent_inspections / 30 if recent_inspections > 0 else 0,
+        'avg_inspection_duration': hours_analysis['avg_hours'] or 0,
+        'compliance_rate': compliance_rate,
+        'rfi_rate': rfi_rate,
+        'month_growth_rate': month_growth_rate
+    }
     
-    # Get top clients by inspection count
+    # === RISK ASSESSMENT ===
+    # High-risk clients (low compliance rate, recent inspections)
+    high_risk_clients = [
+        client for client in client_analytics[:10] 
+        if client['compliance_rate'] < 70 and client['total_inspections'] >= 3
+    ]
+    
+    # === EXPORT DATA PREPARATION ===
+    export_data = {
+        'summary': {
+            'total_clients': total_clients,
+            'total_inspections': total_food_safety_inspections,
+            'compliance_rate': compliance_rate,
+            'rfi_rate': rfi_rate,
+            'month_growth_rate': month_growth_rate
+        },
+        'time_series': {
+            'daily': list(daily_inspections),
+            'weekly': list(weekly_inspections),
+            'monthly': list(monthly_inspections)
+        },
+        'performance': {
+            'inspectors': list(inspector_performance),
+            'clients': list(client_analytics),
+            'commodities': list(commodity_analysis)
+        }
+    }
+    
+    # === TOP CLIENTS (LEGACY SUPPORT) ===
     top_clients = FoodSafetyAgencyInspection.objects.values('client_name').annotate(
         count=Count('client_name')
     ).order_by('-count')[:10]
@@ -4075,105 +4289,76 @@ def analytics_dashboard(request):
         else:
             client['percentage'] = 0
     
-    # Get monthly trends (Oct 2025 to Apr 2026)
-    monthly_trends = FoodSafetyAgencyInspection.objects.filter(
-        date_of_inspection__gte=start_date,
-        date_of_inspection__lt=end_date
-    ).extra(
-        select={'month': "EXTRACT(month FROM date_of_inspection)"}
-    ).values('month').annotate(
-        count=Count('id')
-    ).order_by('month')
-    
-    # Convert month numbers to month names
-    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    for trend in monthly_trends:
-        month_num = int(trend['month']) - 1  # Convert to 0-based index
-        if 0 <= month_num < 12:
-            trend['month_name'] = month_names[month_num]
-        else:
-            trend['month_name'] = 'Unknown'
-    
-    # Get inspections over time (monthly for last 12 months)
-    from django.db.models.functions import TruncMonth
-    monthly_inspections = FoodSafetyAgencyInspection.objects.filter(
-        date_of_inspection__gte=datetime.now() - timedelta(days=365)
-    ).annotate(
-        month=TruncMonth('date_of_inspection')
-    ).values('month').annotate(
-        count=Count('id')
-    ).order_by('month')
-    
-    # Get top inspectors by inspection count
-    top_inspectors = FoodSafetyAgencyInspection.objects.values('inspector_name').annotate(
+    # === MAJOR COMPANIES (LEGACY SUPPORT) ===
+    major_companies = FoodSafetyAgencyInspection.objects.filter(
+        Q(client_name__icontains='Shoprite') |
+        Q(client_name__icontains='Boxer') |
+        Q(client_name__icontains='Pick n Pay') |
+        Q(client_name__icontains='Woolworths') |
+        Q(client_name__icontains='Spar') |
+        Q(client_name__icontains='Checkers') |
+        Q(client_name__icontains='Food Lover') |
+        Q(client_name__icontains='Massmart') |
+        Q(client_name__icontains='Makro') |
+        Q(client_name__icontains='Game')
+    ).values('client_name').annotate(
         count=Count('id')
     ).order_by('-count')[:10]
     
-    # Get major companies (Shoprite, Boxer, Pick n Pay, etc.)
-    major_companies = FoodSafetyAgencyInspection.objects.values('client_name').annotate(
-        count=Count('id')
-    ).filter(
-        models.Q(client_name__icontains='shoprite') |
-        models.Q(client_name__icontains='boxer') |
-        models.Q(client_name__icontains='pick') |
-        models.Q(client_name__icontains='spar') |
-        models.Q(client_name__icontains='woolworths')
-    ).order_by('-count')
-    
-    # Simple forecasting for next 3 months
-    if monthly_inspections:
-        # Calculate average monthly growth rate
-        recent_months = list(monthly_inspections)[-6:]  # Last 6 months
-        if len(recent_months) >= 2:
-            # Calculate average monthly change
-            total_change = recent_months[-1]['count'] - recent_months[0]['count']
-            avg_monthly_change = total_change / (len(recent_months) - 1)
-            
-            # Generate forecast for next 3 months
-            last_count = recent_months[-1]['count']
-            forecast_data = []
-            for i in range(1, 4):
-                forecast_count = max(0, last_count + (avg_monthly_change * i))
-                forecast_data.append({
-                    'month': f'Forecast {i}',
-                    'count': round(forecast_count, 0)
-                })
-        else:
-            forecast_data = []
-    else:
-        forecast_data = []
-    
-    # Debug: Print some values to see what's happening
-    print(f"Debug - Total clients: {total_clients}")
-    print(f"Debug - Total inspections: {total_inspections}")
-    print(f"Debug - Total food safety inspections: {total_food_safety_inspections}")
-    print(f"Debug - Monthly inspections count: {len(monthly_inspections)}")
-    print(f"Debug - Top inspectors count: {len(top_inspectors)}")
-    print(f"Debug - Major companies count: {len(major_companies)}")
-    
-    # Debug: Print sample data
-    if monthly_inspections:
-        print(f"Debug - Sample monthly data: {list(monthly_inspections)[:2]}")
-    if top_inspectors:
-        print(f"Debug - Sample inspector data: {list(top_inspectors)[:2]}")
-    if major_companies:
-        print(f"Debug - Sample company data: {list(major_companies)[:2]}")
-    
-    # Convert QuerySets to lists for proper JSON serialization
-    import json
-    from django.core.serializers.json import DjangoJSONEncoder
+    # === CONTEXT PREPARATION ===
+    # Ensure all data is properly JSON-encoded and handle None values
+    def safe_json_dumps(data, default=None):
+        """Safely convert data to JSON, handling None values"""
+        if data is None:
+            return json.dumps(default or [])
+        try:
+            return json.dumps(data, cls=DjangoJSONEncoder)
+        except (TypeError, ValueError):
+            return json.dumps(default or [])
     
     context = {
-        'total_clients': total_clients,
-        'total_inspections': total_inspections,
-        'total_food_safety_inspections': total_food_safety_inspections,
-        'recent_inspections': recent_inspections,
-        'this_month_inspections': this_month_inspections,
-        'avg_monthly_inspections': round(avg_monthly_inspections, 1),
-        'monthly_inspections': json.dumps(list(monthly_inspections), cls=DjangoJSONEncoder),
-        'top_inspectors': json.dumps(list(top_inspectors), cls=DjangoJSONEncoder),
-        'major_companies': json.dumps(list(major_companies), cls=DjangoJSONEncoder),
-        'forecast_data': json.dumps(forecast_data, cls=DjangoJSONEncoder),
+        # Basic statistics
+        'total_clients': total_clients or 0,
+        'total_inspections': total_inspections or 0,
+        'total_food_safety_inspections': total_food_safety_inspections or 0,
+        'recent_inspections': recent_inspections or 0,
+        'this_week_inspections': this_week_inspections or 0,
+        'this_month_inspections': this_month_inspections or 0,
+        'last_month_inspections': last_month_inspections or 0,
+        'avg_monthly_inspections': round(avg_monthly_inspections or 0, 1),
+        
+        # Compliance and RFI metrics
+        'compliance_rate': round(compliance_rate or 0, 1),
+        'compliance_stats': safe_json_dumps(compliance_stats, {'total': 0, 'compliant': 0, 'non_compliant': 0}),
+        'rfi_rate': round(rfi_rate or 0, 1),
+        'rfi_stats': safe_json_dumps(rfi_stats, {'total': 0, 'with_rfi': 0, 'without_rfi': 0}),
+        'month_growth_rate': round(month_growth_rate or 0, 1),
+        
+        # Performance data
+        'inspector_performance': safe_json_dumps(list(inspector_performance), []),
+        'client_analytics': safe_json_dumps(list(client_analytics), []),
+        'commodity_analysis': safe_json_dumps(list(commodity_analysis), []),
+        
+        # Time series data
+        'daily_inspections': safe_json_dumps(list(daily_inspections), []),
+        'weekly_inspections': safe_json_dumps(list(weekly_inspections), []),
+        'monthly_inspections': safe_json_dumps(list(monthly_inspections), []),
+        
+        # Geographic and efficiency data
+        'geographic_analysis': safe_json_dumps(geographic_analysis, {'avg_distance': 0, 'max_distance': 0, 'min_distance': 0}),
+        'hours_analysis': safe_json_dumps(hours_analysis, {'avg_hours': 0, 'max_hours': 0, 'min_hours': 0, 'total_hours': 0}),
+        'efficiency_metrics': safe_json_dumps(efficiency_metrics, {'inspections_per_day': 0, 'avg_inspection_duration': 0, 'compliance_rate': 0, 'rfi_rate': 0, 'month_growth_rate': 0}),
+        
+        # Risk assessment
+        'high_risk_clients': safe_json_dumps(high_risk_clients, []),
+        
+        # Legacy data for existing charts
+        'top_inspectors': safe_json_dumps(list(inspector_performance[:10]), []),
+        'major_companies': safe_json_dumps(list(major_companies), []),
+        'forecast_data': safe_json_dumps(forecast_data, []),
+        
+        # Export data
+        'export_data': safe_json_dumps(export_data, {}),
     }
     
     return render(request, 'main/analytics_dashboard.html', context)
@@ -10871,6 +11056,76 @@ def system_logs(request):
     return render(request, 'main/system_logs.html', context)
 
 
+@login_required
+@role_required(['admin', 'super_admin', 'developer'])
+def refresh_tokens(request):
+    """Refresh OneDrive and Google Sheets tokens."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Invalid request method'})
+    
+    try:
+        from ..utils.onedrive_utils import refresh_access_token
+        from ..services.google_sheets_service import GoogleSheetsService
+        
+        results = {
+            'onedrive': {'success': False, 'message': ''},
+            'google_sheets': {'success': False, 'message': ''}
+        }
+        
+        # Refresh OneDrive token
+        try:
+            onedrive_token = refresh_access_token()
+            if onedrive_token:
+                results['onedrive'] = {
+                    'success': True, 
+                    'message': 'OneDrive token refreshed successfully'
+                }
+            else:
+                results['onedrive'] = {
+                    'success': False, 
+                    'message': 'Failed to refresh OneDrive token'
+                }
+        except Exception as e:
+            results['onedrive'] = {
+                'success': False, 
+                'message': f'OneDrive token refresh error: {str(e)}'
+            }
+        
+        # Refresh Google Sheets token
+        try:
+            google_service = GoogleSheetsService()
+            if google_service.authenticate():
+                results['google_sheets'] = {
+                    'success': True, 
+                    'message': 'Google Sheets token refreshed successfully'
+                }
+            else:
+                results['google_sheets'] = {
+                    'success': False, 
+                    'message': 'Failed to refresh Google Sheets token'
+                }
+        except Exception as e:
+            results['google_sheets'] = {
+                'success': False, 
+                'message': f'Google Sheets token refresh error: {str(e)}'
+            }
+        
+        # Check if any refresh was successful
+        any_success = results['onedrive']['success'] or results['google_sheets']['success']
+        
+        return JsonResponse({
+            'success': any_success,
+            'message': 'Token refresh completed',
+            'results': results
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Token refresh failed: {str(e)}'
+        })
+
+
 # =============================================================================
 # INSPECTOR MAPPING MANAGEMENT VIEWS
 # =============================================================================
@@ -11846,6 +12101,9 @@ def stop_onedrive_service(request):
 def test_onedrive_connection(request):
     """Test OneDrive connection."""
     try:
+        import os
+        import json
+        from django.conf import settings
         from ..services.onedrive_direct_service import OneDriveDirectUploadService
         
         onedrive_service = OneDriveDirectUploadService()
@@ -11870,14 +12128,42 @@ def test_onedrive_connection(request):
                 'connected': True
             })
         else:
-            return JsonResponse({
-                'success': False, 
-                'message': 'OneDrive connection failed. Please check authentication.',
-                'connected': False
-            })
+            # Check if it's a token issue
+            token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
+            if os.path.exists(token_file):
+                with open(token_file, 'r') as f:
+                    tokens = json.load(f)
+                
+                refresh_token = tokens.get('refresh_token')
+                if not refresh_token:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'OneDrive refresh token missing. Please re-authenticate in Settings.',
+                        'connected': False,
+                        'needs_reauth': True
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False, 
+                        'message': 'OneDrive connection failed. Please check authentication.',
+                        'connected': False,
+                        'needs_reauth': True
+                    })
+            else:
+                return JsonResponse({
+                    'success': False, 
+                    'message': 'OneDrive not configured. Please authenticate in Settings.',
+                    'connected': False,
+                    'needs_reauth': True
+                })
         
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+        return JsonResponse({
+            'success': False, 
+            'error': str(e),
+            'message': f'OneDrive connection test failed: {str(e)}',
+            'connected': False
+        }, status=500)
 
 
 @login_required

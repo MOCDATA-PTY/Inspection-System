@@ -3939,12 +3939,6 @@
             <div style="font-size: 14px; font-weight: bold;">Food Safety Agency</div>
         </div>
         <div class="mobile-nav-links">
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' and request.user.role != 'admin' %}
-            <a href="{% url 'home' %}">
-                <i class="fas fa-home"></i> Home
-            </a>
-            {% endif %}
-            
             <a href="{% url 'shipment_list' %}">
                 <i class="fas fa-clipboard-check"></i> Inspections
             </a>
@@ -3952,10 +3946,6 @@
             {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
             <a href="{% url 'client_allocation' %}">
                 <i class="fas fa-users"></i> Manage Clients
-            </a>
-            
-            <a href="{% url 'analytics_dashboard' %}">
-                <i class="fas fa-chart-line"></i> Home
             </a>
             {% endif %}
             
@@ -3982,11 +3972,14 @@
             
             {% if request.user.role == 'inspector' %}
             <a href="{% url 'inspector_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
-                <i class="fas fa-chart-line"></i> My Home
+                <i class="fas fa-home"></i> My Home
             </a>
-            {% else %}
+            {% elif request.user.role != 'scientist' %}
+            <a href="{% url 'home' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
+                <i class="fas fa-home"></i> Home
+            </a>
             <a href="{% url 'analytics_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
-                <i class="fas fa-chart-line"></i> Home
+                <i class="fas fa-chart-line"></i> Analytics
             </a>
             {% endif %}
             
@@ -4019,14 +4012,21 @@
         <!-- User Context Message - Removed to hide status reset notifications -->
      
         <div class="action-bar">
-            <!-- Home Dashboard Button - Redirects based on user role (FIRST) -->
+            <!-- Home Button (FIRST) -->
             {% if request.user.role == 'inspector' %}
             <a href="{% url 'inspector_dashboard' %}" class="btn btn-primary">
-                <i class="fas fa-chart-line"></i> My Home
+                <i class="fas fa-home"></i> My Home
             </a>
             {% else %}
-            <a href="{% url 'analytics_dashboard' %}" class="btn btn-primary">
-                <i class="fas fa-chart-line"></i> Home
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Home
+            </a>
+            {% endif %}
+            
+            <!-- Analytics Button -->
+            {% if request.user.role != 'inspector' %}
+            <a href="{% url 'analytics_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-chart-line"></i> Analytics
             </a>
             {% endif %}
             
@@ -4039,13 +4039,6 @@
             <button type="button" class="btn btn-secondary" onclick="collapseAll()">
                 <i class="fas fa-compress-alt"></i> Collapse All
             </button>
-            
-            <!-- Home Button -->
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' and request.user.role != 'admin' %}
-            <a href="{% url 'home' %}" class="btn" style="background: #10b981; color: white;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
-                <i class="fas fa-home"></i> Home
-            </a>
-            {% endif %}
             
             <!-- Sync Shipments Button - Hidden for administrators -->
             {% if request.user.role != 'inspector' and request.user.role != 'scientist' and request.user.role != 'admin' %}
