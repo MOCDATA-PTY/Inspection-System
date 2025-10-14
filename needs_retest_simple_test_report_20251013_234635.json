@@ -1,0 +1,202 @@
+{
+  "summary": {
+    "total_tests": 32,
+    "passed_tests": 25,
+    "failed_tests": 7,
+    "success_rate": 78.125
+  },
+  "test_results": [
+    {
+      "test_name": "Test Data Creation",
+      "status": "PASS",
+      "message": "Created test inspections",
+      "timestamp": "2025-10-13T23:45:25.599279"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'YES'",
+      "status": "PASS",
+      "message": "Accepted valid value",
+      "timestamp": "2025-10-13T23:45:29.184080"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'NO'",
+      "status": "PASS",
+      "message": "Accepted valid value",
+      "timestamp": "2025-10-13T23:45:31.624179"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'yes'",
+      "status": "PASS",
+      "message": "Accepted valid value",
+      "timestamp": "2025-10-13T23:45:34.303928"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'no'",
+      "status": "PASS",
+      "message": "Accepted valid value",
+      "timestamp": "2025-10-13T23:45:37.487916"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'pending'",
+      "status": "FAIL",
+      "message": "Rejected valid value: Error updating needs retest: value too long for type character varying(3)\n",
+      "timestamp": "2025-10-13T23:45:40.139821"
+    },
+    {
+      "test_name": "Backend API - Valid Value 'PENDING'",
+      "status": "FAIL",
+      "message": "Rejected valid value: Error updating needs retest: value too long for type character varying(3)\n",
+      "timestamp": "2025-10-13T23:45:42.495993"
+    },
+    {
+      "test_name": "Backend API - Valid Value ''",
+      "status": "PASS",
+      "message": "Accepted valid value",
+      "timestamp": "2025-10-13T23:45:45.259803"
+    },
+    {
+      "test_name": "Backend API - Invalid Value 'invalid'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:47.307783"
+    },
+    {
+      "test_name": "Backend API - Invalid Value 'maybe'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:49.356256"
+    },
+    {
+      "test_name": "Backend API - Invalid Value '123'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:51.711217"
+    },
+    {
+      "test_name": "Backend API - Invalid Value 'true'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:53.861858"
+    },
+    {
+      "test_name": "Backend API - Invalid Value 'false'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:56.218553"
+    },
+    {
+      "test_name": "Backend API - Invalid Value 'xyz'",
+      "status": "PASS",
+      "message": "Correctly rejected invalid value",
+      "timestamp": "2025-10-13T23:45:58.367497"
+    },
+    {
+      "test_name": "Case Conversion - 'yes'",
+      "status": "PASS",
+      "message": "Converted to 'YES'",
+      "timestamp": "2025-10-13T23:46:01.337552"
+    },
+    {
+      "test_name": "Case Conversion - 'no'",
+      "status": "PASS",
+      "message": "Converted to 'NO'",
+      "timestamp": "2025-10-13T23:46:04.002199"
+    },
+    {
+      "test_name": "Case Conversion - 'pending'",
+      "status": "FAIL",
+      "message": "API error: Error updating needs retest: value too long for type character varying(3)\n",
+      "timestamp": "2025-10-13T23:46:06.149878"
+    },
+    {
+      "test_name": "Case Conversion - 'YES'",
+      "status": "PASS",
+      "message": "Converted to 'YES'",
+      "timestamp": "2025-10-13T23:46:08.665183"
+    },
+    {
+      "test_name": "Case Conversion - 'NO'",
+      "status": "PASS",
+      "message": "Converted to 'NO'",
+      "timestamp": "2025-10-13T23:46:11.372441"
+    },
+    {
+      "test_name": "Case Conversion - 'PENDING'",
+      "status": "FAIL",
+      "message": "API error: Error updating needs retest: value too long for type character varying(3)\n",
+      "timestamp": "2025-10-13T23:46:13.727431"
+    },
+    {
+      "test_name": "Case Conversion - ''",
+      "status": "PASS",
+      "message": "Converted to 'None'",
+      "timestamp": "2025-10-13T23:46:16.697269"
+    },
+    {
+      "test_name": "No Sample - API Response",
+      "status": "PASS",
+      "message": "API correctly handles no sample scenario",
+      "timestamp": "2025-10-13T23:46:18.745503"
+    },
+    {
+      "test_name": "No Sample - Database Check",
+      "status": "PASS",
+      "message": "Needs retest remains NO in database",
+      "timestamp": "2025-10-13T23:46:18.950482"
+    },
+    {
+      "test_name": "Error Handling - Non-existent ID",
+      "status": "FAIL",
+      "message": "Unexpected response: {'success': False, 'error': \"Error finding inspection: Field 'remote_id' expected a number but got 'NON_EXISTENT_001'.\"}",
+      "timestamp": "2025-10-13T23:46:20.339418"
+    },
+    {
+      "test_name": "Error Handling - Invalid Method",
+      "status": "PASS",
+      "message": "Correctly handled invalid request method",
+      "timestamp": "2025-10-13T23:46:21.492830"
+    },
+    {
+      "test_name": "Database Persistence - 'YES'",
+      "status": "PASS",
+      "message": "Value 'YES' persisted correctly",
+      "timestamp": "2025-10-13T23:46:23.968482"
+    },
+    {
+      "test_name": "Database Persistence - 'NO'",
+      "status": "PASS",
+      "message": "Value 'NO' persisted correctly",
+      "timestamp": "2025-10-13T23:46:26.324010"
+    },
+    {
+      "test_name": "Database Persistence - 'PENDING'",
+      "status": "FAIL",
+      "message": "API error: Error updating needs retest: value too long for type character varying(3)\n",
+      "timestamp": "2025-10-13T23:46:28.780342"
+    },
+    {
+      "test_name": "Template - Mobile Options",
+      "status": "FAIL",
+      "message": "Mobile dropdown options not found",
+      "timestamp": "2025-10-13T23:46:35.043169"
+    },
+    {
+      "test_name": "Template - Desktop Options",
+      "status": "PASS",
+      "message": "Desktop dropdown options found",
+      "timestamp": "2025-10-13T23:46:35.043398"
+    },
+    {
+      "test_name": "Template - JavaScript Functions",
+      "status": "PASS",
+      "message": "Required JavaScript functions found",
+      "timestamp": "2025-10-13T23:46:35.043663"
+    },
+    {
+      "test_name": "Template - CSS Classes",
+      "status": "PASS",
+      "message": "Required CSS classes found",
+      "timestamp": "2025-10-13T23:46:35.043706"
+    }
+  ]
+}
