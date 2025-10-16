@@ -474,7 +474,9 @@
             #shipmentsTable tbody tr td.col-email,
             #shipmentsTable tbody tr td.col-additional-email {
                 padding-left: 0;
+                padding-right: 15px;
                 margin-bottom: 15px;
+                text-align: right;
             }
             
             #shipmentsTable tbody tr td.col-email:before,
@@ -1575,10 +1577,12 @@
             #shipmentsTable tbody tr td.col-email,
             #shipmentsTable tbody tr td.col-additional-email {
                 padding-left: 0 !important;
+                padding-right: 15px !important;
                 margin-bottom: 15px !important;
                 background: #f8f9fa !important;
                 border-radius: 6px !important;
                 padding: 10px !important;
+                text-align: right !important;
             }
             
             #shipmentsTable tbody tr td.col-email:before,
@@ -1789,7 +1793,7 @@
             .col-date { width: 90px; min-width: 90px; max-width: 90px; white-space: nowrap; }
             .col-compliance { width: 75px; min-width: 75px; max-width: 75px; text-align: center; }
             .col-email { width: auto; min-width: 150px; max-width: none; white-space: nowrap; }
-            .col-inspector { width: 65px; min-width: 65px; max-width: 65px; }
+            .col-inspector { width: auto; min-width: fit-content; max-width: none; white-space: nowrap; }
             .col-view-files { width: 45px; min-width: 45px; max-width: 45px; }
             .col-rfi { width: 50px; min-width: 50px; max-width: 50px; }
             .col-invoice { width: 50px; min-width: 50px; max-width: 50px; }
@@ -1882,7 +1886,7 @@
             .col-date { width: 85px; min-width: 85px; max-width: 85px; white-space: nowrap; }
             .col-compliance { width: 65px; min-width: 65px; max-width: 65px; text-align: center; }
             .col-email { width: auto; min-width: 140px; max-width: none; white-space: nowrap; }
-            .col-inspector { width: 55px; min-width: 55px; max-width: 55px; }
+            .col-inspector { width: auto; min-width: fit-content; max-width: none; white-space: nowrap; }
             .col-view-files { width: 40px; min-width: 40px; max-width: 40px; }
             .col-rfi { width: 45px; min-width: 45px; max-width: 45px; }
             .col-invoice { width: 45px; min-width: 45px; max-width: 45px; }
@@ -1965,7 +1969,7 @@
             .col-date { width: 95px; min-width: 95px; max-width: 95px; white-space: nowrap; }
             .col-compliance { width: 85px; min-width: 85px; max-width: 85px; text-align: center; }
             .col-email { width: auto; min-width: 140px; max-width: none; white-space: nowrap; }
-            .col-inspector { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-inspector { width: auto; min-width: fit-content; max-width: none; white-space: nowrap; }
             .col-view-files { width: 50px; min-width: 50px; max-width: 50px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
             .col-invoice { width: 55px; min-width: 55px; max-width: 55px; }
@@ -2044,7 +2048,7 @@
             .col-date { width: 100px; min-width: 100px; max-width: 100px; white-space: nowrap; }
             .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
             .col-email { width: auto; min-width: 150px; max-width: none; white-space: nowrap; }
-            .col-inspector { width: 75px; min-width: 75px; max-width: 75px; }
+            .col-inspector { width: auto; min-width: fit-content; max-width: none; white-space: nowrap; }
             .col-view-files { width: 55px; min-width: 55px; max-width: 55px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
             .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
@@ -2224,15 +2228,17 @@
             max-width: 100px !important; 
             flex: none !important;
         }
-        .col-email { 
-            width: 200px !important; 
-            min-width: 200px !important; 
-            max-width: 200px !important; 
+        .col-email {
+            width: 200px !important;
+            min-width: 200px !important;
+            max-width: 200px !important;
             flex: none !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             position: relative;
+            text-align: right !important;
+            padding-right: 15px !important;
         }
         
         /* Email line styling to prevent overflow */
@@ -2243,6 +2249,7 @@
             max-width: 100%;
             display: block;
             font-size: 0.75rem;
+            text-align: right;
         }
         .col-compliance { 
             width: 100px !important; 
@@ -2251,10 +2258,11 @@
             text-align: center;
             flex: none !important;
         }
-        .col-inspector { 
-            width: 80px !important; 
-            min-width: 80px !important; 
-            max-width: 80px !important; 
+        .col-inspector {
+            width: auto !important;
+            min-width: fit-content !important;
+            max-width: none !important;
+            white-space: nowrap !important;
             flex: none !important;
         }
         .col-view-files { 
@@ -4844,9 +4852,10 @@
             .col-date {
                 min-width: 80px;
             }
-            
+
             .col-inspector {
-                min-width: 100px;
+                min-width: fit-content;
+                white-space: nowrap;
             }
             
             .col-email {
