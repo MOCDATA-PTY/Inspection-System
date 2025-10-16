@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Dropdown Border Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .test-title {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        /* Class dropdown border styling - EXACT COPY from main template */
+        .product-class-select {
+            border: 2px solid #dc3545; /* Red border by default (no selection) */
+            transition: border-color 0.3s ease;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 300px;
+        }
+        
+        .product-class-select.has-value {
+            border-color: #28a745; /* Green border when value is selected */
+        }
+        
+        .product-class-select:disabled {
+            border-color: #6c757d; /* Gray border when disabled */
+        }
+        
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .test-button:hover {
+            background: #0056b3;
+        }
+        
+        .test-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-line;
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .status.red { background: #f8d7da; color: #721c24; }
+        .status.green { background: #d4edda; color: #155724; }
+        .status.gray { background: #e2e3e5; color: #383d41; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h2 class="test-title">Class Dropdown Border Test</h2>
+        
+        <label for="testDropdown">Test Dropdown:</label><br>
+        <select id="testDropdown" class="product-class-select">
+            <option value="">Select Class...</option>
+            <option value="Raw species sausage / wors">Raw species sausage / wors</option>
+            <option value="Extra Lean Mince">Extra Lean Mince</option>
+            <option value="Lean Mince">Lean Mince</option>
+            <option value="Regular Mince">Regular Mince</option>
+        </select>
+        
+        <br><br>
+        
+        <button class="test-button" onclick="testEmpty()">Test Empty (Should be RED)</button>
+        <button class="test-button" onclick="testPlaceholder()">Test Placeholder (Should be RED)</button>
+        <button class="test-button" onclick="testValue()">Test Real Value (Should be GREEN)</button>
+        <button class="test-button" onclick="testDisabled()">Test Disabled (Should be GRAY)</button>
+        <button class="test-button" onclick="runFullTest()">Run Full Test</button>
+        
+        <div id="testResults" class="test-results"></div>
+    </div>
+
+    <script>
+        // EXACT COPY of the logic from the main template
+        function updateBorderStyling(dropdown) {
+            console.log('[TEST] Dropdown value:', dropdown.value);
+            console.log('[TEST] Is empty?', !dropdown.value || dropdown.value === '');
+            console.log('[TEST] Is placeholder?', dropdown.value === 'Select Class...');
+            
+            if (dropdown.value && dropdown.value !== '' && dropdown.value !== 'Select Class...') {
+                dropdown.classList.add('has-value');
+                console.log('[TEST] Added has-value class - should be GREEN');
+                return 'GREEN';
+            } else {
+                dropdown.classList.remove('has-value');
+                console.log('[TEST] Removed has-value class - should be RED');
+                return 'RED';
+            }
+        }
+        
+        function getBorderColor(dropdown) {
+            const computedStyle = window.getComputedStyle(dropdown);
+            return computedStyle.borderColor;
+        }
+        
+        function logResult(testName, expected, actual, borderColor) {
+            const results = document.getElementById('testResults');
+            const status = expected === actual ? 'PASS' : 'FAIL';
+            const statusClass = expected === 'GREEN' ? 'green' : expected === 'RED' ? 'red' : 'gray';
+            
+            results.innerHTML += `${testName}: ${status}\n`;
+            results.innerHTML += `  Expected: ${expected} | Got: ${actual}\n`;
+            results.innerHTML += `  Border Color: ${borderColor}\n`;
+            results.innerHTML += `  Has 'has-value' class: ${dropdown.classList.contains('has-value')}\n\n`;
+        }
+        
+        function testEmpty() {
+            const dropdown = document.getElementById('testDropdown');
+            dropdown.value = '';
+            const result = updateBorderStyling(dropdown);
+            const borderColor = getBorderColor(dropdown);
+            logResult('Empty Test', 'RED', result, borderColor);
+        }
+        
+        function testPlaceholder() {
+            const dropdown = document.getElementById('testDropdown');
+            dropdown.value = 'Select Class...';
+            const result = updateBorderStyling(dropdown);
+            const borderColor = getBorderColor(dropdown);
+            logResult('Placeholder Test', 'RED', result, borderColor);
+        }
+        
+        function testValue() {
+            const dropdown = document.getElementById('testDropdown');
+            dropdown.value = 'Raw species sausage / wors';
+            const result = updateBorderStyling(dropdown);
+            const borderColor = getBorderColor(dropdown);
+            logResult('Real Value Test', 'GREEN', result, borderColor);
+        }
+        
+        function testDisabled() {
+            const dropdown = document.getElementById('testDropdown');
+            dropdown.disabled = true;
+            const borderColor = getBorderColor(dropdown);
+            logResult('Disabled Test', 'GRAY', 'GRAY', borderColor);
+            dropdown.disabled = false; // Re-enable for other tests
+        }
+        
+        function runFullTest() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = 'Running Full Test...\n\n';
+            
+            const dropdown = document.getElementById('testDropdown');
+            
+            // Test 1: Empty
+            dropdown.value = '';
+            const result1 = updateBorderStyling(dropdown);
+            const border1 = getBorderColor(dropdown);
+            logResult('Test 1 - Empty', 'RED', result1, border1);
+            
+            // Test 2: Placeholder
+            dropdown.value = 'Select Class...';
+            const result2 = updateBorderStyling(dropdown);
+            const border2 = getBorderColor(dropdown);
+            logResult('Test 2 - Placeholder', 'RED', result2, border2);
+            
+            // Test 3: Real Value
+            dropdown.value = 'Raw species sausage / wors';
+            const result3 = updateBorderStyling(dropdown);
+            const border3 = getBorderColor(dropdown);
+            logResult('Test 3 - Real Value', 'GREEN', result3, border3);
+            
+            // Test 4: Back to Empty
+            dropdown.value = '';
+            const result4 = updateBorderStyling(dropdown);
+            const border4 = getBorderColor(dropdown);
+            logResult('Test 4 - Back to Empty', 'RED', result4, border4);
+            
+            // Test 5: Disabled
+            dropdown.disabled = true;
+            const border5 = getBorderColor(dropdown);
+            logResult('Test 5 - Disabled', 'GRAY', 'GRAY', border5);
+            dropdown.disabled = false;
+            
+            results.innerHTML += '\n=== TEST COMPLETE ===\n';
+        }
+        
+        // Initialize with empty value
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('testDropdown');
+            updateBorderStyling(dropdown);
+        });
+    </script>
+</body>
+</html>
