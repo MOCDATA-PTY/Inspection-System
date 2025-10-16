@@ -2340,12 +2340,30 @@
             width: 20px;
             height: 20px;
             padding: 0;
-            font-size: 12px;
+            font-size: 20px;
+            font-weight: bold;
             line-height: 1;
-            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: #000;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            margin-left: 8px;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .remove-email-btn:hover {
+            color: #dc3545;
+            transform: scale(1.2);
+        }
+
+        .remove-email-btn:active {
+            transform: scale(1.0);
         }
         
         .add-email-btn {
@@ -2916,6 +2934,13 @@
             transition: all 0.2s ease;
             flex-shrink: 0;
             box-sizing: border-box;
+        }
+
+        /* Red border for zero values in KM and Hours */
+        .group-km-input.invalid-zero,
+        .group-hours-input.invalid-zero {
+            border: 2px solid #dc3545 !important;
+            border-color: #dc3545 !important;
         }
         
         .group-additional-email-input {
@@ -4808,14 +4833,10 @@
             .form-group {
                 grid-template-columns: 1fr;
             }
-            
+
+            /* Hide action-bar on mobile - use mobile menu instead */
             .action-bar {
-                flex-direction: column;
-            }
-            
-            .action-bar .btn {
-                width: 100%;
-                margin-bottom: 5px;
+                display: none !important;
             }
             
             /* Mobile Table Styles */
@@ -4857,12 +4878,75 @@
                 min-width: fit-content;
                 white-space: nowrap;
             }
-            
+
             .col-email {
                 min-width: 120px;
             }
-            
-            
+
+            /* Consistent RFI and Invoice button sizing on mobile */
+            .col-rfi .btn,
+            .col-invoice .btn {
+                width: 70px !important;
+                height: 32px !important;
+                min-width: 70px !important;
+                max-width: 70px !important;
+                padding: 4px 8px !important;
+                font-size: 11px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                white-space: nowrap !important;
+            }
+
+            /* Consistent dropdown sizing on mobile */
+            select.form-control,
+            select.form-control-sm,
+            .group-additional-email-input,
+            .group-km-input,
+            .group-hours-input,
+            input[type="email"].form-control-sm,
+            input[type="number"].form-control-sm {
+                width: 100% !important;
+                max-width: 150px !important;
+                min-width: 100px !important;
+                height: 32px !important;
+                font-size: 12px !important;
+                padding: 4px 8px !important;
+            }
+
+            /* Sent status dropdown consistency */
+            select[onchange*="updateSentStatus"] {
+                width: 120px !important;
+                min-width: 120px !important;
+                max-width: 120px !important;
+                height: 32px !important;
+            }
+
+            /* Mobile card button consistency - RFI and Invoice same size */
+            .group-card .grid-cols-2 button {
+                width: 100% !important;
+                height: 40px !important;
+                min-height: 40px !important;
+                max-height: 40px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 12px !important;
+                padding: 8px 12px !important;
+                flex: 1 !important;
+            }
+
+            /* Mobile card input consistency */
+            .group-card .group-km-input,
+            .group-card .group-hours-input {
+                width: 70px !important;
+                min-width: 70px !important;
+                max-width: 70px !important;
+                height: 28px !important;
+                font-size: 12px !important;
+            }
+
+
             .col-view-files {
                 min-width: 90px;
             }
@@ -5252,16 +5336,25 @@
             // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
 
+            if (!csrfToken) {
+                console.error('[ERROR] CSRF token not found');
+                alert('Security token missing. Please refresh the page.');
+                return;
+            }
+
             // Create form data
             const formData = new FormData();
             formData.append('group_id', groupId);
             formData.append('additional_email', emailValue);
             formData.append('csrfmiddlewaretoken', csrfToken);
 
+            console.log('[FETCH] Sending request to /update-group-additional-email/');
+
             // Send update request
             fetch('/update-group-additional-email/', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin'
             })
             .then(response => {
                 // Check if response is JSON or HTML (login redirect)
@@ -5294,7 +5387,25 @@
             })
             .catch(error => {
                 console.error('[ERROR] Network error saving additional emails:', error);
-                alert('Error updating additional emails: ' + error.message);
+
+                // Show user-friendly error messages
+                let errorMessage = 'Error updating additional emails: ';
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Unable to reach the server. Please check:\n';
+                    errorMessage += '1. Your internet connection\n';
+                    errorMessage += '2. The Django server is running\n';
+                    errorMessage += '3. The URL is correct';
+                } else {
+                    errorMessage += error.message;
+                }
+
+                alert(errorMessage);
+
+                // Show error feedback on input
+                input.style.backgroundColor = '#f8d7da';
+                setTimeout(() => {
+                    input.style.backgroundColor = '';
+                }, 1000);
             });
         }, 1000); // 1 second delay
 
@@ -5352,7 +5463,8 @@
                 allRows.forEach(row => {
                     const removeBtn = row.querySelector('.remove-email-btn');
                     if (removeBtn) {
-                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
+                        // Always show remove buttons
+                        removeBtn.style.display = 'flex';
                     }
                 });
 
@@ -5383,41 +5495,66 @@
                 const newInput = newRow.querySelector('.group-additional-email-input');
                 newInput.focus();
 
-                // Show remove buttons for all rows if there are multiple
+                // Show remove buttons for all rows
                 const allRows = emailInputs.querySelectorAll('.email-input-row');
                 allRows.forEach(row => {
                     const removeBtn = row.querySelector('.remove-email-btn');
                     if (removeBtn) {
-                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
+                        // Always show remove buttons
+                        removeBtn.style.display = 'flex';
                     }
                 });
             }
         };
 
         window.removeEmailInput = function(button) {
+            console.log('[REMOVE EMAIL] Function called', button);
+
             const row = button.closest('.email-input-row');
             const container = button.closest('.additional-emails-container');
             const emailInputs = container.querySelector('.email-inputs');
 
-            // Don't remove if it's the only row
+            console.log('[REMOVE EMAIL] Row:', row);
+            console.log('[REMOVE EMAIL] Container:', container);
+            console.log('[REMOVE EMAIL] Email inputs:', emailInputs);
+
+            // Check row count
             const allRows = emailInputs.querySelectorAll('.email-input-row');
+            console.log('[REMOVE EMAIL] Total rows:', allRows.length);
+
             if (allRows.length <= 1) {
+                // If it's the last row, just clear the input value instead of removing
+                console.log('[REMOVE EMAIL] Last row - clearing value instead of removing');
+                const input = row.querySelector('.group-additional-email-input');
+                if (input) {
+                    input.value = '';
+                    // Update the database to clear the email
+                    updateGroupAdditionalEmails(input);
+                }
                 return;
             }
 
             // Remove the row
+            console.log('[REMOVE EMAIL] Removing row');
             row.remove();
 
             // Update the database
-            updateGroupAdditionalEmails(container.querySelector('.group-additional-email-input'));
+            const firstInput = container.querySelector('.group-additional-email-input');
+            if (firstInput) {
+                console.log('[REMOVE EMAIL] Updating database after removal');
+                updateGroupAdditionalEmails(firstInput);
+            }
 
             // Show/hide remove buttons based on remaining rows
             const remainingRows = emailInputs.querySelectorAll('.email-input-row');
+            console.log('[REMOVE EMAIL] Remaining rows after removal:', remainingRows.length);
+
             remainingRows.forEach((row, index) => {
                 const removeBtn = row.querySelector('.remove-email-btn');
                 if (removeBtn) {
-                    // Show remove button if there are multiple rows, hide if only one
-                    removeBtn.style.display = remainingRows.length > 1 ? 'flex' : 'none';
+                    // Always show remove buttons
+                    removeBtn.style.display = 'flex';
+                    console.log(`[REMOVE EMAIL] Button ${index} display:`, removeBtn.style.display);
                 }
             });
         };
@@ -5823,23 +5960,22 @@
                                     <i class="fas fa-file-alt mr-1"></i> RFI
                                 </button>
                                 {% endif %}
-                            </div>
+
                                 {% if user.role != 'inspector' %}
-                                <div class="mt-2">
                                     {% if shipment.invoice_uploaded %}
-                                    <button class="w-full bg-green-500 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs font-medium touch-manipulation" disabled>
+                                    <button class="bg-green-500 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs font-medium touch-manipulation" disabled>
                                         <i class="fas fa-check mr-1"></i> Invoice ✓
                                     </button>
                                     {% else %}
-                                    <button class="w-full bg-gray-400 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200 touch-manipulation"
+                                    <button class="bg-gray-400 text-white py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200 touch-manipulation"
                                             onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')"
                                             data-client-name="{{ shipment.client_name }}"
                                             data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
                                         <i class="fas fa-file-invoice mr-1"></i> Invoice
                                     </button>
                                     {% endif %}
-                                </div>
                                 {% endif %}
+                            </div>
                             </div>
                         </div>
                         
@@ -8850,8 +8986,8 @@
                     return;
                 }
                 
-                // Show loading indicator
-                showStatusCheckProgress();
+                // Show loading indicator - DISABLED
+                // showStatusCheckProgress();
                 
                 const response = await fetch('/page-clients-status/', {
                     method: 'POST',
@@ -8904,20 +9040,20 @@
         }
 
         function showStatusCheckProgress() {
-            // Show a subtle progress indicator
-            const progressDiv = document.createElement('div');
-            progressDiv.id = 'statusCheckProgress';
-            progressDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 4px; z-index: 9999; font-size: 0.875rem;';
-            progressDiv.innerHTML = '<i class="fas fa-sync fa-spin"></i> Checking file status...';
-            document.body.appendChild(progressDiv);
+            // Disabled - no progress indicator shown
+            // const progressDiv = document.createElement('div');
+            // progressDiv.id = 'statusCheckProgress';
+            // progressDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 4px; z-index: 9999; font-size: 0.875rem;';
+            // progressDiv.innerHTML = '<i class="fas fa-sync fa-spin"></i> Checking file status...';
+            // document.body.appendChild(progressDiv);
         }
 
         function hideStatusCheckProgress() {
-            // Hide the progress indicator
-            const progressDiv = document.getElementById('statusCheckProgress');
-            if (progressDiv) {
-                progressDiv.remove();
-            }
+            // Disabled - no progress indicator to hide
+            // const progressDiv = document.getElementById('statusCheckProgress');
+            // if (progressDiv) {
+            //     progressDiv.remove();
+            // }
         }
         async function loadClientAllFilesOptimized(clientName, currentPageClients) {
             try {

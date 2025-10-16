@@ -934,8 +934,8 @@
                     return;
                 }
                 
-                // Show loading indicator
-                showStatusCheckProgress();
+                // Show loading indicator - DISABLED
+                // showStatusCheckProgress();
                 
                 const response = await fetch('/page-clients-status/', {
                     method: 'POST',
@@ -980,20 +980,20 @@
         }
 
         function showStatusCheckProgress() {
-            // Show a subtle progress indicator
-            const progressDiv = document.createElement('div');
-            progressDiv.id = 'statusCheckProgress';
-            progressDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 4px; z-index: 9999; font-size: 0.875rem;';
-            progressDiv.innerHTML = '<i class="fas fa-sync fa-spin"></i> Checking file status...';
-            document.body.appendChild(progressDiv);
+            // Disabled - no progress indicator shown
+            // const progressDiv = document.createElement('div');
+            // progressDiv.id = 'statusCheckProgress';
+            // progressDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 4px; z-index: 9999; font-size: 0.875rem;';
+            // progressDiv.innerHTML = '<i class="fas fa-sync fa-spin"></i> Checking file status...';
+            // document.body.appendChild(progressDiv);
         }
 
         function hideStatusCheckProgress() {
-            // Hide the progress indicator
-            const progressDiv = document.getElementById('statusCheckProgress');
-            if (progressDiv) {
-                progressDiv.remove();
-            }
+            // Disabled - no progress indicator to hide
+            // const progressDiv = document.getElementById('statusCheckProgress');
+            // if (progressDiv) {
+            //     progressDiv.remove();
+            // }
         }
 
         async function loadClientAllFilesOptimized(clientName, currentPageClients) {
