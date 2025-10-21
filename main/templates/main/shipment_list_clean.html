@@ -19,6 +19,7 @@
                     colors: {
                         primary: '#007890',
                         'primary-light': '#e6f3f7',
+                        'primary-dark': '#005a6b',
                         secondary: '#EC343C',
                         danger: '#EC343C',
                         warning: '#f59e0b',
@@ -40,6 +41,87 @@
                         'custom-lg': '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
                     }
                 }
+            }
+        }
+
+        // Global toggleSidebar function - available immediately for onclick
+        function toggleSidebar() {
+            console.log('🍔 ===== GLOBAL MENU TOGGLE STARTED =====');
+            console.log('🍔 Menu button clicked!');
+            
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            
+            console.log('🍔 Elements found:', {
+                sidebar: !!sidebar,
+                overlay: !!overlay,
+                mobileBtn: !!mobileBtn
+            });
+            
+            if (sidebar && overlay && mobileBtn) {
+                console.log('🍔 All elements found, proceeding with toggle...');
+                
+                // Check current state before toggle
+                const wasOpen = sidebar.classList.contains('show');
+                console.log('🍔 Current state - Sidebar open:', wasOpen);
+                console.log('🍔 Current sidebar classes:', sidebar.className);
+                console.log('🍔 Current overlay classes:', overlay.className);
+                
+                // Toggle classes
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+                
+                console.log('🍔 After toggle - Sidebar classes:', sidebar.className);
+                console.log('🍔 After toggle - Overlay classes:', overlay.className);
+                
+                // Check new state
+                const isNowOpen = sidebar.classList.contains('show');
+                console.log('🍔 New state - Sidebar open:', isNowOpen);
+                
+                // Update icon
+                const icon = mobileBtn.querySelector('i');
+                console.log('🍔 Icon element found:', !!icon);
+                console.log('🍔 Current icon classes:', icon ? icon.className : 'N/A');
+                
+                if (isNowOpen) {
+                    if (icon) {
+                        icon.className = 'fas fa-times';
+                        console.log('🍔 ✅ SIDEBAR OPENED - Icon changed to X');
+                        console.log('🍔 New icon classes:', icon.className);
+                    }
+                    
+                    // Check computed styles
+                    const sidebarStyles = getComputedStyle(sidebar);
+                    console.log('🍔 Sidebar computed styles:', {
+                        transform: sidebarStyles.transform,
+                        display: sidebarStyles.display,
+                        visibility: sidebarStyles.visibility,
+                        opacity: sidebarStyles.opacity,
+                        zIndex: sidebarStyles.zIndex
+                    });
+                    
+                    const overlayStyles = getComputedStyle(overlay);
+                    console.log('🍔 Overlay computed styles:', {
+                        display: overlayStyles.display,
+                        visibility: overlayStyles.visibility,
+                        opacity: overlayStyles.opacity,
+                        zIndex: overlayStyles.zIndex
+                    });
+                } else {
+                    if (icon) {
+                        icon.className = 'fas fa-bars';
+                        console.log('🍔 ❌ SIDEBAR CLOSED - Icon changed to hamburger');
+                        console.log('🍔 New icon classes:', icon.className);
+                    }
+                }
+                
+                console.log('🍔 ===== GLOBAL MENU TOGGLE COMPLETED =====');
+            } else {
+                console.error('🍔 ❌ MISSING ELEMENTS FOR MENU TOGGLE');
+                console.error('🍔 Sidebar found:', !!sidebar);
+                console.error('🍔 Overlay found:', !!overlay);
+                console.error('🍔 Mobile button found:', !!mobileBtn);
             }
         }
     </script>
@@ -531,8 +613,12 @@
             
             /* Detail table responsive styling */
             .detail-table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+                width: 100%;
+                border-radius: var(--radius);
+                max-width: 100%;
+                max-width: calc(100vw - 40px);
+                margin: 0;
+                padding: 0;
             }
             
             .detail-table {
@@ -754,8 +840,11 @@
             
             /* Detail table responsive styling for 1024px breakpoint */
             .detail-table-wrapper {
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch !important;
+                width: 100%;
+                border-radius: var(--radius);
+                max-width: calc(100vw - 40px);
+                margin: 0;
+                padding: 0;
             }
             
             .detail-table {
@@ -774,13 +863,6 @@
                 background: var(--primary-light) !important;
                 font-weight: bold !important;
                 font-size: 0.75rem !important;
-            }
-            
-            .detail-table .col-km,
-            .detail-table .col-test,
-            .detail-table .col-bought-sample,
-            .detail-table .col-lab-dropdown {
-                min-width: 80px !important;
             }
             
             .detail-table .product-name-text {
@@ -874,6 +956,13 @@
             .detail-table .compliance-status {
                 font-size: 0.6rem !important;
                 padding: 1px 4px !important;
+            }
+        }
+        
+        /* Hide action-bar navigation on mobile devices since sidebar already has these options */
+        @media (max-width: 1024px) {
+            .action-bar {
+                display: none !important;
             }
         }
 
@@ -1406,6 +1495,7 @@
             width: 100%;
             -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
             position: relative;
+            padding-right: 20px;
         }
         
         /* Add scroll indicators for mobile */
@@ -1536,7 +1626,8 @@
             #shipmentsTable tbody tr td.col-inspector {
                 padding-left: 0 !important;
                 text-align: center !important;
-                font-weight: 600 !important;
+                font-weight: 500 !important;
+                font-size: 0.75rem !important;
                 color: var(--primary) !important;
                 background: var(--primary-light) !important;
                 border-radius: 6px !important;
@@ -1735,7 +1826,7 @@
             .col-date { width: 60px; min-width: 60px; max-width: 60px; }
             .col-compliance { width: 75px; min-width: 75px; max-width: 75px; text-align: center; }
             .col-email { width: 90px; min-width: 90px; max-width: 90px; }
-            .col-inspector { width: 65px; min-width: 65px; max-width: 65px; }
+            .col-inspector { width: 160px; min-width: 160px; max-width: 160px; }
             .col-view-files { width: 45px; min-width: 45px; max-width: 45px; }
             .col-rfi { width: 50px; min-width: 50px; max-width: 50px; }
             .col-invoice { width: 50px; min-width: 50px; max-width: 50px; }
@@ -1771,8 +1862,6 @@
             }
             
             .detail-table-wrapper {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
                 border-radius: 6px;
                 margin: 4px 0;
             }
@@ -1793,7 +1882,7 @@
             .detail-table th:nth-child(7),
             .detail-table td:nth-child(7) { width: 50px; min-width: 50px; max-width: 50px; } /* Needs Retest */
             .detail-table th:nth-child(8),
-            .detail-table td:nth-child(8) { width: 80px; min-width: 80px; max-width: 80px; } /* Class */
+            .detail-table td:nth-child(8) { width: 120px; min-width: 120px; max-width: 120px; } /* Class - same as Product Name mobile */
             .detail-table th:nth-child(9),
             .detail-table td:nth-child(9) { width: 25px; min-width: 25px; max-width: 25px; } /* Fat */
             .detail-table th:nth-child(10),
@@ -1828,7 +1917,7 @@
             .col-date { width: 55px; min-width: 55px; max-width: 55px; }
             .col-compliance { width: 65px; min-width: 65px; max-width: 65px; text-align: center; }
             .col-email { width: 80px; min-width: 80px; max-width: 80px; }
-            .col-inspector { width: 55px; min-width: 55px; max-width: 55px; }
+            .col-inspector { width: 140px; min-width: 140px; max-width: 140px; }
             .col-view-files { width: 40px; min-width: 40px; max-width: 40px; }
             .col-rfi { width: 45px; min-width: 45px; max-width: 45px; }
             .col-invoice { width: 45px; min-width: 45px; max-width: 45px; }
@@ -1911,7 +2000,7 @@
             .col-date { width: 62px; min-width: 62px; max-width: 62px; }
             .col-compliance { width: 85px; min-width: 85px; max-width: 85px; text-align: center; }
             .col-email { width: 160px; min-width: 160px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .col-inspector { width: 70px; min-width: 70px; max-width: 70px; }
+            .col-inspector { width: 180px; min-width: 180px; max-width: 180px; }
             .col-view-files { width: 50px; min-width: 50px; max-width: 50px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
             .col-invoice { width: 55px; min-width: 55px; max-width: 55px; }
@@ -1990,7 +2079,7 @@
             .col-date { width: 70px; min-width: 70px; max-width: 70px; }
             .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
             .col-email { width: 200px; min-width: 200px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-            .col-inspector { width: 75px; min-width: 75px; max-width: 75px; }
+            .col-inspector { width: 200px; min-width: 200px; max-width: 200px; }
             .col-view-files { width: 55px; min-width: 55px; max-width: 55px; }
             .col-rfi { width: 55px; min-width: 55px; max-width: 55px; }
             .col-invoice { width: 60px; min-width: 60px; max-width: 60px; }
@@ -2118,10 +2207,53 @@
         
         /* Main table layout - efficient space usage */
         #shipmentsTable {
-            table-layout: fixed;
             width: 100%;
             border-collapse: collapse;
-            max-width: 100%;
+            font-size: 0.7rem;
+            min-width: 800px;
+        }
+
+        #shipmentsTable th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            text-align: left;
+            padding: 6px 8px;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        #shipmentsTable td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        .col-client-name { min-width: 300px; }
+        .col-account-code { min-width: 300px; }
+        .col-date { min-width: 300px; }
+        .col-compliance { min-width: 300px; }
+        .col-email { min-width: 300px; }
+        .col-additional-email { min-width: 300px; }
+        .col-inspector { min-width: 300px; }
+        .col-view-files { min-width: 300px; }
+        .col-rfi { min-width: 300px; }
+        .col-invoice { min-width: 300px; }
+        .col-km { min-width: 300px; }
+        .col-hours { min-width: 300px; }
+        .col-approved { min-width: 300px; }
+        .col-send { min-width: 300px; }
+
+        @media (min-width: 1024px) {
+            #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) {
+                width: auto;
+                text-align: center !important;
+            }
         }
         
         /* Ensure table maintains its structure when expanded */
@@ -2190,9 +2322,9 @@
             flex: none !important;
         }
         .col-inspector { 
-            width: 80px !important; 
-            min-width: 80px !important; 
-            max-width: 80px !important; 
+            width: 160px !important; 
+            min-width: 160px !important; 
+            max-width: 160px !important; 
             flex: none !important;
         }
         .col-view-files { 
@@ -3260,9 +3392,9 @@
         
         /* Sent status dropdown styling */
         .sent-status-dropdown {
-            width: 250px !important;
-            min-width: 250px !important;
-            max-width: 300px !important;
+            width: 120px !important;
+            min-width: 120px !important;
+            max-width: 120px !important;
             font-size: 0.7rem;
             padding: 4px 8px;
             border: 2px solid #e5e7eb;
@@ -3370,9 +3502,9 @@
         
         /* Ensure all Sent status dropdowns stay aligned inline with RFI buttons */
         .sent-status-dropdown {
-            min-width: 180px !important;
-            width: 180px !important;
-            max-width: 180px !important;
+            min-width: 120px !important;
+            width: 120px !important;
+            max-width: 120px !important;
             height: 28px !important;
             margin: 8px 0 0 12px !important;
             text-align: center !important;
@@ -3783,7 +3915,7 @@
             font-size: 0.75rem;
             min-width: 100%; /* Use 100% instead of fixed pixel width */
             max-width: 100%; /* Prevent overflow beyond container */
-            table-layout: fixed;
+            table-layout: auto;
         }
         
         /* Allow detail table to expand more on larger screens */
@@ -3805,9 +3937,10 @@
         .detail-table th:nth-child(3) { width: 100px; } /* Commodity */
         .detail-table th:nth-child(4) { width: 100px; } /* Compliance */
         .detail-table th:nth-child(5) { width: 250px; } /* Product Name - increased width */
-        .detail-table th:nth-child(6) { width: 70px; } /* Sampled */
-        .detail-table th:nth-child(7) { width: 80px; } /* Needs Retest */
-        .detail-table th:nth-child(8) { width: 150px; } /* Class */
+        .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 80px; min-width: 80px; } /* Sampled */
+        .detail-table th:nth-child(7) { width: 120px; min-width: 120px; } /* Needs Retest */
+        .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 250px; min-width: 250px; } /* Class - same as Product Name */
+        .detail-table td:nth-child(8) select { width: 100% !important; } /* Class dropdown - full width of column */
         .detail-table th:nth-child(9) { width: 40px; } /* Fat */
         .detail-table th:nth-child(10) { width: 40px; } /* Protein */
         .detail-table th:nth-child(11) { width: 40px; } /* Calcium */
@@ -3815,7 +3948,71 @@
         .detail-table th:nth-child(13) { width: 100px; } /* Bought Sample */
         .detail-table th:nth-child(14) { width: 100px; } /* Lab */
         .detail-table th:nth-child(15) { width: 280px; } /* Actions - Edit, Lab, Lab Form, Retest - increased for full visibility */
-        
+
+        /* Desktop-specific column widths */
+        @media (min-width: 1024px) {
+            .detail-table th:nth-child(1), .detail-table td:nth-child(1) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(2), .detail-table td:nth-child(2) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(3), .detail-table td:nth-child(3) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(4), .detail-table td:nth-child(4) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(5), .detail-table td:nth-child(5) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(6), .detail-table td:nth-child(6) {
+                text-align: center !important;
+                min-width: 80px !important;
+            }
+            .detail-table th:nth-child(7), .detail-table td:nth-child(7) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(8), .detail-table td:nth-child(8) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(9), .detail-table td:nth-child(9) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(10), .detail-table td:nth-child(10) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(11), .detail-table td:nth-child(11) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(12), .detail-table td:nth-child(12) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(13), .detail-table td:nth-child(13) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(14), .detail-table td:nth-child(14) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+            .detail-table th:nth-child(15), .detail-table td:nth-child(15) {
+                text-align: center !important;
+                min-width: 250px !important;
+            }
+        }
+
         /* Hide actions column for inspectors */
         .hide-actions .detail-table th:nth-child(15),
         .hide-actions .detail-table td:nth-child(15) { 
@@ -3823,7 +4020,6 @@
         }
         
         .detail-table-wrapper {
-            overflow-x: auto;
             width: 100%;
             border-radius: var(--radius);
             max-width: 100%;
@@ -3833,7 +4029,7 @@
         
         .detail-table {
             width: 100%;
-            table-layout: fixed;
+            table-layout: auto;
             margin: 0;
         }
         
@@ -3889,16 +4085,17 @@
             position: sticky;
             top: 0;
             z-index: 100;
-            background-color: var(--primary-light) !important;
             /* Force exact column widths to prevent any changes */
             box-sizing: border-box;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            white-space: nowrap !important;
+            line-height: 1.3;
         }
         
         /* Ensure main table maintains its exact layout when detail rows are shown */
         #shipmentsTable {
-            table-layout: fixed;
+            table-layout: auto;
             width: 100%;
             position: relative;
         }
@@ -3931,7 +4128,6 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            overflow-x: auto;
             border-radius: var(--radius);
             max-width: calc(100vw - 40px);
             /* Prevent this from affecting main table */
@@ -4162,19 +4358,7 @@
             text-align: center;
         }
         
-        /* Class dropdown border styling */
-        .product-class-select {
-            border: 2px solid #dc3545; /* Red border by default (no selection) */
-            transition: border-color 0.3s ease;
-        }
-        
-        .product-class-select.has-value {
-            border-color: #28a745; /* Green border when value is selected */
-        }
-        
-        .product-class-select:disabled {
-            border-color: #6c757d; /* Gray border when disabled */
-        }
+        /* Class dropdown styling - matching lab dropdown exactly (no special border colors) */
         
         /* Test columns (Fat, Protein, Calcium, DNA) - increased width */
         .detail-table th:nth-child(9),
@@ -4266,6 +4450,38 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
         }
+
+        /* Override km-input styling for class-dropdown to match lab-dropdown exactly */
+        .class-dropdown {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            font-size: 0.7rem;
+            background-color: var(--card-bg);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            z-index: 10;
+        }
+
+        .class-dropdown:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.2);
+            z-index: 100;
+        }
+
+        /* Ensure class column cell has relative positioning for z-index to work */
+        .col-class-dropdown {
+            position: relative;
+            z-index: 1;
+        }
+
+        .col-class-dropdown:has(.class-dropdown:focus) {
+            z-index: 100;
+        }
         
         /* Product name text styling - read-only from SQL Server */
         .product-name-text {
@@ -4351,13 +4567,17 @@
         #shipmentsTable thead th {
             display: table-cell !important;
             visibility: visible !important;
-            background-color: #f8f9fa;
             font-weight: bold;
             border-bottom: 2px solid #dee2e6;
-            padding: 8px 4px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: visible;
+            padding: 10px 16px;
+            text-align: left;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            vertical-align: middle;
+            position: relative;
+            line-height: 1.3;
+            font-size: 0.75rem;
         }
         
         /* Force table to respect column widths */
@@ -4382,8 +4602,11 @@
         #shipmentsTable thead th {
             position: sticky;
             top: 0;
-            background-color: #f8f9fa !important;
             z-index: 10;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            line-height: 1.3;
         }
         
         /* Ensure main table headers don't move when detail rows are shown */
@@ -4400,6 +4623,7 @@
         /* Force table to maintain its layout */
         #shipmentsTable {
             position: relative;
+            min-width: 1400px;
         }
         
         /* Prevent any layout shifts */
@@ -4419,6 +4643,7 @@
         #shipmentsTable {
             position: relative;
             overflow: visible;
+            min-width: 1400px;
         }
         
         /* Ensure detail rows don't push main table around */
@@ -4560,152 +4785,229 @@
         }
 
         
-        /* Mobile Menu Button */
+        
+        
+        /* Mobile menu button */
         .mobile-menu-btn {
-            display: none;
+            display: flex;
             position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: var(--primary);
-            color: white;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+            background-color: #1e293b;
+            color: #f1f5f9;
             border: none;
-            padding: 12px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 18px;
+            transition: all 0.3s ease;
         }
         
+        /* Hide mobile menu button on desktop */
+        @media (min-width: 1025px) {
+            .mobile-menu-btn {
+                display: none !important;
+            }
+        }
         
-        /* Mobile Navigation Drawer */
-        .mobile-nav {
-            display: none;
+        .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Sidebar */
+        #sidebar {
             position: fixed;
             top: 0;
-            left: -300px;
-            width: 280px;
-            height: 100vh;
-            background: var(--card-bg);
-            box-shadow: var(--shadow-lg);
-            z-index: 999;
-            transition: left 0.3s ease;
-            overflow-y: auto;
-        }
-        
-        .mobile-nav.show {
             left: 0;
+            height: 100vh;
+            width: 256px;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
         }
         
-        .mobile-nav-header {
-            padding: 20px;
-            background: var(--primary);
-            color: white;
+        /* Tailwind utility class for sidebar background */
+        .bg-sidebar-bg {
+            background-color: #1e293b !important;
+        }
+        
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
             text-align: center;
         }
         
-        .mobile-nav-header img {
-            max-height: 40px;
-            margin-bottom: 10px;
+        .sidebar-header img {
+            max-height: 60px;
+            margin-bottom: 0.5rem;
         }
         
-        .mobile-nav-links {
-            padding: 20px 0;
+        .company-name {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #f1f5f9;
         }
         
-        .mobile-nav-links a,
-        .mobile-nav-links button {
-            display: block;
-            width: 100%;
-            padding: 12px 20px;
-            color: var(--text);
-            text-decoration: none;
-            border: none;
-            background: none;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            font-size: 14px;
+        /* Force all table cells to stay within their columns */
+        #shipmentsTable td {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 0 !important;
+            white-space: normal !important;
         }
         
-        .mobile-nav-links a:hover,
-        .mobile-nav-links button:hover {
-            background: var(--primary-light);
+        #shipmentsTable th {
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 0 !important;
+            white-space: normal !important;
         }
         
-        
-        /* Mobile Navigation Dark Mode */
-        [data-theme="dark"] .mobile-nav {
-            background: var(--sidebar-bg) !important;
-            color: var(--sidebar-text) !important;
-        }
-        
-        [data-theme="dark"] .mobile-nav-header {
-            background: var(--primary) !important;
-            color: white !important;
-        }
-        
-        [data-theme="dark"] .mobile-nav-links a,
-        [data-theme="dark"] .mobile-nav-links button {
-            color: var(--sidebar-text) !important;
-        }
-        
-        [data-theme="dark"] .mobile-nav-links a:hover,
-        [data-theme="dark"] .mobile-nav-links button:hover {
-            background: var(--sidebar-hover) !important;
-        }
-        
-        /* Mobile Overlay */
-        .mobile-overlay {
+        /* Mobile close button for sidebar */
+        .sidebar-close-btn {
             display: none;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: none;
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .sidebar-close-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Show close button only on mobile */
+        @media (max-width: 1024px) {
+            .sidebar-header {
+                position: relative;
+            }
+            
+            .sidebar-close-btn {
+                display: flex;
+            }
+        }
+        
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-item {
+            margin: 0;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #f1f5f9;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--primary);
+        }
+        
+        .nav-link.active {
+            background-color: var(--primary);
+            border-left-color: #ffffff;
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .logout-section {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            border-top: 1px solid #334155;
+        }
+        
+        .logout-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #dc2626;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #b91c1c;
+        }
+        
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            z-index: 998;
+            z-index: 999;
+            display: none;
         }
         
-        .mobile-overlay.show {
+        .sidebar-overlay.show {
             display: block;
         }
+        
         @media (max-width: 1024px) {
             .mobile-menu-btn {
-                display: block;
+                display: flex;
             }
             
-            .mobile-nav {
-                display: block;
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            
+            #sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
             }
             
             .container {
                 padding-top: 60px;
-            }
-            
-            .action-bar {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            
-            .action-bar .btn {
-                font-size: 12px;
-                padding: 8px 12px;
             }
         }
         
         @media (max-width: 768px) {
             .form-group {
                 grid-template-columns: 1fr;
-            }
-            
-            .action-bar {
-                flex-direction: column;
-            }
-            
-            .action-bar .btn {
-                width: 100%;
-                margin-bottom: 5px;
             }
             
             /* Mobile Table Styles */
@@ -4744,7 +5046,7 @@
             }
             
             .col-inspector {
-                min-width: 100px;
+                min-width: 160px;
             }
             
             .col-email {
@@ -4986,8 +5288,7 @@
         
         /* Ensure desktop table takes full width */
         #shipmentsTable {
-            width: 100% !important;
-            min-width: 100% !important;
+            width: auto !important;
             table-layout: auto !important;
         }
         
@@ -4996,18 +5297,78 @@
             width: 100% !important;
         }
         
-        /* Make table cells use available space */
-        #shipmentsTable th,
-        #shipmentsTable td {
-            white-space: nowrap !important;
-            padding: 8px 12px !important;
+        /* Desktop-only table cell styling */
+        @media (min-width: 1024px) {
+            #shipmentsTable th,
+            #shipmentsTable td {
+                white-space: nowrap !important;
+                padding: 8px 12px !important;
+                text-align: left !important;
+                vertical-align: middle !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+        }
+        
+        /* Add more spacing between columns for desktop view */
+
+        /* Desktop-only column width and alignment rules */
+        @media (min-width: 1024px) {
+            #shipmentsTable th {
+                white-space: normal !important;
+                text-align: center !important;
+                position: relative !important;
+                vertical-align: middle !important;
+                box-sizing: border-box !important;
+                font-size: 0.75rem !important;
+                font-weight: normal !important;
+                overflow: visible !important;
+                word-wrap: break-word !important;
+                line-height: 1.4 !important;
+            }
+            #shipmentsTable td {
+                white-space: nowrap !important;
+                text-align: center !important;
+                position: relative !important;
+                vertical-align: middle !important;
+                box-sizing: border-box !important;
+                font-size: 0.85rem !important;
+            }
+            #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) { text-align: left !important; min-width: 180px !important; } /* Client Name */
+            #shipmentsTable th:nth-child(2), #shipmentsTable td:nth-child(2) { text-align: left !important; min-width: 220px !important; } /* Account Code */
+            #shipmentsTable th:nth-child(3), #shipmentsTable td:nth-child(3) { text-align: left !important; min-width: 180px !important; padding-left: 5px !important; padding-right: 5px !important; } /* Inspection Date */
+            #shipmentsTable th:nth-child(4), #shipmentsTable td:nth-child(4) { min-width: 190px !important; } /* Compliant/Non-Compliant */
+            #shipmentsTable td:nth-child(4) span { min-width: 120px !important; display: inline-block !important; text-align: center !important; padding: 6px 12px !important; } /* Make compliance badge wider */
+            #shipmentsTable th:nth-child(5) { text-align: center !important; min-width: 200px !important; } /* Email header */
+            #shipmentsTable td:nth-child(5) { text-align: left !important; min-width: 200px !important; } /* Email data */
+            #shipmentsTable th:nth-child(6), #shipmentsTable td:nth-child(6) { text-align: left !important; min-width: 200px !important; } /* Additional Email */
+            #shipmentsTable th:nth-child(7), #shipmentsTable td:nth-child(7) { text-align: left !important; min-width: 160px !important; font-size: 0.85rem !important; } /* Inspector */
+            #shipmentsTable th:nth-child(8), #shipmentsTable td:nth-child(8) { min-width: 150px !important; } /* View Files */
+            #shipmentsTable th:nth-child(9), #shipmentsTable td:nth-child(9) { min-width: 80px !important; } /* RFI */
+            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) { min-width: 100px !important; } /* Invoice */
+            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) { min-width: 130px !important; } /* Distance (Km) */
+            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) { min-width: 130px !important; } /* Hours Worked */
+            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) { min-width: 110px !important; } /* Approved */
+            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) { min-width: 160px !important; } /* Sent Status */
+        }
+
+        @media (min-width: 1024px) {
+            #shipmentsTable th:nth-child(6), #shipmentsTable td:nth-child(6) {
+                text-align: left !important;
+                min-width: 250px !important;
+            }
+            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) {
+                width: 200px !important;
+                text-align: center !important;
+                padding-right: 50px !important;
+            }
         }
         
         /* Ensure table takes maximum available width */
         .container {
             max-width: 100% !important;
             padding-left: 1rem !important;
-            padding-right: 1rem !important;
+            padding-right: 2rem !important;
         }
         
         /* Desktop table specific width optimization */
@@ -5023,9 +5384,8 @@
             }
             
             #shipmentsTable {
-                width: 100% !important;
-                min-width: 100% !important;
-                table-layout: fixed !important;
+                width: auto !important;
+                table-layout: auto !important;
             }
         }
         
@@ -5094,6 +5454,21 @@
             overflow: visible !important;
         }
         
+        /* Desktop-specific rules - hide sidebar and overlay on large screens */
+        @media (min-width: 1025px) {
+            #sidebar {
+                display: none !important;
+            }
+            
+            .sidebar-overlay {
+                display: none !important;
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -5103,80 +5478,123 @@
         <div id="loadingMessage">Loading {{ total_shipments }} records... Please wait...</div>
     </div>
     
+    
     <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" id="mobile-menu-btn">
-        <i class="fas fa-bars"></i>
+    <button id="mobile-menu-btn" class="mobile-menu-btn fixed top-4 left-4 z-50 bg-sidebar-bg text-white p-3 rounded-lg shadow-lg lg:hidden hover:bg-opacity-90 transition-all duration-200 active:scale-95" aria-label="Toggle menu" onclick="toggleSidebar(); console.log('🍔 DIRECT ONCLICK TRIGGERED');" style="pointer-events: auto !important;">
+        <i class="fas fa-bars text-xl"></i>
     </button>
     
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
     
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobile-overlay"></div>
-    
-    <!-- Mobile Navigation -->
-    <nav class="mobile-nav" id="mobile-nav">
-        <div class="mobile-nav-header">
-            <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
-            <div style="font-size: 14px; font-weight: bold;">Food Safety Agency</div>
-        </div>
-        <div class="mobile-nav-links">
-            <a href="{% url 'shipment_list' %}">
-                <i class="fas fa-clipboard-check"></i> Inspections
-            </a>
-            
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-            <a href="{% url 'client_allocation' %}">
-                <i class="fas fa-users"></i> Manage Clients
-            </a>
-            {% endif %}
-            
-            {% if request.user.role == 'super_admin' or request.user.role == 'developer' %}
-            <a href="{% url 'system_logs' %}">
-                <i class="fas fa-list-alt"></i> System Logs
-            </a>
-            {% endif %}
-            
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-            <button onclick="syncInspectionsFromShipmentList()">
-                <i class="fas fa-sync-alt"></i> <span class="btn-text">Sync Inspections</span>
-            </button>
-            <div id="inspection-sync-status" style="margin-top: 10px;"></div>
-            {% endif %}
-            
-            <button onclick="expandAll()">
-                <i class="fas fa-expand-alt"></i> Expand All
-            </button>
-            
-            <button onclick="collapseAll()">
-                <i class="fas fa-compress-alt"></i> Collapse All
-            </button>
-            
-            {% if request.user.role == 'inspector' %}
-            <a href="{% url 'inspector_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
-                <i class="fas fa-home"></i> My Home
-            </a>
-            {% elif request.user.role != 'scientist' %}
-            <a href="{% url 'home' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
-                <i class="fas fa-home"></i> Home
-            </a>
-            <a href="{% url 'analytics_dashboard' %}" style="color: var(--primary); text-decoration: none; padding: 10px 15px; display: block; border-bottom: 1px solid #e5e7eb;">
-                <i class="fas fa-chart-line"></i> Analytics
-            </a>
-            {% endif %}
-            
-            <form action="{% url 'logout' %}" method="post" style="margin: 0;">
-                {% csrf_token %}
-                <button type="submit" style="color: var(--danger); background-color: white; padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+    <div class="page-container">
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="sidebar-header">
+                <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
+                <div class="company-name">Food Safety Agency (Pty) Ltd</div>
+                <!-- Mobile close button -->
+                <button id="sidebar-close-btn" class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close menu">
+                    <i class="fas fa-times"></i>
                 </button>
-            </form>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{% url 'home' %}" class="nav-link">
+                        <i class="fas fa-home"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'client_list' %}" class="nav-link">
+                        <i class="fas fa-users"></i>
+                        Clients
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'shipment_list' %}" class="nav-link active">
+                        <i class="fas fa-clipboard-check"></i>
+                        Inspections
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'user_management' %}" class="nav-link">
+                        <i class="fas fa-users-cog"></i>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'system_logs' %}" class="nav-link">
+                        <i class="fas fa-list-alt"></i>
+                        System Logs
+                    </a>
+                </li>
+                {% if request.user.role == 'developer' %}
+                <li class="nav-item">
+                    <a href="{% url 'onedrive_view' %}" class="nav-link">
+                        <i class="fas fa-cloud"></i>
+                        OneDrive View
+                    </a>
+                </li>
+                {% endif %}
+                {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                <li class="nav-item">
+                    <a href="{% url 'server_view' %}" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Server View
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a href="{% url 'settings' %}" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </a>
+                </li>
+                
+                <!-- Shipment-specific functionality -->
+                {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+                <li class="nav-item">
+                    <button onclick="syncInspectionsFromShipmentList()" class="nav-link" style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; color: #f1f5f9; cursor: pointer;">
+                        <i class="fas fa-sync-alt"></i>
+                        Sync Inspections
+                    </button>
+                </li>
+                {% endif %}
+                
+                <li class="nav-item">
+                    <button onclick="expandAll()" class="nav-link" style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; color: #f1f5f9; cursor: pointer;">
+                        <i class="fas fa-expand-alt"></i>
+                        Expand All
+                    </button>
+                </li>
+                
+                <li class="nav-item">
+                    <button onclick="collapseAll()" class="nav-link" style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; color: #f1f5f9; cursor: pointer;">
+                        <i class="fas fa-compress-alt"></i>
+                        Collapse All
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="logout-section">
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </form>
+            </div>
         </div>
-    </nav>
-
-    
-    <!-- Hidden CSRF token for AJAX requests -->
-    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token|escapejs }}">
-    
-    <div class="container mx-auto px-4 py-6 w-full">
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Hidden CSRF token for AJAX requests -->
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token|escapejs }}">
+            
+            <div class="container mx-auto px-4 py-6 w-full">
         <div class="logo">
             <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
         </div>
@@ -5311,7 +5729,7 @@
                         <div class="filter-field">
                             <label class="form-label">Sent Status</label>
                             <select class="form-control" name="sent_status">
-                                <option value="">All Inspections</option>
+                                <option value="">Not Sent</option>
                                 <option value="YES" {% if request.GET.sent_status == 'YES' %}selected{% endif %}>Sent Only</option>
                                 <option value="NO" {% if request.GET.sent_status == 'NO' %}selected{% endif %}>Not Sent Only</option>
                             </select>
@@ -5542,7 +5960,7 @@
                                                            value="{{ shipment.additional_email }}" 
                                                            placeholder="email@example.com"
                                                            onchange="updateGroupAdditionalEmails(this)">
-                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeAdditionalEmailRow(this)">×</button>
+                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeEmailInput(this)">×</button>
                                                 </div>
                                             {% else %}
                                                 <div class="email-input-row">
@@ -5551,11 +5969,11 @@
                                                            value="" 
                                                            placeholder="email@example.com"
                                                            onchange="updateGroupAdditionalEmails(this)">
-                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeAdditionalEmailRow(this)">×</button>
+                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeEmailInput(this)">×</button>
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <button class="text-primary hover:text-primary-dark text-xs" onclick="addAdditionalEmailRow(this)">
+                                        <button class="text-primary hover:text-primary-dark text-xs" onclick="addEmailInput(this)">
                                             <i class="fas fa-plus mr-1"></i> Add Email
                                         </button>
                                     </div>
@@ -5595,7 +6013,7 @@
                                 
                                 <!-- Bought Sample Input -->
                                 <div class="mt-4">
-                                    <label class="block text-gray-600 font-medium mb-2">Bought Sample (R)</label>
+                                    <label class="block text-gray-600 font-medium mb-2">Bought Sample</label>
                                     <div class="flex items-center space-x-2">
                                         <input type="number" 
                                                class="bought-sample-input flex-1 text-xs border border-gray-300 rounded px-2 py-1" 
@@ -5718,7 +6136,7 @@
                                             
                                             <!-- Bought Sample Input -->
                                             <div class="mb-3">
-                                                <label class="block text-gray-600 font-medium mb-1 text-xs">Bought Sample (R)</label>
+                                                <label class="block text-gray-600 font-medium mb-1 text-xs">Bought Sample</label>
                                                 <div class="flex items-center space-x-2">
                                                     <input type="number" 
                                                            class="bought-sample-input flex-1 text-xs border border-gray-300 rounded px-2 py-1" 
@@ -5804,29 +6222,29 @@
                 </div>
                 
                 <!-- Desktop Table Layout (Hidden on mobile) -->
-                <div class="hidden lg:block overflow-x-auto">
-                    <table id="shipmentsTable" class="w-full min-w-full divide-y divide-gray-200 bg-white shadow-sm rounded-lg overflow-hidden">
+                <div class="hidden lg:block overflow-x-auto shadow-md rounded-lg">
+                    <table id="shipmentsTable" class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account Code</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compliant/Non-Compliant</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Additional Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspector</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Files</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RFI</th>
+                                <th class="col-client-name px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Client Name</th>
+                                <th class="col-account-code px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Account Code</th>
+                                <th class="col-date px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Inspection Date</th>
+                                <th class="col-compliance px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Compliant/Non-Compliant</th>
+                                <th class="col-email px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Email</th>
+                                <th class="col-additional-email px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Additional Email</th>
+                                <th class="col-inspector px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Inspector</th>
+                                <th class="col-view-files px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">View Files</th>
+                                <th class="col-rfi px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">RFI</th>
                                 {% if user.role != 'inspector' %}
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice</th>
+                                <th class="col-invoice px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Invoice</th>
                                 {% endif %}
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Distance (Km)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Worked</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approved</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sent Status</th>
+                                <th class="col-km px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Distance (Km)</th>
+                                <th class="col-hours px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Hours Worked</th>
+                                <th class="col-approved px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Approved</th>
+                                <th class="col-send px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Sent Status</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="bg-white divide-y divide-gray-200">
                             {% for shipment in shipments %}
                             <!-- Generate fallback group_id for this shipment -->
                             {% with client_slug=shipment.client_name|sanitize_group_id %}
@@ -5834,31 +6252,28 @@
                             {% with fallback_group_id=client_slug|add:"_"|add:date_str %}
                             <!-- Main grouped row -->
                             <tr class="group-row shipment-row bg-white hover:bg-gray-50 transition-colors duration-200 border-b border-gray-200 {% if shipment.is_complete and not shipment.is_sent %}inspection-complete{% endif %} {% if shipment.client_name|slice:':3' == 'New' %}greyed-out-group{% endif %}" data-group-id="{{ fallback_group_id }}" data-client-name="{{ shipment.client_name }}" data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}" {% if shipment.sent_date %}data-sent-timestamp="{{ shipment.sent_date|date:'c' }}"{% endif %}>
-                                <td class="col-expand px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hidden lg:table-cell">
-                                    <button class="expand-btn p-2 rounded-full hover:bg-gray-100 transition-colors duration-200" data-group-id="{{ fallback_group_id }}" title="Expand/Collapse">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </td>
-                                <td class="col-client-name px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 block lg:table-cell w-full lg:w-auto mb-2 lg:mb-0">
+                                <td class="col-client-name px-6 py-4 text-sm font-medium text-gray-900">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-semibold text-primary text-lg lg:text-sm">{{ shipment.client_name|default:"-" }}</span>
+                                        <span class="font-semibold text-primary cursor-pointer hover:text-primary-dark transition-colors duration-200 whitespace-nowrap"
+                                              onclick="toggleGroup(event, '{{ fallback_group_id|escapejs }}')"
+                                              title="Click to expand/collapse details">{{ shipment.client_name|default:"-" }}</span>
                                         <span class="sample-indicator text-xs" data-group-id="{{ fallback_group_id }}"></span>
                                     </div>
                                 </td>
-                                <td class="col-account-code px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden sm:table-cell block lg:table-cell w-full lg:w-auto mb-2 lg:mb-0" data-label="Account Code">
+                                <td class="col-account-code px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Account Code">
                                     <span class="font-mono text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">{{ shipment.internal_account_code|default:"-" }}</span>
                                 </td>
-                                <td class="col-date px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell block lg:table-cell w-full lg:w-auto mb-2 lg:mb-0" data-label="Inspection Date">
+                                <td class="col-date px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Inspection Date">
                                     <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">{{ shipment.date_of_inspection|date:"d/m/Y"|default:"-" }}</span>
                                 </td>
-                                <td class="col-compliance px-6 py-4 whitespace-nowrap text-sm hidden lg:table-cell block lg:table-cell w-full lg:w-auto mb-2 lg:mb-0 text-center" data-label="Compliance Status">
+                                <td class="col-compliance px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Compliance Status">
                                     {% if shipment.inspection_compliance_status == 'compliant' %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Compliant</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Compliant</span>
                                     {% else %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Non-Compliant</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Non-Compliant</span>
                                     {% endif %}
                                 </td>
-                                <td class="col-email" data-label="Email">
+                                <td class="col-email px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-label="Email">
                                     {% if shipment.client_emails %}
                                         {% for item in shipment.client_emails %}
                                             <div class="email-line" title="{{ item.email }}">
@@ -5873,7 +6288,7 @@
                                     {% endif %}
                                 </td>
                                 <!-- Additional Email Column -->
-                                <td class="col-additional-email" data-label="Additional Email">
+                                <td class="col-additional-email px-6 py-4 text-sm text-gray-500" data-label="Additional Email">
                                     {% if request.user.role == 'inspector' %}
                                         <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
                                             <div class="email-inputs">
@@ -5950,8 +6365,8 @@
                                         {{ shipment.additional_email|default:"-" }}
                                     {% endif %}
                                 </td>
-                                <td class="col-inspector" data-label="Inspector">{{ shipment.inspector_name|default:"-" }}</td>
-                                <td class="col-view-files" data-label="View Files">
+                                <td class="col-inspector px-6 py-4 text-xs text-gray-500 text-center" data-label="Inspector" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ shipment.inspector_name|default:"-" }}</td>
+                                <td class="col-view-files px-6 py-4 whitespace-nowrap text-sm text-center" data-label="View Files">
                                     <button class="btn btn-sm btn-view-files
                                            {% if shipment.file_status == 'complete' %}
                                                btn-files-complete
@@ -5975,7 +6390,7 @@
                                     </button>
                                 </td>
                                 <!-- RFI Column -->
-                                <td class="col-rfi" data-label="RFI">
+                                <td class="col-rfi px-6 py-4 whitespace-nowrap text-sm text-center" data-label="RFI">
                                     {% if request.user.role == 'inspector' %}
                                         {% if shipment.rfi_uploaded %}
                                         <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled 
@@ -6009,7 +6424,7 @@
                                 
                                 <!-- Invoice Column -->
                                 {% if user.role != 'inspector' %}
-                                <td class="col-invoice" data-label="Invoice">
+                                <td class="col-invoice px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Invoice">
                                     {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
                                         {% if shipment.invoice_uploaded %}
                                         <button class="btn btn-sm btn-success" id="invoice-{{ fallback_group_id }}" disabled 
@@ -6031,7 +6446,7 @@
                                 {% endif %}
                                 
                                 <!-- Km Column -->
-                                <td class="col-km" data-label="Distance (Km)">
+                                <td class="col-km px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Distance (Km)">
                                     {% if request.user.role == 'inspector' %}
                                         <input type="number" class="form-control form-control-sm group-km-input" 
                                                data-group-id="{{ fallback_group_id }}" 
@@ -6105,7 +6520,7 @@
                                 </td>
                                 
                                 <!-- Sent Status Column -->
-                                <td class="col-send" data-label="Sent Status">
+                                <td class="col-send px-4 py-4 text-sm text-gray-500 min-w-[150px] max-w-[150px] break-words" data-label="Sent Status">
                                     {% if user_role != 'inspector' and user_role != 'scientist' %}
                                         <select class="form-control form-control-sm sent-status-dropdown {% if shipment.is_sent %}sent-yes{% elif shipment.is_sent == False %}sent-no{% endif %}{% if shipment.compliance_status != 'complete' %} disabled-dropdown{% endif %}" 
                                                 data-group-id="{{ fallback_group_id }}" 
@@ -6127,7 +6542,7 @@
                                             <span class="countdown-text">{{ onedrive_delay_days|floatformat:0 }} days until upload</span>
                                         </div>
                                         {% else %}
-                                        <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">Status</small>
+                                        <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block; word-wrap: break-word; max-width: 100%;">Status</small>
                                         {% endif %}
                                     {% else %}
                                         <!-- Read-only sent status display for inspectors -->
@@ -6137,7 +6552,7 @@
                                                     {% if shipment.sent_by and shipment.sent_by.first_name %}{{ shipment.sent_by.first_name }}{% else %}{{ shipment.sent_by.username|default:"Sent" }}{% endif %} ✓
                                                 </span>
                                                 {% if shipment.sent_date %}
-                                                <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block;">
+                                                <small class="text-muted" style="font-size: 0.6rem; margin-top: 2px; text-align: center; display: block; word-wrap: break-word; max-width: 100%;">
                                                     {{ shipment.sent_date|date:"M d, Y H:i" }}
                                                 </small>
                                                 {% endif %}
@@ -6180,7 +6595,7 @@
                                                     <th class="col-test">Protein</th>
                                                     <th class="col-test">Calcium</th>
                                                     <th class="col-test">DNA</th>
-                                                    <th class="col-bought-sample">Bought Sample (R)</th>
+                                                    <th class="col-bought-sample">Bought Sample</th>
                                                     <th class="col-lab-dropdown">Lab</th>
                                                     {% if user.role != 'inspector' %}
                                                     <th>Actions</th>
@@ -6226,9 +6641,9 @@
                                                             <option value="YES" {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}selected{% endif %}>Yes</option>
                                                         </select>
                                                     </td>
-                                                    <td class="col-km {% if not product.is_sample_taken %}blurred{% endif %}">
+                                                    <td class="col-class-dropdown">
                                                         {% with lower_commodity=product.commodity|default:''|lower %}
-                                                        <select class="km-input product-class-select {% if product.product_class %}has-value{% endif %}" 
+                                                        <select class="form-control form-control-sm class-dropdown product-class-select {% if product.product_class %}has-value{% endif %}"
                                                                 data-inspection-id="{{ product.remote_id }}"
                                                                 data-commodity="{{ lower_commodity }}"
                                                                 data-current-class="{{ product.product_class }}"
@@ -6753,6 +7168,9 @@
     <!-- Load current rendered JavaScript functions -->
     <script src="{% static 'js/current_rendered_js.js' %}?v=20251008-FIX"></script>
     <script>
+        // CACHE BUST: 2025-01-15 - Menu debugging added
+        console.log('🚀 SCRIPT LOADED - Cache busted at:', new Date().toISOString());
+        
         // Set global CSRF token for upload functions
         try {
             window.csrfToken = '{{ csrf_token|escapejs }}';
@@ -7098,7 +7516,7 @@
                 console.error('[ERROR] Network error saving additional emails:', error);
                 alert('Error updating additional emails: ' + error.message);
             });
-        };, 1000); // 1 second delay
+        };
         
         window.addEmailInput = function(button) {
             const container = button.closest('.additional-emails-container');
@@ -7613,18 +8031,217 @@
             }
         }
 
-        // Mobile Navigation
+        // Mobile Menu Toggle
+        function toggleSidebar() {
+            console.log('🍔 ===== MENU TOGGLE STARTED =====');
+            console.log('🍔 Menu button clicked!');
+            
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+            
+            console.log('🍔 Elements found:', {
+                sidebar: !!sidebar,
+                overlay: !!overlay,
+                mobileBtn: !!mobileBtn
+            });
+            
+            if (sidebar && overlay && mobileBtn) {
+                console.log('🍔 All elements found, proceeding with toggle...');
+                
+                // Check current state before toggle
+                const wasOpen = sidebar.classList.contains('show');
+                console.log('🍔 Current state - Sidebar open:', wasOpen);
+                console.log('🍔 Current sidebar classes:', sidebar.className);
+                console.log('🍔 Current overlay classes:', overlay.className);
+                
+                // Toggle classes
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+                
+                console.log('🍔 After toggle - Sidebar classes:', sidebar.className);
+                console.log('🍔 After toggle - Overlay classes:', overlay.className);
+                
+                // Check new state
+                const isNowOpen = sidebar.classList.contains('show');
+                console.log('🍔 New state - Sidebar open:', isNowOpen);
+                
+                // Update icon
+                const icon = mobileBtn.querySelector('i');
+                console.log('🍔 Icon element found:', !!icon);
+                console.log('🍔 Current icon classes:', icon ? icon.className : 'N/A');
+                
+                if (isNowOpen) {
+                    icon.className = 'fas fa-times';
+                    console.log('🍔 ✅ SIDEBAR OPENED - Icon changed to X');
+                    console.log('🍔 New icon classes:', icon.className);
+                    
+                    // Check computed styles
+                    const sidebarStyles = getComputedStyle(sidebar);
+                    console.log('🍔 Sidebar computed styles:', {
+                        transform: sidebarStyles.transform,
+                        display: sidebarStyles.display,
+                        visibility: sidebarStyles.visibility,
+                        opacity: sidebarStyles.opacity,
+                        zIndex: sidebarStyles.zIndex
+                    });
+                    
+                    const overlayStyles = getComputedStyle(overlay);
+                    console.log('🍔 Overlay computed styles:', {
+                        display: overlayStyles.display,
+                        visibility: overlayStyles.visibility,
+                        opacity: overlayStyles.opacity,
+                        zIndex: overlayStyles.zIndex
+                    });
+                } else {
+                    icon.className = 'fas fa-bars';
+                    console.log('🍔 ❌ SIDEBAR CLOSED - Icon changed to hamburger');
+                    console.log('🍔 New icon classes:', icon.className);
+                }
+                
+                console.log('🍔 ===== MENU TOGGLE COMPLETED =====');
+            } else {
+                console.error('🍔 ❌ MISSING ELEMENTS FOR MENU TOGGLE');
+                console.error('🍔 Sidebar found:', !!sidebar);
+                console.error('🍔 Overlay found:', !!overlay);
+                console.error('🍔 Mobile button found:', !!mobileBtn);
+            }
+        }
+
+        // Handle window resize for responsive behavior
+        function handleResize() {
+            console.log('🍔 ===== WINDOW RESIZE EVENT =====');
+            console.log('🍔 Window width:', window.innerWidth);
+            
+            // Handle sidebar resize logic
+            if (window.innerWidth > 1024) {
+                console.log('🍔 Desktop size detected, closing mobile menu...');
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                const mobileBtn = document.getElementById('mobile-menu-btn');
+                
+                console.log('🍔 Elements found for resize:', {
+                    sidebar: !!sidebar,
+                    overlay: !!overlay,
+                    mobileBtn: !!mobileBtn
+                });
+                
+                if (sidebar) {
+                    console.log('🍔 Sidebar classes before close:', sidebar.className);
+                    sidebar.classList.remove('show');
+                    console.log('🍔 Sidebar classes after close:', sidebar.className);
+                }
+                
+                if (overlay) {
+                    console.log('🍔 Overlay classes before close:', overlay.className);
+                    overlay.classList.remove('show');
+                    console.log('🍔 Overlay classes after close:', overlay.className);
+                }
+                
+                if (mobileBtn) {
+                    const icon = mobileBtn.querySelector('i');
+                    if (icon) {
+                        console.log('🍔 Icon classes before reset:', icon.className);
+                        icon.className = 'fas fa-bars';
+                        console.log('🍔 Icon classes after reset:', icon.className);
+                    }
+                }
+                
+                console.log('🍔 ✅ Mobile menu closed due to desktop resize');
+            } else {
+                console.log('🍔 Mobile size detected, menu should be available');
+            }
+            
+            console.log('🍔 ===== WINDOW RESIZE COMPLETE =====');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 DOM Content Loaded - Initializing...');
+            console.log('🚀 CACHE BUST: 2025-01-15 - Menu debugging version loaded');
             
             // Initialize theme
             initTheme();
             
+            // Mobile menu functionality
+            console.log('🍔 ===== SETTING UP MENU EVENT LISTENERS =====');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            console.log('🍔 Looking for menu elements...');
+            console.log('🍔 Mobile menu button found:', !!mobileMenuBtn);
+            console.log('🍔 Sidebar overlay found:', !!sidebarOverlay);
+            
+            if (mobileMenuBtn) {
+                console.log('🍔 Mobile menu button element:', mobileMenuBtn);
+                console.log('🍔 Mobile menu button classes:', mobileMenuBtn.className);
+                console.log('🍔 Mobile menu button styles:', {
+                    display: getComputedStyle(mobileMenuBtn).display,
+                    visibility: getComputedStyle(mobileMenuBtn).visibility,
+                    position: getComputedStyle(mobileMenuBtn).position,
+                    zIndex: getComputedStyle(mobileMenuBtn).zIndex,
+                    pointerEvents: getComputedStyle(mobileMenuBtn).pointerEvents
+                });
+                
+                // Test if button is clickable
+                console.log('🍔 Testing button clickability...');
+                console.log('🍔 Button offsetParent:', mobileMenuBtn.offsetParent);
+                console.log('🍔 Button getBoundingClientRect:', mobileMenuBtn.getBoundingClientRect());
+                
+                // Add event listener with debugging
+                mobileMenuBtn.addEventListener('click', function(e) {
+                    console.log('🍔 EVENT LISTENER TRIGGERED!', e);
+                    toggleSidebar();
+                });
+                console.log('🍔 ✅ Menu button event listener attached successfully');
+                
+                // Test direct click simulation
+                setTimeout(() => {
+                    console.log('🍔 Testing programmatic click...');
+                    // Don't actually click, just test if we can
+                    console.log('🍔 Button is ready for testing');
+                }, 1000);
+            } else {
+                console.error('🍔 ❌ Mobile menu button not found!');
+                console.error('🍔 Searching for button with ID "mobile-menu-btn"...');
+                const allButtons = document.querySelectorAll('button');
+                console.error('🍔 All buttons found:', allButtons.length);
+                allButtons.forEach((btn, index) => {
+                    console.error(`🍔 Button ${index}:`, {
+                        id: btn.id,
+                        classes: btn.className,
+                        text: btn.textContent.trim()
+                    });
+                });
+            }
+            
+            if (sidebarOverlay) {
+                console.log('🍔 Sidebar overlay element:', sidebarOverlay);
+                console.log('🍔 Sidebar overlay classes:', sidebarOverlay.className);
+                sidebarOverlay.addEventListener('click', toggleSidebar);
+                console.log('🍔 ✅ Sidebar overlay event listener attached successfully');
+            } else {
+                console.error('🍔 ❌ Sidebar overlay not found!');
+            }
+            
+            console.log('🍔 ===== MENU EVENT LISTENERS SETUP COMPLETE =====');
+            
+            // Close sidebar when clicking on nav links on mobile
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
+            
             // Listen for theme changes from other pages
             listenForThemeChanges();
             
-            // Setup expand buttons
-            setupExpandButtons();
+            // Expand buttons are handled by the global document click listener
             
             // Clear any cached data and force immediate file status check on page load
             setTimeout(() => {
@@ -7641,49 +8258,7 @@
                 updateAllViewFilesButtonColors();
             }, 3000);
             
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileNav = document.getElementById('mobile-nav');
-            const mobileOverlay = document.getElementById('mobile-overlay');
-            
-            function toggleMobileNav() {
-                mobileNav.classList.toggle('show');
-                mobileOverlay.classList.toggle('show');
-                
-                // Update menu button icon
-                const icon = mobileMenuBtn.querySelector('i');
-                if (mobileNav.classList.contains('show')) {
-                    icon.className = 'fas fa-times';
-                } else {
-                    icon.className = 'fas fa-bars';
-                }
-            }
-            
-            // Toggle navigation when menu button is clicked
-            mobileMenuBtn.addEventListener('click', toggleMobileNav);
-            
-            // Close navigation when overlay is clicked
-            mobileOverlay.addEventListener('click', toggleMobileNav);
-            
-            // Close navigation when a navigation link is clicked (on mobile)
-            const navLinks = mobileNav.querySelectorAll('a');
-            navLinks.forEach(link => {
-                link.addEventListener('click', function() {
-                    if (window.innerWidth <= 1024) {
-                        toggleMobileNav();
-                    }
-                });
-            });
-            
-            // Handle window resize
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 1024) {
-                    mobileNav.classList.remove('show');
-                    mobileOverlay.classList.remove('show');
-                    const icon = mobileMenuBtn.querySelector('i');
-                    icon.className = 'fas fa-bars';
-                }
-            });
-        };);
+        });
         
         // CSRF functions now defined at top of script section
         
@@ -8624,7 +9199,9 @@
         }
 
         // Flag to prevent duplicate status checks
-        let statusCheckInProgress = false;
+        if (typeof statusCheckInProgress === 'undefined') {
+            var statusCheckInProgress = false;
+        }
         
         async function checkAllClientFileStatus() {
             // Check file status for all clients on current page and update button colors
@@ -9379,7 +9956,7 @@
                                         <i class="fas fa-download"></i>
                                     </a>
                                     ${category.key !== 'compliance' && !(file.relative_path && file.relative_path.toLowerCase().includes('compliance')) && !(file.path && file.path.toLowerCase().includes('compliance')) ? `
-                                    <button class="btn btn-file btn-danger" onclick="console.log('Delete file:', '${file.relative_path || file.path}'); deleteFile('${file.relative_path || file.path}', '${category.key}')" title="Delete File">
+                                    <button class="btn btn-file btn-danger" onclick="console.log('Delete file:', '${(file.relative_path || file.path).replace(/'/g, "\\'")}'); deleteFile('${(file.relative_path || file.path).replace(/'/g, "\\'")}', '${category.key}')" title="Delete File">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                     ` : ''}
@@ -12194,6 +12771,7 @@
             document.querySelectorAll('.expand-btn').forEach(button => {
                 // Ensure initial state is correct
                 const card = button.closest('.group-card');
+                if (!card) return; // Skip if no group-card parent
                 const details = card.querySelector('.group-details');
                 const icon = button.querySelector('i');
                 
@@ -12238,40 +12816,8 @@
             
             console.log('[MOBILE CARDS] Expand/collapse functionality initialized successfully');
             
-            // Handle desktop table expansion
-            document.querySelectorAll('.group-row .expand-btn').forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    console.log('[DESKTOP] Expand button clicked');
-                    
-                    const groupId = this.getAttribute('data-group-id');
-                    const row = this.closest('.group-row');
-                    const icon = this.querySelector('i');
-                    
-                    if (row && icon) {
-                        console.log('[DESKTOP] Toggling details for group:', groupId);
-                        
-                        // Toggle the expanded class
-                        row.classList.toggle('expanded');
-                        this.classList.toggle('expanded');
-                        
-                        // Update the icon rotation
-                        if (row.classList.contains('expanded')) {
-                            icon.classList.remove('fa-chevron-right');
-                            icon.classList.add('fa-chevron-down');
-                            console.log('[DESKTOP] Details expanded');
-                        } else {
-                            icon.classList.remove('fa-chevron-down');
-                            icon.classList.add('fa-chevron-right');
-                            console.log('[DESKTOP] Details collapsed');
-                        }
-                    } else {
-                        console.warn('[DESKTOP] Could not find row or icon element');
-                    }
-                });
-            });
+            // Desktop expand button functionality is handled by the main toggleGroup function
+            // No separate desktop handler needed - the global click listener handles all expand buttons
             
             console.log('[DESKTOP] Expand/collapse functionality initialized successfully');
             

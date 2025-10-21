@@ -2395,7 +2395,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
             }
             
             // Remove existing color classes including the problematic btn-files-none
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
             
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -4066,10 +4066,10 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             // Update the button colors immediately - bypass the skip logic for file deletion
             matchingButtons.forEach(button => {
                 console.log(`COLOR [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
-                
+
                 // Remove existing color classes including the problematic btn-files-none
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
-                
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
+
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
                 
@@ -4122,10 +4122,10 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             console.log(`📊 [IMMEDIATE] No files found after deletion - setting to no_files`);
             matchingButtons.forEach(button => {
                 console.log(`COLOR [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
-                
+
                 // Remove existing color classes including the problematic btn-files-none
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
-                
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
+
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
                 
@@ -4147,7 +4147,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             console.log(`COLOR [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
             
             // Remove existing color classes including the problematic btn-files-none
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
             
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');

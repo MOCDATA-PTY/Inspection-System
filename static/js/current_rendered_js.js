@@ -1136,7 +1136,7 @@
                 if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
                     console.log('   Button ' + index + 1 + ': "' + button.textContent.trim() + '"');
                     // Remove existing color classes
-                    button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue');
+                    button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-warning', 'btn-danger');
                     
                     // Find the status icon
                     const statusIcon = button.querySelector('i[class*="fa-"]');

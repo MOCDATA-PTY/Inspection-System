@@ -95,46 +95,9 @@ function checkButtonUploadStatus(button, uploadType) {
 
 // Function to show upload validation error to user
 function showUploadValidationError(missingUploads) {
-    // Create or update error message
-    let errorDiv = document.getElementById('upload-validation-error');
-    
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'upload-validation-error';
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            border-radius: 5px;
-            padding: 15px;
-            z-index: 9999;
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        `;
-        document.body.appendChild(errorDiv);
-    }
-    
-    // Set error message
-    const missingList = missingUploads.map(upload => `• ${upload}`).join('<br>');
-    errorDiv.innerHTML = `
-        <strong>⚠️ Cannot mark as "Sent"</strong><br>
-        Please complete all uploads first:<br>
-        ${missingList}
-        <br><br>
-        <small>All RFI and Invoice files must be uploaded before marking as "Sent".</small>
-    `;
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        if (errorDiv && errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
-        }
-    }, 5000);
-    
-    console.log('⚠️ Upload validation error shown:', missingUploads);
+    // DISABLED: Warning popup suppressed per user request
+    console.log('Upload validation warning suppressed. Missing uploads:', missingUploads);
+    return; // Exit early - do not show any warning popup
 }
 
 // Function to show reset notification
@@ -157,78 +120,13 @@ function updateSentStatus(dropdown) {
     const groupId = dropdown.getAttribute('data-group-id');
     const sentStatus = dropdown.value;
     const complianceStatus = dropdown.getAttribute('data-compliance-status');
-    
+
     console.log('📋 Group ID:', groupId);
     console.log('📋 Sent Status:', sentStatus);
     console.log('📋 Compliance Status:', complianceStatus);
-    
-    // If trying to mark as "Sent", validate that all uploads are complete first
-    if (sentStatus === 'YES') {
-        console.log('DEBUG Validating uploads before allowing "Sent" status...');
-        
-        // Check compliance status first (this is the most reliable indicator)
-        if (complianceStatus !== 'complete') {
-            console.log('❌ Cannot mark as "Sent" - compliance status is not complete:', complianceStatus);
-            
-            // Reset dropdown to previous value
-            dropdown.value = 'NO';
-            
-            // Add visual feedback to dropdown
-            dropdown.style.borderColor = '#dc3545';
-            dropdown.style.backgroundColor = '#f8d7da';
-            
-            // Show error message to user
-            let errorMessage = 'All required files must be uploaded before marking as "Sent".';
-            if (complianceStatus === 'partial') {
-                errorMessage = 'Some files are missing. Please ensure all RFI, Invoice, and Compliance documents are uploaded.';
-            } else if (complianceStatus === 'no_compliance') {
-                errorMessage = 'No compliance documents found. Please upload all required files before marking as "Sent".';
-            }
-            
-            showUploadValidationError([errorMessage]);
-            
-            // Reset dropdown styling after 3 seconds
-            setTimeout(() => {
-                dropdown.style.borderColor = '';
-                dropdown.style.backgroundColor = '';
-            }, 3000);
-            
-            return;
-        }
-        
-        // Additional validation: Check if all required uploads are complete
-        const groupRow = document.querySelector(`tr[data-group-id="${groupId}"]`);
-        if (!groupRow) {
-            console.error('❌ Could not find row for group:', groupId);
-            return;
-        }
-        
-        const uploadValidation = validateUploadsComplete(groupRow, groupId);
-        
-        if (!uploadValidation.isComplete) {
-            console.log('❌ Cannot mark as "Sent" - uploads not complete:', uploadValidation.missing);
-            
-            // Reset dropdown to previous value
-            dropdown.value = 'NO';
-            
-            // Add visual feedback to dropdown
-            dropdown.style.borderColor = '#dc3545';
-            dropdown.style.backgroundColor = '#f8d7da';
-            
-            // Show error message to user
-            showUploadValidationError(uploadValidation.missing);
-            
-            // Reset dropdown styling after 3 seconds
-            setTimeout(() => {
-                dropdown.style.borderColor = '';
-                dropdown.style.backgroundColor = '';
-            }, 3000);
-            
-            return;
-        }
-        
-        console.log('✅ All uploads complete - allowing "Sent" status');
-    }
+
+    // VALIDATION REMOVED: Allow user to change sent status freely
+    console.log('✅ Validation bypassed - allowing sent status change')
     
     if (!groupId) {
         console.error('❌ No group ID found');

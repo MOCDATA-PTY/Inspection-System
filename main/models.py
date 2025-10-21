@@ -429,6 +429,16 @@ class FoodSafetyAgencyInspection(models.Model):
     def __str__(self):
         return f"{self.inspector_name} - {self.client_name} - {self.date_of_inspection} ({self.commodity})"
 
+    @property
+    def rfi_uploaded(self):
+        """Check if RFI document has been uploaded"""
+        return self.rfi_uploaded_date is not None
+
+    @property
+    def invoice_uploaded(self):
+        """Check if Invoice document has been uploaded"""
+        return self.invoice_uploaded_date is not None
+
 class Shipment(models.Model):
     """Shipment/Claim data model for legal system"""
     

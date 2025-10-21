@@ -854,9 +854,10 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
                 if files:
                     print(f"   [OK] Found files in main Compliance folder: {files}")
                     has_compliance_files = True
+                    has_any_compliance = True  # FIXED: Set has_any_compliance when files are found
             except Exception as e:
                 print(f"   [ERR] Error listing main compliance files: {e}")
-                
+
         # Check each Inspection folder
         for folder in inspection_folders:
             inspection_path = os.path.join(client_base, folder)
@@ -866,9 +867,10 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
                     if files:
                         print(f"   Found files in {folder}: {files}")
                         has_compliance_files = True
+                        has_any_compliance = True  # FIXED: Set has_any_compliance when files are found
                 except Exception as e:
                     print(f"   [ERROR] Error listing {folder} files: {e}")
-                    
+
         if not has_compliance_files:
             print(f"   No compliance files found in any location")        # Use original client name for folder matching
         client_folder = client_name or 'Unknown Client'
@@ -909,18 +911,47 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
                 print(f"   ERROR: Error listing inspection folders: {e}")
         else:
             print(f"   Client base path does not exist")
-        
+
+        # ALSO check media/uploads/inspections folder for compliance files
+        uploads_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'inspections')
+        print(f"   [FALLBACK] Checking uploads folder: {uploads_path}")
+
+        if os.path.exists(uploads_path):
+            try:
+                files = os.listdir(uploads_path)
+                # Look for compliance files for this client
+                client_folder_sanitized = create_folder_name(client_name)
+                date_str_formatted = date_of_inspection.strftime('%Y%m%d')
+
+                compliance_files = [f for f in files if 'compliance' in f.lower() and client_folder_sanitized in f.lower() and date_str_formatted in f]
+
+                if compliance_files:
+                    try:
+                        print(f"   [OK] Found compliance file(s) in uploads folder: {compliance_files}")
+                    except:
+                        print(f"   [OK] Found compliance file(s) in uploads folder")
+                    has_any_compliance = True
+                else:
+                    try:
+                        print(f"   [WARN] No compliance files found for {client_folder_sanitized}_{date_str_formatted}")
+                    except:
+                        print(f"   [WARN] No compliance files found")
+            except Exception as e:
+                print(f"   ERROR: Error checking uploads folder: {e}")
+        else:
+            print(f"   Uploads folder does not exist")
+
         # Update commodity status
         for commodity in commodities:
             commodity_status[commodity] = has_any_compliance
-        
+
         all_commodities_have_compliance = all(commodity_status.values()) if commodity_status else False
-        
+
         print(f"    Final results:")
         print(f"      - Has any compliance: {has_any_compliance}")
         print(f"      - All commodities have compliance: {all_commodities_have_compliance}")
         print(f"      - Commodity status: {commodity_status}")
-        
+
         return {
             'has_any_compliance': has_any_compliance,
             'all_commodities_have_compliance': all_commodities_have_compliance,
@@ -2401,9 +2432,12 @@ def upload_document(request):
                                     cache_keys_to_clear.extend([
                                         f"file_status_{client_name_from_group}_{inspection_date}",
                                         f"local_files:{client_name_from_group}:{current_time.year}:{current_time.strftime('%B')}",
-                                        f"files_cache_{client_name_from_group}_{inspection_date}"
+                                        f"files_cache_{client_name_from_group}_{inspection_date}",
+                                        f"compliance_status_{client_name_from_group}_{date_obj}",
+                                        f"onedrive_compliance_{client_name_from_group}_{date_obj}",
+                                        f"local_compliance_{client_name_from_group}_{date_obj}"
                                     ])
-                                
+
                                 for cache_key in cache_keys_to_clear:
                                     cache.delete(cache_key)
                                     print(f"Cleared cache key: {cache_key}")
@@ -2446,9 +2480,12 @@ def upload_document(request):
                         "inspection_files_cache",
                         f"local_files:{client_name}:{current_time.year}:{current_time.strftime('%B')}",
                         "page_clients_status_cache",
-                        f"files_cache_{client_name}_{inspection_date}"
+                        f"files_cache_{client_name}_{inspection_date}",
+                        f"compliance_status_{client_name}_{inspection.date_of_inspection}",
+                        f"onedrive_compliance_{client_name}_{inspection.date_of_inspection}",
+                        f"local_compliance_{client_name}_{inspection.date_of_inspection}"
                     ]
-                    
+
                     for cache_key in cache_keys_to_clear:
                         cache.delete(cache_key)
                         print(f" Cleared cache key: {cache_key}")
