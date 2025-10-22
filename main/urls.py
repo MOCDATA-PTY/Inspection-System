@@ -21,7 +21,7 @@ from .views.core_views import (
     scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
-    reauthenticate_onedrive, get_onedrive_auth_url
+    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet
 )
 from .views.data_views import (
     export_shipments, 
@@ -51,7 +51,7 @@ urlpatterns = [
     # INSPECTIONS PAGE (MAIN DATA PAGE)
     # =============================================================================
     path('inspections/', shipment_list, name='shipment_list'),
-    path('export-sheet/', views.export_sheet, name='export_sheet'),
+    path('export-sheet/', export_sheet, name='export_sheet'),
     path('inspections/files/', get_inspection_files, name='get_inspection_files'),
     path('inspections/download-file/', download_inspection_file, name='download_inspection_file'),
     path('inspections/download-all-files/', download_all_inspection_files, name='download_all_inspection_files'),
