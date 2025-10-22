@@ -127,10 +127,17 @@ def remote_sqlserver_data_view(request):
     error_message = None
     
     try:
-        import pyodbc
-        
-        # Use configuration from config file
-        connection = pyodbc.connect(SQLSERVER_CONNECTION_STRING)
+        import pymssql
+
+        # Use pymssql - NO ODBC DRIVERS NEEDED!
+        connection = pymssql.connect(
+            server='102.67.140.12',
+            port=1053,
+            user='FSAUser2',
+            password='password',
+            database='AFS',
+            timeout=30
+        )
         cursor = connection.cursor()
         
         # Execute the FSA inspection query
