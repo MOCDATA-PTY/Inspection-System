@@ -1411,57 +1411,9 @@ def shipment_list(request):
         rfi_upload_date = None
         invoice_upload_date = None
         
-        # Check for actual RFI and Invoice files on disk
-        import os
-        from datetime import datetime
-        from django.conf import settings
-        
-        # Build file paths
-        date_obj = datetime.strptime(date_of_inspection.strftime('%Y-%m-%d'), '%Y-%m-%d')
-        year_folder = date_obj.strftime('%Y')
-        month_folder = date_obj.strftime('%B')
-        
-        client_base_path = os.path.join(
-            settings.MEDIA_ROOT,
-            'inspection',
-            year_folder,
-            month_folder,
-            client_name
-        )
-        
-        # print(f"[FILE CHECK] Checking files for {client_name} at: {client_base_path}")
-        
-        # Check for RFI files in "rfi" folder (current upload structure)
-        rfi_folders = [
-            os.path.join(client_base_path, 'rfi'),
-            os.path.join(client_base_path, 'Request For Invoice'),
-            os.path.join(client_base_path, 'request for invoice'),
-            os.path.join(client_base_path, 'Request for Invoice')
-        ]
-        
-        for rfi_folder in rfi_folders:
-            if os.path.exists(rfi_folder):
-                rfi_files = [f for f in os.listdir(rfi_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
-                if rfi_files:
-                    rfi_uploader = "File"  # Simple indicator that file exists
-                    # print(f"[FILE CHECK] Found RFI files in '{rfi_folder}': {rfi_files}")
-                    break
-        
-        # Check for Invoice files  
-        invoice_folders = [
-            os.path.join(client_base_path, 'invoice'),
-            os.path.join(client_base_path, 'Invoice')
-        ]
-        
-        for invoice_folder in invoice_folders:
-            if os.path.exists(invoice_folder):
-                invoice_files = [f for f in os.listdir(invoice_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
-                if invoice_files:
-                    invoice_uploader = "File"  # Simple indicator that file exists
-                    # print(f"[FILE CHECK] Found Invoice files: {invoice_files}")
-                    break
-        
-        # print(f"[FILE CHECK] Final result - RFI: {rfi_uploader is not None}, Invoice: {invoice_uploader is not None}")
+        # SKIP FILE CHECKING ON PAGE LOAD FOR SPEED - Files will be checked via AJAX after page loads
+        # File checking moved to background to prevent 504 timeout
+        pass
         
         
         if sample_inspection:
