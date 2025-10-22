@@ -630,21 +630,31 @@ class GoogleSheetsService:
         
         try:
             print("   🔌 Step 2.1: Connecting to SQL Server...")
-            import pyodbc
-            from ..views.data_views import SQLSERVER_CONNECTION_STRING, FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
-            
-            # Connect to SQL Server
-            connection = pyodbc.connect(SQLSERVER_CONNECTION_STRING)
-            cursor = connection.cursor()
-            print("      ✅ Successfully connected to SQL Server")
-            
+            import pymssql
+            from django.conf import settings
+            from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
+
+            # Get SQL Server configuration
+            sql_server_config = settings.DATABASES.get('sql_server', {})
+
+            # Connect to SQL Server using pymssql (more reliable than pyodbc)
+            connection = pymssql.connect(
+                server=sql_server_config.get('HOST'),
+                port=int(sql_server_config.get('PORT', 1433)),
+                user=sql_server_config.get('USER'),
+                password=sql_server_config.get('PASSWORD'),
+                database=sql_server_config.get('NAME'),
+                timeout=30
+            )
+            cursor = connection.cursor(as_dict=True)
+            print("      ✅ Successfully connected to SQL Server using pymssql")
+
             print("\n   📋 Step 2.2: Executing inspection query...")
             # Execute the FSA inspection query
             cursor.execute(FSA_INSPECTION_QUERY)
             print("      ✅ Query executed successfully")
-            
-            # Fetch all results and convert to list of dictionaries
-            columns = [column[0] for column in cursor.description]
+
+            # Fetch all results (already as dictionaries with as_dict=True)
             rows = cursor.fetchall()
             print(f"      📊 Retrieved {len(rows)} inspection records from SQL Server")
             
@@ -710,7 +720,8 @@ class GoogleSheetsService:
 
             for i, row in enumerate(rows, 1):
                 total_processed += 1
-                row_dict = dict(zip(columns, row))
+                # row is already a dictionary with pymssql as_dict=True
+                row_dict = row
 
                 # Extract inspector name
                 inspector_id = row_dict.get('InspectorId')
@@ -860,12 +871,12 @@ class GoogleSheetsService:
             print(f"         Error: {str(e)}")
             return {
                 'success': False,
-                'error': f"SQL Server connector not installed. Please install pyodbc. Error: {str(e)}",
+                'error': f"SQL Server connector not installed. Please install pymssql. Error: {str(e)}",
                 'deleted_count': 0,
                 'inspections_created': 0,
                 'total_processed': 0
             }
-        except pyodbc.Error as e:
+        except pymssql.Error as e:
             print(f"      ❌ SQL Server Connection Error: {str(e)}")
             return {
                 'success': False,
