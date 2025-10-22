@@ -715,8 +715,10 @@ class GoogleSheetsService:
             # OPTIMIZATION: Use bulk_create instead of individual creates
             inspection_objects = []
             
-            # Import product name fetching utility
-            from ..utils.sql_server_utils import fetch_product_names_for_inspection
+            # Bulk fetch all product names at once for better performance
+            print("      🔍 Fetching product names in bulk...")
+            product_names_map = self._bulk_fetch_product_names(rows)
+            print(f"      ✅ Fetched product names for {len(product_names_map)} inspections")
 
             for i, row in enumerate(rows, 1):
                 total_processed += 1
@@ -732,16 +734,13 @@ class GoogleSheetsService:
 
                 inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
 
-                # Fetch product names for this inspection
+                # Get product names from bulk fetch
                 remote_id = row_dict.get('Id')
                 client_name = row_dict.get('Client')
                 inspection_date = row_dict.get('DateOfInspection')
-
-                product_names = fetch_product_names_for_inspection(
-                    inspection_id=remote_id,
-                    client_name=client_name,
-                    inspection_date=inspection_date
-                )
+                
+                # Get product names from our bulk fetch
+                product_names = product_names_map.get(remote_id, [])
                 product_name_str = ', '.join(product_names) if product_names else None
 
                 # Create inspection object (but don't save yet)
@@ -894,6 +893,127 @@ class GoogleSheetsService:
                 'inspections_created': 0,
                 'total_processed': 0
             }
+
+    def _bulk_fetch_product_names(self, inspections_data):
+        """
+        Bulk fetch product names for all inspections in one go.
+        This is much faster than individual calls.
+        """
+        import pymssql
+        from django.conf import settings
+        
+        product_names_map = {}
+        
+        try:
+            # Get SQL Server configuration
+            sql_server_config = settings.DATABASES.get('sql_server', {})
+            
+            # Connect to SQL Server
+            connection = pymssql.connect(
+                server=sql_server_config.get('HOST'),
+                port=int(sql_server_config.get('PORT', 1433)),
+                user=sql_server_config.get('USER'),
+                password=sql_server_config.get('PASSWORD'),
+                database=sql_server_config.get('NAME'),
+                timeout=30
+            )
+            cursor = connection.cursor(as_dict=True)
+            
+            # Get all inspection IDs
+            inspection_ids = [row['Id'] for row in inspections_data if row.get('Id')]
+            
+            if not inspection_ids:
+                return product_names_map
+            
+            # Create placeholders for the IN clause
+            placeholders = ','.join(['%s'] * len(inspection_ids))
+            
+            # Bulk query for PMP product names
+            pmp_query = f"""
+                SELECT InspectionId, PMPItemDetails
+                FROM PMPInspectedProductRecordTypes 
+                WHERE InspectionId IN ({placeholders}) 
+                AND PMPItemDetails IS NOT NULL 
+                AND PMPItemDetails != ''
+            """
+            cursor.execute(pmp_query, inspection_ids)
+            pmp_results = cursor.fetchall()
+            
+            # Process PMP results
+            for row in pmp_results:
+                inspection_id = row['InspectionId']
+                product_name = row['PMPItemDetails'].strip()
+                if product_name:
+                    if inspection_id not in product_names_map:
+                        product_names_map[inspection_id] = []
+                    product_names_map[inspection_id].append(product_name)
+            
+            # Bulk query for Raw RMP product names
+            raw_rmp_query = f"""
+                SELECT InspectionId, NewProductItemDetails
+                FROM RawRMPInspectedProductRecordTypes 
+                WHERE InspectionId IN ({placeholders}) 
+                AND NewProductItemDetails IS NOT NULL 
+                AND NewProductItemDetails != ''
+            """
+            cursor.execute(raw_rmp_query, inspection_ids)
+            raw_rmp_results = cursor.fetchall()
+            
+            # Process Raw RMP results
+            for row in raw_rmp_results:
+                inspection_id = row['InspectionId']
+                product_name = row['NewProductItemDetails'].strip()
+                if product_name:
+                    if inspection_id not in product_names_map:
+                        product_names_map[inspection_id] = []
+                    product_names_map[inspection_id].append(product_name)
+            
+            # Bulk query for Poultry product names (try each table)
+            poultry_tables = [
+                'PoultryGradingInspectionRecordTypes',
+                'PoultryLabelInspectionChecklistRecords', 
+                'PoultryQuidInspectionRecordTypes',
+                'PoultryInspectionRecordTypes'
+            ]
+            
+            for table in poultry_tables:
+                try:
+                    poultry_query = f"""
+                        SELECT Id as InspectionId, ProductName
+                        FROM {table}
+                        WHERE Id IN ({placeholders}) 
+                        AND ProductName IS NOT NULL 
+                        AND ProductName != ''
+                    """
+                    cursor.execute(poultry_query, inspection_ids)
+                    poultry_results = cursor.fetchall()
+                    
+                    # Process Poultry results
+                    for row in poultry_results:
+                        inspection_id = row['InspectionId']
+                        product_name = row['ProductName'].strip()
+                        if product_name:
+                            if inspection_id not in product_names_map:
+                                product_names_map[inspection_id] = []
+                            product_names_map[inspection_id].append(product_name)
+                except Exception as e:
+                    # Table might not exist, continue
+                    continue
+            
+            # Remove duplicates for each inspection
+            for inspection_id in product_names_map:
+                product_names_map[inspection_id] = list(set(product_names_map[inspection_id]))
+            
+            cursor.close()
+            connection.close()
+            
+            print(f"      📊 Bulk fetch completed: {len(product_names_map)} inspections have product names")
+            
+        except Exception as e:
+            print(f"      ⚠️ Error in bulk product name fetch: {e}")
+            # Return empty map on error - sync can continue without product names
+        
+        return product_names_map
 
     def populate_shipments_table(self, request=None):
         """Populate the shipments table with data from remote SQL Server"""

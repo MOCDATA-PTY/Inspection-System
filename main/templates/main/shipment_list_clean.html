@@ -12170,12 +12170,11 @@
         // Inspection sync function for shipment list page
         function syncInspectionsFromShipmentList() {
             const btn = document.querySelector('button[onclick="syncInspectionsFromShipmentList()"]');
-            const btnText = btn.querySelector('.btn-text');
-            const statusDiv = document.getElementById('inspection-sync-status');
+            const statusDiv = document.getElementById('inspection-sync-status') || createStatusDiv();
             
             // Disable button and show loading state
             btn.disabled = true;
-            btnText.textContent = 'Syncing...';
+            btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
             btn.style.opacity = '0.7';
             statusDiv.innerHTML = '';
 
@@ -12223,7 +12222,7 @@
                 resetInspectionButton();
             });
 
-            let pollCount = ;0;
+            let pollCount = 0;
             const maxPolls = 60; // 2 minutes max
 
             function pollInspectionSyncStatus() {
@@ -12251,7 +12250,7 @@
                         resetInspectionButton();
                     } else if (data.status === 'running' || !data.success) {
                         // Still running
-                        btnText.textContent = 'Syncing...';
+                        btn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Syncing...';
                         setTimeout(pollInspectionSyncStatus, 2000);
                     } else {
                         // Error occurred
@@ -12276,8 +12275,24 @@
 
             function resetInspectionButton() {
                 btn.disabled = false;
-                btnText.textContent = 'Sync Inspections';
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Inspections';
                 btn.style.opacity = '1';
+            }
+
+            function createStatusDiv() {
+                // Create status div if it doesn't exist
+                let statusDiv = document.getElementById('inspection-sync-status');
+                if (!statusDiv) {
+                    statusDiv = document.createElement('div');
+                    statusDiv.id = 'inspection-sync-status';
+                    statusDiv.className = 'mt-4';
+                    // Insert after the sync button
+                    const navItem = btn.closest('.nav-item');
+                    if (navItem && navItem.parentNode) {
+                        navItem.parentNode.insertBefore(statusDiv, navItem.nextSibling);
+                    }
+                }
+                return statusDiv;
             }
 
             function updateInspectionPageAfterSync() {
