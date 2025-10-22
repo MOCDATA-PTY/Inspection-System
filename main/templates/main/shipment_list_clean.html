@@ -5635,6 +5635,13 @@
             </a>
             {% endif %}
             
+            <!-- Export Sheet Button -->
+            {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+            <a href="{% url 'export_sheet' %}" class="btn btn-success">
+                <i class="fas fa-file-export"></i> Export Sheet
+            </a>
+            {% endif %}
+            
             <!-- Expand All Button (SECOND) -->
             <button type="button" class="btn btn-secondary" onclick="expandAll()">
                 <i class="fas fa-expand-alt"></i> Expand All
