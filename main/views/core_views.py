@@ -1473,23 +1473,9 @@ def shipment_list(request):
             print(f"[INFO] No inspections expected for {client_name} (count: {inspection_count})")
         
         for inspection in group_inspections:
-            # Try to fetch product names from SQL Server
-            sql_product_names = []
-            try:
-                from ..utils.sql_server_utils import fetch_product_names_for_inspection
-                sql_product_names = fetch_product_names_for_inspection(
-                    inspection_id=inspection.remote_id,
-                    client_name=inspection.client_name,
-                    inspection_date=inspection.date_of_inspection
-                )
-            except Exception as e:
-                print(f"[ERROR] Could not fetch product names from SQL Server for inspection {inspection.remote_id}: {e}")
-            
-            # Use SQL Server product name if available, otherwise fall back to existing product_name
+            # Product names are fetched by background sync service - just use what's in database
+            # DO NOT fetch from SQL Server on page load - it takes 11+ minutes for all inspections!
             final_product_name = inspection.product_name
-            if sql_product_names:
-                # Use only the first product name found (cleanest display)
-                final_product_name = sql_product_names[0]
             
             product = {
                 'remote_id': inspection.remote_id,
