@@ -705,24 +705,38 @@ class GoogleSheetsService:
             # OPTIMIZATION: Use bulk_create instead of individual creates
             inspection_objects = []
             
+            # Import product name fetching utility
+            from ..utils.sql_server_utils import fetch_product_names_for_inspection
+
             for i, row in enumerate(rows, 1):
                 total_processed += 1
                 row_dict = dict(zip(columns, row))
-                
+
                 # Extract inspector name
                 inspector_id = row_dict.get('InspectorId')
                 try:
                     inspector_id_int = int(inspector_id) if inspector_id is not None else None
                 except (TypeError, ValueError):
                     inspector_id_int = None
-                
+
                 inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
-                
-                # Create inspection object (but don't save yet)
+
+                # Fetch product names for this inspection
                 remote_id = row_dict.get('Id')
+                client_name = row_dict.get('Client')
+                inspection_date = row_dict.get('DateOfInspection')
+
+                product_names = fetch_product_names_for_inspection(
+                    inspection_id=remote_id,
+                    client_name=client_name,
+                    inspection_date=inspection_date
+                )
+                product_name_str = ', '.join(product_names) if product_names else None
+
+                # Create inspection object (but don't save yet)
                 inspection_obj = FoodSafetyAgencyInspection(
                     commodity=row_dict.get('Commodity'),
-                    date_of_inspection=row_dict.get('DateOfInspection'),
+                    date_of_inspection=inspection_date,
                     start_of_inspection=row_dict.get('StartOfInspection'),
                     end_of_inspection=row_dict.get('EndOfInspection'),
                     inspection_location_type_id=row_dict.get('InspectionLocationTypeID'),
@@ -734,7 +748,8 @@ class GoogleSheetsService:
                     is_sample_taken=row_dict.get('IsSampleTaken', False),
                     inspection_travel_distance_km=row_dict.get('InspectionTravelDistanceKm'),
                     remote_id=remote_id,
-                    client_name=row_dict.get('Client')
+                    client_name=client_name,
+                    product_name=product_name_str
                 )
                 
                 # RESTORE LOCAL FIELDS: Apply preserved local data if it exists
