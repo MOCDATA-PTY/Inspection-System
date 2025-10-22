@@ -1494,9 +1494,7 @@ def shipment_list(request):
                 'bought_sample': inspection.bought_sample,
                 'lab': inspection.lab,
                 'is_complete': False,  # Default to False
-                'is_direction_present_for_this_inspection': inspection.is_direction_present_for_this_inspection,  # Add missing field
-                'sql_product_names': sql_product_names,  # Store all found names for reference
-                'has_sql_product_name': len(sql_product_names) > 0  # Flag to indicate if we have SQL data
+                'is_direction_present_for_this_inspection': inspection.is_direction_present_for_this_inspection
             }
             products.append(product)
         
