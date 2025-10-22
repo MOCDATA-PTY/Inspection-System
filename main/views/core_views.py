@@ -3776,13 +3776,19 @@ def home(request):
             return False
     
     def check_sql_server_status():
-        """Check SQL Server database connectivity"""
+        """Check SQL Server database connectivity using pymssql - NO ODBC DRIVERS NEEDED!"""
         try:
-            # Test SQL Server connection by trying to connect
-            import pyodbc
-            from ..views.data_views import SQLSERVER_CONNECTION_STRING
-            
-            conn = pyodbc.connect(SQLSERVER_CONNECTION_STRING, timeout=5)
+            # Test SQL Server connection using pymssql
+            import pymssql
+
+            conn = pymssql.connect(
+                server='102.67.140.12',
+                port=1053,
+                user='FSAUser2',
+                password='password',
+                database='AFS',
+                timeout=5
+            )
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             result = cursor.fetchone()
