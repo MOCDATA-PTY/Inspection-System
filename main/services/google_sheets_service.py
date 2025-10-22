@@ -714,11 +714,9 @@ class GoogleSheetsService:
             
             # OPTIMIZATION: Use bulk_create instead of individual creates
             inspection_objects = []
-            
-            # Bulk fetch all product names at once for better performance
-            print("      🔍 Fetching product names in bulk...")
-            product_names_map = self._bulk_fetch_product_names(rows)
-            print(f"      ✅ Fetched product names for {len(product_names_map)} inspections")
+
+            # Product names now come directly from the query (JOIN already done in SQL)
+            print("      ✅ Product names included in query results")
 
             for i, row in enumerate(rows, 1):
                 total_processed += 1
@@ -734,14 +732,13 @@ class GoogleSheetsService:
 
                 inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
 
-                # Get product names from bulk fetch
+                # Get data from query result
                 remote_id = row_dict.get('Id')
                 client_name = row_dict.get('Client')
                 inspection_date = row_dict.get('DateOfInspection')
-                
-                # Get product names from our bulk fetch
-                product_names = product_names_map.get(remote_id, [])
-                product_name_str = ', '.join(product_names) if product_names else None
+
+                # Product name comes directly from the query result (already JOINed in SQL)
+                product_name_str = row_dict.get('ProductName')
 
                 # Create inspection object (but don't save yet)
                 inspection_obj = FoodSafetyAgencyInspection(
