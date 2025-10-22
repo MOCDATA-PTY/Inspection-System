@@ -164,38 +164,110 @@ class ScheduledSyncService:
             return False
     
     def sync_sql_server(self):
-        """Sync inspection data with SQL Server."""
+        """Sync inspection data with SQL Server - fetch inspections and product names."""
         try:
             print("🗄️ Starting SQL Server sync...")
-            
+
             from ..models import FoodSafetyAgencyInspection, Inspection
-            
-            # Count existing inspections
-            total_inspections = FoodSafetyAgencyInspection.objects.count()
-            total_regular_inspections = Inspection.objects.count()
-            
-            print(f"   📊 Found {total_inspections} Food Safety Agency inspections")
-            print(f"   📊 Found {total_regular_inspections} regular inspections")
-            
-            # For now, we'll just report the current state
-            # In a real implementation, this would sync with external SQL Server
-            print(f"   📈 Total inspection records: {total_inspections + total_regular_inspections}")
-            
-            # Check for recent inspections (last 7 days)
+            from ..utils.sql_server_utils import fetch_product_names_for_inspection
+            from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
+            import pymssql
             from datetime import datetime, timedelta
-            recent_date = datetime.now().date() - timedelta(days=7)
-            recent_inspections = FoodSafetyAgencyInspection.objects.filter(
-                date_of_inspection__gte=recent_date
-            ).count()
-            
-            print(f"   📅 Recent inspections (last 7 days): {recent_inspections}")
-            
+
+            # Connect to SQL Server using pymssql
+            sql_server_config = settings.DATABASES.get('sql_server', {})
+            connection = pymssql.connect(
+                server=sql_server_config.get('HOST'),
+                port=int(sql_server_config.get('PORT', 1433)),
+                user=sql_server_config.get('USER'),
+                password=sql_server_config.get('PASSWORD'),
+                database=sql_server_config.get('NAME'),
+                timeout=30
+            )
+            cursor = connection.cursor(as_dict=True)
+
+            print(f"   📅 Fetching inspections from SQL Server...")
+
+            # Use the FSA_INSPECTION_QUERY that's already working
+            cursor.execute(FSA_INSPECTION_QUERY)
+
+            sql_inspections = cursor.fetchall()
+            print(f"   📊 Found {len(sql_inspections)} inspections in SQL Server")
+
+            # Sync each inspection
+            synced_count = 0
+            updated_count = 0
+            product_names_updated = 0
+
+            for sql_insp in sql_inspections:
+                try:
+                    inspection_id = sql_insp.get('Id')
+                    client_name = sql_insp.get('Client')
+                    inspection_date = sql_insp.get('DateOfInspection')
+                    inspector_id = sql_insp.get('InspectorId')
+                    commodity = sql_insp.get('Commodity')
+
+                    # Get inspector name from mapping
+                    try:
+                        inspector_id_int = int(inspector_id) if inspector_id is not None else None
+                    except (TypeError, ValueError):
+                        inspector_id_int = None
+                    inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
+
+                    # Fetch product names for this inspection
+                    product_names = fetch_product_names_for_inspection(
+                        inspection_id=inspection_id,
+                        client_name=client_name,
+                        inspection_date=inspection_date
+                    )
+                    product_name_str = ', '.join(product_names) if product_names else None
+
+                    # Update or create inspection in PostgreSQL
+                    inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
+                        remote_id=inspection_id,
+                        defaults={
+                            'client_name': client_name,
+                            'date_of_inspection': inspection_date,
+                            'inspector_name': inspector_name,
+                            'commodity': commodity,
+                            'product_name': product_name_str,
+                            'last_synced': datetime.now()
+                        }
+                    )
+
+                    if created:
+                        synced_count += 1
+                    else:
+                        updated_count += 1
+
+                    if product_name_str:
+                        product_names_updated += 1
+
+                    if (synced_count + updated_count) % 50 == 0:
+                        print(f"   📈 Progress: {synced_count + updated_count}/{len(sql_inspections)} inspections processed...")
+
+                except Exception as e:
+                    print(f"   ⚠️ Error syncing inspection {inspection_id}: {e}")
+                    continue
+
+            cursor.close()
+            connection.close()
+
+            # Summary
+            total_inspections = FoodSafetyAgencyInspection.objects.count()
+            print(f"\n   ✅ Sync completed:")
+            print(f"      - New inspections: {synced_count}")
+            print(f"      - Updated inspections: {updated_count}")
+            print(f"      - Product names synced: {product_names_updated}")
+            print(f"      - Total inspections in database: {total_inspections}")
+
             self.last_sync_times['sql_server'] = datetime.now()
-            print("✅ SQL Server sync completed successfully")
             return True
-            
+
         except Exception as e:
             print(f"❌ Error in SQL Server sync: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def sync_compliance_documents(self):
