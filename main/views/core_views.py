@@ -1000,15 +1000,16 @@ def shipment_list(request):
     has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'rfi_status', 'page'])
     
     cache_key = f"shipment_list_{request.user.id}_{request.user.role}"
-    
-    # FORCE CACHE CLEAR on every page load to prevent stale data issues
-    safe_print("CLEARING CACHE on page load to prevent stale data...")
-    cache.delete(cache_key)
-    cache.delete('drive_files_lookup_v2')
-    cache.delete('page_clients_status_cache')
-    safe_print("Cache cleared - fresh data will be loaded")
-    
-    # Check if we have cached data (only clear if needed)
+
+    # Only clear cache if user explicitly requests refresh (via query param)
+    if request.GET.get('refresh') == 'true':
+        safe_print("CLEARING CACHE on explicit refresh request...")
+        cache.delete(cache_key)
+        cache.delete('drive_files_lookup_v2')
+        cache.delete('page_clients_status_cache')
+        safe_print("Cache cleared - fresh data will be loaded")
+
+    # Check if we have cached data
     cached_data = cache.get(cache_key)
     
     # Get Food Safety Agency inspections from local database with MASSIVE OPTIMIZATION
@@ -1428,7 +1429,7 @@ def shipment_list(request):
             client_name
         )
         
-        print(f"[FILE CHECK] Checking files for {client_name} at: {client_base_path}")
+        # print(f"[FILE CHECK] Checking files for {client_name} at: {client_base_path}")
         
         # Check for RFI files in "rfi" folder (current upload structure)
         rfi_folders = [
@@ -1443,7 +1444,7 @@ def shipment_list(request):
                 rfi_files = [f for f in os.listdir(rfi_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
                 if rfi_files:
                     rfi_uploader = "File"  # Simple indicator that file exists
-                    print(f"[FILE CHECK] Found RFI files in '{rfi_folder}': {rfi_files}")
+                    # print(f"[FILE CHECK] Found RFI files in '{rfi_folder}': {rfi_files}")
                     break
         
         # Check for Invoice files  
@@ -1457,10 +1458,10 @@ def shipment_list(request):
                 invoice_files = [f for f in os.listdir(invoice_folder) if f.lower().endswith(('.pdf', '.doc', '.docx', '.jpg', '.png'))]
                 if invoice_files:
                     invoice_uploader = "File"  # Simple indicator that file exists
-                    print(f"[FILE CHECK] Found Invoice files: {invoice_files}")
+                    # print(f"[FILE CHECK] Found Invoice files: {invoice_files}")
                     break
         
-        print(f"[FILE CHECK] Final result - RFI: {rfi_uploader is not None}, Invoice: {invoice_uploader is not None}")
+        # print(f"[FILE CHECK] Final result - RFI: {rfi_uploader is not None}, Invoice: {invoice_uploader is not None}")
         
         
         if sample_inspection:
