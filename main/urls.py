@@ -51,6 +51,7 @@ urlpatterns = [
     # INSPECTIONS PAGE (MAIN DATA PAGE)
     # =============================================================================
     path('inspections/', shipment_list, name='shipment_list'),
+    path('export-sheet/', views.export_sheet, name='export_sheet'),
     path('inspections/files/', get_inspection_files, name='get_inspection_files'),
     path('inspections/download-file/', download_inspection_file, name='download_inspection_file'),
     path('inspections/download-all-files/', download_all_inspection_files, name='download_all_inspection_files'),

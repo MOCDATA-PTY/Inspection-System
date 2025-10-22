@@ -3643,6 +3643,11 @@ def dashboard(request):
 
 
 @login_required(login_url='login')
+def export_sheet(request):
+    """Export Sheet page - blank page with only the word 'Export Sheet'"""
+    return render(request, 'main/export_sheet.html', {})
+
+@login_required(login_url='login')
 @inspector_only_inspections
 def home(request):
     """Home page view that requires login."""
