@@ -5637,7 +5637,7 @@
             
             <!-- Export Sheet Button -->
             {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-            <a href="{% url 'export_sheet' %}" class="btn btn-success">
+            <a href="{% url 'export_sheet' %}" class="btn btn-secondary">
                 <i class="fas fa-file-export"></i> Export Sheet
             </a>
             {% endif %}
