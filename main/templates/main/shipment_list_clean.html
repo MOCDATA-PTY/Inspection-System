@@ -11360,9 +11360,81 @@
                 alert('Error updating Km Traveled: ' + error.message);
             });
         };
-        
+
+        // Update Group Km Traveled
+        window.updateGroupKmTraveled = function(input) {
+            const groupId = input.getAttribute('data-group-id');
+            const kmValue = input.value;
+
+            // Get CSRF token
+            const csrfToken = getCSRFToken();
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('group_id', groupId);
+            formData.append('km_traveled', kmValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // Send update request
+            fetch('/update-group-km-traveled/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success feedback
+                    input.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        input.style.backgroundColor = '';
+                    }, 500);
+                } else {
+                    alert('Error updating Group Km Traveled: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error updating Group Km Traveled: ' + error.message);
+            });
+        };
+
+        // Update Group Hours
+        window.updateGroupHours = function(input) {
+            const groupId = input.getAttribute('data-group-id');
+            const hoursValue = input.value;
+
+            // Get CSRF token
+            const csrfToken = getCSRFToken();
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('group_id', groupId);
+            formData.append('hours', hoursValue);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // Send update request
+            fetch('/update-group-hours/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success feedback
+                    input.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        input.style.backgroundColor = '';
+                    }, 500);
+                } else {
+                    alert('Error updating Group Hours: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error updating Group Hours: ' + error.message);
+            });
+        };
+
         // Bought Sample function is now defined earlier in the file (line ~4942)
-        
+
         // Get CSRF Token function
         function getCSRFToken() {
             const token = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
