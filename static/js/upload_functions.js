@@ -1328,6 +1328,9 @@ async function deleteFile(filePath, fileName) {
             } else if (filePath.includes('/invoice/')) {
                 documentType = 'invoice';
                 console.log('DEBUG [DEBUG] Invoice file detected!');
+            } else if (filePath.includes('/occurrence/')) {
+                documentType = 'occurrence';
+                console.log('DEBUG [DEBUG] Occurrence file detected!');
             } else if (filePath.includes('/retest/')) {
                 documentType = 'retest';
                 console.log('DEBUG [DEBUG] Retest file detected!');
@@ -1463,6 +1466,8 @@ async function deleteFile(filePath, fileName) {
                             button.onclick = function() { uploadRFI(groupId); };
                         } else if (documentType === 'invoice') {
                             button.onclick = function() { uploadInvoice(groupId); };
+                        } else if (documentType === 'occurrence') {
+                            button.onclick = function() { uploadOccurrence(groupId); };
                         }
                         console.log(`SUCCESS ${documentType.toUpperCase()} button directly reset to gray state`);
                     } else {
@@ -5416,6 +5421,8 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadRFI(groupId); };
         } else if (documentType === 'invoice') {
             button.onclick = function() { uploadInvoice(groupId); };
+        } else if (documentType === 'occurrence') {
+            button.onclick = function() { uploadOccurrence(groupId); };
         } else if (documentType === 'lab') {
             // For lab buttons, use the inspection ID from the button's data attributes
             const inspectionId = button.getAttribute('data-inspection-id') || button.id.replace('lab-', '');
@@ -5487,6 +5494,8 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadRFI(groupId); };
         } else if (documentType === 'invoice') {
             button.onclick = function() { uploadInvoice(groupId); };
+        } else if (documentType === 'occurrence') {
+            button.onclick = function() { uploadOccurrence(groupId); };
         } else if (documentType === 'lab') {
             button.onclick = function() { uploadLab(groupId); };
         } else if (documentType === 'lab_form') {
