@@ -156,6 +156,11 @@ def delete_client_email(request):
         client = Client.objects.filter(client_id__iexact=client_name).first()
         if not client:
             return JsonResponse({'success': False, 'error': 'Client not found'})
+        # If matches primary email, clear it
+        if client.email and client.email.lower() == email.lower():
+            client.email = None
+            client.save(update_fields=['email'])
+            return JsonResponse({'success': True})
         # If matches manual_email, clear it
         if client.manual_email and client.manual_email.lower() == email.lower():
             client.manual_email = None
@@ -259,8 +264,8 @@ def user_login(request):
                     # Set initial last activity timestamp
                     from django.utils import timezone
                     request.session['last_activity'] = timezone.now().isoformat()
-                    request.session.set_expiry(0)  # Expire session on browser close
-                    # messages.success(request, f"Welcome back, {user.username}!")
+                    request.session['authenticated'] = True
+                    request.session.modified = True
                     
                     # Role-based redirect logic
                     user_role = getattr(user, 'role', 'inspector')
@@ -1151,8 +1156,8 @@ def shipment_list(request):
             # If no inspector ID found, show no inspections
             inspections = inspections.none()
     elif request.user.role == 'scientist':
-        # Lab technicians can only see inspections where is_sample_taken is True
-        inspections = inspections.filter(is_sample_taken=True)
+        # Lab technicians can see all inspections (restriction removed)
+        pass  # No filtering - show all inspections
     # For admin, super_admin, financial roles, show all inspections
     # (no filtering needed)
     
@@ -1251,7 +1256,7 @@ def shipment_list(request):
                     # Collect all emails for this client
                     emails = []
                     if _c.email:
-                        emails.append({'email': _c.email, 'type': 'primary', 'removable': False})
+                        emails.append({'email': _c.email, 'type': 'primary', 'removable': True})
                     if _c.manual_email:
                         emails.append({'email': _c.manual_email, 'type': 'manual', 'removable': True})
                     
@@ -1329,7 +1334,7 @@ def shipment_list(request):
             if client:
                 emails = []
                 if client.email:
-                    emails.append({'email': client.email, 'type': 'primary', 'removable': False})
+                    emails.append({'email': client.email, 'type': 'primary', 'removable': True})
                 if client.manual_email:
                     emails.append({'email': client.manual_email, 'type': 'manual', 'removable': True})
                 
@@ -1710,38 +1715,14 @@ def shipment_list(request):
         return render(request, 'main/shipment_list_clean.html', context)
     except BrokenPipeError:
         print(" Broken pipe error detected - client disconnected")
-        # Return a minimal response to prevent server error - use backup template
-        return render(request, 'main/shipment_list_backup_20250912_024024.html', {
-            'shipments': [],
-            'inspectors': [],
-            'commodities': [],
-            'total_inspections': 0,
-            'total_shipments': 0,
-            'user_role': request.user.role,
-            'user_name': request.user.get_full_name() or request.user.username,
-            'user_message': 'Connection interrupted. Please refresh the page.',
-            'paginator': None,
-            'page_obj': None,
-            'show_all': False,
-            'settings': settings,
-        })
+        # Return a minimal response to prevent server error
+        return HttpResponse("Connection interrupted. Please refresh the page.", status=200)
     except Exception as e:
         print(f" Error rendering shipment list: {e}")
-        # Return error page instead of crashing - use backup template to avoid infinite loop
-        return render(request, 'main/shipment_list_backup_20250912_024024.html', {
-            'shipments': [],
-            'inspectors': [],
-            'commodities': [],
-            'total_inspections': 0,
-            'total_shipments': 0,
-            'user_role': request.user.role,
-            'user_name': request.user.get_full_name() or request.user.username,
-            'user_message': f'Error loading data: {str(e)}',
-            'paginator': None,
-            'page_obj': None,
-            'show_all': False,
-            'settings': settings,
-        })
+        import traceback
+        traceback.print_exc()
+        # Re-raise the exception so Django can handle it properly
+        raise
 
 
 def check_for_compliance_documents(client_name, inspection_date):
@@ -1927,23 +1908,23 @@ def upload_document(request):
         # Check role-based restrictions for inspectors
         user_role = getattr(request.user, 'role', 'inspector')
         
-        # Inspectors can only upload RFI documents
+        # Inspectors can only upload RFI and Accurance documents
         if user_role == 'inspector':
             document_type = request.POST.get('document_type')
-            allowed_document_types = ['rfi']
+            allowed_document_types = ['rfi', 'occurrence']
             if document_type not in allowed_document_types:
                 return JsonResponse({
-                    'success': False, 
-                    'error': 'Access denied. Inspectors can only upload RFI documents.'
+                    'success': False,
+                    'error': 'Access denied. Inspectors can only upload RFI and Accurance documents.'
                 })
         
         # Administrators can only upload invoice and RFI documents
-        elif user_role == 'administrator':
+        elif user_role in ['admin', 'financial', 'super_admin']:
             document_type = request.POST.get('document_type')
             allowed_document_types = ['invoice', 'rfi']
             if document_type not in allowed_document_types:
                 return JsonResponse({
-                    'success': False, 
+                    'success': False,
                     'error': 'Access denied. Administrators can only upload invoice and RFI documents.'
                 })
         
@@ -2181,10 +2162,10 @@ def upload_document(request):
             # Enforce unified directory scheme
             # - Grouped (unmatched): client-level rfi, invoice, compliance
             # - Individual (matched): inspection-<id>/{rfi,invoice,compliance,lab,retest,form}
-            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form']:
+            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form', 'occurrence']:
                 if upload_type == 'individual' and inspection_id:
                     # Map document types to folder names that match scan_inspection_folders expectations
-                    # scan_inspection_folders looks for: 'Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance'
+                    # scan_inspection_folders looks for: 'Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence'
                     folder_map = {
                         'lab': 'lab results',          # Lab results go to 'lab results' folder
                         'lab_form': 'lab results',     # Lab forms also go to 'lab results' folder
@@ -2192,7 +2173,8 @@ def upload_document(request):
                         'invoice': 'invoice',          # Invoices go to 'invoice' folder (lowercase)
                         'retest': 'retest',            # Retest documents go to 'retest' folder (lowercase)
                         'compliance': 'Compliance',    # Compliance documents go to 'Compliance' folder (uppercase)
-                        'form': 'lab results'          # Generic forms go to 'lab results' folder
+                        'form': 'lab results',         # Generic forms go to 'lab results' folder
+                        'occurrence': 'occurrence'     # Occurrence documents go to 'occurrence' folder (lowercase)
                     }
                     mapped_type = folder_map.get(document_type, document_type)
                     # Use uppercase Inspection- to match scan function (it looks for folders starting with 'Inspection-')
@@ -2345,6 +2327,12 @@ def upload_document(request):
                                         invoice_uploaded_date=current_time
                                     )
                                     print(f"DEBUG: Updated Invoice tracking for {updated_count} inspections")
+                                elif document_type == 'occurrence':
+                                    updated_count = group_inspections.update(
+                                        occurrence_uploaded_by=request.user,
+                                        occurrence_uploaded_date=current_time
+                                    )
+                                    print(f"DEBUG: Updated Occurrence tracking for {updated_count} inspections")
                                 
                                 print(f"Updated upload tracking for {updated_count} inspections in group {group_id}")
                                 
@@ -2405,6 +2393,11 @@ def upload_document(request):
                         inspection.invoice_uploaded_date = current_time
                         inspection.save(update_fields=['invoice_uploaded_by', 'invoice_uploaded_date'])
                         print(f"DEBUG: Updated Invoice tracking for individual inspection {inspection_id}")
+                    elif document_type == 'occurrence':
+                        inspection.occurrence_uploaded_by = request.user
+                        inspection.occurrence_uploaded_date = current_time
+                        inspection.save(update_fields=['occurrence_uploaded_by', 'occurrence_uploaded_date'])
+                        print(f"DEBUG: Updated Occurrence tracking for individual inspection {inspection_id}")
                     
                     # Clear cache after individual upload - CLEAR ALL RELEVANT CACHES
                     from django.core.cache import cache
@@ -2506,7 +2499,7 @@ def scan_inspection_folders(test_path, seen_files):
         print(f"[DEBUG] Checking inspection folder: {inspection_folder}")
         
         # Check each document type in the inspection folder
-        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance']
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence']
         for doc_type in doc_types:
             doc_path = os.path.join(inspection_path, doc_type)
             if os.path.exists(doc_path):
@@ -2558,10 +2551,15 @@ def scan_inspection_folders(test_path, seen_files):
                         category_key = 'lab'
                     elif doc_type == 'Compliance':
                         category_key = 'compliance'
-                    
+                    elif doc_type == 'occurrence':
+                        category_key = 'occurrence'
+
+                    print(f" [DEBUG] Mapped doc_type '{doc_type}' to category_key '{category_key}' with {len(files)} files")
+
                     if category_key not in files_list:
                         files_list[category_key] = []
                     files_list[category_key].extend(files)
+                    print(f" [DEBUG] files_list['{category_key}'] now has {len(files_list[category_key])} files")
     
     return files_list
 
@@ -2576,7 +2574,7 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
         print(f" [DEBUG] Checking inspection folder: {inspection_folder}")
         
         # Check each document type in the inspection folder
-        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance']
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence']
         for doc_type in doc_types:
             doc_path = os.path.join(inspection_path, doc_type)
             if os.path.exists(doc_path):
@@ -2714,11 +2712,19 @@ def list_uploaded_files(request):
         seen_files = set()
         files_list = scan_inspection_folders(base_path, seen_files)
 
+        print(f" [DEBUG] scan_inspection_folders returned files_list keys: {list(files_list.keys())}")
+        for category, files in files_list.items():
+            print(f" [DEBUG] Category '{category}' has {len(files)} files")
+
         # Initialize any missing categories
-        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance']:
+        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence']:
             if category not in files_list:
                 files_list[category] = []
-                
+                print(f" [DEBUG] Initialized empty list for missing category '{category}'")
+
+        print(f" [DEBUG] Final files_list keys before response: {list(files_list.keys())}")
+        print(f" [DEBUG] occurrence files count: {len(files_list.get('occurrence', []))}")
+
         return JsonResponse({'files': files_list})
         
     except Exception as e:
@@ -2822,7 +2828,7 @@ def list_client_folder_files(request):
                 files_list[category].extend(file_list)
 
             # Also check traditional document folders (for backward compatibility)
-            traditional_docs = ['rfi', 'Request For Invoice', 'invoice', 'lab', 'lab results', 'retest']
+            traditional_docs = ['rfi', 'Request For Invoice', 'invoice', 'lab', 'lab results', 'retest', 'occurrence']
             for doc_type in traditional_docs:
                 doc_path = os.path.join(test_path, doc_type)
                 if os.path.exists(doc_path):
@@ -2939,6 +2945,15 @@ def list_client_folder_files(request):
                                 files_list['compliance'] = []
                             files_list['compliance'].extend(files)
                             print(f"Found {len(files)} compliance files in {commodity_folder}")
+
+        # Initialize any missing categories before returning
+        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence']:
+            if category not in files_list:
+                files_list[category] = []
+                print(f"[DEBUG] Initialized empty list for missing category '{category}'")
+
+        print(f"[DEBUG] Final files_list keys in list_client_folder_files: {list(files_list.keys())}")
+        print(f"[DEBUG] occurrence files in response: {len(files_list.get('occurrence', []))}")
 
         return JsonResponse({
             'success': True,
@@ -3646,6 +3661,109 @@ def dashboard(request):
 def export_sheet(request):
     """Export Sheet page - blank page with only the word 'Export Sheet'"""
     return render(request, 'main/export_sheet.html', {})
+
+@login_required(login_url='login')
+def export_to_google_sheets(request):
+    """Export data to Google Sheets"""
+    from ..services.google_sheets_service import GoogleSheetsService
+    from google.oauth2.credentials import Credentials
+    from googleapiclient.discovery import build
+    from datetime import datetime
+    import json
+    import pickle
+    import os
+    from django.conf import settings
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST requests allowed'})
+
+    try:
+        # Get the data from request
+        data = json.loads(request.body)
+        export_data = data.get('data', [])
+
+        print(f"📊 Export request received with {len(export_data)} rows")
+
+        if not export_data:
+            return JsonResponse({'success': False, 'error': 'No data to export'})
+
+        # Authenticate with Google Sheets
+        token_path = os.path.join(settings.BASE_DIR, 'token.pickle')
+
+        if not os.path.exists(token_path):
+            print("❌ token.pickle not found")
+            return JsonResponse({
+                'success': False,
+                'error': 'Google Sheets not authenticated. Please delete token.pickle and re-authenticate with write permissions.'
+            })
+
+        print("🔐 Loading credentials from token.pickle...")
+        with open(token_path, 'rb') as token:
+            creds = pickle.load(token)
+
+        print("✅ Credentials loaded")
+
+        # Check if credentials are valid
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                print("🔄 Refreshing expired token...")
+                from google.auth.transport.requests import Request
+                creds.refresh(Request())
+                with open(token_path, 'wb') as token:
+                    pickle.dump(creds, token)
+                print("✅ Token refreshed")
+            else:
+                print("❌ Credentials invalid")
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Credentials expired. Please delete token.pickle and re-authenticate.'
+                })
+
+        # Build the service
+        print("🔨 Building Google Sheets service...")
+        service = build('sheets', 'v4', credentials=creds)
+
+        # Create a new spreadsheet
+        print("📝 Creating new spreadsheet...")
+        spreadsheet = {
+            'properties': {
+                'title': f'Export Data {datetime.now().strftime("%Y-%m-%d %H-%M")}'
+            }
+        }
+
+        result = service.spreadsheets().create(body=spreadsheet, fields='spreadsheetId,spreadsheetUrl').execute()
+        spreadsheet_id = result.get('spreadsheetId')
+        spreadsheet_url = result.get('spreadsheetUrl')
+
+        print(f"✅ Spreadsheet created: {spreadsheet_id}")
+        print(f"🔗 URL: {spreadsheet_url}")
+
+        # Write data to the spreadsheet
+        print(f"✍️ Writing {len(export_data)} rows...")
+        body = {'values': export_data}
+
+        service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range='A1',
+            valueInputOption='RAW',
+            body=body
+        ).execute()
+
+        print("✅ Data written successfully!")
+
+        return JsonResponse({
+            'success': True,
+            'url': spreadsheet_url
+        })
+
+    except Exception as e:
+        print(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 @login_required(login_url='login')
 @inspector_only_inspections
@@ -5509,6 +5627,86 @@ def update_group_km_traveled(request):
         'error': 'Invalid request method'
     })
 
+def update_group_comment(request):
+    """Update comment field for all inspections in a group"""
+    if request.method == 'POST':
+        try:
+            group_id = request.POST.get('group_id')
+            comment = request.POST.get('comment', '')
+
+            # Parse group_id to extract client_name and date_of_inspection
+            # group_id format: "client_name_date_of_inspection"
+            if '_' not in group_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid group ID format'
+                })
+
+            # Split the group_id to get client_name and date
+            parts = group_id.split('_')
+            if len(parts) < 2:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Invalid group ID format'
+                })
+
+            # Reconstruct client_name (may contain underscores) and date
+            date_part = parts[-1]
+            client_name_parts = parts[:-1]
+            client_name = '_'.join(client_name_parts)
+
+            # Convert date string to date object (support YYYY-MM-DD and YYYYMMDD)
+            from datetime import datetime
+            date_of_inspection = None
+            for fmt in ('%Y-%m-%d', '%Y%m%d'):
+                try:
+                    date_of_inspection = datetime.strptime(date_part, fmt).date()
+                    break
+                except ValueError:
+                    continue
+            if not date_of_inspection:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Invalid date format in group ID: {date_part}'
+                })
+
+            # Find all inspections in this group using normalized client name
+            import re as _re
+            def _normalize(n):
+                return _re.sub(r'[^a-zA-Z0-9]', '', (n or '')).lower()
+
+            raw_key = _normalize(client_name)
+            candidate_qs = FoodSafetyAgencyInspection.objects.filter(
+                date_of_inspection=date_of_inspection
+            )
+            matching_ids = [ins.id for ins in candidate_qs if _normalize(ins.client_name) == raw_key]
+            inspections = FoodSafetyAgencyInspection.objects.filter(id__in=matching_ids)
+
+            if not inspections.exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': f'No inspections found for group: {group_id}'
+                })
+
+            # Update comment for all inspections in the group
+            updated_count = inspections.update(comment=comment)
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Comment updated successfully for {updated_count} inspections in group'
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error updating group comment: {str(e)}'
+            })
+
+    return JsonResponse({
+        'success': False,
+        'error': 'Invalid request method'
+    })
+
 
 @login_required
 def update_group_hours(request):
@@ -5659,13 +5857,18 @@ def update_group_additional_email(request):
             if additional_email:
                 from django.core.validators import validate_email
                 from django.core.exceptions import ValidationError
-                try:
-                    validate_email(additional_email)
-                except ValidationError:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'Invalid email format'
-                    })
+                
+                # Split comma-separated emails and validate each one
+                emails = [email.strip() for email in additional_email.split(',') if email.strip()]
+                
+                for email in emails:
+                    try:
+                        validate_email(email)
+                    except ValidationError:
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'Invalid email format: {email}'
+                        })
 
             # Update additional_email for all inspections in the group
             email_value = additional_email if additional_email else None
@@ -6175,21 +6378,46 @@ def normalize_client_name(name):
     return name.strip().lower().replace('\u00A0', ' ').replace('\u200B', '').replace('\u2002', ' ').replace('\u2003', ' ').replace('  ', ' ')
 
 
-def load_drive_files_real(request):
-    """Load real Drive files using the existing GoogleDriveService - Apps Script replica."""
+def load_drive_files_real(request, use_cache=True):
+    """Load real Drive files using the existing GoogleDriveService - Apps Script replica.
+    
+    Args:
+        request: Django request object
+        use_cache: If True, checks Redis cache first (default: True)
+        
+    Returns:
+        dict: File lookup dictionary keyed by compound_key
+    """
     try:
         from ..services.google_drive_service import GoogleDriveService
+        from django.core.cache import cache
         import re
         from datetime import datetime
+        
+        # Check cache first for faster retrieval
+        if use_cache:
+            cache_key = 'drive_files_lookup_v3'  # New cache key version
+            cached_lookup = cache.get(cache_key)
+            if cached_lookup:
+                print(f"Using cached Drive files: {len(cached_lookup)} files")
+                return cached_lookup
         
         drive_service = GoogleDriveService()
         folder_id = "18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4"  # From Apps Script
         
-        print("Loading ALL Google Drive files...")
+        print("Loading Google Drive files...")
         start_time = datetime.now()
         
         # Get ALL files from Drive folder (not limited to 1000)
+        # Suppress verbose output from Google Drive service
+        import logging
+        original_level = logging.getLogger().level
+        logging.getLogger().setLevel(logging.ERROR)
+        
         files = drive_service.list_files_in_folder(folder_id, request=request, max_items=None)
+        
+        # Restore logging level
+        logging.getLogger().setLevel(original_level)
         
         file_lookup = {}
         file_count = 0
@@ -6199,9 +6427,7 @@ def load_drive_files_real(request):
             file_id = file.get('id', '')
             web_view_link = file.get('webViewLink', '')
             
-            # Debug first few files to see actual naming pattern
-            if file_count < 5:
-                print(f"Sample file {file_count + 1}: {file_name}")
+            # Skip debug output for cleaner logs
             
             # Apps Script pattern: COMMODITY-ACCOUNT_CODE-DATE
             # Example: RAW-RE-IND-RAW-NA-1000-2025-01-15
@@ -6232,19 +6458,17 @@ def load_drive_files_real(request):
                 
                 file_count += 1
                 
-                # Progress logging like Apps Script
-                if file_count % 1000 == 0 and file_count > 0:
+                # Progress logging (less verbose)
+                if file_count % 5000 == 0 and file_count > 0:
                     print(f"Loaded {file_count} files...")
         
         load_time = (datetime.now() - start_time).total_seconds()
         print(f"Loaded {len(file_lookup)} files in {load_time:.1f} seconds")
         
-        # Debug: Show first few parsed files
-        if file_lookup:
-            print("Sample parsed files:")
-            for i, (key, file_info) in enumerate(file_lookup.items()):
-                if i < 5:
-                    print(f"  {key} -> {file_info['name']}")
+        # Cache the results for 60 minutes (3600 seconds) for faster subsequent access
+        if use_cache and file_lookup:
+            cache_key = 'drive_files_lookup_v3'
+            cache.set(cache_key, file_lookup, 3600)  # Cache for 60 minutes
         
         return file_lookup
         
@@ -6402,23 +6626,24 @@ def organize_zip_file_automatically(zip_file_path, client_name, inspection_date,
         
         # Create individual inspection folders and move files
         for file_info in organized_files:
+            # Use "Inspection-XXX" format for individual inspection folders (e.g., "Inspection-212")
             inspection_folder = os.path.join(base_dir, f"Inspection-{file_info['inspection_number']}")
-            
+
             # Create complete folder structure for each inspection
             compliance_folder = os.path.join(inspection_folder, "Compliance", commodity.upper())
             lab_folder = os.path.join(inspection_folder, "Lab")
             retest_folder = os.path.join(inspection_folder, "Retest")
             form_folder = os.path.join(inspection_folder, "Form")
-            
+
             os.makedirs(compliance_folder, exist_ok=True)
             os.makedirs(lab_folder, exist_ok=True)
             os.makedirs(retest_folder, exist_ok=True)
             os.makedirs(form_folder, exist_ok=True)
-            
+
             # Move file to individual inspection compliance folder with commodity subfolder
             dest_path = os.path.join(compliance_folder, file_info['filename'])
             shutil.move(file_info['file_path'], dest_path)
-            print(f"   Moved {file_info['filename']} to Inspection-{file_info['inspection_number']}/Compliance/{commodity.upper()}/")
+            print(f"   ✅ Moved {file_info['filename']} to Inspection-{file_info['inspection_number']}/Compliance/{commodity.upper()}/")
         
         # Create main document type folders at client level
         rfi_folder = os.path.join(base_dir, "RFI")
@@ -8584,7 +8809,7 @@ def get_page_clients_file_status(request):
                 print(f" [BUTTON] Checking {unique_key}: {client_name} on {inspection_date}")
                 
                 # Initialize results for this specific combination
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
                 file_status = 'no_files'
                 
                 # OPTIMIZATION 1: Database check first (fastest - no file system access)
@@ -8628,7 +8853,7 @@ def get_page_clients_file_status(request):
                 client_folder_variations = [sanitized_client_name, sanitized_with_apostrophe, client_name]
                 
                 # Check all folder variations for files for this specific date
-                has_rfi_dir = has_invoice_dir = has_lab_dir = has_retest_dir = has_compliance_dir = False
+                has_rfi_dir = has_invoice_dir = has_lab_dir = has_retest_dir = has_compliance_dir = has_occurrence_dir = False
                 
                 parent_path = os.path.join(inspection_base, year, month)
                 if os.path.exists(parent_path):
@@ -8800,13 +9025,43 @@ def get_page_clients_file_status(request):
                                                             break
                                                 if has_compliance_dir:
                                                     break
-                
+
+                            # Check Occurrence files (similar to other document types)
+                            if not has_occurrence_dir:
+                                occurrence_variations = ['occurrence', 'Occurrence']
+
+                                for occ_variant in occurrence_variations:
+                                    occ_path = os.path.join(test_path, occ_variant)
+                                    if os.path.exists(occ_path):
+                                        has_occurrence_dir = any(os.path.isfile(os.path.join(occ_path, f)) for f in os.listdir(occ_path))
+                                        if has_occurrence_dir:
+                                            print(f" [BUTTON] Found Occurrence files in '{occ_variant}' folder: {occ_path}")
+                                            break
+                                        else:
+                                            print(f" [BUTTON] '{occ_variant}' folder exists but no files: {occ_path}")
+                                    else:
+                                        print(f" [BUTTON] '{occ_variant}' folder does not exist: {occ_path}")
+
+                                # Also check nested Inspection-XXXX folders
+                                if not has_occurrence_dir:
+                                    for item in os.listdir(test_path):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            for occ_variant in occurrence_variations:
+                                                nested_occ_path = os.path.join(test_path, item, occ_variant)
+                                                if os.path.exists(nested_occ_path) and any(os.path.isfile(os.path.join(nested_occ_path, f)) for f in os.listdir(nested_occ_path)):
+                                                    has_occurrence_dir = True
+                                                    print(f" [BUTTON] Found Occurrence files in nested folder {item}/{occ_variant}")
+                                                    break
+                                            if has_occurrence_dir:
+                                                break
+
                 # Check actual file existence on disk AND sync database records
                 # If files exist on disk but database doesn't have uploader info, update database
                 has_rfi = has_rfi_dir
                 has_invoice = has_invoice_dir
                 has_lab = has_lab_dir
                 has_retest = has_retest_dir
+                has_occurrence = has_occurrence_dir
                 
                 # SYNC DATABASE: Update database records to match actual files on disk
                 if has_rfi or has_invoice or has_lab or has_retest:
@@ -8860,12 +9115,12 @@ def get_page_clients_file_status(request):
                     file_status = 'all_files'  # Green
                 elif has_compliance:
                     file_status = 'compliance_only'  # Orange
-                elif has_rfi or has_invoice or has_lab or has_retest:
+                elif has_rfi or has_invoice or has_lab or has_retest or has_occurrence:
                     file_status = 'partial_files'  # Blue
                 else:
                     file_status = 'no_files'  # Red
-                
-                print(f" [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk)")
+
+                print(f" [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk), Occurrence:{has_occurrence} (disk)")
                 print(f" [BUTTON] Final status for {unique_key}: {file_status} (based on actual files only)")
                 
                 # Debug: Special logging for New Poultry Retailer
@@ -8949,12 +9204,12 @@ def get_page_clients_file_status(request):
                         
             except ValueError:
                 print(f"[ERROR] Invalid date format for {unique_key}: {inspection_date}")
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
                 file_status = 'no_files'
-                
+
             except Exception as e:
                 print(f" Error checking files for {unique_key}: {e}")
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
                 file_status = 'error'
             
             # Store optimized status for this specific combination (common for all cases)
@@ -10823,7 +11078,14 @@ def user_management(request):
             user_id = request.POST.get('user_id')
             try:
                 user_to_edit = User.objects.get(id=user_id)
-                
+
+                # Get form data first (before using role variable)
+                username = request.POST.get('edit_username', '').strip()
+                email = request.POST.get('edit_email', '').strip()
+                first_name = request.POST.get('edit_first_name', '').strip()
+                last_name = request.POST.get('edit_last_name', '').strip()
+                role = request.POST.get('edit_role', 'inspector')
+
                 # Only super_admin and developer users can edit user information
                 if request.user.role not in ['super_admin', 'developer']:
                     messages.error(request, "Only super admin and developer users can edit user information.")
@@ -10832,12 +11094,6 @@ def user_management(request):
                     if role == 'developer' and request.user.role != 'developer':
                         messages.error(request, "Only developers can create or promote users to developer status.")
                         return redirect('user_management')
-                    # Get form data
-                    username = request.POST.get('edit_username', '').strip()
-                    email = request.POST.get('edit_email', '').strip()
-                    first_name = request.POST.get('edit_first_name', '').strip()
-                    last_name = request.POST.get('edit_last_name', '').strip()
-                    role = request.POST.get('edit_role', 'inspector')
                     phone_number = request.POST.get('edit_phone_number', '').strip()
                     department = request.POST.get('edit_department', '').strip()
                     employee_id = request.POST.get('edit_employee_id', '').strip()

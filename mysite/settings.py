@@ -28,6 +28,10 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 print("Using database sessions to avoid Redis conflicts during sync operations")
 
 SESSION_COOKIE_AGE = 86400  # Keep users logged in for 1 day
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request for long operations
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active after closing the browser
 SESSION_COOKIE_SECURE = False  # Change to True if using HTTPS

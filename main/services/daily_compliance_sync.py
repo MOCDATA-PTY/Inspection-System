@@ -10,7 +10,7 @@ import django
 import threading
 import time
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.conf import settings
 from django.core.cache import cache
 
@@ -140,48 +140,56 @@ class DailyComplianceSyncService:
             drive_service = GoogleDriveService()
             folder_id = "18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4"  # From Apps Script
             
-            print("☁️ Loading Google Drive files for daily sync...")
+            print("[Cloud] Loading Google Drive files for daily sync...")
+            print("[Wait] This may take a few minutes for large folders...")
             start_time = datetime.now()
-            
+
             # Get ALL files from Drive folder (not limited to 1000)
             files = drive_service.list_files_in_folder(folder_id, request=None, max_items=None)
-            
+            print(f"[Retrieved] {len(files)} files from Drive, now filtering for October 2025+...")
+
             file_lookup = {}
             file_count = 0
-            
+            skipped_old_files = 0
+
             for file in files:
                 # Check stop flag and force stop during file processing
                 if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
-                    print("🛑 Stop requested during file loading - aborting")
+                    print("[STOP] Stop requested during file loading - aborting")
                     break
-                
+
                 # Check global stop flag
                 import threading
                 if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                    print("🛑 Global stop flag detected during file loading - aborting")
+                    print("[STOP] Global stop flag detected during file loading - aborting")
                     break
-                    
+
                 file_name = file.get('name', '')
                 file_id = file.get('id', '')
                 web_view_link = file.get('webViewLink', '')
-                
+
                 # Apps Script pattern: COMMODITY-ACCOUNT_CODE-DATE
                 # Example: RAW-RE-IND-RAW-NA-1000-2025-01-15
                 full_pattern = re.match(r'^([A-Za-z]+)-([A-Z]{2}-[A-Z]{3}-[A-Z]{3}-[A-Z]{2,3}-\d+)-(\d{4}-\d{2}-\d{2})', file_name)
-                
+
                 if full_pattern and file_id:
                     commodity_prefix = full_pattern.group(1)
                     account_code = full_pattern.group(2)
                     zip_date_str = full_pattern.group(3)
-                    
+
                     try:
                         zip_date = datetime.strptime(zip_date_str, '%Y-%m-%d')
                     except:
                         continue
-                    
+
+                    # FILTER: Only include files from October 2025 onwards
+                    if zip_date.date() < date(2025, 10, 1):
+                        skipped_old_files += 1
+                        continue
+
                     # Create compound key exactly like Apps Script
                     compound_key = f"{commodity_prefix.lower()}|{account_code}|{zip_date_str}"
-                    
+
                     file_lookup[compound_key] = {
                         'url': web_view_link or f"https://drive.google.com/file/d/{file_id}/view",
                         'name': file_name,
@@ -191,20 +199,21 @@ class DailyComplianceSyncService:
                         'zipDateStr': zip_date_str,
                         'file_id': file_id
                     }
-                    
+
                     file_count += 1
-                    
-                    # Progress logging
-                    if file_count % 1000 == 0 and file_count > 0:
-                        print(f"📁 Loaded {file_count} files...")
-            
+
+                    # Progress logging - show progress every 500 files
+                    if file_count % 500 == 0 and file_count > 0:
+                        print(f"[Progress] Processed {file_count} files from Oct 2025+...")
+
             load_time = (datetime.now() - start_time).total_seconds()
-            print(f"✅ Loaded {len(file_lookup)} files in {load_time:.1f} seconds")
-            
+            print(f"[OK] Loaded {len(file_lookup)} files from October 2025+ in {load_time:.1f} seconds")
+            print(f"[Skipped] {skipped_old_files} files before October 2025")
+
             return file_lookup
-            
+
         except Exception as e:
-            print(f"❌ Error loading Drive files: {e}")
+            print(f"[ERROR] Error loading Drive files: {e}")
             return {}
 
     def get_client_account_code(self, client_name):
@@ -231,25 +240,25 @@ class DailyComplianceSyncService:
 
     def process_compliance_documents(self):
         """Process compliance documents with skip logic."""
-        print("🔄 Starting daily compliance document sync...")
+        print("Starting daily compliance document sync...")
         
         # Check if force stop was requested
         if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
-            print("🛑 Force stop requested - aborting sync")
+            print("Force stop requested - aborting sync")
             return
         
         settings = self.get_system_settings()
         if not settings or not settings.compliance_daily_sync_enabled:
-            print("❌ Daily compliance sync is disabled.")
+            print("Daily compliance sync is disabled.")
             return
         
         try:
             # Load Google Drive files once at the start
-            print("☁️ Loading Google Drive files...")
+            print("Loading Google Drive files...")
             file_lookup = self.load_drive_files_standalone()
             
             if not file_lookup:
-                print("❌ Failed to load Google Drive files. Aborting sync.")
+                print("Failed to load Google Drive files. Aborting sync.")
                 return
             
             # Get all inspections from Oct 2025 to Apr 2026
@@ -307,39 +316,56 @@ class DailyComplianceSyncService:
                     
                     if document_link and document_link != "Document Not Found":
                         print(f"✅ Found compliance document for {inspection.id} (Account: {account_code})")
-                        
+
                         # IMMEDIATELY DOWNLOAD the document
                         try:
                             # Find the matching file in lookup for download
+                            # Build the compound key to find the exact file
+                            date_str = inspection.date_of_inspection.strftime('%Y-%m-%d')
+                            commodity_prefix = str(inspection.commodity).lower().strip()
+                            if commodity_prefix == 'eggs':
+                                commodity_prefix = 'egg'
+
+                            # Search for matching files within 15 days
+                            best_match = None
+                            best_days_diff = 999
+
                             for file_key, file_info in file_lookup.items():
-                                if (file_info.get('commodity', '').lower() == str(inspection.commodity).lower().strip() and
+                                if (file_info.get('commodity', '').lower() == commodity_prefix and
                                     file_info.get('accountCode') == account_code):
-                                    
-                                    print(f"📥 Downloading: {file_info['name']} for {inspection.client_name}")
-                                    
-                                    # Download to client's compliance folder
-                                    downloaded_path = download_compliance_document(
-                                        file_info['file_id'],
-                                        account_code,
-                                        inspection.commodity,
-                                        inspection.date_of_inspection,
-                                        file_info['name'],
-                                        inspection.client_name,
-                                        None  # No request object needed
-                                    )
-                                    
-                                    if downloaded_path:
-                                        print(f"✅ Downloaded successfully: {file_info['name']} -> {downloaded_path}")
-                                        documents_processed += 1
-                                    else:
-                                        print(f"❌ Download failed for: {file_info['name']}")
-                                    break
+
+                                    # Calculate days difference
+                                    days_diff = abs((file_info['zipDate'] - inspection.date_of_inspection).days)
+
+                                    if days_diff <= 15 and days_diff < best_days_diff:
+                                        best_match = file_info
+                                        best_days_diff = days_diff
+
+                            if best_match:
+                                print(f"📥 Downloading: {best_match['name']} for {inspection.client_name}")
+
+                                # Download to client's compliance folder
+                                downloaded_path = download_compliance_document(
+                                    best_match['file_id'],
+                                    account_code,
+                                    inspection.commodity,
+                                    inspection.date_of_inspection,
+                                    best_match['name'],
+                                    inspection.client_name,
+                                    None  # No request object needed
+                                )
+
+                                if downloaded_path:
+                                    print(f"✅ Downloaded successfully: {best_match['name']} -> {downloaded_path}")
+                                    documents_processed += 1
+                                else:
+                                    print(f"❌ Download failed for: {best_match['name']}")
                             else:
-                                print(f"⚠️  Could not find file details for download: {account_code}")
-                        
+                                print(f"⚠️  Could not find matching file for download (Account: {account_code}, Commodity: {commodity_prefix})")
+
                         except Exception as download_error:
                             print(f"❌ Download error for {inspection.id}: {download_error}")
-                        
+
                         # Mark as processed only after successful download attempt
                         self.add_to_processed_cache(document_id)
                     else:
@@ -385,11 +411,11 @@ class DailyComplianceSyncService:
         
         self.sync_thread = threading.Thread(target=self._run_daily_sync_loop, daemon=True)
         self.sync_thread.start()
-        print("🚀 Daily compliance sync service started.")
+        print("START: Daily compliance sync service started.")
     
     def stop_daily_sync(self):
         """Stop the daily sync service."""
-        print("🛑 Stopping daily compliance sync service...")
+        print("STOP: Stopping daily compliance sync service...")
         self.is_running = False
         
         # Force stop any ongoing operations
@@ -433,7 +459,7 @@ class DailyComplianceSyncService:
                 # Check if we should run daily sync (use manual_start flag if available)
                 manual_start = getattr(self, 'manual_start', False)
                 if self.should_run_daily_sync(manual_start):
-                    print("🔄 Starting daily compliance document sync...")
+                    print("STARTING: Daily compliance document sync...")
                     self.process_compliance_documents()
                     # Reset manual start flag after first run
                     if manual_start:
@@ -445,13 +471,13 @@ class DailyComplianceSyncService:
                     # Check global stop flag
                     import threading
                     if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                        print("🛑 Global stop flag detected during wait - stopping")
+                        print("STOP: Global stop flag detected during wait - stopping")
                         break
                     time.sleep(60)  # Check every minute
                     wait_time += 60
                 
             except Exception as e:
-                print(f"❌ Error in daily sync loop: {e}")
+                print(f"ERROR: Error in daily sync loop: {e}")
                 # Check stop flag during error recovery too
                 wait_time = 0
                 while wait_time < 300 and self.is_running and not (hasattr(self, '_force_stop_processing') and self._force_stop_processing):  # 5 minutes total
@@ -476,3 +502,4 @@ class DailyComplianceSyncService:
 
 # Global instance
 daily_sync_service = DailyComplianceSyncService()
+

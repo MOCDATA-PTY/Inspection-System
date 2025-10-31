@@ -194,6 +194,169 @@ function uploadRFI(groupId) {
     }
 }
 
+// Upload Accurance function
+function uploadOccurrence(groupId) {
+    console.log('uploadOccurrence called with groupId:', groupId);
+
+    if (!groupId) {
+        alert('Error: Group ID is missing');
+        return;
+    }
+
+    try {
+        // Create a file input element
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf';
+        fileInput.style.display = 'none';
+
+        console.log('File input element created successfully');
+
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate PDF file
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed. Please select a PDF document.');
+                    return;
+                }
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('group_id', groupId);
+                formData.append('document_type', 'occurrence');
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+
+                console.log('Uploading file:', file.name, 'for group:', groupId);
+                uploadInProgress = true; // Set upload flag to prevent status check override
+
+                // Show loading message
+                const originalAlert = alert;
+                alert = function(msg) { console.log('Alert:', msg); };
+
+                // Upload file
+                fetch('/upload-document/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
+                        if (data.success) {
+                            alert(data.message || 'Accurance document uploaded successfully!');
+                            console.log('Upload successful:', data);
+
+                            // Update button directly to show username
+                            const buttonId = 'occurrence-' + groupId;
+                            console.log('DEBUG: Updating Accurance button to show username for:', buttonId);
+
+                                // Find and update the button - simplified approach
+                                let button = document.getElementById(buttonId);
+
+                                if (button) {
+                                    console.log('SUCCESS Found Accurance button, updating to green success state');
+
+                                    // Clear file-deleted attributes since we now have a file
+                                    button.removeAttribute('data-file-deleted');
+                                    button.removeAttribute('data-last-updated');
+
+                                    // Update button to green success state
+                                    button.disabled = true;
+                                    button.className = 'btn btn-sm btn-success success';
+                                    button.style.backgroundColor = '#28a745';
+                                    button.style.borderColor = '#28a745';
+                                    button.style.cursor = 'not-allowed';
+                                    button.innerHTML = 'Accurance ✓';
+                                    button.title = 'Accurance file exists';
+
+                                    // Remove the onclick handler since button is now disabled
+                                    button.onclick = null;
+
+                                    console.log('SUCCESS Updated Accurance button to green success state');
+
+        // IMPORTANT: Mark that files need refresh for this client
+        if (window.uploadedFiles) {
+            window.uploadedFiles[groupId] = true;
+        } else {
+            window.uploadedFiles = {[groupId]: true};
+        }
+
+                        // Update View Files button colors after upload with delay to ensure server processing
+                        console.log('Updating button colors after Accurance upload...');
+                        console.log('Setting 5-second timer for delayed color update...');
+                        console.log('[DEBUG] Upload in progress flag:', uploadInProgress);
+
+                        // Immediately make View Files button ORANGE since we just uploaded a file
+                        makeViewFilesButtonOrange(groupId);
+        console.log('DEBUG [DEBUG] Marked groupId for file refresh:', groupId);
+
+        // Clear upload flag
+        uploadInProgress = false;
+        console.log('SUCCESS Accurance button will stay green (like RFI button)');
+
+                                    // Check if View Files popup is open - if so, auto-refresh it
+                                    const modal = document.getElementById('filesModal');
+                                    if (modal && modal.style.display === 'block') {
+                                        console.log('INFO View Files popup is open - auto-refreshing after Accurance upload...');
+
+                                        // Wait 2 seconds for file to be saved, then refresh the popup
+                                        setTimeout(() => {
+                                            console.log('INFO Auto-refreshing View Files popup with new Accurance file...');
+
+                                            // Get the current popup data from the groupId
+                                            const dateStr = groupId.match(/\d{8}$/);
+                                            if (dateStr) {
+                                                const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                                const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+
+                                                console.log('INFO Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                                loadInspectionFiles(groupId, clientName, formattedDate);
+                                            }
+                                        }, 2000);
+                                    }
+                                } else {
+                                    console.log('⚠️ Accurance button not found, but continuing without page refresh');
+                                    // Page refresh removed to prevent button color reset
+                                }
+                    } else {
+                        alert('Upload failed: ' + (data.error || 'Unknown error'));
+                        console.error('Upload failed:', data);
+                    }
+                })
+                .catch(error => {
+                    alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
+                    console.error('Upload error:', error);
+                    alert('Upload error: ' + error.message);
+                });
+            }
+        };
+
+        // Add to DOM and trigger click
+        document.body.appendChild(fileInput);
+        fileInput.click();
+
+        // Clean up after a short delay
+        setTimeout(() => {
+            if (document.body.contains(fileInput)) {
+                document.body.removeChild(fileInput);
+                console.log('File input removed from body');
+            }
+        }, 100);
+
+    } catch (error) {
+        console.error('Error in uploadOccurrence function:', error);
+        alert('Error in upload function: ' + error.message);
+    }
+}
+
 // Upload Invoice function - CLEAN VERSION
 function uploadInvoice(groupId) {
     console.log('uploadInvoice called with groupId:', groupId);
@@ -943,6 +1106,7 @@ function displayFiles(files, message = null, isTestData = false) {
                 // Map category keys to proper capitalized labels
                 const categoryLabels = {
                     'rfi': 'Request For Invoice',
+                    'occurrence': 'Accurance',
                     'invoice': 'Invoice',
                     'lab': 'Lab Results',
                     'lab_form': 'Lab Forms',
@@ -1358,6 +1522,9 @@ async function deleteFile(filePath, fileName) {
                     } else if (documentType === 'invoice') {
                         console.log(`🎯 [IMMEDIATE] Running targeted Invoice check for deleted file: ${groupId}`);
                         immediateInvoiceButtonCheck(groupId, clientName, inspectionDate);
+                    } else if (documentType === 'occurrence') {
+                        console.log(`🎯 [IMMEDIATE] Running targeted Occurrence check for deleted file: ${groupId}`);
+                        immediateOccurrenceButtonCheck(groupId, clientName, inspectionDate);
                     } else if (documentType === 'lab') {
                         console.log(`🎯 [IMMEDIATE] Running targeted Lab check for deleted file: ${groupId}`);
                         immediateLabButtonCheck(groupId, clientName, inspectionDate);
@@ -1677,6 +1844,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('DEBUG [PAGE] Initializing Invoice buttons immediately...');
         initializeInvoiceButtonsSimple();
     }, 1200);
+
+    // SIMPLE OCCURRENCE BUTTON INITIALIZATION - Run immediately
+    setTimeout(() => {
+        console.log('DEBUG [PAGE] Initializing Occurrence buttons immediately...');
+        initializeOccurrenceButtonsSimple();
+    }, 1400);
 });
 
 // Cookie utility function
@@ -2421,9 +2594,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
                     console.log('   🟡 Applied ORANGE color to button');
                     break;
                 case 'partial_files':
-                    button.classList.add('btn-warning');
-                    button.style.backgroundColor = '#ff8c00';
-                    button.style.color = 'white';
+                    button.classList.add('btn-view-files-orange');
                     button.title = 'Files uploaded';
                     if (statusIcon) {
                         statusIcon.className = 'fas fa-file-alt';
@@ -2539,9 +2710,7 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     break;
                 case 'partial_files':
                     // ANY file detected - make View Files button ORANGE
-                    button.classList.add('btn-warning');
-                    button.style.backgroundColor = '#ff8c00';
-                    button.style.color = 'white';
+                    button.classList.add('btn-view-files-orange');
                     button.title = 'Files uploaded';
                     console.log('   ORANGE Applied ORANGE color to button (files detected)');
                     console.log('   Button after update - classes:', button.className);
@@ -2670,6 +2839,97 @@ function updateRFIButtonColorDelayed(groupId) {
     })
     .catch(error => {
         console.error('Error checking RFI file status for delayed update:', error);
+    });
+}
+
+// Function to update occurrence button color with delayed file check
+function updateAccuranceButtonColorDelayed(groupId) {
+    console.log('INFO [DELAYED] Updating Accurance button color for group:', groupId);
+
+    // Extract client name and date from groupId
+    const parts = groupId.split('_');
+    if (parts.length < 3) {
+        console.warn('Invalid groupId format for Accurance button update:', groupId);
+        return;
+    }
+
+    // Reconstruct client name (handle cases with underscores in client name)
+    const datePart = parts[parts.length - 1];
+    const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+
+    // Reconstruct client name by joining all parts except the last one (date)
+    let clientName = parts.slice(0, -1).join('_');
+
+    // Handle special cases for common patterns
+    if (clientName.includes('Pty_Ltd')) {
+        clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+    } else {
+        clientName = clientName.replace(/_/g, ' ');
+    }
+
+    console.log('DEBUG [DELAYED] Extracted client name:', clientName);
+    console.log('DEBUG [DELAYED] Extracted inspection date:', inspectionDate);
+
+    // Check if occurrence files exist for this client+date combination
+    fetch('/inspections/files/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            client_name: clientName,
+            inspection_date: inspectionDate,
+            _force_refresh: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('DEBUG [DELAYED] Full response data:', data);
+        console.log('DEBUG [DELAYED] data.files:', data.files);
+        console.log('DEBUG [DELAYED] data.files.occurrence:', data.files ? data.files.occurrence : 'files object missing');
+
+        if (data.success && data.files) {
+            const hasAccurance = data.files.occurrence && data.files.occurrence.length > 0;
+            console.log('DEBUG [DELAYED] Accurance file check result:', hasAccurance);
+            console.log('DEBUG [DELAYED] occurrence array length:', data.files.occurrence ? data.files.occurrence.length : 0);
+
+            const buttonId = 'occurrence-' + groupId;
+            const button = document.getElementById(buttonId);
+
+            if (button) {
+                if (hasAccurance) {
+                    // Update to green success state
+                    button.disabled = true;
+                    button.className = 'btn btn-sm btn-success success';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.borderColor = '#28a745';
+                    button.style.cursor = 'not-allowed';
+                    button.innerHTML = 'Accurance ✓';
+                    button.title = 'Accurance file exists';
+                    button.onclick = null;
+                    console.log('SUCCESS [DELAYED] Updated Accurance button to green success state');
+                } else {
+                    // Update to grey state (no file)
+                    button.disabled = false;
+                    button.className = 'btn btn-sm btn-secondary';
+                    button.style.backgroundColor = '#6c757d';
+                    button.style.borderColor = '#6c757d';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'Accurance';
+                    button.title = 'Upload Accurance file';
+                    button.onclick = () => uploadOccurrence(groupId);
+                    console.log('GREY [DELAYED] Updated Accurance button to grey state (no file)');
+                }
+            } else {
+                console.warn('Accurance button not found for delayed update:', buttonId);
+            }
+        } else {
+            console.warn('Failed to get file status for Accurance button update:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking Accurance file status for delayed update:', error);
     });
 }
 
@@ -3465,6 +3725,86 @@ function immediateInvoiceButtonCheck(groupId, clientName, inspectionDate) {
     }, 200); // 200ms delay to ensure server-side deletion is complete
 }
 
+// IMMEDIATE TARGETED OCCURRENCE BUTTON CHECK - For specific inspection after file deletion
+function immediateOccurrenceButtonCheck(groupId, clientName, inspectionDate) {
+    console.log(`🎯 [IMMEDIATE] Starting targeted Occurrence check for: ${clientName} on ${inspectionDate}`);
+
+    // Add a small delay to ensure server-side file deletion is complete
+    setTimeout(() => {
+        // Clean the inspection date - decode any Unicode escapes
+        let cleanDate = inspectionDate;
+        if (typeof inspectionDate === 'string') {
+            cleanDate = inspectionDate.replace(/\\u002D/g, '-');
+            try {
+                cleanDate = JSON.parse('"' + cleanDate + '"');
+            } catch (e) {
+                // Use as-is if parsing fails
+            }
+        }
+
+        // Make immediate API call to check Occurrence status for this specific inspection
+        fetch('/list-client-folder-files/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                client_name: clientName,
+                inspection_date: cleanDate,
+                inspection_id: groupId
+            })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success && result.files) {
+                const hasOccurrence = result.files.occurrence && result.files.occurrence.length > 0;
+                console.log(`🎯 [IMMEDIATE] Occurrence file check result for ${clientName}: ${hasOccurrence}`);
+
+                const buttonId = 'occurrence-' + groupId;
+                const button = document.getElementById(buttonId);
+
+                if (button) {
+                    if (hasOccurrence) {
+                        // Update to green success state
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Accurance ✓';
+                        button.title = 'Accurance file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [IMMEDIATE] Updated Occurrence button to GREEN for: ${clientName}`);
+                    } else {
+                        // Update to grey state (no file)
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Accurance';
+                        button.title = 'Upload Accurance file';
+                        button.onclick = () => uploadOccurrence(groupId);
+                        console.log(`GREY [IMMEDIATE] Updated Occurrence button to GREY for: ${clientName}`);
+                    }
+
+                    // Remove any file-deleted markers since we've done a fresh check
+                    button.removeAttribute('data-file-deleted');
+                    button.removeAttribute('data-last-updated');
+                } else {
+                    console.warn(`⚠️ [IMMEDIATE] Occurrence button not found: ${buttonId}`);
+                }
+            } else {
+                console.warn(`⚠️ [IMMEDIATE] Failed to get file status for ${clientName}: ${result.error}`);
+            }
+        })
+        .catch(error => {
+            console.error(`ERROR [IMMEDIATE] Error checking Occurrence files for ${clientName}:`, error);
+        });
+    }, 200); // 200ms delay to ensure server-side deletion is complete
+}
+
 // IMMEDIATE TARGETED LAB BUTTON CHECK - For specific inspection after file deletion
 function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
     console.log(`🎯 [IMMEDIATE] Starting targeted Lab check for: ${clientName} on ${inspectionDate}`);
@@ -3857,6 +4197,87 @@ async function initializeInvoiceButtonsSimple() {
     }
     
     console.log('SUCCESS [SIMPLE] Invoice button initialization complete');
+}
+
+// SIMPLE OCCURRENCE BUTTON INITIALIZATION - Direct and fast
+async function initializeOccurrenceButtonsSimple() {
+    console.log('DEBUG [SIMPLE] Initializing Occurrence buttons...');
+
+    const occurrenceButtons = document.querySelectorAll('button[id^="occurrence-"]');
+    console.log(`DEBUG [SIMPLE] Found ${occurrenceButtons.length} Occurrence buttons`);
+
+    for (const button of occurrenceButtons) {
+        const buttonId = button.id;
+        const groupId = buttonId.replace('occurrence-', '');
+
+        // Extract client name and date from groupId
+        const parts = groupId.split('_');
+        if (parts.length < 3) continue;
+
+        const datePart = parts[parts.length - 1];
+        const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        let clientName = parts.slice(0, -1).join('_');
+
+        if (clientName.includes('Pty_Ltd')) {
+            clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+        } else {
+            clientName = clientName.replace(/_/g, ' ');
+        }
+
+        try {
+            const response = await fetch('/list-client-folder-files/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    inspection_date: inspectionDate,
+                    inspection_id: groupId
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`DEBUG [OCCURRENCE] Response for ${clientName}:`, data);
+                console.log(`DEBUG [OCCURRENCE] Files object:`, data.files);
+                console.log(`DEBUG [OCCURRENCE] Occurrence files:`, data.files?.occurrence);
+                if (data.success && data.files) {
+                    const hasOccurrence = data.files.occurrence && data.files.occurrence.length > 0;
+                    console.log(`DEBUG [OCCURRENCE] hasOccurrence check result: ${hasOccurrence}`);
+
+                    if (hasOccurrence) {
+                        // GREEN - Occurrence file exists
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Accurance ✓';
+                        button.title = 'Accurance file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [SIMPLE] Set ${clientName} Occurrence button to GREEN`);
+                    } else {
+                        // GREY - No Occurrence file
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Accurance';
+                        button.title = 'Upload Accurance file';
+                        button.onclick = () => uploadOccurrence(groupId);
+                        console.log(`GREY [SIMPLE] Set ${clientName} Occurrence button to GREY`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`ERROR [SIMPLE] Error checking Occurrence for ${clientName}:`, error);
+        }
+    }
+
+    console.log('SUCCESS [SIMPLE] Occurrence button initialization complete');
 }
 
 // Simple function to immediately make View Files button ORANGE after file upload

@@ -36,6 +36,7 @@ from .core_views import (
     update_hours,
     update_group_hours,
     update_group_additional_email,
+    update_group_comment,
     update_lab,
     update_product_name,
     update_product_class,
@@ -62,6 +63,8 @@ from .core_views import (
     
     # Dashboard views
     dashboard,
+    inspector_dashboard,
+    analytics_dashboard,
     
     # Home view
     home,
@@ -112,6 +115,7 @@ __all__ = [
     'update_hours',
     'update_group_hours',
     'update_group_additional_email',
+    'update_group_comment',
     'update_lab',
     'update_product_name',
     'update_product_class',
@@ -138,6 +142,8 @@ __all__ = [
     
     # Dashboard views
     'dashboard',
+    'inspector_dashboard',
+    'analytics_dashboard',
     
     # Home view
     'home',

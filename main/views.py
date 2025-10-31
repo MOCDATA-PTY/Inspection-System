@@ -596,12 +596,17 @@ def user_login(request):
                
                # Role-based redirect logic
                user_role = getattr(user, 'role', 'inspector')
+               print(f"User role: {user_role}")  # Debug print
+               
                if user_role == 'admin':
                    # Redirect administrators to inspection page
                    return redirect('shipment_list')
                elif user_role == 'inspector':
                    # Redirect inspectors to inspector dashboard
                    return redirect('inspector_dashboard')
+               elif user_role == 'developer':
+                   # Developers go to dashboard
+                   return redirect('dashboard')
                else:
                    # All other users go to home page
                    return redirect('home')

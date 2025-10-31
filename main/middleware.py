@@ -16,6 +16,10 @@ class SessionTimeoutMiddleware:
         self.get_response = get_response
     
     def __call__(self, request):
+        # Skip middleware for login-related URLs
+        if request.path.startswith('/login/'):
+            return self.get_response(request)
+            
         # Only check session timeout for authenticated users
         if request.user.is_authenticated:
             try:
@@ -37,7 +41,7 @@ class SessionTimeoutMiddleware:
                     if current_time > timeout_threshold:
                         # Session expired - log out user
                         logout(request)
-                        # messages.warning(request, f"Your session expired due to {session_timeout_minutes} minutes of inactivity. Please log in again.")
+                        messages.warning(request, "Your session has expired. Please log in again.")
                         return redirect('login')
                 
                 # Update last activity timestamp only if not in sync operation

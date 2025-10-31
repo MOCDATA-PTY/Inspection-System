@@ -6,6 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>User Management - Food Safety Agency</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        'sidebar-bg': '#1e293b',
+                        'sidebar-text': '#f1f5f9',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         :root {
             --primary: #007890;
@@ -13,6 +31,7 @@
             --secondary: #EC343C;
             --danger: #EC343C;
             --warning: #f59e0b;
+            --success: #10b981;
             --background: #f9fafb;
             --card-bg: #ffffff;
             --text: #1f2937;
@@ -122,92 +141,6 @@
         
         [data-theme="dark"] .card-header {
             border-bottom: 1px solid #404040;
-        }
-        
-        [data-theme="dark"] .user-card {
-            background-color: #2d2d2d;
-            border-color: #404040;
-        }
-        
-        [data-theme="dark"] .user-card-header {
-            background-color: #1a3a40;
-            border-bottom-color: #404040;
-        }
-        
-        [data-theme="dark"] .user-name {
-            color: #ffffff;
-        }
-        
-        [data-theme="dark"] .user-username {
-            color: #b0b0b0;
-        }
-        
-        [data-theme="dark"] .user-field label {
-            color: #b0b0b0;
-        }
-        
-        [data-theme="dark"] .user-field span {
-            color: #ffffff;
-        }
-        
-        /* Dark mode badge improvements for better contrast */
-        [data-theme="dark"] .status-badge {
-            font-weight: 700;
-        }
-        
-        [data-theme="dark"] .status-active {
-            background-color: #064e3b;
-            color: #6ee7b7;
-        }
-        
-        [data-theme="dark"] .status-inactive {
-            background-color: #7f1d1d;
-            color: #fca5a5;
-        }
-        
-        [data-theme="dark"] .status-staff {
-            background-color: #78350f;
-            color: #fcd34d;
-        }
-        
-        [data-theme="dark"] .role-badge {
-            font-weight: 700;
-        }
-        
-        [data-theme="dark"] .role-inspector {
-            background-color: #1e3a8a;
-            color: #93c5fd;
-        }
-        
-        [data-theme="dark"] .role-admin {
-            background-color: #78350f;
-            color: #fcd34d;
-        }
-        
-        [data-theme="dark"] .role-super_admin {
-            background-color: #7f1d1d;
-            color: #fca5a5;
-        }
-        
-        [data-theme="dark"] .role-financial {
-            background-color: #064e3b;
-            color: #6ee7b7;
-        }
-        
-        [data-theme="dark"] .role-scientist {
-            background-color: #312e81;
-            color: #c4b5fd;
-        }
-        
-        [data-theme="dark"] .role-developer {
-            background-color: #581c87;
-            color: #d8b4fe;
-        }
-        
-        [data-theme="dark"] .inspector-id-badge {
-            background-color: #78350f;
-            color: #fcd34d;
-            font-weight: 700;
         }
         
         /* Dark mode sidebar styles */
@@ -443,27 +376,28 @@
         }
         
         .logo img {
-            max-height: 80px;
+            max-height: 60px;
+            width: auto;
         }
         
         .header {
-            padding: 10px 5px 20px;
-            margin-bottom: var(--spacing);
-            width: 100%;
             text-align: center;
+            margin-bottom: 20px;
+            padding: 20px 0;
         }
         
         .header h1 {
             color: white;
             font-size: 1.75rem;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
         
         .header h2 {
             color: white;
             font-size: 1rem;
             font-weight: 400;
+            opacity: 0.9;
         }
         
         .card {
@@ -498,79 +432,31 @@
         
         .action-bar {
             display: flex;
-            gap: 12px;
-            margin-bottom: var(--spacing);
-            width: 100%;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
         }
         
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
             border-radius: var(--radius);
             border: none;
             font-weight: 500;
             font-size: 0.875rem;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: all 0.2s ease;
             text-decoration: none;
             box-shadow: var(--shadow);
+            white-space: nowrap;
         }
         
-        .btn-refresh {
-            background-color: var(--warning);
-            color: white;
-        }
-        
-        .btn-refresh:hover {
-            background-color: #d97706;
-        }
-        
-        .btn-back {
-            background-color: var(--secondary);
-            color: white;
-        }
-        
-        .btn-back:hover {
-            background-color: #dc2626;
-        }
-        
-        .btn-secondary {
-            background-color: var(--text-light);
-            color: white;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #4b5563;
-        }
-        
-        .btn-success {
-            background-color: #10b981;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background-color: #059669;
-        }
-        
-        .btn-warning {
-            background-color: var(--warning);
-            color: white;
-        }
-        
-        .btn-warning:hover {
-            background-color: #d97706;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #dc2626;
+        .btn i {
+            font-size: 0.875rem;
         }
         
         .btn-primary {
@@ -580,25 +466,41 @@
         
         .btn-primary:hover {
             background-color: #005a6b;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .btn-info {
-            background-color: #3b82f6;
+        .btn-secondary {
+            background-color: #6b7280;
             color: white;
         }
         
-        .btn-info:hover {
-            background-color: #2563eb;
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 0.75rem;
+        .btn-success {
+            background-color: #10b981;
+            color: white;
         }
         
-        .btn-xs {
-            padding: 4px 8px;
-            font-size: 0.7rem;
+        .btn-success:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d42e35;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .form-group {
@@ -607,6 +509,15 @@
             gap: 16px;
             margin-bottom: 16px;
             width: 100%;
+        }
+        
+        .filter-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
         }
         
         .form-field {
@@ -671,32 +582,36 @@
             border-left: 3px solid var(--warning);
         }
         
+        .message.info {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border-left: 3px solid #3b82f6;
+        }
+        
         .table-responsive {
             overflow-x: auto;
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
             width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.7rem;
-            min-width: 800px;
+            font-size: 0.875rem;
+            background: var(--card-bg);
         }
         
         th {
             background-color: var(--primary-light);
             color: var(--primary);
             text-align: left;
-            padding: 6px 8px;
+            padding: 10px 12px;
             font-weight: 600;
             white-space: nowrap;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.7rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            border-bottom: 2px solid var(--primary);
+            font-size: 0.875rem;
         }
         
         tr:nth-child(even) {
@@ -704,65 +619,20 @@
         }
         
         tr:hover {
-            background-color: #f1f5f9;
+            background-color: var(--primary-light);
         }
         
         td {
-            padding: 6px 8px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
-            font-size: 0.7rem;
-            white-space: nowrap;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .col-username { min-width: 100px; }
-        .col-email { min-width: 120px; }
-        .col-name { min-width: 100px; }
-        .col-role { min-width: 80px; }
-        .col-inspector-id { min-width: 80px; }
-        .col-status { min-width: 60px; }
-        .col-staff { min-width: 60px; }
-        .col-actions { min-width: 280px; }
-        
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            gap: 10px;
-        }
-        
-        .view-options {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .view-options .btn {
-            padding: 6px 12px;
-            font-size: 0.75rem;
-        }
-        
-        .view-options .btn.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .view-options .btn.active:hover {
-            background-color: #005a6b;
-        }
-        
-        .table-info {
             font-size: 0.875rem;
-            color: var(--text-light);
         }
         
         .empty-message {
             text-align: center;
             color: var(--text-light);
             padding: 40px 20px;
-            background-color: #f8fafc;
+            background-color: var(--card-bg);
         }
         
         .pagination {
@@ -770,309 +640,51 @@
             justify-content: center;
             align-items: center;
             gap: 10px;
-            margin-top: 16px;
+            margin-top: 20px;
         }
         
         .page-info {
-            font-size: 0.875rem;
             color: var(--text-light);
+            font-size: 0.875rem;
         }
         
-        /* Status and Role Badges */
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .status-active {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        
-        .status-inactive {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .status-staff {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .role-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .role-inspector {
-            background-color: #dbeafe;
-            color: #1e40af;
-        }
-        
-        .role-admin {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .role-super_admin {
-            background-color: #fecaca;
-            color: #991b1b;
-        }
-        
-        .role-financial {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        
-        .role-scientist {
-            background-color: #e0e7ff;
-            color: #3730a3;
-        }
-        
-        .role-developer {
-            background-color: #f3e8ff;
-            color: #6b21a8;
-        }
-        
-        .inspector-id-badge {
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-            font-weight: 700;
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        
-        .action-cell {
-            white-space: nowrap;
-            display: flex;
-            gap: 4px;
-            align-items: center;
-            flex-wrap: nowrap;
-            justify-content: center;
-        }
-        
-        .action-cell .btn {
-            transition: all 0.2s ease;
-        }
-        
-        .action-cell .btn:hover {
-            transform: translateY(-1px);
-        }
-        
-        
-        /* Modal styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-        }
-        
-        .modal-content {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-bg);
-            padding: 24px;
-            border-radius: var(--radius);
-            min-width: 400px;
-            max-width: 90%;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-content.wide {
-            min-width: 600px;
-            max-width: 95%;
-        }
-        
-        .modal-header {
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-        }
-        
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 8px;
-        }
-        
-        .modal-body {
-            margin-bottom: 20px;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .form-text {
+        .table-info {
             font-size: 0.75rem;
             color: var(--text-light);
             margin-top: 4px;
         }
         
-        .search-field {
-            position: relative;
-        }
-        
-        .search-input-wrapper {
-            position: relative;
-        }
-        
-        .search-input {
-            padding-left: 35px;
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6b7280;
-            font-size: 14px;
-            pointer-events: none;
-        }
-        
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            padding-top: 10px;
-            border-top: 1px solid var(--border);
-            margin-top: 16px;
-        }
-        
-        .form-actions .btn {
-            padding: 8px 16px;
-            font-size: 14px;
-        }
-        
-        /* Mobile Card View Styles */
-        .mobile-view {
-            display: none;
-        }
-        
-        .user-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            margin-bottom: 12px;
-            box-shadow: var(--shadow);
-        }
-        
-        .user-card-header {
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border);
-            background: var(--primary-light);
-        }
-        
-        .user-name {
-            font-size: 1rem;
+        .action-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.65rem;
             font-weight: 600;
-            color: var(--primary);
-            margin: 0 0 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         
-        .user-username {
-            font-size: 0.75rem;
-            color: var(--text-light);
-        }
+        .action-LOGIN { background-color: #059669; color: white; }
+        .action-LOGOUT { background-color: #dc2626; color: white; }
+        .action-CREATE { background-color: #1e40af; color: white; }
+        .action-UPDATE { background-color: #d97706; color: white; }
+        .action-DELETE { background-color: #dc2626; color: white; }
+        .action-VIEW { background-color: #3730a3; color: white; }
+        .action-NAVIGATE { background-color: #7c3aed; color: white; }
+        .action-SYNC { background-color: #059669; color: white; }
+        .action-SETTINGS { background-color: #d97706; color: white; }
+        .action-USER_MANAGEMENT { background-color: #d97706; color: white; }
+        .action-PASSWORD_RESET { background-color: #dc2626; color: white; }
+        .action-FILE_UPLOAD { background-color: #1e40af; color: white; }
+        .action-EXPORT { background-color: #059669; color: white; }
+        .action-IMPORT { background-color: #1e40af; color: white; }
+        .action-SEARCH { background-color: #3730a3; color: white; }
+        .action-FILTER { background-color: #7c3aed; color: white; }
+        .action-ERROR { background-color: #dc2626; color: white; }
+        .action-WARNING { background-color: #d97706; color: white; }
+        .action-INFO { background-color: #1e40af; color: white; }
         
-        .user-card-body {
-            padding: 12px 16px;
-        }
-        
-        .user-field {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            padding: 4px 0;
-        }
-        
-        .user-field:last-child {
-            margin-bottom: 0;
-        }
-        
-        .user-field label {
-            font-weight: 500;
-            color: var(--text-light);
-            font-size: 0.875rem;
-        }
-        
-        .user-field span {
-            color: var(--text);
-            font-size: 0.875rem;
-            text-align: right;
-            word-break: break-word;
-        }
-        
-        .user-actions {
-            display: flex;
-            gap: 4px;
-            margin-top: 12px;
-            flex-wrap: wrap;
-        }
-        
-        .user-actions .btn {
-            flex: 1;
-            min-width: 60px;
-            padding: 6px 8px;
-            font-size: 0.7rem;
-        }
-        
-        /* Tablet and smaller desktop */
-        @media (max-width: 1200px) {
-            .main-content {
-                padding: 0.5rem;
-            }
-            
-            .form-group {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 12px;
-            }
-            
-            .table-responsive {
-                font-size: 0.65rem;
-            }
-            
-            th, td {
-                padding: 4px 6px;
-                font-size: 0.65rem;
-            }
-            
-            .action-cell {
-                flex-wrap: wrap;
-                gap: 2px;
-            }
-            
-            .action-cell .btn {
-                padding: 3px 6px;
-                font-size: 0.6rem;
-            }
-        }
-        
-        /* Tablet */
         @media (max-width: 1024px) {
             .mobile-menu-btn {
                 display: flex;
@@ -1094,495 +706,295 @@
             .header {
                 padding-top: 4rem;
             }
-            
-            .form-group {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 10px;
             }
             
-            .card-body {
-                padding: 12px;
-            }
-            
-            .table-responsive {
-                font-size: 0.6rem;
-            }
-            
-            th, td {
-                padding: 3px 5px;
-                font-size: 0.6rem;
-            }
-            
-            .col-username { min-width: 80px; }
-            .col-email { min-width: 100px; }
-            .col-name { min-width: 80px; }
-            .col-role { min-width: 60px; }
-            .col-inspector-id { min-width: 60px; }
-            .col-status { min-width: 50px; }
-            .col-staff { min-width: 50px; }
-            .col-actions { min-width: 200px; }
-            
-            .action-cell {
-                flex-wrap: wrap;
-                gap: 2px;
-                justify-content: flex-start;
-            }
-            
-            .action-cell .btn {
-                padding: 2px 4px;
-                font-size: 0.55rem;
-            }
-        }
-        
-        /* Mobile landscape */
+        /* Mobile responsive table styles */
         @media (max-width: 768px) {
+            /* Prevent horizontal scrolling */
+            body {
+                overflow-x: hidden;
+            }
+            
+            .page-container {
+                overflow-x: hidden;
+            }
+            
             .main-content {
-                padding: 0.75rem;
+                overflow-x: hidden;
+                padding: 1rem;
             }
             
-            .header h1 {
-                font-size: 1.5rem;
-            }
-            
-            .header h2 {
-                font-size: 0.9rem;
+            .container {
+                overflow-x: hidden;
+                max-width: 100%;
             }
             
             .form-group {
                 grid-template-columns: 1fr;
-                gap: 8px;
             }
             
             .action-bar {
                 flex-direction: column;
-                gap: 8px;
             }
             
             .action-bar .btn {
                 width: 100%;
-                justify-content: center;
             }
             
-            .form-actions {
+            .filter-actions {
                 flex-direction: column;
-                gap: 8px;
+                gap: 0.75rem;
             }
             
-            .form-actions .btn {
+            .filter-actions .btn {
                 width: 100%;
-                justify-content: center;
-            }
-            
-            
-            .table-controls {
-                flex-direction: column;
-                gap: 8px;
-                align-items: stretch;
-            }
-            
-            .view-options {
-                justify-content: center;
-            }
-            
-            .view-options .btn {
-                flex: 1;
-                text-align: center;
-            }
-            
-            .view-options .btn-text {
-                display: none;
-            }
-            
-            .desktop-view {
-                display: none;
-            }
-            
-            .mobile-view {
-                display: block;
-            }
-            
-            .table-responsive {
-                font-size: 0.55rem;
-                border-radius: 4px;
-            }
-            
-            table {
-                min-width: 600px;
-            }
-            
-            th, td {
-                padding: 2px 4px;
-                font-size: 0.55rem;
-            }
-            
-            .pagination {
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            
-            .page-info {
-                font-size: 0.75rem;
-                order: -1;
-                width: 100%;
-                text-align: center;
-                margin-bottom: 5px;
             }
             
             .modal-content {
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                right: 20px;
-                bottom: 20px;
-                transform: none;
-                min-width: auto;
-                max-width: none;
-                max-height: none;
-                margin: 0;
-                padding: 16px;
-                border-radius: 8px;
-            }
-            
-            .modal-content.wide {
-                min-width: auto;
-                max-width: none;
-            }
-            
-            .modal-header {
-                margin-bottom: 12px;
-                padding-bottom: 8px;
-            }
-            
-            .modal-title {
-                font-size: 1.1rem;
-            }
-            
-            .modal-body {
-                margin-bottom: 16px;
-                max-height: calc(100vh - 200px);
+                min-width: 300px;
+                margin: 16px;
+                max-width: calc(100% - 32px);
+                max-height: calc(100vh - 32px);
                 overflow-y: auto;
             }
             
             .modal-actions {
                 flex-direction: column;
                 gap: 8px;
-                position: sticky;
-                bottom: 0;
-                background: var(--card-bg);
-                padding-top: 12px;
-                border-top: 1px solid var(--border);
-                margin-top: 16px;
             }
             
             .modal-actions .btn {
                 width: 100%;
                 justify-content: center;
-                padding: 12px 16px;
-                font-size: 0.9rem;
-            }
-        }
-        
-        /* Mobile portrait */
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 0.5rem;
-            }
-            
-            .header {
-                padding: 8px 5px 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.25rem;
-                margin-bottom: 2px;
-            }
-            
-            .header h2 {
-                font-size: 0.8rem;
-            }
-            
-            .card-header {
-                padding: 12px;
-            }
-            
-            .card-title {
-                font-size: 0.9rem;
-            }
-            
-            .card-body {
-                padding: 10px;
-            }
-            
-            .form-field {
-                margin-bottom: 8px;
-            }
-            
-            .form-label {
-                font-size: 0.8rem;
-            }
-            
-            .form-control {
-                padding: 6px 10px;
-                font-size: 0.8rem;
-            }
-            
-            .btn {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.5rem;
-                margin: 0 -0.5rem;
-            }
-            
-            table {
-                min-width: 500px;
-            }
-            
-            th, td {
-                padding: 1px 3px;
-                font-size: 0.5rem;
-            }
-            
-            .empty-message {
-                padding: 20px 10px;
-                font-size: 0.8rem;
-            }
-            
-            .message {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
-            
-            .table-info {
-                font-size: 0.75rem;
-            }
-            
-            .modal-content {
-                position: fixed;
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                transform: none;
-                min-width: auto;
-                max-width: none;
-                margin: 0;
-                padding: 12px;
-                border-radius: 6px;
-            }
-            
-            .modal-content.wide {
-                min-width: auto;
-                max-width: none;
-            }
-            
-            .modal-header {
-                margin-bottom: 10px;
-                padding-bottom: 6px;
-            }
-            
-            .modal-title {
-                font-size: 1rem;
-            }
-            
-            .modal-body {
-                margin-bottom: 12px;
-                max-height: calc(100vh - 180px);
-                overflow-y: auto;
             }
             
             .form-group {
                 grid-template-columns: 1fr;
-                gap: 8px;
-                margin-bottom: 12px;
+                gap: 12px;
             }
             
-            .form-field {
-                margin-bottom: 6px;
+            /* Hide desktop table headers on mobile */
+            .table-responsive table thead {
+                display: none;
             }
             
-            .form-label {
-                font-size: 0.8rem;
-                margin-bottom: 2px;
+            /* Mobile card layout for table rows */
+            .table-responsive {
+                overflow-x: visible;
+                width: 100%;
+                max-width: 100%;
             }
             
-            .form-control {
-                padding: 8px 10px;
-                font-size: 0.85rem;
+            .table-responsive table {
+                width: 100%;
+                max-width: 100%;
             }
             
-            .form-text {
-                font-size: 0.7rem;
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-                gap: 6px;
-                position: sticky;
-                bottom: 0;
+            .table-responsive table tbody tr {
+                display: block;
                 background: var(--card-bg);
-                padding-top: 10px;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                margin-bottom: 12px;
+                padding: 0;
+                box-shadow: var(--shadow);
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .table-responsive table tbody tr.empty-row {
+                display: table-row;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+            }
+            
+            .table-responsive table tbody tr.empty-row td {
+                display: table-cell;
+                text-align: center;
+                padding: 40px 20px;
+            }
+            
+            /* Mobile row content */
+            .mobile-row-content {
+                padding: 16px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .mobile-row-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid var(--border);
+            }
+            
+            .mobile-row-main {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .mobile-row-field {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 0;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .mobile-row-label {
+                font-weight: 600;
+                color: var(--text-light);
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                min-width: 80px;
+            }
+            
+            .mobile-row-value {
+                color: var(--text);
+                font-size: 0.875rem;
+                text-align: right;
+                flex: 1;
+                margin-left: 12px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                max-width: calc(100% - 100px);
+            }
+            
+            .mobile-row-value.action-badge {
+                text-align: right;
+                margin-left: 12px;
+                max-width: calc(100% - 100px);
+                flex: 1;
+                background-color: transparent !important;
+                color: var(--text) !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                font-size: 0.875rem !important;
+                font-weight: normal !important;
+                text-transform: capitalize !important;
+                letter-spacing: normal !important;
+                text-shadow: none !important;
+            }
+            
+            /* Ensure action badge font size matches other mobile row values */
+            @media (max-width: 768px) {
+                .mobile-row-content .action-badge {
+                    font-size: 0.875rem !important;
+                    text-transform: capitalize !important;
+                }
+                
+                /* Additional override for action badges in mobile view */
+                .mobile-row-value.action-badge,
+                .mobile-row-content .action-badge,
+                .action-badge {
+                    text-transform: capitalize !important;
+                    font-size: 0.875rem !important;
+                    background-color: transparent !important;
+                    color: var(--text) !important;
+                    padding: 0 !important;
+                    border-radius: 0 !important;
+                    font-weight: normal !important;
+                    letter-spacing: normal !important;
+                    text-shadow: none !important;
+                }
+                
+                /* Target specific action classes on mobile */
+                .mobile-row-content .action-LOGIN,
+                .mobile-row-content .action-LOGOUT,
+                .mobile-row-content .action-CREATE,
+                .mobile-row-content .action-UPDATE,
+                .mobile-row-content .action-DELETE,
+                .mobile-row-content .action-VIEW,
+                .mobile-row-content .action-NAVIGATE,
+                .mobile-row-content .action-SYNC,
+                .mobile-row-content .action-SETTINGS,
+                .mobile-row-content .action-USER_MANAGEMENT,
+                .mobile-row-content .action-PASSWORD_RESET,
+                .mobile-row-content .action-FILE_UPLOAD,
+                .mobile-row-content .action-EXPORT,
+                .mobile-row-content .action-IMPORT,
+                .mobile-row-content .action-SEARCH,
+                .mobile-row-content .action-FILTER,
+                .mobile-row-content .action-ERROR,
+                .mobile-row-content .action-WARNING,
+                .mobile-row-content .action-INFO {
+                    text-transform: capitalize !important;
+                    font-size: 0.875rem !important;
+                    background-color: transparent !important;
+                    color: var(--text) !important;
+                    padding: 0 !important;
+                    border-radius: 0 !important;
+                    font-weight: normal !important;
+                    letter-spacing: normal !important;
+                    text-shadow: none !important;
+                }
+            }
+            
+            .mobile-row-expandable {
+                display: none;
+                padding-top: 12px;
                 border-top: 1px solid var(--border);
                 margin-top: 12px;
             }
             
-            .modal-actions .btn {
-                width: 100%;
-                justify-content: center;
-                padding: 10px 14px;
-                font-size: 0.85rem;
+            .mobile-row-expandable.show {
+                display: block;
             }
             
-            .user-card {
-                margin-bottom: 8px;
-            }
-            
-            .user-card-header {
-                padding: 10px 12px;
-            }
-            
-            .user-card-body {
-                padding: 10px 12px;
-            }
-            
-            .user-field {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 2px;
-            }
-            
-            .user-field span {
-                text-align: left;
-                font-size: 0.8rem;
-            }
-            
-            .user-actions {
-                gap: 2px;
-            }
-            
-            .user-actions .btn {
-                padding: 4px 6px;
-                font-size: 0.6rem;
-                min-width: 50px;
-            }
-            
-            .pagination .btn {
-                padding: 6px 8px;
-                font-size: 0.7rem;
-            }
-        }
-        
-        /* Extra small screens */
-        @media (max-width: 360px) {
-            .main-content {
-                padding: 0.25rem;
-            }
-            
-            .header h1 {
-                font-size: 1.1rem;
-            }
-            
-            .header h2 {
-                font-size: 0.75rem;
-            }
-            
-            .table-responsive {
-                font-size: 0.45rem;
-            }
-            
-            table {
-                min-width: 450px;
-            }
-            
-            th, td {
-                padding: 1px 2px;
-                font-size: 0.45rem;
-            }
-            
-            .modal-content {
-                position: fixed;
-                top: 5px;
-                left: 5px;
-                right: 5px;
-                bottom: 5px;
-                transform: none;
-                min-width: auto;
-                max-width: none;
-                margin: 0;
-                padding: 8px;
+            .mobile-expand-btn {
+                background: none;
+                border: none;
+                color: var(--primary);
+                font-size: 1.2rem;
+                cursor: pointer;
+                padding: 4px;
                 border-radius: 4px;
+                transition: all 0.2s ease;
             }
             
-            .modal-content.wide {
-                min-width: auto;
-                max-width: none;
+            .mobile-expand-btn:hover {
+                background-color: var(--primary-light);
             }
             
-            .modal-header {
-                margin-bottom: 8px;
-                padding-bottom: 4px;
+            .mobile-expand-btn i {
+                transition: transform 0.2s ease;
             }
             
-            .modal-title {
-                font-size: 0.9rem;
+            .mobile-expand-btn.expanded i {
+                transform: rotate(180deg);
             }
             
-            .modal-body {
-                margin-bottom: 8px;
-                max-height: calc(100vh - 160px);
-                overflow-y: auto;
+            /* Hide desktop table cells on mobile */
+            .table-responsive table tbody tr td:not(.mobile-row-content) {
+                display: none;
             }
             
-            .form-group {
-                grid-template-columns: 1fr;
-                gap: 6px;
-                margin-bottom: 8px;
-            }
-            
-            .form-field {
-                margin-bottom: 4px;
-            }
-            
-            .form-label {
-                font-size: 0.75rem;
-                margin-bottom: 1px;
-            }
-            
-            .form-control {
-                padding: 6px 8px;
-                font-size: 0.8rem;
-            }
-            
-            .form-text {
-                font-size: 0.65rem;
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-                gap: 4px;
-                position: sticky;
-                bottom: 0;
-                background: var(--card-bg);
-                padding-top: 8px;
-                border-top: 1px solid var(--border);
-                margin-top: 8px;
-            }
-            
-            .modal-actions .btn {
-                width: 100%;
-                justify-content: center;
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
+        /* Show only the mobile content on mobile */
+        .table-responsive table tbody tr .mobile-row-content {
+            display: block;
         }
+    }
+    
+    /* Desktop styles - hide mobile content */
+    @media (min-width: 769px) {
+        .mobile-row-content {
+            display: none !important;
+        }
+    }
     </style>
 </head>
 <body>
     <!-- Mobile Menu Button -->
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
-        <i class="fas fa-bars"></i>
+        <i class="fas fa-bars text-xl"></i>
     </button>
     
     <!-- Sidebar Overlay -->
@@ -1671,28 +1083,23 @@
             </div>
 
             <!-- Messages Section -->
-        {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-            <div class="message {{ message.tags }}">
-                {{ message }}
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-         
+            {% endif %}
+
             <div class="action-bar">
                 <!-- Add New User Button -->
                 <button onclick="showAddUserModal()" class="btn btn-success">
                     <i class="fas fa-user-plus"></i> Add New User
                 </button>
-                
-                <!-- Settings Button -->
-                <a href="{% url 'settings' %}" class="btn btn-secondary">
-                    <i class="fas fa-cog"></i> Settings
-                </a>
             </div>
-            
+
             <!-- Filter Card -->
             <div class="card">
                 <div class="card-header">
@@ -1711,6 +1118,7 @@
                                 <option value="super_admin">Super Admin</option>
                                 <option value="financial">Financial Administrator</option>
                                 <option value="scientist">Lab Technician</option>
+                                <option value="developer">Developer</option>
                             </select>
                         </div>
                         <div class="form-field">
@@ -1723,17 +1131,11 @@
                         </div>
                         <div class="form-field search-field">
                             <label class="form-label">Search</label>
-                            <div class="search-input-wrapper">
-                                <input type="text" id="searchFilter" class="form-control search-input" placeholder="Search users..." onkeyup="filterTable()">
-                                <i class="fas fa-search search-icon"></i>
-                            </div>
+                            <input type="text" id="searchFilter" class="form-control" placeholder="Search users..." onkeyup="filterTable()">
                         </div>
                     </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-primary" onclick="clearFilters()">
-                            <i class="fas fa-search"></i> Apply Filters
-                        </button>
+
+                    <div class="filter-actions">
                         <button type="button" class="btn btn-secondary" onclick="clearFilters()">
                             <i class="fas fa-times"></i> Clear All
                         </button>
@@ -1749,81 +1151,75 @@
                     </div>
                 </div>
                 <div class="card-body">
-                <div class="table-controls">
+                <div class="table-controls" style="margin-bottom: 1rem;">
                     <div class="table-info">
                         Showing {{ users|length }} user{{ users|length|pluralize }}
                     </div>
                 </div>
-                
+
                 {% if users %}
-                    <!-- Desktop Table View -->
-                    <div class="table-responsive desktop-view">
-                        <table>
+                    <div class="table-responsive">
+                        <table id="usersTable">
                             <thead>
                                 <tr>
                                     <th class="col-username">Username</th>
                                     <th class="col-email">Email</th>
                                     <th class="col-name">Full Name</th>
                                     <th class="col-role">Role</th>
-                                    <th class="col-inspector-id">Inspector ID</th>
                                     <th class="col-status">Status</th>
-                                    <th class="col-staff">Staff</th>
                                     <th class="col-actions">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for user in users %}
-                                <tr>
+                                <tr data-role="{{ user.role|default:"inspector" }}" data-status="{% if user.is_active %}active{% else %}inactive{% endif %}" data-search="{{ user.username|lower }} {{ user.email|lower }} {{ user.first_name|lower }} {{ user.last_name|lower }}">
                                     <td class="col-username">
                                         <strong>{{ user.username }}</strong>
                                     </td>
                                     <td class="col-email">{{ user.email|default:"-" }}</td>
                                     <td class="col-name">
-                                            {% if user.first_name or user.last_name %}
-                                                {{ user.first_name|title }} {{ user.last_name|title }}
-                                            {% else %}
-                                                <span style="color: var(--text-light); font-style: italic;">Not provided</span>
-                                            {% endif %}
+                                        {% if user.first_name or user.last_name %}
+                                            {{ user.first_name }} {{ user.last_name }}
+                                        {% else %}
+                                            <span style="color: var(--text-light); font-style: italic;">Not provided</span>
+                                        {% endif %}
                                     </td>
                                     <td class="col-role">
-                                            {% if user.role %}
-                                                <span class="role-badge role-{{ user.role }}">{{ user.get_role_display }}</span>
-                                            {% else %}
-                                                <span style="color: var(--text-light);">Inspector</span>
-                                            {% endif %}
-                                    </td>
-                                    <td class="col-inspector-id">
-                                            {% if user.role == 'inspector' %}
-                                                {% if user.inspector_id %}
-                                                    <span class="inspector-id-badge">{{ user.inspector_id }}</span>
-                                                {% else %}
-                                                    <span style="color: var(--text-light); font-style: italic;">Not assigned</span>
-                                                {% endif %}
-                                            {% else %}
-                                                <span style="color: var(--text-light);">-</span>
-                                            {% endif %}
+                                        {% if user.role == 'inspector' %}Inspector
+                                        {% elif user.role == 'admin' %}Administrator
+                                        {% elif user.role == 'super_admin' %}Super Admin
+                                        {% elif user.role == 'financial' %}Financial
+                                        {% elif user.role == 'scientist' %}Lab Technician
+                                        {% elif user.role == 'developer' %}Developer
+                                        {% else %}Inspector{% endif %}
                                     </td>
                                     <td class="col-status">
-                                            {% if user.is_active %}
-                                                <span class="status-badge status-active">Active</span>
-                                            {% else %}
-                                                <span class="status-badge status-inactive">Inactive</span>
-                                            {% endif %}
-                                    </td>
-                                    <td class="col-staff">
-                                            {% if user.is_staff %}
-                                                <span class="status-badge status-staff">Staff</span>
-                                            {% else %}
-                                                <span style="color: var(--text-light);">-</span>
-                                            {% endif %}
+                                        {% if user.is_active %}
+                                            <span style="color: #10b981; font-weight: 600;">Active</span>
+                                        {% else %}
+                                            <span style="color: #ef4444; font-weight: 600;">Inactive</span>
+                                        {% endif %}
                                     </td>
                                     <td class="col-actions">
-                                        <div class="action-cell">
+                                        <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                            <button class="btn btn-xs btn-primary edit-user-btn"
+                                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
+                                                    data-user-id="{{ user.id }}"
+                                                    data-username="{{ user.username }}"
+                                                    data-email="{{ user.email }}"
+                                                    data-first-name="{{ user.first_name }}"
+                                                    data-last-name="{{ user.last_name }}"
+                                                    data-role="{{ user.role|default:"inspector" }}"
+                                                    title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+
                                             <form method="post" style="display: inline;">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="action" value="toggle_user_status">
                                                 <input type="hidden" name="user_id" value="{{ user.id }}">
-                                                <button type="submit" class="btn btn-xs {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}" 
+                                                <button type="submit" class="btn btn-xs {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
                                                         title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %} User"
                                                         onclick="return confirm('Are you sure you want to {% if user.is_active %}deactivate{% else %}activate{% endif %} this user?')">
                                                     {% if user.is_active %}
@@ -1833,39 +1229,16 @@
                                                     {% endif %}
                                                 </button>
                                             </form>
-                                            
-                                            <button onclick="showResetPasswordModal('{{ user.id }}', '{{ user.username }}')" class="btn btn-xs btn-secondary" title="Reset Password">
-                                                <i class="fas fa-key"></i>
-                                            </button>
-                                            
-                                            <button class="btn btn-xs btn-info edit-user-btn" 
-                                                    data-user-id="{{ user.id }}" 
-                                                    data-username="{{ user.username|escapejs }}" 
-                                                    data-email="{{ user.email|escapejs }}" 
-                                                    data-first-name="{{ user.first_name|escapejs }}" 
-                                                    data-last-name="{{ user.last_name|escapejs }}" 
-                                                    data-role="{{ user.role|default:"inspector"|escapejs }}" 
-                                                    data-inspector-id="{{ user.inspector_id|default:""|escapejs }}" 
-                                                    title="Edit User">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            
-                                            <button class="btn btn-xs btn-primary change-role-btn" 
-                                                    data-user-id="{{ user.id }}" 
-                                                    data-username="{{ user.username|escapejs }}" 
-                                                    data-role="{{ user.role|default:"inspector"|escapejs }}" 
-                                                    title="Change Role">
-                                                <i class="fas fa-user-edit"></i>
-                                            </button>
-                                            
+
                                             {% if user != request.user %}
                                             <form method="post" style="display: inline;">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="action" value="delete_user">
                                                 <input type="hidden" name="user_id" value="{{ user.id }}">
-                                                <button type="submit" class="btn btn-xs btn-danger" 
+                                                <button type="submit" class="btn btn-xs btn-danger"
+                                                        style="padding: 0.25rem 0.5rem; font-size: 0.75rem;"
                                                         title="Delete User"
-                                                        onclick="return confirm('Are you sure you want to delete user {{ user.username|escapejs }}? This action cannot be undone.')">
+                                                        onclick="return confirm('Are you sure you want to delete user {{ user.username }}? This action cannot be undone.')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
@@ -1877,557 +1250,147 @@
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- Mobile Card View -->
-                    <div class="mobile-view">
-                        {% for user in users %}
-                        <div class="user-card">
-                            <div class="user-card-header">
-                                <h3 class="user-name">
-                                    {% if user.first_name or user.last_name %}
-                                        {{ user.first_name|title }} {{ user.last_name|title }}
-                                    {% else %}
-                                        {{ user.username }}
-                                    {% endif %}
-                                </h3>
-                                <span class="user-username">@{{ user.username }}</span>
-                            </div>
-                            <div class="user-card-body">
-                                <div class="user-field">
-                                    <label>Email:</label>
-                                    <span>{{ user.email|default:"Not provided" }}</span>
-                                </div>
-                                <div class="user-field">
-                                    <label>Role:</label>
-                                    <span>
-                                        {% if user.role %}
-                                            <span class="role-badge role-{{ user.role }}">{{ user.get_role_display }}</span>
-                                        {% else %}
-                                            Inspector
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                {% if user.role == 'inspector' %}
-                                <div class="user-field">
-                                    <label>Inspector ID:</label>
-                                    <span>
-                                        {% if user.inspector_id %}
-                                            <span class="inspector-id-badge">{{ user.inspector_id }}</span>
-                                        {% else %}
-                                            Not assigned
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                {% endif %}
-                                <div class="user-field">
-                                    <label>Status:</label>
-                                    <span>
-                                        {% if user.is_active %}
-                                            <span class="status-badge status-active">Active</span>
-                                        {% else %}
-                                            <span class="status-badge status-inactive">Inactive</span>
-                                        {% endif %}
-                                        {% if user.is_staff %}
-                                            <span class="status-badge status-staff">Staff</span>
-                                        {% endif %}
-                                    </span>
-                                </div>
-                                
-                                <div class="user-actions">
-                                    <form method="post" style="display: inline; flex: 1;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="toggle_user_status">
-                                        <input type="hidden" name="user_id" value="{{ user.id }}">
-                                        <button type="submit" class="btn btn-xs {% if user.is_active %}btn-warning{% else %}btn-success{% endif %}" 
-                                                title="{% if user.is_active %}Deactivate{% else %}Activate{% endif %} User"
-                                                onclick="return confirm('Are you sure you want to {% if user.is_active %}deactivate{% else %}activate{% endif %} this user?')">
-                                            {% if user.is_active %}
-                                                <i class="fas fa-user-slash"></i>
-                                            {% else %}
-                                                <i class="fas fa-user-check"></i>
-                                            {% endif %}
-                                        </button>
-                                    </form>
-                                    
-                                    <button onclick="showResetPasswordModal('{{ user.id }}', '{{ user.username }}')" class="btn btn-xs btn-secondary" title="Reset Password">
-                                        <i class="fas fa-key"></i>
-                                    </button>
-                                    
-                                    <button class="btn btn-xs btn-info edit-user-btn" 
-                                            data-user-id="{{ user.id }}" 
-                                            data-username="{{ user.username|escapejs }}" 
-                                            data-email="{{ user.email|escapejs }}" 
-                                            data-first-name="{{ user.first_name|escapejs }}" 
-                                            data-last-name="{{ user.last_name|escapejs }}" 
-                                            data-role="{{ user.role|default:"inspector"|escapejs }}" 
-                                            data-inspector-id="{{ user.inspector_id|default:""|escapejs }}" 
-                                            title="Edit User">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    
-                                    <button class="btn btn-xs btn-primary change-role-btn" 
-                                            data-user-id="{{ user.id }}" 
-                                            data-username="{{ user.username|escapejs }}" 
-                                            data-role="{{ user.role|default:"inspector"|escapejs }}" 
-                                            title="Change Role">
-                                        <i class="fas fa-user-edit"></i>
-                                    </button>
-                                    
-                                    {% if user != request.user %}
-                                    <form method="post" style="display: inline; flex: 1;">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="delete_user">
-                                        <input type="hidden" name="user_id" value="{{ user.id }}">
-                                        <button type="submit" class="btn btn-xs btn-danger" 
-                                                title="Delete User"
-                                                onclick="return confirm('Are you sure you want to delete user {{ user.username|escapejs }}? This action cannot be undone.')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
                 {% else %}
                     <div class="empty-message">
-                        <i class="fas fa-users"></i>
+                        <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
                         <p>No users found.</p>
-                </div>
+                    </div>
                 {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Reset Password Modal -->
-    <div id="resetPasswordModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Reset Password</h3>
-            </div>
-            <div class="modal-body">
-                <p>Enter new password for user: <span id="resetUsername" style="font-weight: 600;"></span></p>
-                
-                <form method="post" id="resetPasswordForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="reset_password">
-                    <input type="hidden" name="user_id" id="resetUserId">
-                    
-                    <div class="form-field">
-                        <label class="form-label">New Password</label>
-                        <input type="password" name="new_password" class="form-control" required>
+
+            <!-- Edit User Modal -->
+            <div id="editUserModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow: auto;">
+                <div style="background-color: var(--card-bg); margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: var(--shadow-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                        <h2 style="margin: 0; color: var(--text);">Edit User</h2>
+                        <button onclick="closeEditUserModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text);">&times;</button>
                     </div>
-                </form>
-            </div>
-            <div class="modal-actions">
-                <button type="submit" form="resetPasswordForm" class="btn btn-success">
-                    <i class="fas fa-save"></i> Reset Password
-                </button>
-                <button type="button" onclick="hideResetPasswordModal()" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Change Role Modal -->
-    <div id="changeRoleModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Change User Role</h3>
-            </div>
-            <div class="modal-body">
-                <p>Change role for user: <span id="changeRoleUsername" style="font-weight: 600;"></span></p>
-                
-                <form method="post" id="changeRoleForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="change_user_role">
-                    <input type="hidden" name="user_id" id="changeRoleUserId">
-                    
-                    <div class="form-field">
-                        <label class="form-label">New Role *</label>
-                        <select name="new_role" class="form-control" required>
-                            <option value="inspector">Inspector</option>
-                            <option value="admin">Administrator</option>
-                            <option value="super_admin">Super Admin</option>
-                            <option value="financial">Financial Administrator</option>
-                            <option value="scientist">Lab Technician</option>
-                            {% if request.user.role == 'developer' %}
+
+                    <form id="editUserForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="edit_user">
+                        <input type="hidden" name="user_id" id="edit_user_id">
+
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="edit_username" id="edit_username" class="form-control" required>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="edit_email" id="edit_email" class="form-control" required>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">First Name</label>
+                            <input type="text" name="edit_first_name" id="edit_first_name" class="form-control">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" name="edit_last_name" id="edit_last_name" class="form-control">
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label class="form-label">Role</label>
+                            <select name="edit_role" id="edit_role" class="form-control" required>
+                                <option value="inspector">Inspector</option>
+                                <option value="admin">Administrator</option>
+                                <option value="super_admin">Super Admin</option>
+                                <option value="financial">Financial Administrator</option>
+                                <option value="scientist">Lab Technician</option>
                                 <option value="developer">Developer</option>
-                            {% endif %}
-                        </select>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button type="button" onclick="closeEditUserModal()" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Add User Modal -->
+            <div id="addUserModal" style="display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); overflow: auto;">
+                <div style="background-color: var(--card-bg); margin: 5% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: var(--shadow-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                        <h2 style="margin: 0; color: var(--text);">Add New User</h2>
+                        <button onclick="closeAddUserModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text);">&times;</button>
                     </div>
-                </form>
-            </div>
-            <div class="modal-actions">
-                <button type="submit" form="changeRoleForm" class="btn btn-success">
-                    <i class="fas fa-save"></i> Change Role
-                </button>
-                <button type="button" onclick="hideChangeRoleModal()" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add User Modal -->
-    <div id="addUserModal" class="modal">
-        <div class="modal-content wide">
-            <div class="modal-header">
-                <h3 class="modal-title">Add New User</h3>
-            </div>
-            <div class="modal-body">
-                <form method="post" id="addUserForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="add_user">
-                    
-                    <div class="form-group">
-                        <div class="form-field">
+
+                    <form id="addUserForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_user">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Username *</label>
                             <input type="text" name="new_username" class="form-control" required>
                         </div>
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Email *</label>
                             <input type="email" name="new_email" class="form-control" required>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Password *</label>
                             <input type="password" name="new_password1" class="form-control" required>
                         </div>
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Confirm Password *</label>
                             <input type="password" name="new_password2" class="form-control" required>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">First Name</label>
                             <input type="text" name="new_first_name" class="form-control">
                         </div>
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Last Name</label>
                             <input type="text" name="new_last_name" class="form-control">
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-field">
+
+                        <div style="margin-bottom: 15px;">
                             <label class="form-label">Role *</label>
-                            <select name="new_role" class="form-control" required id="newRoleSelect">
-                                <option value="">Select a role...</option>
-                                {% for value, label in role_choices %}
-                                    {% if value == 'developer' and request.user.role != 'developer' %}
-                                        <!-- Hide developer option for non-developers -->
-                                    {% else %}
-                                        <option value="{{ value }}">{{ label }}</option>
-                                    {% endif %}
-                                {% endfor %}
+                            <select name="new_role" class="form-control" required>
+                                <option value="inspector">Inspector</option>
+                                <option value="admin">Administrator</option>
+                                <option value="super_admin">Super Admin</option>
+                                <option value="financial">Financial Administrator</option>
+                                <option value="scientist">Lab Technician</option>
+                                <option value="developer">Developer</option>
                             </select>
                         </div>
-                    </div>
-                    
-                    <div class="form-group" id="inspectorIdGroup" style="display: none;">
-                        <div class="form-field">
-                            <label class="form-label">Server Inspector ID</label>
-                            <input type="number" name="new_inspector_id" class="form-control" placeholder="Enter inspector ID number" min="1">
-                            <small class="form-text">Enter the unique server ID number for this inspector</small>
+
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                            <button type="button" onclick="closeAddUserModal()" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-success">Add User</button>
                         </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-actions">
-                <button type="submit" form="addUserForm" class="btn btn-success">
-                    <i class="fas fa-user-plus"></i> Add User
-                </button>
-                <button type="button" onclick="hideAddUserModal()" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Edit User Modal -->
-    <div id="editUserModal" class="modal">
-        <div class="modal-content wide">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit User Information</h3>
-            </div>
-            <div class="modal-body">
-                <form method="post" id="editUserForm">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="edit_user">
-                    <input type="hidden" name="user_id" id="editUserId">
-                    
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">Username *</label>
-                            <input type="text" name="edit_username" id="editUsername" class="form-control" required>
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Email *</label>
-                            <input type="email" name="edit_email" id="editEmail" class="form-control" required>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">First Name</label>
-                            <input type="text" name="edit_first_name" id="editFirstName" class="form-control">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" name="edit_last_name" id="editLastName" class="form-control">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">Role *</label>
-                            <select name="edit_role" id="editRole" class="form-control" required onchange="toggleEditInspectorIdField()">
-                                {% for value, label in role_choices %}
-                                    {% if value == 'developer' and request.user.role != 'developer' %}
-                                        <!-- Hide developer option for non-developers -->
-                                    {% else %}
-                                        <option value="{{ value }}">{{ label }}</option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group" id="editInspectorIdGroup" style="display: none;">
-                        <div class="form-field">
-                            <label class="form-label">Server Inspector ID</label>
-                            <input type="number" name="edit_inspector_id" id="editInspectorId" class="form-control" placeholder="Enter inspector ID number" min="1">
-                            <small class="form-text">Enter the unique server ID number for this inspector</small>
-                        </div>
-                    </div>
-                    
-                    
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">New Password (Optional)</label>
-                            <input type="password" name="edit_password1" class="form-control" placeholder="Leave blank to keep current password">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Confirm New Password</label>
-                            <input type="password" name="edit_password2" class="form-control" placeholder="Leave blank to keep current password">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-actions">
-                <button type="submit" form="editUserForm" class="btn btn-success">
-                    <i class="fas fa-save"></i> Save Changes
-                </button>
-                <button type="button" onclick="hideEditUserModal()" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            </div>
-            </div>
-        </div>
-    </div>
-    
+
     <script>
-        function getCsrfToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]').value;
-        }
 
         // Theme management - compatible with settings page
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
-
-        // Apply theme on load
-        document.addEventListener('DOMContentLoaded', function() {
-            initTheme();
-        });
-
-        // Listen for theme changes from settings page
-        window.addEventListener('storage', function(e) {
-            if (e.key === 'theme') {
-                document.documentElement.setAttribute('data-theme', e.newValue || 'light');
-            }
-        });
-        
-        // Modal Functions
-        function showResetPasswordModal(userId, username) {
-            document.getElementById('resetUserId').value = userId;
-            document.getElementById('resetUsername').textContent = username;
-            document.getElementById('resetPasswordModal').style.display = 'block';
-            document.querySelector('#resetPasswordForm input[name="new_password"]').focus();
-        }
-        
-        function hideResetPasswordModal() {
-            document.getElementById('resetPasswordModal').style.display = 'none';
-            document.getElementById('resetPasswordForm').reset();
-        }
-        
-        function showAddUserModal() {
-            // Reset form
-            document.getElementById('addUserForm').reset();
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
             
-            // Hide inspector ID field initially (ensure it's hidden after form reset)
-            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-            if (inspectorIdGroup) {
-                inspectorIdGroup.style.display = 'none';
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
             }
             
-            // Reset the role select to default value
-            const roleSelect = document.querySelector('select[name="new_role"]');
-            if (roleSelect) {
-                roleSelect.value = '';
-            }
-            
-            // Show modal
-            document.getElementById('addUserModal').style.display = 'block';
-            document.querySelector('#addUserForm input[name="new_username"]').focus();
-        }
-        
-        function hideAddUserModal() {
-            document.getElementById('addUserModal').style.display = 'none';
-            document.getElementById('addUserForm').reset();
-            
-            // Ensure inspector ID field is hidden when modal closes
-            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-            if (inspectorIdGroup) {
-                inspectorIdGroup.style.display = 'none';
-            }
-        }
-        
-        function showChangeRoleModal(userId, username, currentRole) {
-            document.getElementById('changeRoleUserId').value = userId;
-            document.getElementById('changeRoleUsername').textContent = username;
-            document.querySelector('#changeRoleForm select[name="new_role"]').value = currentRole;
-            document.getElementById('changeRoleModal').style.display = 'block';
-            document.querySelector('#changeRoleForm select[name="new_role"]').focus();
-        }
-        
-        function hideChangeRoleModal() {
-            document.getElementById('changeRoleModal').style.display = 'none';
-            document.getElementById('changeRoleForm').reset();
-        }
-        
-        function showEditUserModal(userId, username, email, firstName, lastName, role, inspectorId) {
-            document.getElementById('editUserId').value = userId;
-            document.getElementById('editUsername').value = username;
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editFirstName').value = firstName || '';
-            document.getElementById('editLastName').value = lastName || '';
-            document.getElementById('editRole').value = role;
-            document.getElementById('editInspectorId').value = inspectorId || '';
-            
-            // Toggle inspector ID field based on role
-            toggleEditInspectorIdField();
-            
-            document.getElementById('editUserModal').style.display = 'block';
-            document.getElementById('editUsername').focus();
-        }
-        
-        function hideEditUserModal() {
-            document.getElementById('editUserModal').style.display = 'none';
-            document.getElementById('editUserForm').reset();
-        }
-        
-        function toggleEditInspectorIdField() {
-            const roleSelect = document.getElementById('editRole');
-            const inspectorIdGroup = document.getElementById('editInspectorIdGroup');
-            
-            if (roleSelect && inspectorIdGroup) {
-                if (roleSelect.value === 'inspector') {
-                    inspectorIdGroup.style.display = 'block';
-                } else {
-                    inspectorIdGroup.style.display = 'none';
-                }
-            }
-        }
-        
-        // Close modals when clicking outside
-        document.getElementById('resetPasswordModal').addEventListener('click', function(e) {
-            if (e.target === this) hideResetPasswordModal();
-        });
-        
-        document.getElementById('addUserModal').addEventListener('click', function(e) {
-            if (e.target === this) hideAddUserModal();
-        });
-        
-        document.getElementById('changeRoleModal').addEventListener('click', function(e) {
-            if (e.target === this) hideChangeRoleModal();
-        });
-        
-        document.getElementById('editUserModal').addEventListener('click', function(e) {
-            if (e.target === this) hideEditUserModal();
-        });
-        
-        // Close modals on escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                hideResetPasswordModal();
-                hideAddUserModal();
-                hideChangeRoleModal();
-                hideEditUserModal();
-            }
-        });
-        
-        // Filter functionality
-        function filterTable() {
-            const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
-            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
-            
-            const table = document.querySelector('table tbody');
-            const rows = table.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                if (row.querySelector('.empty-message')) return;
-                
-                const cells = row.querySelectorAll('td');
-                if (cells.length === 0) return;
-                
-                const username = cells[0].textContent.toLowerCase();
-                const email = cells[1].textContent.toLowerCase();
-                const name = cells[2].textContent.toLowerCase();
-                const role = cells[3].textContent.toLowerCase();
-                const status = cells[5].textContent.toLowerCase();
-                
-                let showRow = true;
-                
-                // Role filter
-                if (roleFilter && !role.includes(roleFilter)) {
-                    showRow = false;
-                }
-                
-                // Status filter
-                if (statusFilter && !status.includes(statusFilter)) {
-                    showRow = false;
-                }
-                
-                // Search filter
-                if (searchFilter) {
-                    const searchMatch = username.includes(searchFilter) || 
-                                     email.includes(searchFilter) || 
-                                     name.includes(searchFilter);
-                    if (!searchMatch) {
-                        showRow = false;
-                    }
-                }
-                
-                row.style.display = showRow ? '' : 'none';
-            });
-        }
-
-        // Clear all filters
-        function clearFilters() {
-            document.getElementById('roleFilter').value = '';
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('searchFilter').value = '';
-            filterTable();
+            document.documentElement.setAttribute('data-theme', activeTheme);
         }
 
         // Mobile Menu Toggle
@@ -2436,31 +1399,33 @@
             const overlay = document.getElementById('sidebar-overlay');
             const mobileBtn = document.getElementById('mobile-menu-btn');
             
-            sidebar.classList.toggle('show');
+                sidebar.classList.toggle('show');
             overlay.classList.toggle('show');
-            
+                
             const icon = mobileBtn.querySelector('i');
-            if (sidebar.classList.contains('show')) {
+                if (sidebar.classList.contains('show')) {
                 icon.className = 'fas fa-times';
-            } else {
+                } else {
                 icon.className = 'fas fa-bars';
             }
         }
 
-        // Initialize on page load
+        // Apply theme on load
         document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+
             // Mobile menu functionality
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
-            
+
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', toggleSidebar);
             }
-            
+
             if (sidebarOverlay) {
                 sidebarOverlay.addEventListener('click', toggleSidebar);
             }
-            
+
             // Close sidebar when clicking on nav links on mobile
             const navLinks = document.querySelectorAll('.nav-link');
             navLinks.forEach(link => {
@@ -2470,73 +1435,125 @@
                     }
                 });
             });
-            
-            // Handle window resize
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 1024) {
-                    const sidebar = document.getElementById('sidebar');
-                    const overlay = document.getElementById('sidebar-overlay');
-                    const mobileBtn = document.getElementById('mobile-menu-btn');
-                    
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                    
-                    if (mobileBtn) {
-                        const icon = mobileBtn.querySelector('i');
-                        icon.className = 'fas fa-bars';
-                    }
-                }
-            });
-            
-            // Hide inspector ID field initially
-            const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-            if (inspectorIdGroup) {
-                inspectorIdGroup.style.display = 'none';
-            }
-            
-            // Add event listener for role selection change
-            const newRoleSelect = document.getElementById('newRoleSelect');
-            if (newRoleSelect) {
-                newRoleSelect.addEventListener('change', function() {
-                    const inspectorIdGroup = document.getElementById('inspectorIdGroup');
-                    
-                    if (inspectorIdGroup) {
-                        if (this.value === 'inspector') {
-                            inspectorIdGroup.style.display = 'block';
-                        } else {
-                            inspectorIdGroup.style.display = 'none';
-                        }
-                    }
-                });
-            }
-            
-            // Add event listeners for edit user buttons
-            document.querySelectorAll('.edit-user-btn').forEach(button => {
-                button.addEventListener('click', function() {
+
+            // Handle edit user buttons
+            const editBtns = document.querySelectorAll('.edit-user-btn');
+            editBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
                     const userId = this.getAttribute('data-user-id');
                     const username = this.getAttribute('data-username');
                     const email = this.getAttribute('data-email');
                     const firstName = this.getAttribute('data-first-name');
                     const lastName = this.getAttribute('data-last-name');
                     const role = this.getAttribute('data-role');
-                    const inspectorId = this.getAttribute('data-inspector-id');
-                    
-                    showEditUserModal(userId, username, email, firstName, lastName, role, inspectorId);
+                    showEditUserModal(userId, username, email, firstName, lastName, role);
                 });
             });
-            
-            // Add event listeners for change role buttons
-            document.querySelectorAll('.change-role-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-                    const username = this.getAttribute('data-username');
-                    const role = this.getAttribute('data-role');
-                    
-                    showChangeRoleModal(userId, username, role);
-                });
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                const editModal = document.getElementById('editUserModal');
+                const addModal = document.getElementById('addUserModal');
+                if (event.target === editModal) {
+                    closeEditUserModal();
+                }
+                if (event.target === addModal) {
+                    closeAddUserModal();
+                }
             });
+
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
         });
+
+        // Listen for theme changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'theme') {
+                document.documentElement.setAttribute('data-theme', e.newValue || 'light');
+            }
+        });
+
+
+
+        // User Management Functions
+        function filterTable() {
+            const roleFilter = document.getElementById('roleFilter').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value.toLowerCase();
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+            const table = document.getElementById('usersTable');
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const role = row.getAttribute('data-role') || '';
+                const status = row.getAttribute('data-status') || '';
+                const searchText = row.getAttribute('data-search') || '';
+
+                let showRow = true;
+
+                if (roleFilter && role !== roleFilter) {
+                    showRow = false;
+                }
+
+                if (statusFilter && status !== statusFilter) {
+                    showRow = false;
+                }
+
+                if (searchFilter && !searchText.includes(searchFilter)) {
+                    showRow = false;
+                }
+
+                row.style.display = showRow ? '' : 'none';
+            }
+        }
+
+        function clearFilters() {
+            document.getElementById('roleFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchFilter').value = '';
+            filterTable();
+        }
+
+        function showAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'block';
+        }
+
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'none';
+            document.getElementById('addUserForm').reset();
+        }
+
+        function showEditUserModal(userId, username, email, firstName, lastName, role) {
+            document.getElementById('edit_user_id').value = userId;
+            document.getElementById('edit_username').value = username;
+            document.getElementById('edit_email').value = email;
+            document.getElementById('edit_first_name').value = firstName;
+            document.getElementById('edit_last_name').value = lastName;
+            document.getElementById('edit_role').value = role;
+            document.getElementById('editUserModal').style.display = 'block';
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+
+        // Handle window resize for responsive behavior
+        function handleResize() {
+            // Handle sidebar resize logic
+            if (window.innerWidth > 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                const mobileBtn = document.getElementById('mobile-menu-btn');
+
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+
+                if (mobileBtn) {
+                    const icon = mobileBtn.querySelector('i');
+                    icon.className = 'fas fa-bars';
+                }
+            }
+        }
     </script>
 </body>
-</html>
 </html>

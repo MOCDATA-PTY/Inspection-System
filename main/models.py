@@ -283,7 +283,7 @@ class Inspection(models.Model):
     
     # Documentation and follow-up
     follow_up = models.BooleanField(default=False, help_text="Follow-up required")
-    occurrence_report = models.BooleanField(default=False, help_text="Occurrence report required")
+    occurrence_report = models.BooleanField(default=False, help_text="Accurance report required")
     dispensation_application = models.BooleanField(default=False, help_text="Dispensation application required")
     
     # Comments and notes
@@ -365,6 +365,7 @@ class FoodSafetyAgencyInspection(models.Model):
                                          ('PENDING', 'Pending'),
                                          ('APPROVED', 'Approved')
                                      ], default='PENDING')
+    comment = models.TextField(blank=True, null=True, help_text="Comment for this inspection group")
     lab = models.CharField(max_length=20, blank=True, null=True, help_text="Laboratory used for testing",
                           choices=[
                               ('lab_a', 'Lab A'),
@@ -408,7 +409,9 @@ class FoodSafetyAgencyInspection(models.Model):
     lab_form_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Lab Form document was uploaded")
     retest_uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='retest_uploads', help_text="User who uploaded Retest document")
     retest_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Retest document was uploaded")
-    
+    occurrence_uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='occurrence_uploads', help_text="User who uploaded Accurance document")
+    occurrence_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Accurance document was uploaded")
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -438,6 +441,11 @@ class FoodSafetyAgencyInspection(models.Model):
     def invoice_uploaded(self):
         """Check if Invoice document has been uploaded"""
         return self.invoice_uploaded_date is not None
+
+    @property
+    def occurrence_uploaded(self):
+        """Check if Accurance document has been uploaded"""
+        return self.occurrence_uploaded_date is not None
 
 class Shipment(models.Model):
     """Shipment/Claim data model for legal system"""

@@ -1069,62 +1069,62 @@
                 <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
                 <div class="company-name">Food Safety Agency (Pty) Ltd</div>
             </div>
-            
+
             <ul class="nav-menu">
                 <li class="nav-item">
                     <a href="{% url 'home' %}" class="nav-link">
                         <i class="fas fa-home"></i>
-                        Dashboard
-                    </a>
-                </li>
+                            Dashboard
+                        </a>
+                    </li>
                 <li class="nav-item">
                     <a href="{% url 'client_list' %}" class="nav-link active">
                         <i class="fas fa-users"></i>
-                        Clients
-                    </a>
-                </li>
+                            Clients
+                        </a>
+                    </li>
                 <li class="nav-item">
                     <a href="{% url 'shipment_list' %}" class="nav-link">
                         <i class="fas fa-clipboard-check"></i>
-                        Inspections
-                    </a>
-                </li>
+                            Inspections
+                        </a>
+                    </li>
                 <li class="nav-item">
                     <a href="{% url 'user_management' %}" class="nav-link">
                         <i class="fas fa-users-cog"></i>
-                        User Management
-                    </a>
-                </li>
+                            User Management
+                        </a>
+                    </li>
                 <li class="nav-item">
                     <a href="{% url 'system_logs' %}" class="nav-link">
                         <i class="fas fa-list-alt"></i>
-                        System Logs
-                    </a>
-                </li>
-                {% if request.user.role == 'developer' %}
+                            System Logs
+                        </a>
+                    </li>
+                    {% if request.user.role == 'developer' %}
                 <li class="nav-item">
                     <a href="{% url 'onedrive_view' %}" class="nav-link">
                         <i class="fas fa-cloud"></i>
-                        OneDrive View
-                    </a>
-                </li>
-                {% endif %}
-                {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                 <li class="nav-item">
                     <a href="{% url 'server_view' %}" class="nav-link">
                         <i class="fas fa-tachometer-alt"></i>
-                        Server View
-                    </a>
-                </li>
-                {% endif %}
+                            Server View
+                        </a>
+                    </li>
+                    {% endif %}
                 <li class="nav-item">
                     <a href="{% url 'settings' %}" class="nav-link">
                         <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
-                </li>
-            </ul>
-            
+                            Settings
+                        </a>
+                    </li>
+                </ul>
+
             <div class="logout-section">
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}
@@ -1336,8 +1336,17 @@
 
         // Theme management - compatible with settings page
         function initTheme() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+            }
+
+            document.documentElement.setAttribute('data-theme', activeTheme);
         }
 
         // Mobile Menu Toggle
@@ -1345,10 +1354,10 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             const mobileBtn = document.getElementById('mobile-menu-btn');
-            
+
             sidebar.classList.toggle('show');
             overlay.classList.toggle('show');
-            
+
             const icon = mobileBtn.querySelector('i');
             if (sidebar.classList.contains('show')) {
                 icon.className = 'fas fa-times';
@@ -1384,22 +1393,26 @@
             });
             
             // Handle window resize
-            window.addEventListener('resize', function() {
-                if (window.innerWidth > 1024) {
-                    const sidebar = document.getElementById('sidebar');
-                    const overlay = document.getElementById('sidebar-overlay');
-                    const mobileBtn = document.getElementById('mobile-menu-btn');
-                    
-                    sidebar.classList.remove('show');
-                    overlay.classList.remove('show');
-                    
-                    if (mobileBtn) {
-                        const icon = mobileBtn.querySelector('i');
-                        icon.className = 'fas fa-bars';
-                    }
-                }
-            });
+            window.addEventListener('resize', handleResize);
         });
+
+        // Handle window resize for responsive behavior
+        function handleResize() {
+            // Handle sidebar resize logic
+            if (window.innerWidth > 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                const mobileBtn = document.getElementById('mobile-menu-btn');
+
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+
+                if (mobileBtn) {
+                    const icon = mobileBtn.querySelector('i');
+                    icon.className = 'fas fa-bars';
+                }
+            }
+        }
 
         // Listen for theme changes from settings page
         window.addEventListener('storage', function(e) {

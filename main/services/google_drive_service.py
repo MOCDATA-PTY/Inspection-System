@@ -72,19 +72,24 @@ class GoogleDriveService:
         return self.drive
 
     def list_files_in_folder(self, folder_id: str, request=None, max_items: Optional[int] = None) -> List[Dict]:
-        print(f"[Drive] List: folder={folder_id}, max_items={max_items}")
         if not self.drive:
             self.authenticate(request)
         results = []
         page_token = None
         query = f"'{folder_id}' in parents and trashed = false"
+        page_count = 0
+
         while True:
             try:
                 remaining = None
                 if isinstance(max_items, int) and max_items > 0:
                     remaining = max_items - len(results)
                 effective_page_size = 1000 if remaining is None else max(1, min(remaining, 1000))
-                print(f"[Drive] List: requesting page (page_token={page_token}, pageSize={effective_page_size})")
+
+                # Show progress for each page
+                page_count += 1
+                print(f"[Drive] Fetching page {page_count} (pageSize={effective_page_size})...")
+
                 resp = self.drive.files().list(
                     q=query,
                     fields='nextPageToken, files(id, name, webViewLink, mimeType)',
@@ -94,7 +99,7 @@ class GoogleDriveService:
                     supportsAllDrives=True
                 ).execute()
             except Exception as e:
-                print(f"[Drive] List: error {e}")
+                print(f"[Drive] Error: {e}")
                 # If scopes are insufficient, force re-authentication once by removing token and retrying
                 from googleapiclient.errors import HttpError
                 if isinstance(e, HttpError) and e.resp.status == 403:
@@ -105,7 +110,7 @@ class GoogleDriveService:
                         sheets_token_path = os.path.join(settings.BASE_DIR, 'token.pickle')
                         if os.path.exists(sheets_token_path):
                             os.remove(sheets_token_path)
-                        print("[Drive] List: 403 encountered, tokens removed, re-authenticating")
+                        print("[Drive] 403 error - tokens removed, re-authenticating...")
                         self.authenticate(request)
                         resp = self.drive.files().list(
                             q=query,
@@ -120,15 +125,18 @@ class GoogleDriveService:
                 else:
                     raise
             batch = resp.get('files', [])
-            print(f"[Drive] List: received {len(batch)} files in page")
+            print(f"[Drive] Received {len(batch)} files (total so far: {len(results) + len(batch)})")
             results.extend(batch)
+
             if isinstance(max_items, int) and max_items > 0 and len(results) >= max_items:
-                print(f"[Drive] List: reached max_items={max_items}, stopping")
+                print(f"[Drive] Reached limit of {max_items} files, stopping")
                 break
             page_token = resp.get('nextPageToken')
             if not page_token:
+                print(f"[Drive] No more pages, finished")
                 break
-        print(f"[Drive] List: total files collected={len(results)}")
+
+        print(f"[Drive] Total files retrieved: {len(results)}")
         return results
 
     @staticmethod

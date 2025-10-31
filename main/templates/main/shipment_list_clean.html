@@ -9,7 +9,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="-1">
-    <!-- CACHE BUSTER: 20251003-040900 -->
+    <!-- CACHE BUSTER: 20251028-EMAIL-FIX -->
     <title>Claims Records Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -619,11 +619,14 @@
                 max-width: calc(100vw - 40px);
                 margin: 0;
                 padding: 0;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
-            
+
             .detail-table {
-                min-width: 1000px;
-                font-size: 0.8rem;
+                min-width: 100%;
+                font-size: 0.75rem;
+                table-layout: auto;
             }
             
             .detail-table th,
@@ -845,11 +848,14 @@
                 max-width: calc(100vw - 40px);
                 margin: 0;
                 padding: 0;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
-            
+
             .detail-table {
-                min-width: 1000px !important;
-                font-size: 0.8rem !important;
+                min-width: 100% !important;
+                font-size: 0.75rem !important;
+                table-layout: auto !important;
             }
             
             .detail-table th,
@@ -1870,19 +1876,19 @@
             .detail-table th:nth-child(1),
             .detail-table td:nth-child(1) { width: 35px; min-width: 35px; max-width: 35px; } /* Inspection No */
             .detail-table th:nth-child(2),
-            .detail-table td:nth-child(2) { width: 80px; min-width: 80px; max-width: 80px; } /* Client Name */
+            .detail-table td:nth-child(2) { width: 180px; min-width: 180px; max-width: 200px; } /* Client Name */
             .detail-table th:nth-child(3),
             .detail-table td:nth-child(3) { width: 60px; min-width: 60px; max-width: 60px; } /* Commodity */
             .detail-table th:nth-child(4),
-            .detail-table td:nth-child(4) { width: 70px; min-width: 70px; max-width: 70px; } /* Compliance */
+            .detail-table td:nth-child(4) { width: 150px; min-width: 150px; max-width: 150px; overflow: visible !important; } /* Compliance */
             .detail-table th:nth-child(5),
-            .detail-table td:nth-child(5) { width: 120px; min-width: 120px; max-width: 120px; } /* Product Name */
+            .detail-table td:nth-child(5) { width: 200px; min-width: 200px; max-width: 250px; } /* Product Name */
             .detail-table th:nth-child(6),
             .detail-table td:nth-child(6) { width: 40px; min-width: 40px; max-width: 40px; } /* Sampled */
             .detail-table th:nth-child(7),
             .detail-table td:nth-child(7) { width: 50px; min-width: 50px; max-width: 50px; } /* Needs Retest */
             .detail-table th:nth-child(8),
-            .detail-table td:nth-child(8) { width: 120px; min-width: 120px; max-width: 120px; } /* Class - same as Product Name mobile */
+            .detail-table td:nth-child(8) { width: 200px; min-width: 200px; max-width: 250px; } /* Class */
             .detail-table th:nth-child(9),
             .detail-table td:nth-child(9) { width: 25px; min-width: 25px; max-width: 25px; } /* Fat */
             .detail-table th:nth-child(10),
@@ -1896,9 +1902,9 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 60px; min-width: 60px; max-width: 60px; } /* Lab */
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 150px; min-width: 150px; max-width: 150px; } /* Actions */
+            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
         }
-        
+
         @media (max-width: 480px) {
             table {
                 min-width: 1400px; /* Extra space for very small screens */
@@ -1953,19 +1959,19 @@
             .detail-table th:nth-child(1),
             .detail-table td:nth-child(1) { width: 30px; min-width: 30px; max-width: 30px; }
             .detail-table th:nth-child(2),
-            .detail-table td:nth-child(2) { width: 70px; min-width: 70px; max-width: 70px; }
+            .detail-table td:nth-child(2) { width: 150px; min-width: 150px; max-width: 180px; }
             .detail-table th:nth-child(3),
             .detail-table td:nth-child(3) { width: 50px; min-width: 50px; max-width: 50px; }
             .detail-table th:nth-child(4),
-            .detail-table td:nth-child(4) { width: 60px; min-width: 60px; max-width: 60px; }
+            .detail-table td:nth-child(4) { width: 140px; min-width: 140px; max-width: 140px; overflow: visible !important; }
             .detail-table th:nth-child(5),
-            .detail-table td:nth-child(5) { width: 100px; min-width: 100px; max-width: 100px; }
+            .detail-table td:nth-child(5) { width: 180px; min-width: 180px; max-width: 220px; }
             .detail-table th:nth-child(6),
             .detail-table td:nth-child(6) { width: 35px; min-width: 35px; max-width: 35px; }
             .detail-table th:nth-child(7),
             .detail-table td:nth-child(7) { width: 45px; min-width: 45px; max-width: 45px; }
             .detail-table th:nth-child(8),
-            .detail-table td:nth-child(8) { width: 70px; min-width: 70px; max-width: 70px; }
+            .detail-table td:nth-child(8) { width: 180px; min-width: 180px; max-width: 220px; }
             .detail-table th:nth-child(9),
             .detail-table td:nth-child(9) { width: 20px; min-width: 20px; max-width: 20px; }
             .detail-table th:nth-child(10),
@@ -1979,7 +1985,7 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 50px; min-width: 50px; max-width: 50px; }
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 120px; min-width: 120px; max-width: 120px; }
+            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
         }
         
         /* Tablet responsive design */
@@ -2031,19 +2037,19 @@
             .detail-table th:nth-child(1),
             .detail-table td:nth-child(1) { width: 50px; min-width: 50px; max-width: 50px; }
             .detail-table th:nth-child(2),
-            .detail-table td:nth-child(2) { width: 90px; min-width: 90px; max-width: 90px; }
+            .detail-table td:nth-child(2) { width: 200px; min-width: 200px; max-width: 240px; }
             .detail-table th:nth-child(3),
             .detail-table td:nth-child(3) { width: 65px; min-width: 65px; max-width: 65px; }
             .detail-table th:nth-child(4),
-            .detail-table td:nth-child(4) { width: 75px; min-width: 75px; max-width: 75px; }
+            .detail-table td:nth-child(4) { width: 160px; min-width: 160px; max-width: 160px; overflow: visible !important; }
             .detail-table th:nth-child(5),
-            .detail-table td:nth-child(5) { width: 140px; min-width: 140px; max-width: 140px; }
+            .detail-table td:nth-child(5) { width: 240px; min-width: 240px; max-width: 280px; }
             .detail-table th:nth-child(6),
             .detail-table td:nth-child(6) { width: 45px; min-width: 45px; max-width: 45px; }
             .detail-table th:nth-child(7),
             .detail-table td:nth-child(7) { width: 55px; min-width: 55px; max-width: 55px; }
             .detail-table th:nth-child(8),
-            .detail-table td:nth-child(8) { width: 85px; min-width: 85px; max-width: 85px; }
+            .detail-table td:nth-child(8) { width: 240px; min-width: 240px; max-width: 280px; }
             .detail-table th:nth-child(9),
             .detail-table td:nth-child(9) { width: 30px; min-width: 30px; max-width: 30px; }
             .detail-table th:nth-child(10),
@@ -2057,9 +2063,9 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 70px; min-width: 70px; max-width: 70px; }
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 180px; min-width: 180px; max-width: 180px; }
+            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
         }
-        
+
         /* Large desktop optimization */
         @media (min-width: 1200px) {
             table {
@@ -2199,10 +2205,6 @@
             padding: 4px 6px;
             border-bottom: 1px solid var(--border);
             font-size: 0.7rem;
-            white-space: nowrap;
-            max-width: 120px;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
         /* Main table layout - efficient space usage */
@@ -2231,23 +2233,9 @@
             padding: 6px 8px;
             border-bottom: 1px solid var(--border);
             font-size: 0.7rem;
-            white-space: nowrap;
         }
 
-        .col-client-name { min-width: 300px; }
-        .col-account-code { min-width: 300px; }
-        .col-date { min-width: 300px; }
-        .col-compliance { min-width: 300px; }
-        .col-email { min-width: 300px; }
-        .col-additional-email { min-width: 300px; }
-        .col-inspector { min-width: 300px; }
-        .col-view-files { min-width: 300px; }
-        .col-rfi { min-width: 300px; }
-        .col-invoice { min-width: 300px; }
-        .col-km { min-width: 300px; }
-        .col-hours { min-width: 300px; }
-        .col-approved { min-width: 300px; }
-        .col-send { min-width: 300px; }
+        /* Removed fixed 300px constraints - let column widths be controlled by specific rules below */
 
         @media (min-width: 1024px) {
             #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) {
@@ -2274,11 +2262,13 @@
             max-width: 25px !important; 
             flex: none !important;
         }
-        .col-client-name { 
-            width: 140px !important; 
-            min-width: 140px !important; 
-            max-width: 140px !important; 
+        .col-client-name {
+            width: auto !important;
+            min-width: 180px !important;
+            max-width: none !important;
             flex: none !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
         }
         .col-account-code { 
             width: 140px !important; 
@@ -2314,12 +2304,14 @@
             max-width: 100%;
             display: block;
         }
-        .col-compliance { 
-            width: 100px !important; 
-            min-width: 100px !important; 
-            max-width: 100px !important; 
+        .col-compliance {
+            width: auto !important;
+            min-width: 120px !important;
+            max-width: none !important;
             text-align: center;
             flex: none !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
         }
         .col-inspector { 
             width: 160px !important; 
@@ -2630,11 +2622,9 @@
         }
         .col-send { width: 200px; min-width: 200px; max-width: 200px; text-align: center; }
         
-        /* Ensure text doesn't wrap unnecessarily */
+        /* Allow text to display fully by default */
         #shipmentsTable td {
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
             padding: 8px 4px;
         }
         
@@ -2644,16 +2634,46 @@
             word-wrap: break-word;
         }
         
-        /* Compliance status styling */
-        .compliance-status {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            white-space: nowrap;
-            display: inline-block;
-            text-align: center;
-            min-width: 80px;
+        /* Compliance status styling - Ensuring badge fits properly with maximum specificity */
+        .compliance-status,
+        span.compliance-status,
+        .detail-table .compliance-status,
+        .detail-table span.compliance-status,
+        td .compliance-status {
+            font-size: 0.75rem !important;
+            padding: 6px 14px !important;
+            border-radius: 4px !important;
+            font-weight: bold !important;
+            white-space: nowrap !important;
+            display: inline-block !important;
+            text-align: center !important;
+            min-width: 135px !important;
+            width: auto !important;
+            max-width: none !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
+            box-sizing: border-box !important;
+            line-height: 1.3 !important;
+        }
+
+        /* Ensure proper sizing for compliance cells - increased further */
+        .detail-table td:nth-child(4) {
+            min-width: 150px !important;
+            width: auto !important;
+            max-width: none !important;
+            padding: 10px 14px !important;
+            overflow: visible !important;
+            white-space: normal !important;
+            text-overflow: clip !important;
+        }
+
+        /* Force compliance header to be wide enough */
+        .detail-table th:nth-child(4) {
+            min-width: 150px !important;
+            width: auto !important;
+            max-width: none !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
         }
         
         .compliance-status.compliant {
@@ -2997,10 +3017,28 @@
             flex-shrink: 0;
             box-sizing: border-box;
         }
-        
+
+        .group-comment-input {
+            width: 250px;
+            min-width: 250px;
+            max-width: 250px;
+            padding: 3px 6px;
+            border: 1px solid var(--border) !important;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            background-color: var(--card-bg);
+            color: var(--text);
+            text-align: left;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
         .group-km-input:focus,
         .group-hours-input:focus,
-        .group-additional-email-input:focus {
+        .group-additional-email-input:focus,
+        .group-comment-input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.2);
@@ -3093,7 +3131,6 @@
             color: white !important;
             margin: 1px;
             transition: all 0.3s ease;
-            min-width: 60px !important;
             width: 60px !important;
             max-width: 60px !important;
             text-align: center !important;
@@ -3110,7 +3147,6 @@
         .btn-rfi.uploaded {
             background-color: #d4edda;
             color: #155724 !important;
-            min-width: 60px !important;
             width: 60px !important;
             max-width: 60px !important;
             text-align: center !important;
@@ -3160,7 +3196,6 @@
         
         /* Ensure all RFI buttons have consistent width regardless of content */
         button[id^="rfi-"] {
-            min-width: 60px !important;
             width: 60px !important;
             max-width: 60px !important;
             text-align: center !important;
@@ -3918,28 +3953,46 @@
             table-layout: auto;
         }
         
-        /* Allow detail table to expand more on larger screens */
-        @media (min-width: 1200px) {
+        /* Large desktop optimizations for screens wider than 1600px */
+        @media (min-width: 1601px) {
             .detail-table {
-                min-width: 1200px; /* Minimum width for large screens */
+                min-width: 100% !important;
+                font-size: 0.8rem !important;
             }
-        }
-        
-        @media (min-width: 1600px) {
-            .detail-table {
-                min-width: 1400px; /* Even more width for very large screens */
+
+            .detail-table th,
+            .detail-table td {
+                padding: 6px 5px !important;
+                font-size: 0.8rem !important;
             }
+
+            /* Larger column widths for big screens */
+            .detail-table th:nth-child(1), .detail-table td:nth-child(1) { width: 80px !important; }
+            .detail-table th:nth-child(2), .detail-table td:nth-child(2) { width: 260px !important; }
+            .detail-table th:nth-child(3), .detail-table td:nth-child(3) { width: 100px !important; }
+            .detail-table th:nth-child(4), .detail-table td:nth-child(4) { width: 180px !important; overflow: visible !important; }
+            .detail-table th:nth-child(5), .detail-table td:nth-child(5) { width: 320px !important; }
+            .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 70px !important; }
+            .detail-table th:nth-child(7), .detail-table td:nth-child(7) { width: 100px !important; }
+            .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 320px !important; }
+            .detail-table th:nth-child(9), .detail-table td:nth-child(9) { width: 45px !important; }
+            .detail-table th:nth-child(10), .detail-table td:nth-child(10) { width: 45px !important; }
+            .detail-table th:nth-child(11), .detail-table td:nth-child(11) { width: 45px !important; }
+            .detail-table th:nth-child(12), .detail-table td:nth-child(12) { width: 45px !important; }
+            .detail-table th:nth-child(13), .detail-table td:nth-child(13) { width: 100px !important; }
+            .detail-table th:nth-child(14), .detail-table td:nth-child(14) { width: 130px !important; }
+            .detail-table th:nth-child(15), .detail-table td:nth-child(15) { width: 280px !important; }
         }
         
         /* Detail table specific column widths - increased for better use of expanded space */
         .detail-table th:nth-child(1) { width: 80px; } /* Inspection No */
-        .detail-table th:nth-child(2) { width: 140px; } /* Client Name */
+        .detail-table th:nth-child(2) { width: 260px; } /* Client Name */
         .detail-table th:nth-child(3) { width: 100px; } /* Commodity */
-        .detail-table th:nth-child(4) { width: 100px; } /* Compliance */
-        .detail-table th:nth-child(5) { width: 250px; } /* Product Name - increased width */
+        .detail-table th:nth-child(4) { width: 180px; overflow: visible !important; } /* Compliance */
+        .detail-table th:nth-child(5) { width: 320px; } /* Product Name - increased width */
         .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 80px; min-width: 80px; } /* Sampled */
         .detail-table th:nth-child(7) { width: 120px; min-width: 120px; } /* Needs Retest */
-        .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 250px; min-width: 250px; } /* Class - same as Product Name */
+        .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 320px; min-width: 320px; } /* Class - same as Product Name */
         .detail-table td:nth-child(8) select { width: 100% !important; } /* Class dropdown - full width of column */
         .detail-table th:nth-child(9) { width: 40px; } /* Fat */
         .detail-table th:nth-child(10) { width: 40px; } /* Protein */
@@ -3949,67 +4002,116 @@
         .detail-table th:nth-child(14) { width: 100px; } /* Lab */
         .detail-table th:nth-child(15) { width: 280px; } /* Actions - Edit, Lab, Lab Form, Retest - increased for full visibility */
 
-        /* Desktop-specific column widths */
-        @media (min-width: 1024px) {
+        /* Laptop-specific optimizations for 15-inch screens (1366px - 1600px) */
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table {
+                width: 100% !important;
+                max-width: 100% !important;
+                font-size: 0.65rem !important;
+                table-layout: fixed !important;
+            }
+
+            .detail-table th,
+            .detail-table td {
+                padding: 4px 2px !important;
+                font-size: 0.65rem !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* Percentage-based column widths to fit without horizontal scroll - Full names visible */
             .detail-table th:nth-child(1), .detail-table td:nth-child(1) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 7% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(2), .detail-table td:nth-child(2) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 8% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(3), .detail-table td:nth-child(3) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 7% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(4), .detail-table td:nth-child(4) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 7% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(5), .detail-table td:nth-child(5) {
-                text-align: center !important;
-                min-width: 250px !important;
+                text-align: left !important;
+                width: 10% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(6), .detail-table td:nth-child(6) {
                 text-align: center !important;
-                min-width: 80px !important;
+                width: 6% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(7), .detail-table td:nth-child(7) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 7% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(8), .detail-table td:nth-child(8) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 6% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(9), .detail-table td:nth-child(9) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 5% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(10), .detail-table td:nth-child(10) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 5% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(11), .detail-table td:nth-child(11) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 5% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(12), .detail-table td:nth-child(12) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 4% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(13), .detail-table td:nth-child(13) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 8% !important;
+                white-space: normal !important;
             }
             .detail-table th:nth-child(14), .detail-table td:nth-child(14) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 6% !important;
             }
             .detail-table th:nth-child(15), .detail-table td:nth-child(15) {
                 text-align: center !important;
-                min-width: 250px !important;
+                width: 13% !important;
+            }
+
+            /* Compact form controls for laptop */
+            .detail-table .form-control {
+                font-size: 0.6rem !important;
+                padding: 2px 2px !important;
+                width: 100% !important;
+            }
+
+            .detail-table .btn-sm {
+                font-size: 0.6rem !important;
+                padding: 2px 4px !important;
+                margin: 1px !important;
+            }
+
+            /* Remove horizontal scroll */
+            .detail-table-wrapper {
+                overflow-x: hidden !important;
+                overflow-y: visible !important;
             }
         }
 
@@ -4289,11 +4391,15 @@
             text-align: center;
         }
         
-        /* Client name column - increased width */
+        /* Client name column - made much wider */
         .detail-table th:nth-child(2),
         .detail-table td:nth-child(2) {
-            min-width: 120px;
-            max-width: 140px;
+            min-width: 250px !important;
+            width: 250px !important;
+            max-width: 300px !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            padding: 8px 15px !important;
         }
         
         /* Commodity column - increased width */
@@ -4303,20 +4409,27 @@
             max-width: 100px;
         }
         
-        /* Compliance column - increased width */
+        /* Compliance column - made much wider to fit "Non-Compliant" badge */
         .detail-table th:nth-child(4),
         .detail-table td:nth-child(4) {
-            min-width: 80px;
-            max-width: 100px;
-            text-align: center;
+            min-width: 180px !important;
+            width: 180px !important;
+            max-width: 200px !important;
+            text-align: center !important;
+            padding: 8px 15px !important;
+            overflow: visible !important;
         }
         
-        /* Product Name column - significantly increased width */
+        /* Product Name column - made much wider */
         .detail-table th:nth-child(5),
         .detail-table td:nth-child(5) {
-            min-width: 200px;
-            max-width: 250px;
-            text-align: center;
+            min-width: 300px !important;
+            width: 300px !important;
+            max-width: 350px !important;
+            text-align: center !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            padding: 8px 15px !important;
         }
         
         /* Needs retest dropdown styling */
@@ -4350,12 +4463,16 @@
             text-align: center;
         }
         
-        /* Class column - increased width */
+        /* Class column - made much wider */
         .detail-table th:nth-child(8),
         .detail-table td:nth-child(8) {
-            min-width: 120px;
-            max-width: 150px;
-            text-align: center;
+            min-width: 300px !important;
+            width: 300px !important;
+            max-width: 350px !important;
+            text-align: center !important;
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            padding: 8px 15px !important;
         }
         
         /* Class dropdown styling - matching lab dropdown exactly (no special border colors) */
@@ -4483,16 +4600,19 @@
             z-index: 100;
         }
         
-        /* Product name text styling - read-only from SQL Server */
+        /* Product name text styling - read-only from SQL Server - centered */
         .product-name-text {
             font-size: 0.7rem;
             color: var(--text); /* Black text like client name */
             font-weight: 500;
-            text-align: left;
+            text-align: center !important;
             padding: 4px 6px;
             display: inline-block;
             min-width: 120px;
-            max-width: 150px;
+            max-width: none;
+            white-space: normal;
+            word-wrap: break-word;
+            width: 100%;
         }
         
         /* Manual input styling - editable when no product name */
@@ -5344,12 +5464,14 @@
             #shipmentsTable th:nth-child(6), #shipmentsTable td:nth-child(6) { text-align: left !important; min-width: 200px !important; } /* Additional Email */
             #shipmentsTable th:nth-child(7), #shipmentsTable td:nth-child(7) { text-align: left !important; min-width: 160px !important; font-size: 0.85rem !important; } /* Inspector */
             #shipmentsTable th:nth-child(8), #shipmentsTable td:nth-child(8) { min-width: 150px !important; } /* View Files */
-            #shipmentsTable th:nth-child(9), #shipmentsTable td:nth-child(9) { min-width: 80px !important; } /* RFI */
-            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) { min-width: 100px !important; } /* Invoice */
-            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) { min-width: 130px !important; } /* Distance (Km) */
-            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) { min-width: 130px !important; } /* Hours Worked */
-            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) { min-width: 110px !important; } /* Approved */
-            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) { min-width: 160px !important; } /* Sent Status */
+            #shipmentsTable th:nth-child(9), #shipmentsTable td:nth-child(9) { min-width: 100px !important; } /* RFI */
+            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) { min-width: 130px !important; } /* Occurrence */
+            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) { min-width: 280px !important; } /* Comment */
+            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) { min-width: 100px !important; } /* Invoice */
+            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) { min-width: 130px !important; } /* Distance (Km) */
+            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) { min-width: 130px !important; } /* Hours Worked */
+            #shipmentsTable th:nth-child(15), #shipmentsTable td:nth-child(15) { min-width: 110px !important; } /* Approved */
+            #shipmentsTable th:nth-child(16), #shipmentsTable td:nth-child(16) { min-width: 160px !important; } /* Sent Status */
         }
 
         @media (min-width: 1024px) {
@@ -5961,38 +6083,7 @@
                                         {% endif %}
                                     </div>
                                 </div>
-                                
-                                <!-- Additional Email Section -->
-                                <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
-                                    <label class="block text-gray-600 font-medium mb-1">Additional Email</label>
-                                    <div class="space-y-2">
-                                        <div class="email-inputs">
-                                            {% if shipment.additional_email %}
-                                                <div class="email-input-row">
-                                                    <input type="email" 
-                                                           class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 group-additional-email-input" 
-                                                           value="{{ shipment.additional_email }}" 
-                                                           placeholder="email@example.com"
-                                                           onchange="updateGroupAdditionalEmails(this)">
-                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeEmailInput(this)">×</button>
-                                                </div>
-                                            {% else %}
-                                                <div class="email-input-row">
-                                                    <input type="email" 
-                                                           class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 group-additional-email-input" 
-                                                           value="" 
-                                                           placeholder="email@example.com"
-                                                           onchange="updateGroupAdditionalEmails(this)">
-                                                    <button class="text-red-500 hover:text-red-700 text-xs" onclick="removeEmailInput(this)">×</button>
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <button class="text-primary hover:text-primary-dark text-xs" onclick="addEmailInput(this)">
-                                            <i class="fas fa-plus mr-1"></i> Add Email
-                                        </button>
-                                    </div>
-                                </div>
-                                
+
                                 <!-- Other Details -->
                                 <div class="grid grid-cols-2 gap-3">
                                     <div>
@@ -6249,6 +6340,8 @@
                                 <th class="col-inspector px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Inspector</th>
                                 <th class="col-view-files px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">View Files</th>
                                 <th class="col-rfi px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">RFI</th>
+                                <th class="col-occurrence px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Occurrence</th>
+                                <th class="col-comment px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Comment</th>
                                 {% if user.role != 'inspector' %}
                                 <th class="col-invoice px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Invoice</th>
                                 {% endif %}
@@ -6304,76 +6397,34 @@
                                 <!-- Additional Email Column -->
                                 <td class="col-additional-email px-6 py-4 text-sm text-gray-500" data-label="Additional Email">
                                     {% if request.user.role == 'inspector' %}
-                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
+                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}" data-initial-emails="{{ shipment.additional_email|default:'' }}">
                                             <div class="email-inputs">
-                                                {% if shipment.additional_email %}
-                                                    <div class="email-input-row">
-                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                                               value="{{ shipment.additional_email }}" 
-                                               placeholder="email@example.com" 
-                                                               onchange="updateGroupAdditionalEmails(this)"
-                                                               onblur="updateGroupAdditionalEmails(this)"
-                                               title="Additional email for this inspection group">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                                                                onclick="removeEmailInput(this)" title="Remove this email">
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                {% else %}
-                                                    <div class="email-input-row">
-                                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                                               value="" 
-                                                               placeholder="email@example.com" 
-                                                               onchange="updateGroupAdditionalEmails(this)"
-                                                               onblur="updateGroupAdditionalEmails(this)"
-                                                               title="Additional email for this inspection group">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                                                                onclick="removeEmailInput(this)" title="Remove this email">
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                {% endif %}
+                                                <div class="email-input-row" style="display: flex; align-items: center; margin-bottom: 4px;">
+                                                    <input type="email"
+                                                           class="form-control form-control-sm group-additional-email-input"
+                                                           value=""
+                                                           placeholder="email@example.com"
+                                                           onchange="updateGroupAdditionalEmails(this)"
+                                                           onblur="updateGroupAdditionalEmails(this)"
+                                                           style="flex: 1;">
+                                                </div>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-outline-primary add-email-btn" 
-                                                    onclick="addEmailInput(this)" title="Add another email">
-                                                + Add Email
-                                            </button>
+                                            <button type="button" onclick="addEmailInput(this)" style="margin-top: 4px; padding: 2px 8px; font-size: 12px; background: none; border: none; color: #3b82f6; cursor: pointer; text-decoration: underline;">+ Add Email</button>
                                         </div>
                                     {% elif request.user.role != 'scientist' %}
-                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}">
+                                        <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}" data-initial-emails="{{ shipment.additional_email|default:'' }}">
                                             <div class="email-inputs">
-                                                {% if shipment.additional_email %}
-                                                    <div class="email-input-row">
-                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                                               value="{{ shipment.additional_email }}" 
-                                               placeholder="email@example.com" 
-                                                               onchange="updateGroupAdditionalEmails(this)"
-                                                               onblur="updateGroupAdditionalEmails(this)"
-                                               title="Additional email for this inspection group">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                                                                onclick="removeEmailInput(this)" title="Remove this email">
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                {% else %}
-                                                    <div class="email-input-row">
-                                                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                                                               value="" 
-                                                               placeholder="email@example.com" 
-                                                               onchange="updateGroupAdditionalEmails(this)"
-                                                               onblur="updateGroupAdditionalEmails(this)"
-                                                               title="Additional email for this inspection group">
-                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                                                                onclick="removeEmailInput(this)" title="Remove this email">
-                                                            ×
-                                                        </button>
-                                                    </div>
-                                                {% endif %}
+                                                <div class="email-input-row" style="display: flex; align-items: center; margin-bottom: 4px;">
+                                                    <input type="email"
+                                                           class="form-control form-control-sm group-additional-email-input"
+                                                           value=""
+                                                           placeholder="email@example.com"
+                                                           onchange="updateGroupAdditionalEmails(this)"
+                                                           onblur="updateGroupAdditionalEmails(this)"
+                                                           style="flex: 1;">
+                                                </div>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-outline-primary add-email-btn" 
-                                                    onclick="addEmailInput(this)" title="Add another email">
-                                                + Add Email
-                                            </button>
+                                            <button type="button" onclick="addEmailInput(this)" style="margin-top: 4px; padding: 2px 8px; font-size: 12px; background: none; border: none; color: #3b82f6; cursor: pointer; text-decoration: underline;">+ Add Email</button>
                                         </div>
                                     {% else %}
                                         {{ shipment.additional_email|default:"-" }}
@@ -6435,7 +6486,52 @@
                                         -
                                     {% endif %}
                                 </td>
-                                
+
+                                <!-- Occurrence Column -->
+                                <td class="col-occurrence px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Occurrence">
+                                    {% if request.user.role == 'inspector' %}
+                                        {% if shipment.occurrence_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="occurrence-{{ fallback_group_id }}" disabled
+                                                title="Occurrence file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            Occurrence ✓
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary" id="occurrence-{{ fallback_group_id }}" onclick="uploadOccurrence('{{ fallback_group_id|escapejs }}')"
+                                                title="Upload Occurrence"
+                                                data-client-name="{{ shipment.client_name }}"
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
+                                            Occurrence
+                                        </button>
+                                        {% endif %}
+                                    {% elif request.user.role != 'scientist' %}
+                                        {% if shipment.occurrence_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="occurrence-{{ fallback_group_id }}" disabled
+                                                title="Occurrence file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            Occurrence ✓
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary" id="occurrence-{{ fallback_group_id }}" onclick="uploadOccurrence('{{ fallback_group_id|escapejs }}')"
+                                                title="Upload Occurrence">
+                                            Occurrence
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <!-- Comment Column -->
+                                <td class="col-comment px-6 py-4 text-sm text-gray-500" data-label="Comment">
+                                    <input type="text"
+                                           class="form-control form-control-sm group-comment-input"
+                                           data-group-id="{{ fallback_group_id }}"
+                                           value="{{ shipment.comment|default:'' }}"
+                                           placeholder="Add comment..."
+                                           onchange="updateGroupComment(this)"
+                                           onblur="updateGroupComment(this)"
+                                           title="Comment for this inspection group">
+                                </td>
+
                                 <!-- Invoice Column -->
                                 {% if user.role != 'inspector' %}
                                 <td class="col-invoice px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Invoice">
@@ -6586,7 +6682,7 @@
                             </tr>
                             <!-- Expandable detail rows -->
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
-                                <td colspan="{% if user.role == 'inspector' %}14{% else %}15{% endif %}" class="detail-cell">
+                                <td colspan="{% if request.user.role == 'inspector' %}14{% else %}15{% endif %}" class="detail-cell">
                                     <div class="detail-content">
                                         <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"d/m/Y" }} 
                                             <small style="color: #666; font-size: 0.8em;">
@@ -6611,7 +6707,7 @@
                                                     <th class="col-test">DNA</th>
                                                     <th class="col-bought-sample">Bought Sample</th>
                                                     <th class="col-lab-dropdown">Lab</th>
-                                                    {% if user.role != 'inspector' %}
+                                                    {% if request.user.role != 'inspector' %}
                                                     <th>Actions</th>
                                                     {% endif %}
                                                 </tr>
@@ -6709,7 +6805,7 @@
                                                             <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                         </select>
                                                     </td>
-                                                    {% if user.role != 'inspector' %}
+                                                    {% if request.user.role != 'inspector' %}
                                                     <td>
                                                         <!-- Lab upload buttons - disabled for admin roles but still visible for status -->
                                                         {% if product.is_sample_taken %}
@@ -6717,9 +6813,9 @@
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
+                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
                                                                 disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
-                                                                title="Lab upload - View only (upload restricted for {{ user.role }})"
+                                                                title="Lab upload - View only (upload restricted for {{ request.user.role }})"
                                                                 {% else %}
                                                                 onclick="uploadLab('{{ product.remote_id|escapejs }}')" 
                                                                 title="Lab result upload available"
@@ -6730,9 +6826,9 @@
                                                                 data-group-id="{{ fallback_group_id }}"
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
+                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
                                                                 disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
-                                                                title="Lab form - View only (upload restricted for {{ user.role }})"
+                                                                title="Lab form - View only (upload restricted for {{ request.user.role }})"
                                                                 {% else %}
                                                                 onclick="uploadLabForm('{{ product.remote_id|escapejs }}')" 
                                                                 title="Lab form submission upload available"
@@ -6744,8 +6840,8 @@
                                                                 data-client-name="{{ shipment.client_name }}"
                                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
                                                                 {% if product.needs_retest != 'YES' and product.needs_retest != 'yes' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if user.role == 'administrator' or user.role == 'financial_administrator' %}
-                                                                {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ user.role }})"{% endif %}
+                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
+                                                                {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ request.user.role }})"{% endif %}
                                                                 {% else %}
                                                                 {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')" title="Retest required - Please upload retest document"{% endif %}
                                                                 {% endif %}
@@ -6764,12 +6860,12 @@
                                                     {% endfor %}
                                                 {% else %}
                                                     <tr>
-                                                        <td colspan="{% if user.role == 'inspector' %}15{% else %}16{% endif %}" style="text-align: center; padding: 20px; color: #666; font-style: italic;">
+                                                        <td colspan="{% if request.user.role == 'inspector' %}15{% else %}16{% endif %}" style="text-align: center; padding: 20px; color: #666; font-style: italic;">
                                                             <i class="fas fa-info-circle" style="margin-right: 8px; color: #ffc107;"></i>
                                                             No detailed inspection records found for this group.
                                                             <br><small style="color: #999; margin-top: 10px; display: block;">
                                                                 This may occur if inspection records are still being processed or if you don't have permission to view detailed data for this group.
-                                                                {% if user.role == 'inspector' %}
+                                                                {% if request.user.role == 'inspector' %}
                                                                 <br>As an inspector, you can only view inspections you conducted.
                                                                 {% endif %}
                                                             </small>
@@ -7174,15 +7270,15 @@
     <!-- Load sent status functionality from external file -->
     <script src="{% static 'js/sent_status.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20251003-FINAL-FIX"></script>
+    <script src="{% static 'js/upload_functions.js' %}?v=20251030-OCCURRENCE-API-FIX"></script>
     <!-- Load bought sample functionality -->
     <script src="{% static 'js/bought_sample.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load KM and Hours functions fix (before main JS to ensure functions are available) -->
-    <script src="{% static 'js/km_hours_fix.js' %}?v=20251008-FIX"></script>
+    <script src="{% static 'js/km_hours_fix.js' %}?v=20251030-NO-X-BUTTON"></script>
     <!-- Load current rendered JavaScript functions -->
     <script src="{% static 'js/current_rendered_js.js' %}?v=20251008-FIX"></script>
     <script>
-        // CACHE BUST: 2025-01-15 - Menu debugging added
+        // CACHE BUST: 2025-10-28 - Email functions fix - MUST SEE THIS
         console.log('🚀 SCRIPT LOADED - Cache busted at:', new Date().toISOString());
         
         // Set global CSRF token for upload functions
@@ -7192,7 +7288,60 @@
         } catch (error) {
             console.error('Error setting CSRF token:', error);
         }
-        
+
+        // DEBOUNCE HELPER FUNCTION - Must be defined early
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // EMAIL MANAGEMENT FUNCTIONS - lightweight stubs
+        // The full, robust implementations are defined later in this file
+        // to avoid duplicate definitions and to keep logic centralized.
+        (function() {
+            function stub(name) {
+                return function() {
+                    console.warn('[EMAIL-STUB]', name, 'called before real implementation is loaded.');
+                };
+            }
+
+            window.updateGroupAdditionalEmails = window.updateGroupAdditionalEmails || stub('updateGroupAdditionalEmails');
+            window.addEmailInput = window.addEmailInput || stub('addEmailInput');
+            window.removeEmailInput = window.removeEmailInput || stub('removeEmailInput');
+
+            // Basic safe initializer for existing inputs so inline handlers don't fail
+            document.addEventListener('DOMContentLoaded', function() {
+                try {
+                    const containers = document.querySelectorAll('.additional-emails-container');
+                    containers.forEach(function(container) {
+                        const emailInputs = container.querySelectorAll('.group-additional-email-input');
+                        emailInputs.forEach(function(input) {
+                            // Ensure onchange/onblur attributes won't throw if functions not ready
+                            input.addEventListener('change', function() {
+                                if (typeof window.updateGroupAdditionalEmails === 'function') {
+                                    window.updateGroupAdditionalEmails(this);
+                                }
+                            });
+                            input.addEventListener('blur', function() {
+                                if (typeof window.updateGroupAdditionalEmails === 'function') {
+                                    window.updateGroupAdditionalEmails(this);
+                                }
+                            });
+                        });
+                    });
+                } catch (e) {
+                    console.warn('[EMAIL-STUB] initialization error', e);
+                }
+            });
+        })();
+
         // CLASS DROPDOWN FUNCTION - Must be defined early to avoid syntax errors
         window.filterClassOptions = function(dropdown) {
             console.log('[CLASS] Populating dropdown - function called');
@@ -7259,7 +7408,7 @@
         }
 
         // Initialize class dropdowns when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
             console.log('[CLASS] Initializing class dropdowns...');
             const dropdowns = document.querySelectorAll('select.product-class-select');
             console.log('[CLASS] Found', dropdowns.length, 'dropdowns');
@@ -7415,247 +7564,37 @@
             });
         };
         
+        // Backwards-compatible wrapper: delegate single-input updates to the consolidated function
         window.updateGroupAdditionalEmail = function(input) {
+            if (typeof window.updateGroupAdditionalEmails === 'function') {
+                return window.updateGroupAdditionalEmails(input);
+            }
+            // Fallback: do a direct POST (legacy behavior)
             const groupId = input.getAttribute('data-group-id');
             const emailValue = input.value.trim();
-            
-            console.log('[STORAGE] Updating Group Additional Email - Group ID:', groupId, 'Value:', emailValue);
-            
-            // Get CSRF token
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-            
-            // Create form data
             const formData = new FormData();
             formData.append('group_id', groupId);
             formData.append('additional_email', emailValue);
             formData.append('csrfmiddlewaretoken', csrfToken);
-            
-            // Send update request
-            fetch('/update-group-additional-email/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('✅ Additional email saved successfully:', data);
-                    // Show success feedback
-                    input.style.backgroundColor = '#d4edda';
-                setTimeout(() => {
-                        input.style.backgroundColor = '';
-                    }, 500);
+            fetch('/update-group-additional-email/', { method: 'POST', body: formData })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        input.style.backgroundColor = '#d4edda';
+                        setTimeout(() => input.style.backgroundColor = '', 500);
                     } else {
-                    console.error('❌ Error saving additional email:', data.error);
-                    alert('Error updating additional email: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('❌ Network error saving additional email:', error);
-                alert('Error updating additional email: ' + error.message);
-            });
-        };
-        
-        // Debounce function to delay validation
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-        
-        // New functions for multiple additional emails
-        window.updateGroupAdditionalEmails = debounce(function(input) {
-            const container = input.closest('.additional-emails-container');
-            const groupId = container.getAttribute('data-group-id');
-            
-            // Collect all email values
-            const emailInputs = container.querySelectorAll('.group-additional-email-input');
-            const emails = Array.from(emailInputs)
-                .map(input => input.value.trim())
-                .filter(email => email.length > 0);
-            
-            // Only validate if there are emails and they look complete
-            const atSymbol = String.fromCharCode(64); // '@' symbol
-            const hasIncompleteEmails = emails.some(email => 
-                email.includes(atSymbol) && (!email.includes('.') || email.endsWith(atSymbol) || email.endsWith('.'))
-            );
-            
-            // If there are incomplete emails, don't validate yet
-            if (hasIncompleteEmails) {
-                console.log('[WAIT] Skipping validation - incomplete email detected');
-                return;
-            }
-            
-            const emailValue = emails.join(',');
-            
-            console.log('[STORAGE] Updating Group Additional Emails - Group ID:', groupId, 'Emails:', emails);
-            
-            // Get CSRF token
-            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-            
-            // Create form data
-            const formData = new FormData();
-            formData.append('group_id', groupId);
-            formData.append('additional_email', emailValue);
-            formData.append('csrfmiddlewaretoken', csrfToken);
-            
-            // Send update request
-            fetch('/update-group-additional-email/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('[SUCCESS] Additional emails saved successfully:', data);
-                    // Show success feedback
-                    input.style.backgroundColor = '#d4edda';
-                    setTimeout(() => {
-                        input.style.backgroundColor = '';
-                    }, 500);
-                } else {
-                    console.error('[ERROR] Error saving additional emails:', data.error);
-                    // Only show alert for actual validation errors, not incomplete emails
-                    if (!data.error.includes('Invalid email format') || emails.length > 0) {
-                        alert('Error updating additional emails: ' + data.error);
+                        console.error('Error saving additional email (fallback):', data.error);
                     }
-                }
-            })
-            .catch(error => {
-                console.error('[ERROR] Network error saving additional emails:', error);
-                alert('Error updating additional emails: ' + error.message);
-            });
+                })
+                .catch(err => console.error('Network error (fallback):', err));
         };
         
-        window.addEmailInput = function(button) {
-            const container = button.closest('.additional-emails-container');
-            const emailInputs = container.querySelector('.email-inputs');
-            
-            // Check if the first input has comma-separated emails
-            const firstInput = emailInputs.querySelector('.group-additional-email-input');
-            if (firstInput && firstInput.value.includes(',')) {
-                // Split the comma-separated emails into separate inputs
-                const emails = firstInput.value.split(',').map(email => email.trim()).filter(email => email);
-                
-                // Clear the container
-                emailInputs.innerHTML = '';
-                
-                // Create input rows for each email
-                emails.forEach((email, index) => {
-                    const newRow = document.createElement('div');
-                    newRow.className = 'email-input-row';
-                    newRow.innerHTML = `
-                        <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                               value="${email}" 
-                               placeholder="email@example.com" 
-                               onchange="updateGroupAdditionalEmails(this)"
-                               onblur="updateGroupAdditionalEmails(this)"
-                               title="Additional email for this inspection group">
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                                onclick="removeEmailInput(this)" title="Remove this email">
-                            ×
-                        </button>
-                    `;
-                    emailInputs.appendChild(newRow);
-                });
-                
-                // Add one empty row for new email
-                const emptyRow = document.createElement('div');
-                emptyRow.className = 'email-input-row';
-                emptyRow.innerHTML = `
-                    <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                           value="" 
-                           placeholder="email@example.com" 
-                           onchange="updateGroupAdditionalEmails(this)"
-                           onblur="updateGroupAdditionalEmails(this)"
-                           title="Additional email for this inspection group">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                            onclick="removeEmailInput(this)" title="Remove this email">
-                        ×
-                    </button>
-                `;
-                emailInputs.appendChild(emptyRow);
-                
-                // Show remove buttons for all rows
-                const allRows = emailInputs.querySelectorAll('.email-input-row');
-                allRows.forEach(row => {
-                    const removeBtn = row.querySelector('.remove-email-btn');
-                    if (removeBtn) {
-                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
-                    }
-                });
-                
-                // Focus the empty input
-                const emptyInput = emptyRow.querySelector('.group-additional-email-input');
-                emptyInput.focus();
-            } else {
-                // Create new email input row
-                const newRow = document.createElement('div');
-                newRow.className = 'email-input-row';
-                newRow.innerHTML = `
-                    <input type="email" class="form-control form-control-sm group-additional-email-input" 
-                           value="" 
-                           placeholder="email@example.com" 
-                           onchange="updateGroupAdditionalEmails(this)"
-                           onblur="updateGroupAdditionalEmails(this)"
-                           title="Additional email for this inspection group">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-email-btn" 
-                            onclick="removeEmailInput(this)" title="Remove this email">
-                        ×
-                    </button>
-                `;
-                
-                // Insert before the add button
-                emailInputs.appendChild(newRow);
-                
-                // Focus the new input
-                const newInput = newRow.querySelector('.group-additional-email-input');
-                newInput.focus();
-                
-                // Show remove buttons for all rows if there are multiple
-                const allRows = emailInputs.querySelectorAll('.email-input-row');
-                allRows.forEach(row => {
-                    const removeBtn = row.querySelector('.remove-email-btn');
-                    if (removeBtn) {
-                        removeBtn.style.display = allRows.length > 1 ? 'flex' : 'none';
-                    }
-                });
-            }
-        };
-        
-        window.removeEmailInput = function(button) {
-            const row = button.closest('.email-input-row');
-            const container = button.closest('.additional-emails-container');
-            const emailInputs = container.querySelector('.email-inputs');
-            
-            // Don't remove if it's the only row
-            const allRows = emailInputs.querySelectorAll('.email-input-row');
-            if (allRows.length <= 1) {
-                return;
-            }
-            
-            // Remove the row
-            row.remove();
-            
-            // Update the database
-            updateGroupAdditionalEmails(container.querySelector('.group-additional-email-input'));
-            
-            // Show/hide remove buttons based on remaining rows
-            const remainingRows = emailInputs.querySelectorAll('.email-input-row');
-            remainingRows.forEach((row, index) => {
-                const removeBtn = row.querySelector('.remove-email-btn');
-                if (removeBtn) {
-                    // Show remove button if there are multiple rows, hide if only one
-                    removeBtn.style.display = remainingRows.length > 1 ? 'flex' : 'none';
-                }
-            });
-        };
-        
+        // Debounce function moved to early in script (around line 7193)
+
+        // Email management functions moved to early in script (around line 7206)
+        // Duplicate definitions removed to prevent conflicts
+
         // Function to update input border colors based on value
         function updateInputBorderColor(input) {
             if (input.value && input.value.trim() !== '') {
@@ -7682,7 +7621,7 @@
                     updateInputBorderColor(this);
                 });
             });
-        };);
+        };
         
         // Function to update approved status
         window.updateGroupApproved = function(select) {
@@ -7745,7 +7684,7 @@
         
         // Hide invoice column for inspectors
         document.addEventListener('DOMContentLoaded', function() {
-            const userRole = '{{ user.role|default:"admin" }}';
+            const userRole = '{{ request.user.role|default:"admin" }}';
             if (userRole === 'inspector') {
                 const table = document.getElementById('shipmentsTable');
                 if (table) {
@@ -8336,10 +8275,10 @@
         // Function to re-enable upload buttons when files are deleted
         function reEnableUploadButtons(filePath, category) {
             console.log('🔄 Re-enabling upload buttons for deleted file:', filePath, 'category:', category);
-            
+
             // Determine which button to re-enable based on file path or category
             let buttonId = null;
-            
+
             if (category === 'rfi' || filePath.includes('/RFI/') || filePath.toLowerCase().includes('rfi')) {
                 // Find RFI button for current client
                 const groupId = window.currentFilesGroupId;
@@ -8351,6 +8290,12 @@
                 const groupId = window.currentFilesGroupId;
                 if (groupId) {
                     buttonId = 'invoice-' + groupId;
+                }
+            } else if (category === 'occurrence' || filePath.includes('/occurrence/') || filePath.toLowerCase().includes('occurrence')) {
+                // Find Occurrence button for current client
+                const groupId = window.currentFilesGroupId;
+                if (groupId) {
+                    buttonId = 'occurrence-' + groupId;
                 }
             }
             
@@ -8371,12 +8316,19 @@
                     button.style.cursor = 'pointer';
                     
                     // Reset button content to original text
-                    const docType = buttonId.startsWith('rfi-') ? 'RFI' : 'Invoice';
+                    let docType = 'Unknown';
+                    if (buttonId.startsWith('rfi-')) {
+                        docType = 'RFI';
+                    } else if (buttonId.startsWith('invoice-')) {
+                        docType = 'Invoice';
+                    } else if (buttonId.startsWith('occurrence-')) {
+                        docType = 'Occurrence';
+                    }
                     button.innerHTML = docType;
-                    
+
                     // Reset button title
                     button.title = 'Upload ' + docType;
-                    
+
                     // Re-enable the onclick handler
                     if (docType === 'RFI') {
                         const groupId = buttonId.replace('rfi-', '');
@@ -8384,6 +8336,9 @@
                     } else if (docType === 'Invoice') {
                         const groupId = buttonId.replace('invoice-', '');
                         button.onclick = function() { uploadInvoice(groupId); };
+                    } else if (docType === 'Occurrence') {
+                        const groupId = buttonId.replace('occurrence-', '');
+                        button.onclick = function() { uploadOccurrence(groupId); };
                     }
                     
                     // Remove from localStorage
@@ -8611,7 +8566,7 @@
                     hideSuggestions();
                 }
             });
-        };);
+    });
         
         // Show loading indicator for large datasets and check OneDrive status after page is fully loaded
         document.addEventListener('DOMContentLoaded', function() {
@@ -8738,7 +8693,7 @@
         
         // Function to wait for OneDrive processing to complete
         async function waitForOneDriveCompletion(overlay, messageElement) {
-            let attempts = ;0;
+            let attempts = 0;
             const maxAttempts = 60; // Wait up to 5 minutes (60 * 5 seconds)
             
             console.log('🔄 OneDrive overlay: Starting OneDrive completion polling...');
@@ -8919,9 +8874,8 @@
             setTimeout(() => {
                 loadSentStatus();
             }, 1000);
-        });
-        
-        // Set up a periodic check to ensure sent status styling is maintained
+
+            // Set up a periodic check to ensure sent status styling is maintained
             setInterval(() => {
                 const sentRows = document.querySelectorAll('tr[data-sent-status="yes"]');
                 sentRows.forEach(row => {
@@ -9151,7 +9105,7 @@
                         console.log('[DEBUG] DEBUG: Files object details for empty case:', {
                             files: result.files,
                             filesType: typeof result.files,
-                            filesKeys: result.files ? Object.keys(result.files); : 'N/A',
+                            filesKeys: result.files ? Object.keys(result.files) : 'N/A',
                             filesLength: result.files ? Object.keys(result.files).length : 'N/A'
                         });
                         filesList.innerHTML = '<div class="no-files-message">No files found for this inspection.</div>';
@@ -10139,7 +10093,7 @@
                 
                 // Update button state
                 const sendButton = document.getElementById('send-' + groupId);
-                const originalText = sendButton.innerHTM;L;
+                const originalText = sendButton.innerHTML;
                 sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
                 sendButton.disabled = true;
                 
@@ -10445,8 +10399,8 @@
         window.markAsUploaded = function markAsUploaded(buttonId) {
             // Mark button as uploaded and save to localStorage
             console.log('[DEBUG] [DEBUG] markAsUploaded called for:', buttonId);
-            console.log('[DEBUG] [DEBUG] Button type:', buttonId.startsWith('rfi-') ? 'RFI' : buttonId.startsWith('invoice-') ? 'Invoice' : 'Unknown');
-            
+            console.log('[DEBUG] [DEBUG] Button type:', buttonId.startsWith('rfi-') ? 'RFI' : buttonId.startsWith('invoice-') ? 'Invoice' : buttonId.startsWith('occurrence-') ? 'Occurrence' : 'Unknown');
+
             const button = document.getElementById(buttonId);
             console.log('[DEBUG] [DEBUG] Button element found:', button);
             console.log('[DEBUG] [DEBUG] Button current innerHTML:', button ? button.innerHTML : 'N/A');
@@ -10511,6 +10465,8 @@
                     docType = 'RFI';
                 } else if (buttonId.startsWith('invoice-')) {
                     docType = 'Invoice';
+                } else if (buttonId.startsWith('occurrence-')) {
+                    docType = 'Occurrence';
                 }
                 console.log('[DEBUG] [DEBUG] Document type:', docType);
                 
@@ -10816,16 +10772,16 @@
         function uploadRFI(groupId) {
             console.log('[DEBUG] uploadRFI called with groupId:', groupId);
             console.log('[DEBUG] Function execution starting...');
-            
+
             try {
                 // Create a file input element
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.accept = '.pdf';
                 fileInput.style.display = 'none';
-                
+
                 console.log('✅ File input element created successfully');
-                
+
                 fileInput.onchange = function(e) {
                     const file = e.target.files[0];
                     if (file) {
@@ -10839,12 +10795,12 @@
                         formData.append('file', file);
                         formData.append('group_id', groupId);
                         formData.append('document_type', 'rfi');
-                        
+
                         // Get CSRF token
-                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                                          '{{ csrf_token|escapejs }}';
                         formData.append('csrfmiddlewaretoken', csrfToken);
-                        
+
                         // Upload file
                         fetch('/upload-document/', {
                             method: 'POST',
@@ -10855,7 +10811,7 @@
                             if (data.success) {
                                 console.log('✅ RFI uploaded successfully!');
                                 markAsUploaded('rfi-' + groupId);
-                                
+
                                 // Update View Files button colors after upload with delay to ensure server processing
                                 console.log('🎨 Updating button colors after RFI upload...');
                                 console.log('[TIMER] Setting 3-second timer for delayed color update...');
@@ -10863,7 +10819,7 @@
                                     console.log('[TIMER] Timer fired! Starting delayed color update...');
                                     console.log('🔄 Delayed file status check after RFI upload...');
                                     updateAllViewFilesButtonColors();
-                                    
+
                                     // Also update RFI/Invoice button colors
                                     const button = document.getElementById('rfi-' + groupId);
                                     if (button) {
@@ -10873,7 +10829,7 @@
                                         }
                                     }
                                 }, 3000); // 3 second delay to ensure server processing is complete
-                                
+
                                 // Auto-open files popup after successful upload
                                 const button = document.getElementById('rfi-' + groupId);
                                 if (button) {
@@ -10895,21 +10851,114 @@
                         });
                     }
                 };
-                
+
                 console.log('✅ File input onchange handler set');
-                
+
                 // Trigger file selection
                 document.body.appendChild(fileInput);
                 console.log('✅ File input appended to body');
-                
+
                 fileInput.click();
                 console.log('✅ File input click() triggered - dialog should open now');
-                
+
                 document.body.removeChild(fileInput);
                 console.log('✅ File input removed from body');
-                
+
             } catch (error) {
                 console.error('❌ Error in uploadRFI function:', error);
+                alert('Error in upload function: ' + error.message);
+            }
+        }
+
+        // Upload Occurrence function
+        function uploadOccurrence(groupId) {
+            console.log('[DEBUG] uploadOccurrence called with groupId:', groupId);
+            console.log('[DEBUG] Function execution starting...');
+
+            try {
+                // Create a file input element
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = '.pdf';
+                fileInput.style.display = 'none';
+
+                console.log('✅ File input element created successfully');
+
+                fileInput.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        // Additional client-side PDF validation
+                        if (!file.name.toLowerCase().endsWith('.pdf')) {
+                            alert('Only PDF files are allowed. Please select a PDF document.');
+                            return;
+                        }
+                        // Create form data
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('group_id', groupId);
+                        formData.append('document_type', 'occurrence');
+
+                        // Get CSRF token
+                        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
+                                         '{{ csrf_token|escapejs }}';
+                        formData.append('csrfmiddlewaretoken', csrfToken);
+
+                        // Upload file
+                        fetch('/upload-document/', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log('✅ Occurrence uploaded successfully!');
+                                markAsUploaded('occurrence-' + groupId);
+
+                                // Update View Files button colors after upload with delay to ensure server processing
+                                console.log('🎨 Updating button colors after Occurrence upload...');
+                                console.log('[TIMER] Setting 3-second timer for delayed color update...');
+                                setTimeout(() => {
+                                    console.log('[TIMER] Timer fired! Starting delayed color update...');
+                                    console.log('🔄 Delayed file status check after Occurrence upload...');
+                                    updateAllViewFilesButtonColors();
+                                }, 3000); // 3 second delay to ensure server processing is complete
+
+                                // Auto-open files popup after successful upload
+                                const button = document.getElementById('occurrence-' + groupId);
+                                if (button) {
+                                    const clientName = button.getAttribute('data-client-name');
+                                    const inspectionDate = button.getAttribute('data-inspection-date');
+                                    if (clientName && inspectionDate) {
+                                        // Longer delay to ensure the upload is processed and indexed
+                                        setTimeout(() => {
+                                            openFilesPopup(groupId, clientName, inspectionDate);
+                                        }, 2500);
+                                    }
+                                }
+                            } else {
+                                alert('Error uploading Occurrence: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            alert('Error uploading Occurrence: ' + error.message);
+                        });
+                    }
+                };
+
+                console.log('✅ File input onchange handler set');
+
+                // Trigger file selection
+                document.body.appendChild(fileInput);
+                console.log('✅ File input appended to body');
+
+                fileInput.click();
+                console.log('✅ File input click() triggered - dialog should open now');
+
+                document.body.removeChild(fileInput);
+                console.log('✅ File input removed from body');
+
+            } catch (error) {
+                console.error('❌ Error in uploadOccurrence function:', error);
                 alert('Error in upload function: ' + error.message);
             }
         }
@@ -11779,7 +11828,7 @@
                         return;
                     }
                     
-                    const timeDiff = now - sentDat;e;
+                    const timeDiff = now - sentDate;
                     const totalMinutesDiff = Math.floor(timeDiff / (1000 * 60));
                     const totalHoursDiff = Math.floor(timeDiff / (1000 * 60 * 60));
                     const totalDaysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
@@ -11796,10 +11845,10 @@
                         // Calculate remaining time in appropriate units
                         const daysLeft = Math.floor(minutesLeft / (24 * 60));
                         const hoursLeft = Math.floor((minutesLeft % (24 * 60)) / 60);
-                        const minsLeft = minutesLeft % 6;0;
-                        
+                        const minsLeft = minutesLeft % 60;
+
                         let displayText;
-                        let color = '#6b7280;';
+                        let color = '#6b7280'
                         
                         if (daysLeft > 0) {
                             if (daysLeft === 1) {
@@ -11875,7 +11924,7 @@
                 
                 // Check if any product in this group has samples
                 const sampleBadges = row.querySelectorAll('.sampled-badge.sampled-yes');
-                const hasSamples = sampleBadges.length > ;0;
+                const hasSamples = sampleBadges.length > 0;
                 
                 console.log(`🔬 Processing ${groupId}: found ${sampleBadges.length} sampled products, hasSamples=${hasSamples}`);
                 
@@ -11996,15 +12045,15 @@
             const allRows = document.querySelectorAll('.group-row.shipment-row');
             console.log('📋 Total rows found:', allRows.length);
             
-            let sampledCount = ;0;
-            let notSampledCount = ;0;
-            let unknownCount = ;0;
+            let sampledCount = 0;
+            let notSampledCount = 0;
+            let unknownCount = 0;
             
             allRows.forEach((row, index) => {
                 const clientName = row.getAttribute('data-client-name');
                 const groupId = row.getAttribute('data-group-id');
                 const hasSamples = row.getAttribute('data-has-samples');
-                const isVisible = row.style.display !== 'none;';
+                const isVisible = row.style.display !== 'none';
                 
                 console.log(`[DEBUG] Row ${index + 1}: ${clientName}`);
                 console.log(`   group-id: ${groupId}`);
@@ -12431,7 +12480,10 @@
         
         // Initialize theme on page load
         initTheme();
-        
+
+        // Email function is now defined in km_hours_fix.js as updateGroupAdditionalEmail (singular)
+        // No need for complex add/remove email row functions anymore
+
         // Manual class dropdown fix - run this in console if dropdowns don't work
         window.fixClassDropdowns = function() {
             console.log('[FIX] Manually fixing class dropdowns...');
@@ -13330,7 +13382,7 @@
         // Function to update retest button state based on needs retest value
         function updateRetestButtonState(inspectionId, needsRetest) {
             // Find the retest button for this inspection
-            const retestButton = document.querySelector(`button[onclick*="uploadRetestFile('${inspectionId}'"]`);
+            const retestButton = document.querySelector(`button[onclick*="uploadRetestFile('${inspectionId}')"]`);
             if (retestButton) {
                 if (needsRetest === 'yes' || needsRetest === 'YES') {
                     // Enable retest button only if needs retest is "yes"

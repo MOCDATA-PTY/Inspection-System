@@ -17,8 +17,8 @@ class GoogleSheetsService:
     
     # If modifying these scopes, delete the file token.pickle.
     SCOPES = [
-        'https://www.googleapis.com/auth/spreadsheets.readonly',
-        'https://www.googleapis.com/auth/drive.readonly'
+        'https://www.googleapis.com/auth/spreadsheets',  # Full read/write access
+        'https://www.googleapis.com/auth/drive'  # Full read/write access
     ]
     
     def __init__(self):
@@ -129,13 +129,13 @@ class GoogleSheetsService:
                     auth_url, _ = flow.authorization_url(
                         prompt='consent', access_type='offline', include_granted_scopes='true'
                     )
-                    print(f"\n🔐 Please visit this URL to authorize the application:")
+                    print(f"\n[AUTH] Please visit this URL to authorize the application:")
                     print(f"   {auth_url}")
-                    print(f"\n📝 After authorization, you'll be redirected to: {self.redirect_uri}")
-                    print(f"📋 Copy the 'code' parameter from the URL and paste it below.")
-                    
+                    print(f"\n[INFO] After authorization, you'll be redirected to: {self.redirect_uri}")
+                    print(f"[INFO] Copy the 'code' parameter from the URL and paste it below.")
+
                     # Get authorization code from user
-                    auth_code = input("\n🔑 Enter the authorization code: ").strip()
+                    auth_code = input("\n[INPUT] Enter the authorization code: ").strip()
                     
                     # Exchange code for tokens
                     flow.fetch_token(code=auth_code)
@@ -676,27 +676,29 @@ class GoogleSheetsService:
                     else:
                         print(f"      ⚠️  Warning: Could not delete inspection_document_logs: {e}")
             
-            # PRESERVE LOCAL FIELDS: Save sent status and OneDrive tracking to temporary table
-            print("      💾 Preserving local fields (sent status, OneDrive tracking)...")
-            
+            # PRESERVE LOCAL FIELDS: Save sent status, OneDrive tracking, KM and Hours
+            print("      💾 Preserving local fields (sent status, OneDrive tracking, KM, Hours)...")
+
             # Store local data in memory instead of temporary table (more reliable)
             print("      💾 Storing local data in memory...")
             local_data_dict = {}
             local_data_count = 0
             processed_remote_ids = set()
-            
+
             for inspection in FoodSafetyAgencyInspection.objects.all():
                 # Skip if we've already processed this remote_id
                 if inspection.remote_id in processed_remote_ids:
                     continue
-                
+
                 local_data_dict[inspection.remote_id] = {
                     'is_sent': inspection.is_sent,
                     'sent_date': inspection.sent_date,
                     'sent_by_id': inspection.sent_by_id if inspection.sent_by else None,
                     'onedrive_uploaded': inspection.onedrive_uploaded,
                     'onedrive_upload_date': inspection.onedrive_upload_date,
-                    'onedrive_folder_id': inspection.onedrive_folder_id
+                    'onedrive_folder_id': inspection.onedrive_folder_id,
+                    'km_traveled': inspection.km_traveled,
+                    'hours': inspection.hours
                 }
                 local_data_count += 1
                 processed_remote_ids.add(inspection.remote_id)
@@ -741,6 +743,7 @@ class GoogleSheetsService:
                 product_name_str = row_dict.get('ProductName')
 
                 # Create inspection object (but don't save yet)
+                # Note: km_traveled and hours are intentionally left as None - these should be manually entered
                 inspection_obj = FoodSafetyAgencyInspection(
                     commodity=row_dict.get('Commodity'),
                     date_of_inspection=inspection_date,
@@ -753,7 +756,6 @@ class GoogleSheetsService:
                     latitude=row_dict.get('Latitude'),
                     longitude=row_dict.get('Longitude'),
                     is_sample_taken=row_dict.get('IsSampleTaken', False),
-                    inspection_travel_distance_km=row_dict.get('InspectionTravelDistanceKm'),
                     remote_id=remote_id,
                     client_name=client_name,
                     product_name=product_name_str
@@ -814,13 +816,15 @@ class GoogleSheetsService:
                     onedrive_uploaded = local_data['onedrive_uploaded']
                     onedrive_upload_date = local_data['onedrive_upload_date']
                     onedrive_folder_id = local_data['onedrive_folder_id']
-                    
+                    km_traveled = local_data['km_traveled']
+                    hours = local_data['hours']
+
                     # Convert naive datetimes to timezone-aware if needed
                     if sent_date and timezone.is_naive(sent_date):
                         sent_date = timezone.make_aware(sent_date)
                     if onedrive_upload_date and timezone.is_naive(onedrive_upload_date):
                         onedrive_upload_date = timezone.make_aware(onedrive_upload_date)
-                    
+
                     # Update the inspection object
                     inspection.is_sent = is_sent
                     inspection.sent_date = sent_date
@@ -828,6 +832,8 @@ class GoogleSheetsService:
                     inspection.onedrive_uploaded = onedrive_uploaded
                     inspection.onedrive_upload_date = onedrive_upload_date
                     inspection.onedrive_folder_id = onedrive_folder_id
+                    inspection.km_traveled = km_traveled
+                    inspection.hours = hours
                     
                     inspections_for_bulk_update.append(inspection)
             
@@ -836,7 +842,7 @@ class GoogleSheetsService:
                 print(f"      🚀 Performing single bulk update for {len(inspections_for_bulk_update):,} inspections...")
                 FoodSafetyAgencyInspection.objects.bulk_update(
                     inspections_for_bulk_update,
-                    ['is_sent', 'sent_date', 'sent_by_id', 'onedrive_uploaded', 'onedrive_upload_date', 'onedrive_folder_id'],
+                    ['is_sent', 'sent_date', 'sent_by_id', 'onedrive_uploaded', 'onedrive_upload_date', 'onedrive_folder_id', 'km_traveled', 'hours'],
                     batch_size=2000
                 )
                 updated_count = len(inspections_for_bulk_update)

@@ -1,110 +1,1056 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
+    {% load group_filters %}
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="-1">
     <title>Export Sheet - Food Safety Agency</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007890',
+                        'primary-light': '#e6f3f7',
+                        'primary-dark': '#005a6b',
+                        secondary: '#EC343C',
+                        danger: '#EC343C',
+                        warning: '#f59e0b',
+                        background: '#f9fafb',
+                        'card-bg': '#ffffff',
+                        text: '#1f2937',
+                        'text-light': '#6b7280',
+                        border: '#e5e7eb',
+                        'light-black': '#333333',
+                        'import-color': '#446f1e',
+                        grey: '#777777',
+                        analytics: '#7c3aed'
+                    },
+                    borderRadius: {
+                        'custom': '6px'
+                    },
+                    boxShadow: {
+                        'custom': '0 1px 3px rgba(0,0,0,0.05)',
+                        'custom-lg': '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
+        :root {
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --danger: #EC343C;
+            --warning: #f59e0b; 
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --spacing: 5px;
+            --light-black: #333333;
+            --import-color: #446f1e;
+            --grey: #777777;
+            --analytics: #7c3aed;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        }
+        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.5;
+            padding: var(--spacing);
+            position: relative;
         }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
         .container {
-            max-width: 1200px;
+            width: calc(100% - var(--spacing)*2);
             margin: 0 auto;
-            padding: 20px;
+            padding: 5px 0;
+            position: relative;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
+        
         .logo {
-            max-width: 200px;
-            margin: 0 auto 20px;
+            text-align: center;
+            margin-bottom: 10px;
         }
-        .btn {
-            display: inline-block;
-            padding: 12px 24px;
-            margin: 10px;
-            background: #007890;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
+        
+        .logo img {
+            max-height: 80px;
         }
-        .btn:hover {
-            background: #005a6b;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #545b62;
-        }
-        .content {
-            background: white;
-            border-radius: 15px;
-            padding: 60px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        
+        .header {
+            padding: 10px 5px 20px;
+            margin-bottom: var(--spacing);
+            width: 100%;
             text-align: center;
         }
-        .nav-bar {
+        
+        .header h1 {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .header h2 {
+            color: white;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: var(--spacing);
+            border: 1px solid var(--border);
+            width: 100%;
+        }
+        
+        .card-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: center;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .card-title i {
+            color: var(--primary);
+        }
+        
+        .card-body {
+            padding: 16px;
+            overflow-x: auto;
+            background: var(--background);
+        }
+        
+        .action-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: var(--spacing);
+            width: 100%;
             flex-wrap: wrap;
-            margin-bottom: 30px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            border: none;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            box-shadow: var(--shadow);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #005a6b;
+        }
+        
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .export-content {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .export-content p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        
+        .export-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        @media (min-width: 768px) {
+            .export-buttons {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: flex;
+            }
+            
+            .action-bar {
+                display: none !important;
+            }
+        }
+        
+        /* Filter controls styling */
+        .filter-controls {
+            background: var(--background);
+            padding: 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .filter-controls label {
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        
+        .filter-controls input[type="date"] {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            background: var(--card-bg);
+            color: var(--text);
+        }
+        
+        .filter-controls input[type="date"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.1);
+        }
+        
+        /* Table styling */
+        .table-responsive {
+            overflow-x: auto;
+            margin: 0;
+            border-radius: var(--radius);
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #exportTable {
+            width: auto;
+            border-collapse: collapse;
+            min-width: 100%;
+            table-layout: fixed;
+        }
+
+        #exportTable thead {
+            background-color: var(--primary-light);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        #exportTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: var(--primary-light);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.7rem;
+        }
+
+        #exportTable tbody tr {
+            background-color: var(--card-bg);
+            transition: background-color 0.2s ease;
+        }
+
+        #exportTable tbody tr:hover {
+            background-color: var(--primary-light);
+        }
+
+        #exportTable tbody td {
+            border-bottom: 1px solid var(--border);
+            font-size: 0.7rem;
+            line-height: 1.4;
+            vertical-align: middle;
+            padding: 10px 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #exportTable tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Specific column widths to prevent huge rows */
+        #exportTable th:nth-child(1),
+        #exportTable td:nth-child(1) {
+            min-width: 200px;
+            max-width: 250px;
+        }
+
+        #exportTable th:nth-child(2),
+        #exportTable td:nth-child(2) {
+            min-width: 150px;
+            max-width: 200px;
+        }
+
+        #exportTable th:nth-child(3),
+        #exportTable th:nth-child(4),
+        #exportTable th:nth-child(5),
+        #exportTable th:nth-child(6),
+        #exportTable td:nth-child(3),
+        #exportTable td:nth-child(4),
+        #exportTable td:nth-child(5),
+        #exportTable td:nth-child(6) {
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        #exportTable th:nth-child(7),
+        #exportTable td:nth-child(7) {
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        #exportTable th:nth-child(8),
+        #exportTable th:nth-child(9),
+        #exportTable th:nth-child(10),
+        #exportTable td:nth-child(8),
+        #exportTable td:nth-child(9),
+        #exportTable td:nth-child(10) {
+            min-width: 100px;
+            max-width: 120px;
+        }
+
+        #exportTable th:nth-child(11),
+        #exportTable th:nth-child(12),
+        #exportTable td:nth-child(11),
+        #exportTable td:nth-child(12) {
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        #exportTable th:nth-child(13),
+        #exportTable th:nth-child(14),
+        #exportTable td:nth-child(13),
+        #exportTable td:nth-child(14) {
+            min-width: 100px;
+            max-width: 120px;
+        }
+
+        #exportTable th:nth-child(15),
+        #exportTable td:nth-child(15) {
+            min-width: 80px;
+            max-width: 100px;
+        }
+
+        #exportTable th:nth-child(16),
+        #exportTable td:nth-child(16) {
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        /* Description column - allow wrapping but limit width */
+        #exportTable th:nth-child(17),
+        #exportTable td:nth-child(17) {
+            min-width: 300px;
+            max-width: 400px;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+
+        #exportTable th:nth-child(18),
+        #exportTable th:nth-child(19),
+        #exportTable th:nth-child(20),
+        #exportTable td:nth-child(18),
+        #exportTable td:nth-child(19),
+        #exportTable td:nth-child(20) {
+            min-width: 80px;
+            max-width: 100px;
+        }
+
+        #exportTable th:nth-child(21),
+        #exportTable td:nth-child(21) {
+            min-width: 120px;
+            max-width: 150px;
+        }
+
+        #exportTable th:nth-child(22),
+        #exportTable td:nth-child(22) {
+            min-width: 180px;
+            max-width: 220px;
+        }
+
+        /* Context menu styling */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            z-index: 10000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            color: var(--text);
+            transition: background 0.15s ease;
+        }
+
+        .context-menu-item:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .context-menu-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Logo -->
-        <div class="header">
-            <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="logo">
-            <h1 style="color: white; font-size: 2.5rem; margin: 0;">Food Safety Agency (Pty) Ltd</h1>
-            <h2 style="color: white; font-size: 1.5rem; margin: 10px 0 0 0;">Export Sheet</h2>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+    
+    <div class="container mx-auto px-4 py-6 w-full">
+        <div class="logo">
+            <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
         </div>
-
-        <!-- Navigation Bar -->
-        <div class="nav-bar">
-            <a href="{% url 'home' %}" class="btn">
+        
+        <div class="header">
+            <h1>Food Safety Agency (Pty) Ltd</h1>
+            <h2>Export Sheet</h2>
+        </div>
+        
+        <div class="action-bar">
+            <!-- Home Button -->
+            {% if request.user.role == 'inspector' %}
+            <a href="{% url 'inspector_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-home"></i> My Home
+            </a>
+            {% else %}
+            <a href="{% url 'home' %}" class="btn btn-primary">
                 <i class="fas fa-home"></i> Home
             </a>
-            <a href="{% url 'client_list' %}" class="btn">
-                <i class="fas fa-users"></i> Manage Clients
+            {% endif %}
+            
+            <!-- Back to Shipments -->
+            <a href="{% url 'shipment_list' %}" class="btn btn-secondary">
+                <i class="fas fa-clipboard-list"></i> Back to Inspections
             </a>
-            <a href="{% url 'shipment_list' %}" class="btn">
-                <i class="fas fa-clipboard-check"></i> Inspections
-            </a>
+            
+            <!-- Analytics Button -->
+            {% if request.user.role != 'inspector' %}
             <a href="{% url 'analytics_dashboard' %}" class="btn btn-secondary">
                 <i class="fas fa-chart-line"></i> Analytics
             </a>
-            <a href="{% url 'settings' %}" class="btn btn-secondary">
-                <i class="fas fa-cog"></i> Settings
-            </a>
+            {% endif %}
+            
+            <!-- Logout Button -->
             <form action="{% url 'logout' %}" method="post" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn" style="background: #dc3545;">
+                <button type="submit" class="btn btn-secondary">
                     <i class="fas fa-sign-out-alt"></i> Logout
                 </button>
             </form>
         </div>
+        
+        <!-- Export content card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="fas fa-file-export"></i> Export Data
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filter and Export Controls -->
+                <div class="filter-controls" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="contactNameFilter" style="font-size: 0.875rem; font-weight: 500;">Contact Name:</label>
+                        <input type="text" id="contactNameFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
 
-        <!-- Main Content -->
-        <div class="content">
-            <h1 style="font-size: 3rem; color: #007890; margin-bottom: 20px;">Export Sheet</h1>
-            <p style="font-size: 1.2rem; color: #666; margin-bottom: 30px;">Export functionality coming soon...</p>
-            <div style="font-size: 4rem; color: #007890; margin: 40px 0;">
-                <i class="fas fa-file-export"></i>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="referenceFilter" style="font-size: 0.875rem; font-weight: 500;">Reference Number:</label>
+                        <input type="text" id="referenceFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="cityFilter" style="font-size: 0.875rem; font-weight: 500;">City:</label>
+                        <input type="text" id="cityFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="invoiceDateFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date:</label>
+                        <input type="date" id="invoiceDateFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="inspectorFilter" style="font-size: 0.875rem; font-weight: 500;">Inspector:</label>
+                        <input type="text" id="inspectorFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
+
+                    <button onclick="applyFilters()" class="btn btn-primary" style="align-self: flex-end;">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+
+                    <button onclick="clearAllFilters()" class="btn btn-secondary" style="align-self: flex-end;">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+                
+                <div class="table-responsive" style="overflow-x: auto;">
+                    <table id="exportTable" class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*ContactName</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">EmailAddress</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine1</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine2</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine3</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine4</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCity</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">PORegion</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POPostalCode</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCountry</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceNumber</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Reference</th>
+                                <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceDate</th>
+                                <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">*DueDate</th>
+                                <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">Total</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">InventoryItemCode</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*Description</th>
+                                <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">*Quantity</th>
+                                <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">*UnitAmount</th>
+                                <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">Discount</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*AccountCode</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*TaxType</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exportTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Data will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" onclick="exportAsGoogleSheets()">
+            <i class="fab fa-google"></i>
+            <span>Google Sheets</span>
+        </div>
+        <div class="context-menu-item" onclick="exportAsCSV()">
+            <i class="fas fa-file-csv"></i>
+            <span>CSV</span>
+        </div>
+        <div class="context-menu-item" onclick="exportAsExcelCSV()">
+            <i class="fas fa-file-excel"></i>
+            <span>CSV (Excel)</span>
+        </div>
+    </div>
+
+    <!-- SheetJS Library for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        // Dummy data
+        const dummyData = [
+            {
+                ContactName: 'Spath - Silverton Pretoria',
+                EmailAddress: '',
+                POAddressLine1: '',
+                POAddressLine2: '',
+                POAddressLine3: '',
+                POAddressLine4: '',
+                POCity: 'Silverton',
+                PORegion: '',
+                POPostalCode: '',
+                POCountry: '',
+                InvoiceNumber: '',
+                Reference: '',
+                InvoiceDate: '02/10/2025',
+                DueDate: '',
+                Total: '',
+                InventoryItemCode: 'PMP 062',
+                Description: 'Sample Taking: Fat Content (Processed Meat Products)',
+                Quantity: '1',
+                UnitAmount: '826',
+                Discount: '',
+                AccountCode: '1000/061',
+                TaxType: 'Standard Rate Sales (15%)',
+                TaxAmount: '',
+                TrackingName1: '',
+                TrackingOption1: '',
+                TrackingName2: '',
+                TrackingOption2: '',
+                Currency: '',
+                BrandingTheme: ''
+            },
+            {
+                ContactName: 'Mamashes Butchery',
+                EmailAddress: '',
+                POAddressLine1: '',
+                POAddressLine2: '',
+                POAddressLine3: '',
+                POAddressLine4: '',
+                POCity: 'Mayibuye',
+                PORegion: '',
+                POPostalCode: '',
+                POCountry: '',
+                InvoiceNumber: '',
+                Reference: '',
+                InvoiceDate: '02/10/2025',
+                DueDate: '',
+                Total: '',
+                InventoryItemCode: 'RAW 050',
+                Description: 'Inspection on Regulated Animal Products (Certain Raw Processed Meat Products): Inspection (Hours) - 02/10/2025 - C Ngongo - Mamashes Butchery',
+                Quantity: '1',
+                UnitAmount: '510',
+                Discount: '',
+                AccountCode: '1000/050',
+                TaxType: 'Standard Rate Sales (15%)',
+                TaxAmount: '',
+                TrackingName1: '',
+                TrackingOption1: '',
+                TrackingName2: '',
+                TrackingOption2: '',
+                Currency: '',
+                BrandingTheme: ''
+            }
+        ];
+
+        let allData = [...dummyData];
+        let filteredData = [...dummyData];
+        
+        // Function to render table data
+        function renderTable(data) {
+            const tbody = document.getElementById('exportTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="22" class="text-center text-gray-500">No data available</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'bg-white hover:bg-gray-50 transition-colors duration-200';
+
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-900">${row.ContactName || ''}</td>
+                    <td class="text-gray-500">${row.EmailAddress || ''}</td>
+                    <td class="text-gray-500">${row.POAddressLine1 || ''}</td>
+                    <td class="text-gray-500">${row.POAddressLine2 || ''}</td>
+                    <td class="text-gray-500">${row.POAddressLine3 || ''}</td>
+                    <td class="text-gray-500">${row.POAddressLine4 || ''}</td>
+                    <td class="text-gray-500">${row.POCity || ''}</td>
+                    <td class="text-gray-500">${row.PORegion || ''}</td>
+                    <td class="text-gray-500">${row.POPostalCode || ''}</td>
+                    <td class="text-gray-500">${row.POCountry || ''}</td>
+                    <td class="text-gray-500">${row.InvoiceNumber || ''}</td>
+                    <td class="text-gray-500">${row.Reference || ''}</td>
+                    <td class="text-center text-gray-900">
+                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">${row.InvoiceDate || ''}</span>
+                    </td>
+                    <td class="text-center text-gray-500">${row.DueDate || ''}</td>
+                    <td class="text-right text-gray-500">${row.Total || ''}</td>
+                    <td class="text-gray-500">
+                        <span class="font-mono text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">${row.InventoryItemCode || ''}</span>
+                    </td>
+                    <td class="text-gray-500">${row.Description || ''}</td>
+                    <td class="text-right text-gray-500">${row.Quantity || ''}</td>
+                    <td class="text-right text-gray-500">${row.UnitAmount || ''}</td>
+                    <td class="text-right text-gray-500">${row.Discount || ''}</td>
+                    <td class="text-gray-500">
+                        <span class="font-mono text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">${row.AccountCode || ''}</span>
+                    </td>
+                    <td class="text-gray-500">${row.TaxType || ''}</td>
+                `;
+
+                tbody.appendChild(tr);
+            });
+        }
+        
+        // Function to convert DD/MM/YYYY to YYYY-MM-DD for date comparison
+        function convertDateFormat(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateStr;
+        }
+        
+        // Function to apply all filters
+        function applyFilters() {
+            const contactName = document.getElementById('contactNameFilter').value.toLowerCase().trim();
+            const reference = document.getElementById('referenceFilter').value.toLowerCase().trim();
+            const city = document.getElementById('cityFilter').value.toLowerCase().trim();
+            const invoiceDate = document.getElementById('invoiceDateFilter').value;
+            const inspector = document.getElementById('inspectorFilter').value.toLowerCase().trim();
+
+            console.log('Applying filters:', { contactName, reference, city, invoiceDate, inspector });
+
+            filteredData = allData.filter(row => {
+                // Contact Name filter
+                if (contactName && !row.ContactName.toLowerCase().includes(contactName)) {
+                    return false;
+                }
+
+                // Reference Number filter
+                if (reference && !row.Reference.toLowerCase().includes(reference)) {
+                    return false;
+                }
+
+                // City filter
+                if (city && !row.POCity.toLowerCase().includes(city)) {
+                    return false;
+                }
+
+                // Invoice Date filter
+                if (invoiceDate) {
+                    const filterParts = invoiceDate.split('-');
+                    const filterDateFormatted = `${filterParts[2]}/${filterParts[1]}/${filterParts[0]}`;
+                    if (row.InvoiceDate !== filterDateFormatted) {
+                        return false;
+                    }
+                }
+
+                // Inspector filter (assuming inspector is in Description field or add a new field)
+                // For now, searching in Description field
+                if (inspector && !row.Description.toLowerCase().includes(inspector)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            console.log(`Filtered: ${filteredData.length} of ${allData.length} rows`);
+            renderTable(filteredData);
+        }
+
+        // Function to clear all filters
+        function clearAllFilters() {
+            document.getElementById('contactNameFilter').value = '';
+            document.getElementById('referenceFilter').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('invoiceDateFilter').value = '';
+            document.getElementById('inspectorFilter').value = '';
+
+            filteredData = [...allData];
+            renderTable(filteredData);
+            console.log('All filters cleared');
+        }
+
+        // Legacy function for backward compatibility
+        function filterByInvoiceDate() {
+            applyFilters();
+        }
+
+        // Legacy function for backward compatibility
+        function clearFilter() {
+            clearAllFilters();
+        }
+        
+        // Show context menu on right-click
+        document.getElementById('exportTable').addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+            contextMenu.style.left = e.pageX + 'px';
+            contextMenu.style.top = e.pageY + 'px';
+        });
+
+        // Hide context menu on click outside
+        document.addEventListener('click', function(e) {
+            const contextMenu = document.getElementById('contextMenu');
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.style.display = 'none';
+            }
+        });
+
+        // Get data for export
+        function getExportData() {
+            const headers = [];
+            document.querySelectorAll('#exportTable thead th').forEach(th => {
+                headers.push(th.textContent.trim());
+            });
+
+            const data = [headers];
+            filteredData.forEach(row => {
+                data.push([
+                    row.ContactName || '',
+                    row.EmailAddress || '',
+                    row.POAddressLine1 || '',
+                    row.POAddressLine2 || '',
+                    row.POAddressLine3 || '',
+                    row.POAddressLine4 || '',
+                    row.POCity || '',
+                    row.PORegion || '',
+                    row.POPostalCode || '',
+                    row.POCountry || '',
+                    row.InvoiceNumber || '',
+                    row.Reference || '',
+                    row.InvoiceDate || '',
+                    row.DueDate || '',
+                    row.Total || '',
+                    row.InventoryItemCode || '',
+                    row.Description || '',
+                    row.Quantity || '',
+                    row.UnitAmount || '',
+                    row.Discount || '',
+                    row.AccountCode || '',
+                    row.TaxType || ''
+                ]);
+            });
+
+            return data;
+        }
+
+        // Export to Google Sheets
+        async function exportAsGoogleSheets() {
+            document.getElementById('contextMenu').style.display = 'none';
+
+            if (filteredData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const exportData = getExportData();
+
+            // Open a blank tab immediately (within user click context)
+            const newTab = window.open('about:blank', '_blank');
+
+            if (!newTab) {
+                alert('❌ Please allow pop-ups for this site to export to Google Sheets.');
+                return;
+            }
+
+            // Show loading message in the new tab
+            newTab.document.write('<html><head><title>Creating Google Sheet...</title></head><body style="font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5;"><div style="text-align: center;"><h2>Creating your Google Sheet...</h2><p>Please wait...</p><div style="margin-top: 20px;"><div style="border: 4px solid #f3f3f3; border-top: 4px solid #007890; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto;"></div></div></div><style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style></body></html>');
+
+            console.log('Sending export request...');
+            console.log('Export data rows:', exportData.length);
+
+            try {
+                const response = await fetch('{% url "export_to_google_sheets" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ data: exportData })
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (data.success) {
+                    console.log('Redirecting to Google Sheet:', data.url);
+
+                    // Redirect the blank tab to the Google Sheet
+                    newTab.location.href = data.url;
+
+                    console.log('✅ Opened in new tab');
+                } else {
+                    // Close the blank tab and show error
+                    newTab.close();
+                    alert('❌ Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+
+                // Close the blank tab
+                newTab.close();
+
+                alert('❌ Error creating Google Sheet: ' + error.message);
+            }
+        }
+
+        // Export as CSV
+        function exportAsCSV() {
+            document.getElementById('contextMenu').style.display = 'none';
+
+            if (filteredData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const exportData = getExportData();
+            const csvRows = exportData.map(row =>
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            );
+            const csvContent = csvRows.join('\n');
+
+            downloadFile(csvContent, 'text/csv', 'Export_Data.csv');
+        }
+
+        // Export as CSV (Excel)
+        function exportAsExcelCSV() {
+            document.getElementById('contextMenu').style.display = 'none';
+
+            if (filteredData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const exportData = getExportData();
+
+            // Excel CSV needs BOM for UTF-8
+            const BOM = '\uFEFF';
+            const csvRows = exportData.map(row =>
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            );
+            const csvContent = BOM + csvRows.join('\r\n');
+
+            downloadFile(csvContent, 'text/csv', 'Export_Data.csv');
+        }
+
+        // Helper function to download file
+        function downloadFile(content, mimeType, fileName) {
+            const blob = new Blob([content], { type: mimeType + ';charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            URL.revokeObjectURL(url);
+        }
+
+        // Keep the button export for backward compatibility
+        function exportToExcel() {
+            exportAsGoogleSheets();
+        }
+
+        // Add event listeners for filters (Enter key to apply)
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterInputs = [
+                'contactNameFilter',
+                'referenceFilter',
+                'cityFilter',
+                'invoiceDateFilter',
+                'inspectorFilter'
+            ];
+
+            filterInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            applyFilters();
+                        }
+                    });
+
+                    // For date input, apply filter on change
+                    if (inputId === 'invoiceDateFilter') {
+                        input.addEventListener('change', applyFilters);
+                    }
+                }
+            });
+
+            // Initialize table
+            renderTable(filteredData);
+        });
+    </script>
 </body>
 </html>

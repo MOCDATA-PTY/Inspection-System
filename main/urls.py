@@ -21,23 +21,25 @@ from .views.core_views import (
     scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
-    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet
+    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets
 )
 from .views.data_views import (
     export_shipments, 
 )
 
 urlpatterns = [
-    # =============================================================================
-    # AUTHENTICATION & NAVIGATION URLS
-    # =============================================================================
+# =============================================================================
+# AUTHENTICATION & NAVIGATION URLS
+# =============================================================================
+    # Base URLs using views
     path('', views.home, name='home'),
-    path('dashboard/', dashboard, name='dashboard'),
+    path('home/', views.home, name='home'),
     path('login/', views.user_login, name='login'),
     path('hidden-register/', views.register, name='register'),
     path('logout/', views.user_logout, name='logout'),
-
-    
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('inspector-dashboard/', views.inspector_dashboard, name='inspector_dashboard'),
+    path('analytics-dashboard/', views.analytics_dashboard, name='analytics_dashboard'),    
     # =============================================================================
     # CLIENT MANAGEMENT URLS
     # =============================================================================
@@ -52,6 +54,7 @@ urlpatterns = [
     # =============================================================================
     path('inspections/', shipment_list, name='shipment_list'),
     path('export-sheet/', export_sheet, name='export_sheet'),
+    path('export-to-google-sheets/', export_to_google_sheets, name='export_to_google_sheets'),
     path('inspections/files/', get_inspection_files, name='get_inspection_files'),
     path('inspections/download-file/', download_inspection_file, name='download_inspection_file'),
     path('inspections/download-all-files/', download_all_inspection_files, name='download_all_inspection_files'),
@@ -75,6 +78,7 @@ urlpatterns = [
     path('update-group-hours/', views.update_group_hours, name='update_group_hours'),
     path('update-group-additional-email/', views.update_group_additional_email, name='update_group_additional_email'),
     path('update-group-approved/', update_group_approved, name='update_group_approved'),
+    path('update-group-comment/', views.update_group_comment, name='update_group_comment'),
     path('update-lab/', views.update_lab, name='update_lab'),
     path('update-product-name/', views.update_product_name, name='update_product_name'),
     path('update-product-class/', views.update_product_class, name='update_product_class'),
