@@ -1460,9 +1460,10 @@ async function deleteFile(filePath, fileName) {
                     if (button) {
                         console.log(`🔧 [DIRECT RESET] Directly resetting ${documentType} button to gray state`);
                         button.disabled = false;
-                        button.className = 'btn btn-outline-secondary btn-sm';
-                        button.style.background = '';
-                        button.style.color = '';
+                        button.className = 'btn btn-secondary btn-sm';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.color = 'white';
                         button.style.cursor = 'pointer';
                         button.innerHTML = documentType.toUpperCase();
                         button.title = `Upload ${documentType.toUpperCase()}`;
@@ -4482,20 +4483,21 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             const hasInvoice = result.files.invoice && result.files.invoice.length > 0;
             const hasLab = result.files.lab && result.files.lab.length > 0;
             const hasRetest = result.files.retest && result.files.retest.length > 0;
+            const hasOccurrence = result.files.occurrence && result.files.occurrence.length > 0;
             const hasCompliance = result.files.compliance && result.files.compliance.length > 0;
-            
+
             let fileStatus;
             if (hasRfi && hasInvoice && hasLab && hasCompliance) {
                 fileStatus = 'all_files';
             } else if (hasCompliance) {
                 fileStatus = 'compliance_only';
-            } else if (hasRfi || hasInvoice || hasLab || hasRetest) {
+            } else if (hasRfi || hasInvoice || hasLab || hasRetest || hasOccurrence) {
                 fileStatus = 'partial_files';
             } else {
                 fileStatus = 'no_files';
             }
-            
-            console.log(`📊 [IMMEDIATE] File status after deletion: ${fileStatus} (RFI:${hasRfi}, Invoice:${hasInvoice}, Lab:${hasLab}, Compliance:${hasCompliance})`);
+
+            console.log(`📊 [IMMEDIATE] File status after deletion: ${fileStatus} (RFI:${hasRfi}, Invoice:${hasInvoice}, Lab:${hasLab}, Occurrence:${hasOccurrence}, Compliance:${hasCompliance})`);
             
             // Update the button colors immediately - bypass the skip logic for file deletion
             matchingButtons.forEach(button => {
@@ -5396,13 +5398,13 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
     if (button) {
         console.log(`SUCCESS Found ${documentType} button: ${buttonId}`);
         
-        // Reset button to default state (uploadable)
+        // Reset button to default state (uploadable) - GREY
         button.disabled = false;
         button.classList.remove('uploaded', 'btn-success');
-        button.classList.add('btn-outline-secondary', 'btn-sm');
-        button.style.background = '';
-        button.style.color = '';
-        button.style.border = '';
+        button.classList.add('btn-secondary', 'btn-sm');
+        button.style.backgroundColor = '#6c757d';
+        button.style.borderColor = '#6c757d';
+        button.style.color = 'white';
         button.style.cursor = 'pointer';
         
         // Set appropriate content based on document type
@@ -5482,13 +5484,13 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
     if (button) {
         console.log(`SUCCESS Found main table button: ${buttonId}`);
         
-        // Reset button to default state
+        // Reset button to default state - GREY
         button.disabled = false;
         button.classList.remove('uploaded', 'btn-success');
-        button.classList.add('btn-outline-secondary', 'btn-sm');
-        button.style.background = '';
-        button.style.color = '';
-        button.style.border = '';
+        button.classList.add('btn-secondary', 'btn-sm');
+        button.style.backgroundColor = '#6c757d';
+        button.style.borderColor = '#6c757d';
+        button.style.color = 'white';
         button.style.cursor = 'pointer';
         button.innerHTML = documentType.toUpperCase();
         button.title = `Upload ${documentType.toUpperCase()}`;
