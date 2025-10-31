@@ -4478,13 +4478,17 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
     .then(response => response.json())
     .then(result => {
         if (result.success && result.files) {
+            console.log('🔍 [IMMEDIATE] Server response files:', result.files);
+            console.log('🔍 [IMMEDIATE] Occurrence field exists:', 'occurrence' in result.files);
+            console.log('🔍 [IMMEDIATE] Occurrence value:', result.files.occurrence);
+
             // Determine file status based on what files exist
-            const hasRfi = result.files.rfi && result.files.rfi.length > 0;
-            const hasInvoice = result.files.invoice && result.files.invoice.length > 0;
-            const hasLab = result.files.lab && result.files.lab.length > 0;
-            const hasRetest = result.files.retest && result.files.retest.length > 0;
-            const hasOccurrence = result.files.occurrence && result.files.occurrence.length > 0;
-            const hasCompliance = result.files.compliance && result.files.compliance.length > 0;
+            const hasRfi = !!(result.files.rfi && result.files.rfi.length > 0);
+            const hasInvoice = !!(result.files.invoice && result.files.invoice.length > 0);
+            const hasLab = !!(result.files.lab && result.files.lab.length > 0);
+            const hasRetest = !!(result.files.retest && result.files.retest.length > 0);
+            const hasOccurrence = !!(result.files.occurrence && result.files.occurrence.length > 0);
+            const hasCompliance = !!(result.files.compliance && result.files.compliance.length > 0);
 
             let fileStatus;
             if (hasRfi && hasInvoice && hasLab && hasCompliance) {
