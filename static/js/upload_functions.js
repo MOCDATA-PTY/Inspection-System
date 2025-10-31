@@ -1330,7 +1330,9 @@ async function deleteFile(filePath, fileName) {
                 console.log('DEBUG [DEBUG] Invoice file detected!');
             } else if (filePath.includes('/occurrence/')) {
                 documentType = 'occurrence';
-                console.log('DEBUG [DEBUG] Occurrence file detected!');
+                console.log('🟢 [OCCURRENCE DELETE] Occurrence file detected!');
+                console.log('🟢 [OCCURRENCE DELETE] File path:', filePath);
+                console.log('🟢 [OCCURRENCE DELETE] Group ID:', groupId);
             } else if (filePath.includes('/retest/')) {
                 documentType = 'retest';
                 console.log('DEBUG [DEBUG] Retest file detected!');
@@ -1415,7 +1417,9 @@ async function deleteFile(filePath, fileName) {
                         resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
                     }
                 } else {
-                    // For other document types (RFI, Invoice), use the existing group-level reset
+                    // For other document types (RFI, Invoice, Occurrence), use the existing group-level reset
+                    console.log(`🔧 [DELETE] Calling resetButtonImmediately for ${documentType}`);
+                    console.log(`🔧 [DELETE] Parameters: documentType=${documentType}, groupId=${groupId}, clientName=${clientName}, inspectionDate=${inspectionDate}`);
                     resetButtonImmediately(documentType, groupId, clientName, inspectionDate);
                 }
             }
@@ -1446,11 +1450,15 @@ async function deleteFile(filePath, fileName) {
                 
                 // Also directly reset the button to gray state
                 const groupId = window.currentFilesGroupId;
+                console.log(`🔧 [DIRECT RESET] Group ID from window: ${groupId}`);
+                console.log(`🔧 [DIRECT RESET] Document type: ${documentType}`);
                 if (groupId) {
                     const buttonId = `${documentType}-${groupId}`;
+                    console.log(`🔧 [DIRECT RESET] Looking for button ID: ${buttonId}`);
                     const button = document.getElementById(buttonId);
+                    console.log(`🔧 [DIRECT RESET] Button found:`, button ? 'YES' : 'NO');
                     if (button) {
-                        console.log(`🔧 Directly resetting ${documentType} button to gray state`);
+                        console.log(`🔧 [DIRECT RESET] Directly resetting ${documentType} button to gray state`);
                         button.disabled = false;
                         button.className = 'btn btn-outline-secondary btn-sm';
                         button.style.background = '';
