@@ -30,7 +30,7 @@ if __name__ == '__main__':
     invoice_count = inspections.filter(invoice_uploaded_date__isnull=False).count()
     composition_count = inspections.filter(composition_uploaded_date__isnull=False).count()
     occurrence_count = inspections.filter(occurrence_uploaded_date__isnull=False).count()
-    lab_count = inspections.filter(lab_uploaded_date__isnull=False).count()
+    coa_count = inspections.filter(coa_uploaded_date__isnull=False).count()
     lab_form_count = inspections.filter(lab_form_uploaded_date__isnull=False).count()
     retest_count = inspections.filter(retest_uploaded_date__isnull=False).count()
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print(f"  Invoice documents: {invoice_count}")
     print(f"  Composition documents: {composition_count}")
     print(f"  Occurrence documents: {occurrence_count}")
-    print(f"  Lab documents: {lab_count}")
+    print(f"  COA documents: {coa_count}")
     print(f"  Lab Form documents: {lab_form_count}")
     print(f"  Retest documents: {retest_count}")
     print()
@@ -57,8 +57,8 @@ if __name__ == '__main__':
         composition_uploaded_date=None,
         occurrence_uploaded_by=None,
         occurrence_uploaded_date=None,
-        lab_uploaded_by=None,
-        lab_uploaded_date=None,
+        coa_uploaded_by=None,
+        coa_uploaded_date=None,
         lab_form_uploaded_by=None,
         lab_form_uploaded_date=None,
         retest_uploaded_by=None,
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     print("  - Invoice uploads (uploaded_by, uploaded_date)")
     print("  - Composition uploads (uploaded_by, uploaded_date)")
     print("  - Occurrence uploads (uploaded_by, uploaded_date)")
-    print("  - Lab uploads (uploaded_by, uploaded_date)")
+    print("  - COA uploads (uploaded_by, uploaded_date)")
     print("  - Lab Form uploads (uploaded_by, uploaded_date)")
     print("  - Retest uploads (uploaded_by, uploaded_date)")
     print()

@@ -746,9 +746,9 @@ function uploadLab(inspectionId) {
                 formData.append('document_type', 'lab');
                 formData.append('csrfmiddlewaretoken', getCSRFToken());
                 
-                console.log('Uploading lab result:', file.name, 'for inspection:', inspectionId);
+                console.log('Uploading COA:', file.name, 'for inspection:', inspectionId);
                 uploadInProgress = true;
-                
+
                 fetch('/upload-document/', {
                     method: 'POST',
                     body: formData
@@ -757,32 +757,32 @@ function uploadLab(inspectionId) {
                 .then(data => {
                     uploadInProgress = false;
                     if (data.success) {
-                        alert(data.message || 'Lab result uploaded successfully!');
-                        console.log('Lab upload successful:', data);
-                        
+                        alert(data.message || 'COA uploaded successfully!');
+                        console.log('COA upload successful:', data);
+
                         // Update button to green success state
                         const buttonId = 'lab-' + inspectionId;
                         let button = document.getElementById(buttonId);
                         if (button) {
                             button.classList.add('uploaded');
-                            button.innerHTML = '<i class="fas fa-flask"></i> Lab ✓';
+                            button.innerHTML = '<i class="fas fa-flask"></i> COA ✓';
                             button.disabled = true;
-                            button.title = 'Lab result uploaded';
+                            button.title = 'COA uploaded';
                         }
-                        
+
                         // Trigger delayed color update
                         setTimeout(() => {
                             updateAllViewFilesButtonColors();
                         }, 1000);
                     } else {
-                        alert(data.message || 'Failed to upload lab result');
-                        console.error('Lab upload failed:', data);
+                        alert(data.message || 'Failed to upload COA');
+                        console.error('COA upload failed:', data);
                     }
                 })
                 .catch(error => {
                     uploadInProgress = false;
-                    console.error('Error uploading lab result:', error);
-                    alert('Error uploading lab result. Please try again.');
+                    console.error('Error uploading COA:', error);
+                    alert('Error uploading COA. Please try again.');
                 });
             }
         };
@@ -792,7 +792,7 @@ function uploadLab(inspectionId) {
         document.body.removeChild(fileInput);
         
     } catch (error) {
-        console.error('Error creating file input for lab upload:', error);
+        console.error('Error creating file input for COA upload:', error);
         alert('Error creating file input. Please try again.');
     }
 }
