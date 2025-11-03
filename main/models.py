@@ -411,6 +411,8 @@ class FoodSafetyAgencyInspection(models.Model):
     retest_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Retest document was uploaded")
     occurrence_uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='occurrence_uploads', help_text="User who uploaded Accurance document")
     occurrence_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Accurance document was uploaded")
+    composition_uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='composition_uploads', help_text="User who uploaded Composition document")
+    composition_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Composition document was uploaded")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

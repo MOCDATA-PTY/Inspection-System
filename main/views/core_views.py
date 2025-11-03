@@ -1002,7 +1002,7 @@ def shipment_list(request):
     
     # Use caching to improve performance, but skip cache if filters are applied
     from django.core.cache import cache
-    has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'rfi_status', 'page'])
+    has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'rfi_status', 'compliance_status', 'lab_form_status', 'page'])
     
     cache_key = f"shipment_list_{request.user.id}_{request.user.role}"
 
@@ -1022,14 +1022,15 @@ def shipment_list(request):
     from django.db.models import Prefetch, Q
     
     # Start with base queryset - only select needed fields to reduce memory usage
-    inspections = FoodSafetyAgencyInspection.objects.select_related('rfi_uploaded_by', 'invoice_uploaded_by', 'sent_by').only(
+    inspections = FoodSafetyAgencyInspection.objects.select_related('rfi_uploaded_by', 'invoice_uploaded_by', 'composition_uploaded_by', 'sent_by').only(
         'client_name', 'date_of_inspection', 'inspector_name', 'inspector_id',
-        'commodity', 'remote_id', 'is_sample_taken', 'needs_retest', 
-        'product_name', 'product_class', 'fat', 'protein', 'calcium', 
-        'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'is_sent', 'sent_date', 'sent_by',
-        'is_direction_present_for_this_inspection', 'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date',
+        'commodity', 'remote_id', 'is_sample_taken', 'needs_retest',
+        'product_name', 'product_class', 'fat', 'protein', 'calcium',
+        'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'comment', 'is_sent', 'sent_date', 'sent_by',
+        'is_direction_present_for_this_inspection', 'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date', 'composition_uploaded_by', 'composition_uploaded_date',
         'rfi_uploaded_by__username', 'rfi_uploaded_by__first_name', 'rfi_uploaded_by__last_name',
         'invoice_uploaded_by__username', 'invoice_uploaded_by__first_name', 'invoice_uploaded_by__last_name',
+        'composition_uploaded_by__username', 'composition_uploaded_by__first_name', 'composition_uploaded_by__last_name',
         'sent_by__username', 'sent_by__first_name', 'sent_by__last_name'
     )
     
@@ -1193,7 +1194,7 @@ def shipment_list(request):
     
     # Create the base queryset for groups
     groups_queryset = inspections.values(
-        'client_name', 
+        'client_name',
         'date_of_inspection'
     ).annotate(
         inspection_count=Count('id'),
@@ -1202,7 +1203,10 @@ def shipment_list(request):
         has_sent_inspections=Count('id', filter=Q(is_sent=True)),  # Count sent inspections in group
         has_unsent_inspections=Count('id', filter=Q(is_sent=False)),  # Count unsent inspections in group
         has_rfi_inspections=Count('id', filter=Q(rfi_uploaded_by__isnull=False)),  # Count inspections with RFI uploaded
-        has_no_rfi_inspections=Count('id', filter=Q(rfi_uploaded_by__isnull=True))  # Count inspections without RFI uploaded
+        has_no_rfi_inspections=Count('id', filter=Q(rfi_uploaded_by__isnull=True)),  # Count inspections without RFI uploaded
+        has_lab_form_inspections=Count('id', filter=Q(lab_form_uploaded_by__isnull=False)),  # Count inspections with Lab Form uploaded
+        has_no_lab_form_inspections=Count('id', filter=Q(lab_form_uploaded_by__isnull=True)),  # Count inspections without Lab Form uploaded
+        comment=Max('comment')  # Get the comment from the group (all should have the same comment)
     ).order_by('-date_of_inspection', 'client_name')
     
     # FILTER GROUPS BY SENT STATUS: Apply sent status filter to groups, not individual inspections
@@ -1224,7 +1228,17 @@ def shipment_list(request):
         elif rfi_status == 'NO_RFI':
             # Only show groups that have at least one inspection without RFI uploaded
             groups_queryset = groups_queryset.filter(has_no_rfi_inspections__gt=0)
-    
+
+    # FILTER GROUPS BY LAB FORM STATUS: Apply Lab Form status filter to groups, not individual inspections
+    lab_form_status = request.GET.get('lab_form_status')
+    if lab_form_status:
+        if lab_form_status == 'HAS_LAB_FORM':
+            # Only show groups that have at least one inspection with Lab Form uploaded
+            groups_queryset = groups_queryset.filter(has_lab_form_inspections__gt=0)
+        elif lab_form_status == 'NO_LAB_FORM':
+            # Only show groups that have at least one inspection without Lab Form uploaded
+            groups_queryset = groups_queryset.filter(has_no_lab_form_inspections__gt=0)
+
     # Apply database-level pagination
     paginator = Paginator(groups_queryset, 25)  # 25 groups per page
     page_obj = paginator.get_page(page_number)
@@ -1408,6 +1422,7 @@ def shipment_list(request):
         group_km_traveled = None
         group_hours = None
         group_additional_email = None
+        group_comment = None
         group_is_sent = False
         
         # IGNORE DATABASE - CHECK ACTUAL FILES ON DISK ONLY
@@ -1415,6 +1430,8 @@ def shipment_list(request):
         invoice_uploader = None
         rfi_upload_date = None
         invoice_upload_date = None
+        composition_uploader = None
+        composition_upload_date = None
         
         # SKIP FILE CHECKING ON PAGE LOAD FOR SPEED - Files will be checked via AJAX after page loads
         # File checking moved to background to prevent 504 timeout
@@ -1425,6 +1442,7 @@ def shipment_list(request):
             group_km_traveled = sample_inspection.km_traveled
             group_hours = sample_inspection.hours
             group_additional_email = sample_inspection.additional_email
+            group_comment = sample_inspection.comment
             # Check if ANY inspection in the group is marked as sent
             group_is_sent = any(inspection.is_sent for inspection in group_inspections)
         
@@ -1448,6 +1466,13 @@ def shipment_list(request):
                 if inspection.additional_email is not None:
                     group_additional_email = inspection.additional_email
                     print(f" [EMAIL FALLBACK] Found additional email {group_additional_email} in alternate inspection for {client_name}")
+                    break
+
+        if group_comment is None and group_inspections:
+            for inspection in group_inspections:
+                if inspection.comment is not None:
+                    group_comment = inspection.comment
+                    print(f" [COMMENT FALLBACK] Found comment value in alternate inspection for {client_name}")
                     break
         
         # Get all products for this group (simplified)
@@ -1597,6 +1622,7 @@ def shipment_list(request):
             'km_traveled': group_km_traveled,  # From actual inspection data
             'hours': group_hours,  # From actual inspection data
             'additional_email': group_additional_email,  # From actual inspection data
+            'comment': group_comment,  # From actual inspection data
             'is_sent': group_is_sent,  # From actual inspection data
             'sent_by': next((inspection.sent_by for inspection in group_inspections if inspection.is_sent), None),  # Who marked as sent
             'sent_date': next((inspection.sent_date for inspection in group_inspections if inspection.is_sent), None),  # When marked as sent
@@ -1606,6 +1632,9 @@ def shipment_list(request):
             'rfi_uploaded_date': rfi_upload_date,  # When RFI was uploaded
             'invoice_uploaded_by': invoice_uploader,  # Who uploaded Invoice
             'invoice_uploaded_date': invoice_upload_date,  # When Invoice was uploaded
+            'composition_uploaded': composition_uploader is not None,  # Use file detection results
+            'composition_uploaded_by': composition_uploader,  # Who uploaded Composition
+            'composition_uploaded_date': composition_upload_date,  # When Composition was uploaded
             'inspection_compliance_status': inspection_compliance_status,  # For header compliance display (based on individual inspections)
             'compliance_status': compliance_status,  # For sent dropdown control (based on file uploads)
             'file_status': file_status,  # For View Files button color coding (based on actual files)
@@ -1908,24 +1937,24 @@ def upload_document(request):
         # Check role-based restrictions for inspectors
         user_role = getattr(request.user, 'role', 'inspector')
         
-        # Inspectors can only upload RFI and Accurance documents
+        # Inspectors can only upload RFI, Occurrence, Lab Form, and Composition documents
         if user_role == 'inspector':
             document_type = request.POST.get('document_type')
-            allowed_document_types = ['rfi', 'occurrence']
+            allowed_document_types = ['rfi', 'occurrence', 'lab_form', 'composition']
             if document_type not in allowed_document_types:
                 return JsonResponse({
                     'success': False,
-                    'error': 'Access denied. Inspectors can only upload RFI and Accurance documents.'
+                    'error': 'Access denied. Inspectors can only upload RFI, Occurrence, Lab Form, and Composition documents.'
                 })
         
         # Administrators can only upload invoice and RFI documents
         elif user_role in ['admin', 'financial', 'super_admin']:
             document_type = request.POST.get('document_type')
-            allowed_document_types = ['invoice', 'rfi']
+            allowed_document_types = ['invoice', 'rfi', 'composition']
             if document_type not in allowed_document_types:
                 return JsonResponse({
                     'success': False,
-                    'error': 'Access denied. Administrators can only upload invoice and RFI documents.'
+                    'error': 'Access denied. Administrators can only upload invoice, RFI, and composition documents.'
                 })
         
         # Lab technicians can only upload lab-related documents
@@ -2162,7 +2191,7 @@ def upload_document(request):
             # Enforce unified directory scheme
             # - Grouped (unmatched): client-level rfi, invoice, compliance
             # - Individual (matched): inspection-<id>/{rfi,invoice,compliance,lab,retest,form}
-            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form', 'occurrence']:
+            if document_type in ['rfi', 'invoice', 'compliance', 'lab', 'lab_form', 'retest', 'form', 'occurrence', 'composition']:
                 if upload_type == 'individual' and inspection_id:
                     # Map document types to folder names that match scan_inspection_folders expectations
                     # scan_inspection_folders looks for: 'Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence'
@@ -2174,7 +2203,8 @@ def upload_document(request):
                         'retest': 'retest',            # Retest documents go to 'retest' folder (lowercase)
                         'compliance': 'Compliance',    # Compliance documents go to 'Compliance' folder (uppercase)
                         'form': 'lab results',         # Generic forms go to 'lab results' folder
-                        'occurrence': 'occurrence'     # Occurrence documents go to 'occurrence' folder (lowercase)
+                        'occurrence': 'occurrence',    # Occurrence documents go to 'occurrence' folder (lowercase)
+                        'composition': 'composition'   # Composition documents go to 'composition' folder (lowercase)
                     }
                     mapped_type = folder_map.get(document_type, document_type)
                     # Use uppercase Inspection- to match scan function (it looks for folders starting with 'Inspection-')
@@ -2188,6 +2218,8 @@ def upload_document(request):
                         'lab_form': 'lab',  # Map lab_form to lab folder
                         'retest': 'retest',
                         'form': 'form',
+                        'occurrence': 'occurrence',
+                        'composition': 'composition',
                     }
                     document_dir = os.path.join(client_dir, top_map.get(document_type, document_type))
             else:
@@ -2333,18 +2365,27 @@ def upload_document(request):
                                         occurrence_uploaded_date=current_time
                                     )
                                     print(f"DEBUG: Updated Occurrence tracking for {updated_count} inspections")
-                                
+                                elif document_type == 'composition':
+                                    updated_count = group_inspections.update(
+                                        composition_uploaded_by=request.user,
+                                        composition_uploaded_date=current_time
+                                    )
+                                    print(f"DEBUG: Updated Composition tracking for {updated_count} inspections")
+                                                                
                                 print(f"Updated upload tracking for {updated_count} inspections in group {group_id}")
                                 
                                 # Clear ALL relevant caches to ensure updated data is shown
                                 from django.core.cache import cache
-                                
+
                                 # Construct inspection_date from group_id for cache clearing
                                 inspection_date = None
                                 if len(parts) >= 2 and len(parts[-1]) == 8:
                                     date_str = parts[-1]
                                     inspection_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:8]}"
-                                
+
+                                # CRITICAL: Create sanitized folder name to match cache keys in get_inspection_files_local
+                                sanitized_folder = create_folder_name(client_name_from_group)
+
                                 # Clear all cache keys that could affect file detection
                                 cache_keys_to_clear = [
                                     f"shipment_list_{request.user.id}_{request.user.role}",
@@ -2352,11 +2393,13 @@ def upload_document(request):
                                     "inspection_files_cache",
                                     "page_clients_status_cache"
                                 ]
-                                
+
                                 if inspection_date:
                                     cache_keys_to_clear.extend([
                                         f"file_status_{client_name_from_group}_{inspection_date}",
                                         f"local_files:{client_name_from_group}:{current_time.year}:{current_time.strftime('%B')}",
+                                        # CRITICAL: Also clear with SANITIZED folder name (lowercase, underscores)
+                                        f"local_files:{sanitized_folder}:{current_time.year}:{current_time.strftime('%B')}",
                                         f"files_cache_{client_name_from_group}_{inspection_date}",
                                         f"compliance_status_{client_name_from_group}_{date_obj}",
                                         f"onedrive_compliance_{client_name_from_group}_{date_obj}",
@@ -2365,9 +2408,9 @@ def upload_document(request):
 
                                 for cache_key in cache_keys_to_clear:
                                     cache.delete(cache_key)
-                                    print(f"Cleared cache key: {cache_key}")
-                                
-                                print(f"Cleared ALL relevant caches after group upload")
+                                    print(f"✅ Cleared cache key: {cache_key}")
+
+                                print(f"✅ Cleared ALL relevant caches after group upload (including sanitized folder name)")
                                 
                             else:
                                 print(f"WARNING: No matching inspections found for group {group_id}")
@@ -2398,10 +2441,17 @@ def upload_document(request):
                         inspection.occurrence_uploaded_date = current_time
                         inspection.save(update_fields=['occurrence_uploaded_by', 'occurrence_uploaded_date'])
                         print(f"DEBUG: Updated Occurrence tracking for individual inspection {inspection_id}")
-                    
+                    elif document_type == 'composition':
+                        inspection.composition_uploaded_by = request.user
+                        inspection.composition_uploaded_date = current_time
+                        inspection.save(update_fields=['composition_uploaded_by', 'composition_uploaded_date'])
+                        print(f"DEBUG: Updated Composition tracking for individual inspection {inspection_id}")
                     # Clear cache after individual upload - CLEAR ALL RELEVANT CACHES
                     from django.core.cache import cache
-                    
+
+                    # CRITICAL: Create sanitized folder name to match cache keys in get_inspection_files_local
+                    sanitized_folder = create_folder_name(client_name)
+
                     # Clear all cache keys that could affect file detection
                     cache_keys_to_clear = [
                         f"shipment_list_{request.user.id}_{request.user.role}",
@@ -2409,6 +2459,8 @@ def upload_document(request):
                         f"file_status_{client_name}_{inspection_date}",
                         "inspection_files_cache",
                         f"local_files:{client_name}:{current_time.year}:{current_time.strftime('%B')}",
+                        # CRITICAL: Also clear with SANITIZED folder name (lowercase, underscores)
+                        f"local_files:{sanitized_folder}:{current_time.year}:{current_time.strftime('%B')}",
                         "page_clients_status_cache",
                         f"files_cache_{client_name}_{inspection_date}",
                         f"compliance_status_{client_name}_{inspection.date_of_inspection}",
@@ -2418,9 +2470,9 @@ def upload_document(request):
 
                     for cache_key in cache_keys_to_clear:
                         cache.delete(cache_key)
-                        print(f" Cleared cache key: {cache_key}")
-                    
-                    print(f" Cleared ALL relevant caches after upload")
+                        print(f"✅ Cleared cache key: {cache_key}")
+
+                    print(f"✅ Cleared ALL relevant caches after individual upload (including sanitized folder name)")
             
             # Note: OneDrive sync is handled by the scheduled sync service after the configured delay period
             # Files are only uploaded to OneDrive after inspections are marked as "sent" and the delay period has passed
@@ -2499,7 +2551,7 @@ def scan_inspection_folders(test_path, seen_files):
         print(f"[DEBUG] Checking inspection folder: {inspection_folder}")
         
         # Check each document type in the inspection folder
-        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence']
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence', 'composition']
         for doc_type in doc_types:
             doc_path = os.path.join(inspection_path, doc_type)
             if os.path.exists(doc_path):
@@ -2574,7 +2626,7 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
         print(f" [DEBUG] Checking inspection folder: {inspection_folder}")
         
         # Check each document type in the inspection folder
-        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence']
+        doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence', 'composition']
         for doc_type in doc_types:
             doc_path = os.path.join(inspection_path, doc_type)
             if os.path.exists(doc_path):
@@ -2612,7 +2664,7 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
                                         category_key = 'rfi'
                                     elif doc_type == 'lab results':
                                         # Check if it's a lab form file based on filename
-                                        if 'lab_form' in filename.lower():
+                                        if 'lab_form' in filename.lower() or 'lab-form' in filename.lower() or 'labform' in filename.lower():
                                             category_key = 'lab_form'
                                         else:
                                             category_key = 'lab'
@@ -2717,7 +2769,7 @@ def list_uploaded_files(request):
             print(f" [DEBUG] Category '{category}' has {len(files)} files")
 
         # Initialize any missing categories
-        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence']:
+        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence', 'composition']:
             if category not in files_list:
                 files_list[category] = []
                 print(f" [DEBUG] Initialized empty list for missing category '{category}'")
@@ -2799,9 +2851,13 @@ def list_client_folder_files(request):
         # Clear cache if force_refresh is requested
         if force_refresh:
             from django.core.cache import cache
-            cache_key = f"local_files:{client_name}:{year_folder}:{month_folder}"
-            cache.delete(cache_key)
-            print(f"[DEBUG] Cleared cache for: {cache_key}")
+            # Clear BOTH original and sanitized cache keys (cache uses sanitized name)
+            cache_key_original = f"local_files:{client_name}:{year_folder}:{month_folder}"
+            cache_key_sanitized = f"local_files:{sanitized_client_name}:{year_folder}:{month_folder}"
+            cache.delete(cache_key_original)
+            cache.delete(cache_key_sanitized)
+            print(f"✅ [CACHE] Cleared cache for original: {cache_key_original}")
+            print(f"✅ [CACHE] Cleared cache for sanitized: {cache_key_sanitized}")
 
         # Use sanitized client name to match upload folder structure
         parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
@@ -2828,7 +2884,7 @@ def list_client_folder_files(request):
                 files_list[category].extend(file_list)
 
             # Also check traditional document folders (for backward compatibility)
-            traditional_docs = ['rfi', 'Request For Invoice', 'invoice', 'lab', 'lab results', 'retest', 'occurrence']
+            traditional_docs = ['rfi', 'Request For Invoice', 'invoice', 'lab', 'lab results', 'retest', 'occurrence', 'composition']
             for doc_type in traditional_docs:
                 doc_path = os.path.join(test_path, doc_type)
                 if os.path.exists(doc_path):
@@ -2867,10 +2923,12 @@ def list_client_folder_files(request):
                                         elif doc_type == 'Request For Invoice':
                                             actual_doc_type = 'rfi'
                                         elif doc_type in ['lab', 'lab results']:
-                                            if 'lab_form' in filename.lower():
+                                            if 'lab_form' in filename.lower() or 'lab-form' in filename.lower() or 'labform' in filename.lower():
                                                 actual_doc_type = 'lab_form'
                                             else:
                                                 actual_doc_type = 'lab'
+                                        elif doc_type == 'composition':
+                                            actual_doc_type = 'composition'
 
                                         # Filter by inspection ID if provided
                                         if inspection_id:
@@ -2947,7 +3005,7 @@ def list_client_folder_files(request):
                             print(f"Found {len(files)} compliance files in {commodity_folder}")
 
         # Initialize any missing categories before returning
-        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence']:
+        for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence', 'composition']:
             if category not in files_list:
                 files_list[category] = []
                 print(f"[DEBUG] Initialized empty list for missing category '{category}'")
@@ -5007,24 +5065,53 @@ def settings_view(request):
                 
                 # Get client account code mapping
                 client_map = {c.name: (c.internal_account_code or 'no') for c in Client.objects.all()}
-                
-                # Google Drive folder ID
-                folder_id = '18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4'
-                
+
+                # Google Drive parent folder ID (2025 folder containing month subfolders)
+                parent_folder_id = '1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP'
+
                 def pull_all_data_background():
                     """Background function to pull ALL data from Google Drive"""
                     try:
-                        print("Starting full system sync - pulling ALL data from Google Drive...")
-                        
+                        from datetime import datetime, timedelta
+
+                        # Dynamically determine which months to pull from (October 2025 onwards)
+                        start_month = datetime(2025, 10, 1)  # October 2025
+                        current_date = datetime.now()
+
+                        # Generate list of month names from October 2025 to current month + 1 month ahead
+                        target_months = []
+                        temp_date = start_month
+                        while temp_date <= current_date.replace(day=1) + timedelta(days=62):  # Current + ~2 months
+                            month_name = temp_date.strftime('%B %Y')  # e.g., "October 2025"
+                            target_months.append(month_name)
+                            # Move to next month
+                            if temp_date.month == 12:
+                                temp_date = datetime(temp_date.year + 1, 1, 1)
+                            else:
+                                temp_date = datetime(temp_date.year, temp_date.month + 1, 1)
+
+                        print(f"Starting full system sync - pulling data from: {', '.join(target_months)}")
+
                         # Initialize Google Drive service
                         drive_service = GoogleDriveService()
                         print(" Google Drive service initialized")
-                        
-                        # Get file list from Google Drive
-                        print(" Fetching file list from Google Drive...")
-                        drive_files = drive_service.list_files_in_folder(folder_id, request=None)
-                        file_lookup = GoogleDriveService.build_file_lookup(drive_files)
-                        print(f" Found {len(drive_files)} files in Google Drive")
+
+                        # Get all subfolders in the 2025 parent folder
+                        print(f" Fetching month folders from parent folder...")
+                        month_folders = drive_service.list_files_in_folder(parent_folder_id, request=None)
+
+                        # Collect all files from target month folders
+                        all_drive_files = []
+                        for folder in month_folders:
+                            if folder.get('mimeType') == 'application/vnd.google-apps.folder' and folder.get('name') in target_months:
+                                print(f" Fetching files from {folder['name']}...")
+                                month_files = drive_service.list_files_in_folder(folder['id'], request=None)
+                                all_drive_files.extend(month_files)
+                                print(f"   Found {len(month_files)} files in {folder['name']}")
+
+                        # Build file lookup from collected files
+                        file_lookup = GoogleDriveService.build_file_lookup(all_drive_files)
+                        print(f" Total files found across all target months: {len(all_drive_files)}")
                         
                         # Process all inspections
                         total_inspections = all_inspections.count()
@@ -5672,17 +5759,27 @@ def update_group_comment(request):
 
             # Find all inspections in this group using normalized client name
             import re as _re
+            import logging
+            logger = logging.getLogger(__name__)
+
             def _normalize(n):
                 return _re.sub(r'[^a-zA-Z0-9]', '', (n or '')).lower()
 
             raw_key = _normalize(client_name)
+            logger.info(f'[COMMENT] Looking for inspections - group_id: {group_id}, client_name: {client_name}, raw_key: {raw_key}, date: {date_of_inspection}')
+
             candidate_qs = FoodSafetyAgencyInspection.objects.filter(
                 date_of_inspection=date_of_inspection
             )
+            logger.info(f'[COMMENT] Found {candidate_qs.count()} inspections on date {date_of_inspection}')
+
             matching_ids = [ins.id for ins in candidate_qs if _normalize(ins.client_name) == raw_key]
+            logger.info(f'[COMMENT] Matching inspection IDs: {matching_ids}')
+
             inspections = FoodSafetyAgencyInspection.objects.filter(id__in=matching_ids)
 
             if not inspections.exists():
+                logger.error(f'[COMMENT] No inspections found for group: {group_id}')
                 return JsonResponse({
                     'success': False,
                     'error': f'No inspections found for group: {group_id}'
@@ -5690,6 +5787,7 @@ def update_group_comment(request):
 
             # Update comment for all inspections in the group
             updated_count = inspections.update(comment=comment)
+            logger.info(f'[COMMENT] Updated comment for {updated_count} inspections')
 
             return JsonResponse({
                 'success': True,
@@ -7532,7 +7630,9 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
             'invoice': 'invoice',
             'lab': 'lab',  # Simplified from "lab results"
             'retest': 'retest',
-            'compliance': 'compliance'  # Lowercase for consistency
+            'compliance': 'compliance',  # Lowercase for consistency
+            'occurrence': 'occurrence',
+            'composition': 'composition'
         }
         
         files_by_category = {}
@@ -7557,7 +7657,7 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         
         # Simplified - use only one folder structure (consistent naming)
         folder_structures = [
-            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab', 'retest': 'retest', 'compliance': 'compliance'}
+            {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab', 'retest': 'retest', 'compliance': 'compliance', 'occurrence': 'occurrence', 'composition': 'composition'}
         ]
         
         # Enhanced compliance file scanning
@@ -8649,11 +8749,13 @@ def get_page_clients_files(request):
         has_lab = len(files_by_category.get('lab', [])) > 0
         has_retest = len(files_by_category.get('retest', [])) > 0
         has_compliance = len(files_by_category.get('compliance', [])) > 0
+        has_occurrence = len(files_by_category.get('occurrence', [])) > 0
+        has_composition = len(files_by_category.get('composition', [])) > 0
         
         # Determine status based on user requirements:
         # Green: ALL required documents (RFI, Invoice, Lab, Compliance) exist
         # Orange: Only compliance document exists (or compliance + some others but not all)
-        # Blue: Has RFI/Invoice/Lab but no compliance documents
+        # Blue: Has RFI/Invoice/Lab/Retest/Occurrence/Composition but no compliance documents
         # Red: No files at all
         if total_files == 0:
             file_status = 'no_files'  # Red - no files at all
@@ -8661,7 +8763,7 @@ def get_page_clients_files(request):
             file_status = 'all_files'  # Green - all required documents exist
         elif has_compliance:
             file_status = 'compliance_only'  # Orange - compliance exists (with or without other docs)
-        elif has_rfi or has_invoice or has_lab or has_retest:
+        elif has_rfi or has_invoice or has_lab or has_retest or has_occurrence or has_composition:
             file_status = 'partial_files'  # Blue - has some files but no compliance
         else:
             file_status = 'no_files'  # Red - no files at all
@@ -8853,7 +8955,7 @@ def get_page_clients_file_status(request):
                 client_folder_variations = [sanitized_client_name, sanitized_with_apostrophe, client_name]
                 
                 # Check all folder variations for files for this specific date
-                has_rfi_dir = has_invoice_dir = has_lab_dir = has_retest_dir = has_compliance_dir = has_occurrence_dir = False
+                has_rfi_dir = has_invoice_dir = has_lab_dir = has_retest_dir = has_compliance_dir = has_occurrence_dir = has_composition_dir = False
                 
                 parent_path = os.path.join(inspection_base, year, month)
                 if os.path.exists(parent_path):
@@ -9055,6 +9157,35 @@ def get_page_clients_file_status(request):
                                             if has_occurrence_dir:
                                                 break
 
+                            # Check Composition files (similar to other document types)
+                            if not has_composition_dir:
+                                composition_variations = ['composition', 'Composition']
+
+                                for comp_variant in composition_variations:
+                                    comp_path = os.path.join(test_path, comp_variant)
+                                    if os.path.exists(comp_path):
+                                        has_composition_dir = any(os.path.isfile(os.path.join(comp_path, f)) for f in os.listdir(comp_path))
+                                        if has_composition_dir:
+                                            print(f" [BUTTON] Found Composition files in '{comp_variant}' folder: {comp_path}")
+                                            break
+                                        else:
+                                            print(f" [BUTTON] '{comp_variant}' folder exists but no files: {comp_path}")
+                                    else:
+                                        print(f" [BUTTON] '{comp_variant}' folder does not exist: {comp_path}")
+
+                                # Also check nested Inspection-XXXX folders
+                                if not has_composition_dir:
+                                    for item in os.listdir(test_path):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            for comp_variant in composition_variations:
+                                                nested_comp_path = os.path.join(test_path, item, comp_variant)
+                                                if os.path.exists(nested_comp_path) and any(os.path.isfile(os.path.join(nested_comp_path, f)) for f in os.listdir(nested_comp_path)):
+                                                    has_composition_dir = True
+                                                    print(f" [BUTTON] Found Composition files in nested folder {item}/{comp_variant}")
+                                                    break
+                                            if has_composition_dir:
+                                                break
+
                 # Check actual file existence on disk AND sync database records
                 # If files exist on disk but database doesn't have uploader info, update database
                 has_rfi = has_rfi_dir
@@ -9062,9 +9193,10 @@ def get_page_clients_file_status(request):
                 has_lab = has_lab_dir
                 has_retest = has_retest_dir
                 has_occurrence = has_occurrence_dir
-                
+                has_composition = has_composition_dir
+
                 # SYNC DATABASE: Update database records to match actual files on disk
-                if has_rfi or has_invoice or has_lab or has_retest:
+                if has_rfi or has_invoice or has_lab or has_retest or has_composition:
                     # Find matching inspections for this client and date
                     matching_inspections = FoodSafetyAgencyInspection.objects.filter(
                         client_name=client_name,
@@ -9107,6 +9239,14 @@ def get_page_clients_file_status(request):
                                 retest_uploaded_date=current_time
                             )
                             print(f" [SYNC] Updated Retest database records for {client_name} - files exist on disk")
+
+                        if has_composition and not matching_inspections.filter(composition_uploaded_by__isnull=False).exists():
+                            # Files exist but database doesn't have uploader info - set to system user
+                            matching_inspections.update(
+                                composition_uploaded_by_id=1,  # System user
+                                composition_uploaded_date=current_time
+                            )
+                            print(f" [SYNC] Updated Composition database records for {client_name} - files exist on disk")
                 has_compliance = has_compliance_dir
                 
                 # Determine status for this specific client+date combination
@@ -9115,12 +9255,12 @@ def get_page_clients_file_status(request):
                     file_status = 'all_files'  # Green
                 elif has_compliance:
                     file_status = 'compliance_only'  # Orange
-                elif has_rfi or has_invoice or has_lab or has_retest or has_occurrence:
+                elif has_rfi or has_invoice or has_lab or has_retest or has_occurrence or has_composition:
                     file_status = 'partial_files'  # Blue
                 else:
                     file_status = 'no_files'  # Red
 
-                print(f" [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk), Occurrence:{has_occurrence} (disk)")
+                print(f" [BUTTON] {unique_key}: RFI:{has_rfi} (disk), Invoice:{has_invoice} (disk), Lab:{has_lab} (disk), Compliance:{has_compliance} (disk), Occurrence:{has_occurrence} (disk), Composition:{has_composition} (disk)")
                 print(f" [BUTTON] Final status for {unique_key}: {file_status} (based on actual files only)")
                 
                 # Debug: Special logging for New Poultry Retailer
@@ -9437,7 +9577,7 @@ def download_all_inspection_files(request):
                                             inspection_id = id_match.group(1)
                                         
                                         # Determine document type from filename and category
-                                        if '_lab_form_' in filename.lower() or '_labform_' in filename.lower():
+                                        if '_lab_form_' in filename.lower() or '_labform_' in filename.lower() or 'lab-form' in filename.lower() or '-lab-form' in filename.lower():
                                             doc_type = 'Lab Form'
                                         elif category in ['lab', 'lab results']:
                                             doc_type = 'Lab'
@@ -10747,12 +10887,41 @@ def download_first_10_compliance_by_commodity(request):
     from ..models import Client
     client_map = {c.name: (c.internal_account_code or 'no') for c in Client.objects.all()}
 
-    # Load Drive files and build lookup
-    folder_id = '18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4'
+    # Load Drive files from October 2025 onwards (dynamic)
+    from datetime import datetime, timedelta
+
+    parent_folder_id = '1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP'  # 2025 folder
+
+    # Dynamically determine which months to pull from (October 2025 onwards)
+    start_month = datetime(2025, 10, 1)  # October 2025
+    current_date = datetime.now()
+
+    # Generate list of month names from October 2025 to current month + 1 month ahead
+    target_months = []
+    temp_date = start_month
+    while temp_date <= current_date.replace(day=1) + timedelta(days=62):  # Current + ~2 months
+        month_name = temp_date.strftime('%B %Y')  # e.g., "October 2025"
+        target_months.append(month_name)
+        # Move to next month
+        if temp_date.month == 12:
+            temp_date = datetime(temp_date.year + 1, 1, 1)
+        else:
+            temp_date = datetime(temp_date.year, temp_date.month + 1, 1)
+
     drive = GoogleDriveService()
-    print("[View] download_first_10_compliance_by_commodity: listing drive files")
-    # Only list enough files to match quickly (cap 2000)
-    files = drive.list_files_in_folder(folder_id, request=request, max_items=2000)
+    print(f"[View] download_first_10_compliance_by_commodity: fetching from {', '.join(target_months)}")
+
+    # Get all subfolders in the 2025 parent folder
+    month_folders = drive.list_files_in_folder(parent_folder_id, request=request)
+
+    # Collect all files from target month folders
+    files = []
+    for folder in month_folders:
+        if folder.get('mimeType') == 'application/vnd.google-apps.folder' and folder.get('name') in target_months:
+            print(f"[View] Fetching files from {folder['name']}...")
+            month_files = drive.list_files_in_folder(folder['id'], request=request, max_items=2000)
+            files.extend(month_files)
+            print(f"[View] Found {len(month_files)} files in {folder['name']}")
     lookup = GoogleDriveService.build_file_lookup(files)
 
     # Commodity grouping

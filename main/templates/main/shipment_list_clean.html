@@ -433,7 +433,7 @@
             #shipmentsTable tbody tr td {
                 @apply block w-full py-2 border-b border-gray-100 last:border-b-0;
             }
-            
+
             #shipmentsTable tbody tr td:before {
                 content: attr(data-label);
                 position: absolute;
@@ -624,7 +624,7 @@
             }
 
             .detail-table {
-                min-width: 100%;
+                min-width: 2000px;
                 font-size: 0.75rem;
                 table-layout: auto;
             }
@@ -666,10 +666,70 @@
                 font-size: 0.7rem;
                 padding: 2px 6px;
             }
-            
+
+            /* Inspector role: Hide columns 6-14 on all screen sizes */
+            body.user-role-inspector .detail-table th:nth-child(6),
+            body.user-role-inspector .detail-table td:nth-child(6),
+            body.user-role-inspector .detail-table th:nth-child(7),
+            body.user-role-inspector .detail-table td:nth-child(7),
+            body.user-role-inspector .detail-table th:nth-child(8),
+            body.user-role-inspector .detail-table td:nth-child(8),
+            body.user-role-inspector .detail-table th:nth-child(9),
+            body.user-role-inspector .detail-table td:nth-child(9),
+            body.user-role-inspector .detail-table th:nth-child(10),
+            body.user-role-inspector .detail-table td:nth-child(10),
+            body.user-role-inspector .detail-table th:nth-child(11),
+            body.user-role-inspector .detail-table td:nth-child(11),
+            body.user-role-inspector .detail-table th:nth-child(12),
+            body.user-role-inspector .detail-table td:nth-child(12),
+            body.user-role-inspector .detail-table th:nth-child(13),
+            body.user-role-inspector .detail-table td:nth-child(13),
+            body.user-role-inspector .detail-table th:nth-child(14),
+            body.user-role-inspector .detail-table td:nth-child(14) {
+                display: none !important;
+            }
+
+            /* Inspector role: Hide Lab and Retest buttons everywhere (detail table, mobile cards, all views) */
+            /* Inspectors should only see Lab Form button */
+            body.user-role-inspector .btn-lab,
+            body.user-role-inspector .btn-retest,
+            body.user-role-inspector button[title*="retest" i],
+            body.user-role-inspector button[title*="Lab result" i],
+            body.user-role-inspector button[title*="Lab upload" i],
+            body.user-role-inspector button[onclick*="uploadLab(" i],
+            body.user-role-inspector button[onclick*="uploadRetest(" i],
+            body.user-role-inspector button:has(i.fa-flask):not(:has(i.fa-file-alt)),
+            body.user-role-inspector button:has(i.fa-redo) {
+                display: none !important;
+            }
+
             .detail-table .compliance-status {
                 font-size: 0.7rem;
                 padding: 2px 6px;
+            }
+
+            /* Actions column - stack buttons vertically on mobile */
+            .detail-table td:last-child {
+                min-width: 100px !important;
+                max-width: 120px !important;
+            }
+
+            .detail-table .btn-lab,
+            .detail-table .btn-lab-form,
+            .detail-table .btn-retest {
+                display: block !important;
+                width: 100% !important;
+                margin: 2px 0 !important;
+                font-size: 0.65rem !important;
+                padding: 3px 2px !important;
+                white-space: nowrap !important;
+            }
+
+            .detail-table .btn-lab i,
+            .detail-table .btn-lab-form i,
+            .detail-table .btn-retest i {
+                font-size: 0.6rem;
+                margin-right: 2px;
             }
         }
         
@@ -853,7 +913,7 @@
             }
 
             .detail-table {
-                min-width: 100% !important;
+                min-width: 2000px !important;
                 font-size: 0.75rem !important;
                 table-layout: auto !important;
             }
@@ -1902,7 +1962,29 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 60px; min-width: 60px; max-width: 60px; } /* Lab */
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+            .detail-table td:nth-child(15) { width: 350px; min-width: 350px; max-width: 350px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+
+            /* Inspector role: Hide columns 6-14 (Sampled, Needs Retest, Class, Fat, Protein, Calcium, DNA, Bought Sample, Lab) */
+            body.user-role-inspector .detail-table th:nth-child(6),
+            body.user-role-inspector .detail-table td:nth-child(6),
+            body.user-role-inspector .detail-table th:nth-child(7),
+            body.user-role-inspector .detail-table td:nth-child(7),
+            body.user-role-inspector .detail-table th:nth-child(8),
+            body.user-role-inspector .detail-table td:nth-child(8),
+            body.user-role-inspector .detail-table th:nth-child(9),
+            body.user-role-inspector .detail-table td:nth-child(9),
+            body.user-role-inspector .detail-table th:nth-child(10),
+            body.user-role-inspector .detail-table td:nth-child(10),
+            body.user-role-inspector .detail-table th:nth-child(11),
+            body.user-role-inspector .detail-table td:nth-child(11),
+            body.user-role-inspector .detail-table th:nth-child(12),
+            body.user-role-inspector .detail-table td:nth-child(12),
+            body.user-role-inspector .detail-table th:nth-child(13),
+            body.user-role-inspector .detail-table td:nth-child(13),
+            body.user-role-inspector .detail-table th:nth-child(14),
+            body.user-role-inspector .detail-table td:nth-child(14) {
+                display: none !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1985,9 +2067,31 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 50px; min-width: 50px; max-width: 50px; }
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+            .detail-table td:nth-child(15) { width: 350px; min-width: 350px; max-width: 350px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+
+            /* Inspector role: Hide columns 6-14 (Sampled, Needs Retest, Class, Fat, Protein, Calcium, DNA, Bought Sample, Lab) */
+            body.user-role-inspector .detail-table th:nth-child(6),
+            body.user-role-inspector .detail-table td:nth-child(6),
+            body.user-role-inspector .detail-table th:nth-child(7),
+            body.user-role-inspector .detail-table td:nth-child(7),
+            body.user-role-inspector .detail-table th:nth-child(8),
+            body.user-role-inspector .detail-table td:nth-child(8),
+            body.user-role-inspector .detail-table th:nth-child(9),
+            body.user-role-inspector .detail-table td:nth-child(9),
+            body.user-role-inspector .detail-table th:nth-child(10),
+            body.user-role-inspector .detail-table td:nth-child(10),
+            body.user-role-inspector .detail-table th:nth-child(11),
+            body.user-role-inspector .detail-table td:nth-child(11),
+            body.user-role-inspector .detail-table th:nth-child(12),
+            body.user-role-inspector .detail-table td:nth-child(12),
+            body.user-role-inspector .detail-table th:nth-child(13),
+            body.user-role-inspector .detail-table td:nth-child(13),
+            body.user-role-inspector .detail-table th:nth-child(14),
+            body.user-role-inspector .detail-table td:nth-child(14) {
+                display: none !important;
+            }
         }
-        
+
         /* Tablet responsive design */
         @media (min-width: 769px) and (max-width: 1024px) {
             table {
@@ -2063,24 +2167,150 @@
             .detail-table th:nth-child(14),
             .detail-table td:nth-child(14) { width: 70px; min-width: 70px; max-width: 70px; }
             .detail-table th:nth-child(15),
-            .detail-table td:nth-child(15) { width: 280px; min-width: 280px; max-width: 280px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+            .detail-table td:nth-child(15) { width: 350px; min-width: 350px; max-width: 350px; } /* Actions - increased for Lab, Lab Form, Retest buttons */
+        }
+
+        /* Laptop screens (15-inch) - 1366px to 1620px */
+        @media (min-width: 1025px) and (max-width: 1620px) {
+            .detail-table-wrapper {
+                width: 100%;
+                border-radius: var(--radius);
+                max-width: 100%;
+                margin: 0;
+                padding: 0;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .detail-table {
+                width: 100% !important;
+                min-width: auto !important;
+                font-size: 0.58rem !important;
+                table-layout: fixed !important;
+            }
+
+            .detail-table th,
+            .detail-table td {
+                padding: 3px 2px !important;
+                white-space: nowrap !important;
+                text-align: center !important;
+                font-size: 0.58rem !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            .detail-table th {
+                background: var(--primary-light) !important;
+                font-weight: bold !important;
+                font-size: 0.56rem !important;
+            }
+
+            /* Optimized column widths for 15-inch laptops - more width for readability */
+            .detail-table th:nth-child(1),
+            .detail-table td:nth-child(1) { width: 3% !important; } /* Inspection No */
+
+            .detail-table th:nth-child(2),
+            .detail-table td:nth-child(2) { width: 9% !important; } /* Client Name */
+
+            .detail-table th:nth-child(3),
+            .detail-table td:nth-child(3) { width: 5% !important; } /* Commodity */
+
+            .detail-table th:nth-child(4),
+            .detail-table td:nth-child(4) { width: 7% !important; overflow: visible !important; } /* Compliance */
+
+            .detail-table th:nth-child(5),
+            .detail-table td:nth-child(5) { width: 10% !important; } /* Product Name */
+
+            .detail-table th:nth-child(6),
+            .detail-table td:nth-child(6) { width: 16% !important; min-width: 250px !important; text-align: left !important; } /* Sampled */
+
+            .detail-table th:nth-child(7),
+            .detail-table td:nth-child(7) { width: 7% !important; text-align: center !important; } /* Needs Retest */
+
+            .detail-table th:nth-child(8),
+            .detail-table td:nth-child(8) { width: 11% !important; text-align: center !important; } /* Class */
+
+            .detail-table th:nth-child(9),
+            .detail-table td:nth-child(9) { width: 10% !important; text-align: center !important; } /* Fat */
+
+            .detail-table th:nth-child(10),
+            .detail-table td:nth-child(10) { width: 15% !important; text-align: center !important; white-space: normal !important; } /* Protein */
+
+            .detail-table th:nth-child(11),
+            .detail-table td:nth-child(11) { width: 15% !important; text-align: center !important; white-space: normal !important; } /* Calcium */
+
+            .detail-table th:nth-child(12),
+            .detail-table td:nth-child(12) { width: 15% !important; text-align: center !important; white-space: normal !important; } /* DNA */
+
+            .detail-table th:nth-child(13),
+            .detail-table td:nth-child(13) { width: 8% !important; } /* Bought Sample */
+
+            .detail-table th:nth-child(14),
+            .detail-table td:nth-child(14) { width: 6% !important; } /* Lab */
+
+            .detail-table th:nth-child(15),
+            .detail-table td:nth-child(15) { width: 10% !important; } /* Actions/Lab Form */
+
+            .detail-table .product-name-text {
+                max-width: 100% !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                display: inline-block !important;
+            }
+
+            .detail-table .form-control {
+                font-size: 0.56rem !important;
+                padding: 2px 2px !important;
+                width: 100% !important;
+            }
+
+            .detail-table .sampled-badge {
+                font-size: 0.54rem !important;
+                padding: 1px 3px !important;
+            }
+
+            .detail-table .compliance-status {
+                font-size: 0.54rem !important;
+                padding: 2px 4px !important;
+                min-width: auto !important;
+            }
+
+            /* Buttons in actions column for laptops - more compact */
+            .detail-table .btn-lab,
+            .detail-table .btn-lab-form,
+            .detail-table .btn-retest {
+                display: inline-block !important;
+                width: auto !important;
+                margin: 1px 0 !important;
+                font-size: 0.54rem !important;
+                padding: 2px 4px !important;
+                white-space: nowrap !important;
+            }
+
+            .detail-table .btn-lab i,
+            .detail-table .btn-lab-form i,
+            .detail-table .btn-retest i {
+                font-size: 0.5rem;
+                margin-right: 1px;
+            }
         }
 
         /* Large desktop optimization */
-        @media (min-width: 1200px) {
+        @media (min-width: 1621px) {
             table {
                 min-width: 1000px;
                 font-size: 0.75rem;
             }
-            
+
             th, td {
                 padding: 5px 7px;
                 font-size: 0.75rem;
             }
-            
+
             /* Restore original column widths for large screens */
             .col-expand { width: 25px; min-width: 25px; max-width: 25px; }
-            .col-client-name { width: 120px; min-width: 120px; max-width: 120px; }
+            .col-client-name { width: 450px; min-width: 450px; max-width: 450px; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; }
             .col-account-code { width: 140px; min-width: 140px; max-width: 140px; white-space: nowrap; }
             .col-date { width: 70px; min-width: 70px; max-width: 70px; }
             .col-compliance { width: 100px; min-width: 100px; max-width: 100px; text-align: center; }
@@ -2094,25 +2324,77 @@
             .col-additional-email { width: 110px; min-width: 110px; max-width: 110px; }
             .col-approved { width: 90px; min-width: 90px; max-width: 90px; }
             .col-send { width: 140px; min-width: 140px; max-width: 140px; }
-            
+
             /* Large desktop detail content */
             .detail-content {
                 padding: 16px;
                 font-size: 0.8rem;
                 margin: 8px;
             }
-            
+
             .detail-table {
                 font-size: 0.75rem;
             }
-            
+
             .detail-table th,
             .detail-table td {
                 padding: 6px 8px;
                 font-size: 0.75rem;
             }
         }
-        
+
+        /* Additional specific column width overrides for 1024px to 1600px screens */
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table th:nth-child(6), .detail-table td:nth-child(6) {
+                width: 16% !important;
+                min-width: 250px !important;
+                max-width: 0 !important;
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+                text-align: left !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                overflow-wrap: break-word !important;
+                position: relative !important;
+                vertical-align: middle !important;
+                box-sizing: border-box !important;
+                border-bottom: 1px solid var(--border);
+                z-index: 5;
+            }
+        }
+
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table th:nth-child(9), .detail-table td:nth-child(9) {
+                text-align: center !important;
+                width: 16% !important;
+            }
+        }
+
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table th:nth-child(10), .detail-table td:nth-child(10) {
+                text-align: center !important;
+                width: 15% !important;
+                white-space: normal !important;
+            }
+        }
+
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table th:nth-child(11), .detail-table td:nth-child(11) {
+                text-align: center !important;
+                width: 15% !important;
+                white-space: normal !important;
+            }
+        }
+
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table th:nth-child(12), .detail-table td:nth-child(12) {
+                text-align: center !important;
+                width: 15% !important;
+                white-space: normal !important;
+            }
+        }
+
         /* Enhanced touch interactions for mobile */
         @media (max-width: 768px) {
             .expand-btn {
@@ -2238,9 +2520,24 @@
         /* Removed fixed 300px constraints - let column widths be controlled by specific rules below */
 
         @media (min-width: 1024px) {
+            #shipmentsTable th, #shipmentsTable td {
+                white-space: nowrap !important;
+                padding: 8px 12px !important;
+                text-align: center !important;
+            }
+
             #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) {
                 width: auto;
                 text-align: center !important;
+            }
+
+            #shipmentsTable th:nth-child(6), #shipmentsTable td:nth-child(6) {
+                text-align: left !important;
+            }
+
+            #shipmentsTable th:nth-child(7), #shipmentsTable td:nth-child(7) {
+                text-align: left !important;
+                font-size: 0.85rem !important;
             }
         }
         
@@ -2264,7 +2561,7 @@
         }
         .col-client-name {
             width: auto !important;
-            min-width: 180px !important;
+            min-width: 250px !important;
             max-width: none !important;
             flex: none !important;
             white-space: normal !important;
@@ -2333,16 +2630,25 @@
             text-align: center;
             flex: none !important;
         }
-        .col-invoice { 
-            width: 100px !important; 
-            min-width: 100px !important; 
-            max-width: 100px !important; 
+        .col-invoice {
+            width: 100px !important;
+            min-width: 100px !important;
+            max-width: 100px !important;
             text-align: center;
             flex: none !important;
         }
-        
+
         /* Hide invoice column for inspectors */
         .hide-invoice .col-invoice { display: none !important; }
+
+        .col-composition {
+            width: 120px !important;
+            min-width: 120px !important;
+            max-width: 120px !important;
+            text-align: center;
+            flex: none !important;
+        }
+
         .col-km { 
             width: 100px !important; 
             min-width: 100px !important; 
@@ -3313,19 +3619,8 @@
             box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
         }
         
-        
+
         /* More specific selectors to override inline styles and btn-danger class */
-        .btn.btn-view-files.btn-view-files-orange,
-        .btn-sm.btn-view-files.btn-view-files-orange,
-        .btn-danger.btn-view-files-orange,
-        button.btn.btn-view-files.btn-view-files-orange,
-        button.btn-sm.btn-view-files.btn-view-files-orange,
-        button.btn-danger.btn-view-files-orange {
-            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-            background-color: #f59e0b !important;
-            color: white !important;
-        }
-        
         .btn.btn-view-files.btn-view-files-green,
         .btn-sm.btn-view-files.btn-view-files-green,
         .btn-danger.btn-view-files-green,
@@ -3336,7 +3631,7 @@
             background-color: #10B981 !important;
             color: white !important;
         }
-        
+
         .btn.btn-view-files.btn-view-files-red,
         .btn-sm.btn-view-files.btn-view-files-red,
         .btn-danger.btn-view-files-red,
@@ -3345,6 +3640,18 @@
         button.btn-danger.btn-view-files-red {
             background: linear-gradient(135deg, #EF4444, #dc2626) !important;
             background-color: #EF4444 !important;
+            color: white !important;
+        }
+
+        /* ORANGE must come AFTER RED to override in cascade */
+        .btn.btn-view-files.btn-view-files-orange,
+        .btn-sm.btn-view-files.btn-view-files-orange,
+        .btn-danger.btn-view-files-orange,
+        button.btn.btn-view-files.btn-view-files-orange,
+        button.btn-sm.btn-view-files.btn-view-files-orange,
+        button.btn-danger.btn-view-files-orange {
+            background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+            background-color: #f59e0b !important;
             color: white !important;
         }
         
@@ -3373,9 +3680,10 @@
             color: white !important;
             box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
-        
-        
-        .btn-view-files-orange {
+
+
+        .btn-view-files-orange,
+        .files-button-custom.btn-view-files-orange {
             background: linear-gradient(135deg, #f59e0b, #d97706) !important;
             background-color: #f59e0b !important;
             color: white !important;
@@ -3972,7 +4280,7 @@
             .detail-table th:nth-child(3), .detail-table td:nth-child(3) { width: 100px !important; }
             .detail-table th:nth-child(4), .detail-table td:nth-child(4) { width: 180px !important; overflow: visible !important; }
             .detail-table th:nth-child(5), .detail-table td:nth-child(5) { width: 320px !important; }
-            .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 70px !important; }
+            .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 16% !important; min-width: 250px !important; }
             .detail-table th:nth-child(7), .detail-table td:nth-child(7) { width: 100px !important; }
             .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 320px !important; }
             .detail-table th:nth-child(9), .detail-table td:nth-child(9) { width: 45px !important; }
@@ -3981,26 +4289,28 @@
             .detail-table th:nth-child(12), .detail-table td:nth-child(12) { width: 45px !important; }
             .detail-table th:nth-child(13), .detail-table td:nth-child(13) { width: 100px !important; }
             .detail-table th:nth-child(14), .detail-table td:nth-child(14) { width: 130px !important; }
-            .detail-table th:nth-child(15), .detail-table td:nth-child(15) { width: 280px !important; }
+            .detail-table th:nth-child(15), .detail-table td:nth-child(15) { width: 350px !important; }
         }
         
         /* Detail table specific column widths - increased for better use of expanded space */
+        /* These are base widths for large screens - will be overridden by media queries for smaller screens */
         .detail-table th:nth-child(1) { width: 80px; } /* Inspection No */
         .detail-table th:nth-child(2) { width: 260px; } /* Client Name */
         .detail-table th:nth-child(3) { width: 100px; } /* Commodity */
         .detail-table th:nth-child(4) { width: 180px; overflow: visible !important; } /* Compliance */
         .detail-table th:nth-child(5) { width: 320px; } /* Product Name - increased width */
-        .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 80px; min-width: 80px; } /* Sampled */
-        .detail-table th:nth-child(7) { width: 120px; min-width: 120px; } /* Needs Retest */
+        /* Columns 6-12 widths controlled by media queries below */
+        /* .detail-table th:nth-child(6), .detail-table td:nth-child(6) { width: 80px; min-width: 80px; } */ /* Sampled - now controlled by media queries */
+        /* .detail-table th:nth-child(7) { width: 120px; min-width: 120px; } */ /* Needs Retest - now controlled by media queries */
         .detail-table th:nth-child(8), .detail-table td:nth-child(8) { width: 320px; min-width: 320px; } /* Class - same as Product Name */
         .detail-table td:nth-child(8) select { width: 100% !important; } /* Class dropdown - full width of column */
-        .detail-table th:nth-child(9) { width: 40px; } /* Fat */
-        .detail-table th:nth-child(10) { width: 40px; } /* Protein */
-        .detail-table th:nth-child(11) { width: 40px; } /* Calcium */
-        .detail-table th:nth-child(12) { width: 40px; } /* DNA */
+        /* .detail-table th:nth-child(9) { width: 40px; } */ /* Fat - now controlled by media queries */
+        /* .detail-table th:nth-child(10) { width: 40px; } */ /* Protein - now controlled by media queries */
+        /* .detail-table th:nth-child(11) { width: 40px; } */ /* Calcium - now controlled by media queries */
+        /* .detail-table th:nth-child(12) { width: 40px; } */ /* DNA - now controlled by media queries */
         .detail-table th:nth-child(13) { width: 100px; } /* Bought Sample */
         .detail-table th:nth-child(14) { width: 100px; } /* Lab */
-        .detail-table th:nth-child(15) { width: 280px; } /* Actions - Edit, Lab, Lab Form, Retest - increased for full visibility */
+        .detail-table th:nth-child(15) { width: 350px; min-width: 350px; white-space: normal; } /* Actions - Edit, Lab, Lab Form, Retest - increased for full visibility */
 
         /* Laptop-specific optimizations for 15-inch screens (1366px - 1600px) */
         @media (min-width: 1024px) and (max-width: 1600px) {
@@ -4223,6 +4533,7 @@
             padding: 10px;
             position: relative;
             z-index: 1;
+            overflow-x: auto;
         }
         
         /* Lock detail table wrapper to prevent main table shifting */
@@ -4236,7 +4547,52 @@
             margin: 0;
             padding: 0;
         }
-        
+
+        /* Tailwind responsive enhancements for detail table */
+        @media (max-width: 640px) {
+            .detail-table-wrapper {
+                border-radius: 0.5rem;
+            }
+            .detail-table th,
+            .detail-table td {
+                font-size: 0.65rem !important;
+                padding: 0.25rem !important;
+            }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .detail-table th,
+            .detail-table td {
+                font-size: 0.75rem !important;
+                padding: 0.5rem !important;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .detail-table th,
+            .detail-table td {
+                font-size: 0.875rem !important;
+                padding: 0.75rem !important;
+            }
+        }
+
+        /* Medium screens: 1024px to 1600px - Show all content, allow horizontal scroll */
+        @media (min-width: 1024px) and (max-width: 1600px) {
+            .detail-table {
+                width: auto !important;
+                table-layout: auto !important;
+            }
+            .detail-table th,
+            .detail-table td {
+                white-space: nowrap !important;
+                padding: 0.5rem 0.5rem !important;
+            }
+            .detail-table-wrapper {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+        }
+
         /* Keep actions inline on desktop and tablets */
         @media (max-width: 1024px) and (min-width: 769px) {
             .col-rfi, .col-invoice { width: 70px; min-width: 70px; max-width: 70px; }
@@ -4272,7 +4628,6 @@
         
         /* Specific styling for test columns in detail table */
         .detail-table .col-test {
-            min-width: 30px !important;
             max-width: 35px !important;
             padding: 2px 3px !important;
         }
@@ -4318,7 +4673,6 @@
         /* Test column styling */
         .col-test {
             text-align: center;
-            min-width: 25px;
             max-width: 30px;
             padding: 2px 2px !important;
         }
@@ -4447,19 +4801,15 @@
             max-width: 70px;
         }
         
-        /* Sampled column - increased width */
+        /* Sampled column */
         .detail-table th:nth-child(6),
         .detail-table td:nth-child(6) {
-            min-width: 50px;
-            max-width: 70px;
             text-align: center;
         }
-        
+
         /* Needs retest column */
         .detail-table th:nth-child(7),
         .detail-table td:nth-child(7) {
-            min-width: 60px;
-            max-width: 80px;
             text-align: center;
         }
         
@@ -5356,7 +5706,6 @@
             }
             
             .col-test {
-                min-width: 25px !important;
                 max-width: 30px !important;
             }
             
@@ -5454,7 +5803,7 @@
                 box-sizing: border-box !important;
                 font-size: 0.85rem !important;
             }
-            #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) { text-align: left !important; min-width: 180px !important; } /* Client Name */
+            #shipmentsTable th:nth-child(1), #shipmentsTable td:nth-child(1) { text-align: left !important; /* min-width: 180px !important; */ } /* Client Name */
             #shipmentsTable th:nth-child(2), #shipmentsTable td:nth-child(2) { text-align: left !important; min-width: 220px !important; } /* Account Code */
             #shipmentsTable th:nth-child(3), #shipmentsTable td:nth-child(3) { text-align: left !important; min-width: 180px !important; padding-left: 5px !important; padding-right: 5px !important; } /* Inspection Date */
             #shipmentsTable th:nth-child(4), #shipmentsTable td:nth-child(4) { min-width: 190px !important; } /* Compliant/Non-Compliant */
@@ -5465,24 +5814,50 @@
             #shipmentsTable th:nth-child(7), #shipmentsTable td:nth-child(7) { text-align: left !important; min-width: 160px !important; font-size: 0.85rem !important; } /* Inspector */
             #shipmentsTable th:nth-child(8), #shipmentsTable td:nth-child(8) { min-width: 150px !important; } /* View Files */
             #shipmentsTable th:nth-child(9), #shipmentsTable td:nth-child(9) { min-width: 100px !important; } /* RFI */
-            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) { min-width: 130px !important; } /* Occurrence */
-            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) { min-width: 280px !important; } /* Comment */
-            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) { min-width: 100px !important; } /* Invoice */
-            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) { min-width: 130px !important; } /* Distance (Km) */
-            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) { min-width: 130px !important; } /* Hours Worked */
-            #shipmentsTable th:nth-child(15), #shipmentsTable td:nth-child(15) { min-width: 110px !important; } /* Approved */
-            #shipmentsTable th:nth-child(16), #shipmentsTable td:nth-child(16) { min-width: 160px !important; } /* Sent Status */
+            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) { min-width: 100px !important; } /* Invoice */
+            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) { min-width: 130px !important; } /* Occurrence */
+            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) { min-width: 120px !important; } /* Composition */
+            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) { min-width: 280px !important; } /* Comment */
+            #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) { min-width: 130px !important; } /* Distance (Km) */
+            #shipmentsTable th:nth-child(15), #shipmentsTable td:nth-child(15) { min-width: 150px !important; } /* Hours Worked */
+            #shipmentsTable th:nth-child(16), #shipmentsTable td:nth-child(16) { min-width: 110px !important; } /* Approved */
+            #shipmentsTable th:nth-child(17), #shipmentsTable td:nth-child(17) { min-width: 160px !important; } /* Sent Status */
         }
 
         @media (min-width: 1024px) {
+            #shipmentsTable td:nth-child(5) {
+                text-align: left !important;
+                min-width: 340px !important;
+            }
             #shipmentsTable th:nth-child(6), #shipmentsTable td:nth-child(6) {
                 text-align: left !important;
                 min-width: 250px !important;
             }
+            #shipmentsTable th:nth-child(8), #shipmentsTable td:nth-child(8) {
+                min-width: 250px !important;
+            }
+            #shipmentsTable th:nth-child(9), #shipmentsTable td:nth-child(9) {
+                min-width: 120px !important;
+            }
+            #shipmentsTable th:nth-child(10), #shipmentsTable td:nth-child(10) {
+                min-width: 200px !important;
+            }
+            #shipmentsTable th:nth-child(11), #shipmentsTable td:nth-child(11) {
+                min-width: 120px !important;
+            }
+            #shipmentsTable th:nth-child(12), #shipmentsTable td:nth-child(12) {
+                min-width: 274px !important;
+            }
+            #shipmentsTable th:nth-child(13), #shipmentsTable td:nth-child(13) {
+                min-width: 274px !important;
+            }
             #shipmentsTable th:nth-child(14), #shipmentsTable td:nth-child(14) {
                 width: 200px !important;
                 text-align: center !important;
-                padding-right: 50px !important;
+                /* padding-right: 50px !important; */
+            }
+            #shipmentsTable th:nth-child(15), #shipmentsTable td:nth-child(15) {
+                min-width: 290px !important;
             }
         }
         
@@ -5550,6 +5925,14 @@
                 padding: 1.5rem 1rem !important;
                 display: flex !important;
                 visibility: visible !important;
+                position: relative !important;
+                z-index: 1 !important;
+            }
+
+            /* Ensure pagination doesn't overlap with mobile cards */
+            .group-card {
+                z-index: 2 !important;
+                position: relative !important;
             }
         }
         
@@ -5593,7 +5976,7 @@
         
     </style>
 </head>
-<body>
+<body class="user-role-{{ request.user.role }}">
     <!-- Loading overlay for large datasets -->
     <div id="loadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
@@ -5886,8 +6269,16 @@
                                 <option value="NON_COMPLIANT" {% if request.GET.compliance_status == 'NON_COMPLIANT' %}selected{% endif %}>Non-Compliant Only</option>
                             </select>
                         </div>
+                        <div class="filter-field">
+                            <label class="form-label">Lab Form Status</label>
+                            <select class="form-control" name="lab_form_status">
+                                <option value="">All Inspections</option>
+                                <option value="HAS_LAB_FORM" {% if request.GET.lab_form_status == 'HAS_LAB_FORM' %}selected{% endif %}>Has Lab Form</option>
+                                <option value="NO_LAB_FORM" {% if request.GET.lab_form_status == 'NO_LAB_FORM' %}selected{% endif %}>No Lab Form</option>
+                            </select>
+                        </div>
                     </div>
-                    
+
                     <!-- Action Buttons Row -->
                     <div class="filter-actions">
                         <button type="submit" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">
@@ -6036,9 +6427,27 @@
                                 {% else %}
                                 <button class="bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
                                         onclick="uploadRFI('{{ fallback_group_id|escapejs }}')"
-                                        data-client-name="{{ shipment.client_name }}" 
+                                        data-client-name="{{ shipment.client_name }}"
                                         data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
                                     <i class="fas fa-file-alt mr-1"></i> RFI
+                                </button>
+                                {% endif %}
+
+                                <!-- Composition Button (mobile card) -->
+                                {% if shipment.composition_uploaded %}
+                                <button class="composition-btn bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
+                                        id="composition-mobile-{{ fallback_group_id }}"
+                                        disabled>
+                                    <i class="fas fa-check mr-1"></i> Composition ✓
+                                </button>
+                                {% else %}
+                                <button class="composition-btn bg-gray-500 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-600 transition-colors duration-200"
+                                        id="composition-mobile-{{ fallback_group_id }}"
+                                        onclick="uploadComposition('{{ fallback_group_id|escapejs }}')"
+                                        data-client-name="{{ shipment.client_name }}"
+                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                        style="display: none;">
+                                    <i class="fas fa-flask mr-1"></i> Composition
                                 </button>
                                 {% endif %}
                             </div>
@@ -6287,6 +6696,18 @@
                                             
                                             <!-- Upload Buttons -->
                                             <div class="space-y-2">
+                                                {% if request.user.role == 'inspector' %}
+                                                <!-- Inspector: Only show Lab Form button -->
+                                                <div class="grid grid-cols-1 gap-2">
+                                                    <button class="bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200
+                                                               {% if not product.is_sample_taken %}opacity-50 cursor-not-allowed{% endif %}"
+                                                            {% if not product.is_sample_taken %}disabled title="No sample taken - lab form upload disabled"{% endif %}
+                                                            onclick="{% if product.is_sample_taken %}uploadLabForm('{{ product.remote_id|escapejs }}'){% else %}alert('No sample taken - lab form upload disabled'){% endif %}">
+                                                        <i class="fas fa-file-alt mr-1"></i> Lab Form
+                                                    </button>
+                                                </div>
+                                                {% else %}
+                                                <!-- Non-Inspector: Show Lab, Retest, and Lab Form buttons -->
                                                 <div class="grid grid-cols-2 gap-2">
                                                     <button class="bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200
                                                                {% if not product.is_sample_taken %}opacity-50 cursor-not-allowed{% endif %}"
@@ -6301,7 +6722,6 @@
                                                         <i class="fas fa-redo mr-1"></i> Retest
                                                     </button>
                                                 </div>
-                                                {% if user.role != 'inspector' %}
                                                 <div class="grid grid-cols-1 gap-2">
                                                     <button class="bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200
                                                                {% if not product.is_sample_taken %}opacity-50 cursor-not-allowed{% endif %}"
@@ -6340,11 +6760,12 @@
                                 <th class="col-inspector px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Inspector</th>
                                 <th class="col-view-files px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">View Files</th>
                                 <th class="col-rfi px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">RFI</th>
-                                <th class="col-occurrence px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Occurrence</th>
-                                <th class="col-comment px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Comment</th>
                                 {% if user.role != 'inspector' %}
                                 <th class="col-invoice px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Invoice</th>
                                 {% endif %}
+                                <th class="col-occurrence px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Occurrence</th>
+                                <th class="col-composition px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Composition</th>
+                                <th class="col-comment px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Comment</th>
                                 <th class="col-km px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Distance (Km)</th>
                                 <th class="col-hours px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Hours Worked</th>
                                 <th class="col-approved px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Approved</th>
@@ -6385,9 +6806,6 @@
                                         {% for item in shipment.client_emails %}
                                             <div class="email-line" title="{{ item.email }}">
                                                 <span>{{ item.email }}</span>
-                                                {% if item.removable %}
-                                                    <button class="btn btn-xs" title="Remove" onclick="deleteClientEmail('{{ shipment.client_name }}', '{{ item.email }}')">×</button>
-                                                {% endif %}
                                             </div>
                                         {% endfor %}
                                     {% else %}
@@ -6458,26 +6876,26 @@
                                 <td class="col-rfi px-6 py-4 whitespace-nowrap text-sm text-center" data-label="RFI">
                                     {% if request.user.role == 'inspector' %}
                                         {% if shipment.rfi_uploaded %}
-                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled 
+                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled
                                                 title="RFI file exists" style="background-color: #28a745; border-color: #28a745;">
                                             RFI ✓
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
-                                                title="Upload RFI" 
-                                                data-client-name="{{ shipment.client_name }}" 
+                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')"
+                                                title="Upload RFI"
+                                                data-client-name="{{ shipment.client_name }}"
                                                 data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
                                             RFI
                                         </button>
                                         {% endif %}
                                     {% elif request.user.role != 'scientist' %}
                                         {% if shipment.rfi_uploaded %}
-                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled 
+                                        <button class="btn btn-sm btn-success" id="rfi-{{ fallback_group_id }}" disabled
                                                 title="RFI file exists" style="background-color: #28a745; border-color: #28a745;">
                                             RFI ✓
                                         </button>
                                         {% else %}
-                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')" 
+                                        <button class="btn btn-sm btn-secondary" id="rfi-{{ fallback_group_id }}" onclick="uploadRFI('{{ fallback_group_id|escapejs }}')"
                                                 title="Upload RFI">
                                             RFI
                                         </button>
@@ -6486,6 +6904,29 @@
                                         -
                                     {% endif %}
                                 </td>
+
+                                <!-- Invoice Column -->
+                                {% if user.role != 'inspector' %}
+                                <td class="col-invoice px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Invoice">
+                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+                                        {% if shipment.invoice_uploaded %}
+                                        <button class="btn btn-sm btn-success" id="invoice-{{ fallback_group_id }}" disabled
+                                                title="Invoice file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            Invoice ✓
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')"
+                                                title="Upload Invoice"
+                                                data-client-name="{{ shipment.client_name }}"
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
+                                            Invoice
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                {% endif %}
 
                                 <!-- Occurrence Column -->
                                 <td class="col-occurrence px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Occurrence">
@@ -6520,6 +6961,29 @@
                                     {% endif %}
                                 </td>
 
+                                <!-- Composition Column -->
+                                <td class="col-composition px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Composition" data-group-id="{{ fallback_group_id }}">
+                                    {% if request.user.role != 'scientist' %}
+                                        {% if shipment.composition_uploaded %}
+                                        <button class="btn btn-sm btn-success composition-btn" id="composition-{{ fallback_group_id }}" disabled
+                                                title="Composition file exists" style="background-color: #28a745; border-color: #28a745;">
+                                            Composition ✓
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-sm btn-secondary composition-btn" id="composition-{{ fallback_group_id }}"
+                                                onclick="uploadComposition('{{ fallback_group_id|escapejs }}')"
+                                                title="Upload Composition"
+                                                data-client-name="{{ shipment.client_name }}"
+                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                style="display: none;">
+                                            Composition
+                                        </button>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="composition-indicator">-</span>
+                                    {% endif %}
+                                </td>
+
                                 <!-- Comment Column -->
                                 <td class="col-comment px-6 py-4 text-sm text-gray-500" data-label="Comment">
                                     <input type="text"
@@ -6531,29 +6995,6 @@
                                            onblur="updateGroupComment(this)"
                                            title="Comment for this inspection group">
                                 </td>
-
-                                <!-- Invoice Column -->
-                                {% if user.role != 'inspector' %}
-                                <td class="col-invoice px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Invoice">
-                                    {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
-                                        {% if shipment.invoice_uploaded %}
-                                        <button class="btn btn-sm btn-success" id="invoice-{{ fallback_group_id }}" disabled 
-                                                title="Invoice file exists" style="background-color: #28a745; border-color: #28a745;">
-                                            Invoice ✓
-                                        </button>
-                                        {% else %}
-                                        <button class="btn btn-sm btn-secondary" id="invoice-{{ fallback_group_id }}" onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')" 
-                                                title="Upload Invoice"
-                                                data-client-name="{{ shipment.client_name }}" 
-                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}">
-                                            Invoice
-                                        </button>
-                                        {% endif %}
-                                    {% else %}
-                                        -
-                                    {% endif %}
-                                </td>
-                                {% endif %}
                                 
                                 <!-- Km Column -->
                                 <td class="col-km px-6 py-4 whitespace-nowrap text-sm text-center" data-label="Distance (Km)">
@@ -6684,76 +7125,74 @@
                             <tr class="detail-row" id="detail-{{ fallback_group_id }}" style="display: none;">
                                 <td colspan="{% if request.user.role == 'inspector' %}14{% else %}15{% endif %}" class="detail-cell">
                                     <div class="detail-content">
-                                        <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"d/m/Y" }} 
+                                        <h4>Products for {{ shipment.client_name }} - {{ shipment.date_of_inspection|date:"d/m/Y" }}
                                             <small style="color: #666; font-size: 0.8em;">
                                                 ({{ shipment.products|length }} products)
                                             </small>
                                         </h4>
-                                        <div class="detail-table-wrapper">
-                                            <table class="detail-table">
-                                            <thead>
+                                        <div class="detail-table-wrapper w-full overflow-x-auto rounded-lg shadow-sm">
+                                            <table class="detail-table divide-y divide-gray-200" style="width: auto; table-layout: auto;">
+                                            <thead class="bg-primary-light">
                                                 <tr>
-                                                    <th>Inspection No</th>
-                                                    <th>Client Name</th>
-                                                    <th>Commodity</th>
-                                                    <th>Compliance</th>
-                                                    <th class="col-km">Product Name</th>
-                                                    <th>Sampled</th>
-                                                    <th>Needs Retest</th>
-                                                    <th class="col-km">Class</th>
-                                                    <th class="col-test">Fat</th>
-                                                    <th class="col-test">Protein</th>
-                                                    <th class="col-test">Calcium</th>
-                                                    <th class="col-test">DNA</th>
-                                                    <th class="col-bought-sample">Bought Sample</th>
-                                                    <th class="col-lab-dropdown">Lab</th>
-                                                    {% if request.user.role != 'inspector' %}
-                                                    <th>Actions</th>
-                                                    {% endif %}
+                                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Inspection No</th>
+                                                    <th class="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Client Name</th>
+                                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Commodity</th>
+                                                    <th class="px-3 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Compliance</th>
+                                                    <th class="col-km px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Product Name</th>
+                                                    <th class="px-2 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Sampled</th>
+                                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Needs Retest</th>
+                                                    <th class="col-km px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Class</th>
+                                                    <th class="col-test px-1 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Fat</th>
+                                                    <th class="col-test px-1 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Protein</th>
+                                                    <th class="col-test px-1 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Calcium</th>
+                                                    <th class="col-test px-1 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">DNA</th>
+                                                    <th class="col-bought-sample px-2 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Bought Sample</th>
+                                                    <th class="col-lab-dropdown px-2 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">Lab</th>
+                                                    <th class="px-3 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider whitespace-nowrap sm:text-sm">{% if request.user.role == 'inspector' %}Lab Form{% else %}Actions{% endif %}</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody class="bg-white divide-y divide-gray-200">
                                                 {% if shipment.products %}
                                                     {% for product in shipment.products %}
-                                                    <tr class="{% if product.is_complete %}inspection-complete{% endif %}">
-                                                    <td>{{ product.remote_id|default:"-" }}</td>
-                                                    <td>{{ product.client_name|default:"-" }}</td>
-                                                    <td>{{ product.commodity|default:"-" }}</td>
-                                                    <td>
+                                                    <tr class="{% if product.is_complete %}inspection-complete{% endif %} hover:bg-gray-50 transition-colors">
+                                                    <td class="px-2 py-2 text-center text-xs sm:text-sm whitespace-nowrap">{{ product.remote_id|default:"-" }}</td>
+                                                    <td class="px-3 py-2 text-left text-xs sm:text-sm">{{ product.client_name|default:"-" }}</td>
+                                                    <td class="px-2 py-2 text-center text-xs sm:text-sm whitespace-nowrap">{{ product.commodity|default:"-" }}</td>
+                                                    <td class="px-3 py-2 text-center text-xs sm:text-sm">
                                                         {% if product.is_direction_present_for_this_inspection %}
                                                             <span class="compliance-status non-compliant" title="Non-Compliant (Direction Present)">Non-Compliant</span>
                                                         {% else %}
                                                             <span class="compliance-status compliant" title="Compliant (No Direction)">Compliant</span>
                                                         {% endif %}
                                                     </td>
-                                                    <td class="col-km">
+                                                    <td class="col-km px-3 py-2 text-left text-xs sm:text-sm">
                                                         {% if product.product_name %}
-                                                            <span class="product-name-text">{{ product.product_name }}</span>
+                                                            <span class="product-name-text block truncate max-w-xs">{{ product.product_name }}</span>
                                                         {% else %}
-                                                            <input type="text" class="km-input manual-input" 
-                                                                   data-inspection-id="{{ product.remote_id }}" 
+                                                            <input type="text" class="km-input manual-input w-full px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-primary focus:border-primary"
+                                                                   data-inspection-id="{{ product.remote_id }}"
                                                                    value=""
                                                                    placeholder="Enter product name"
                                                                    onchange="updateProductName(this)"
                                                                    title="Enter product name manually">
                                                         {% endif %}
                                                     </td>
-                                                    <td>
+                                                    <td class="px-2 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
                                                         {% if product.is_sample_taken %}
                                                             <span class="sampled-badge sampled-yes">Yes</span>
                                                         {% else %}
                                                             <span class="sampled-badge sampled-no">No</span>
                                                         {% endif %}
                                                     </td>
-                                                    <td>
-                                                        <select class="form-control form-control-sm needs-retest-dropdown" data-inspection-id="{{ product.remote_id }}" onchange="updateNeedsRetest(this)" {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - retest not possible"{% endif %}>
+                                                    <td class="px-4 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <select class="form-control form-control-sm needs-retest-dropdown w-full px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-primary focus:border-primary" data-inspection-id="{{ product.remote_id }}" onchange="updateNeedsRetest(this)" {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - retest not possible"{% endif %}>
                                                             <option value="NO" {% if product.needs_retest == 'NO' or product.needs_retest == 'no' or not product.is_sample_taken or not product.needs_retest %}selected{% endif %}>No</option>
                                                             <option value="YES" {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}selected{% endif %}>Yes</option>
                                                         </select>
                                                     </td>
-                                                    <td class="col-class-dropdown">
+                                                    <td class="col-class-dropdown px-3 py-2 text-left text-xs sm:text-sm">
                                                         {% with lower_commodity=product.commodity|default:''|lower %}
-                                                        <select class="form-control form-control-sm class-dropdown product-class-select {% if product.product_class %}has-value{% endif %}"
+                                                        <select class="form-control form-control-sm class-dropdown product-class-select {% if product.product_class %}has-value{% endif %} w-full px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-primary focus:border-primary"
                                                                 data-inspection-id="{{ product.remote_id }}"
                                                                 data-commodity="{{ lower_commodity }}"
                                                                 data-current-class="{{ product.product_class }}"
@@ -6764,36 +7203,36 @@
                                                         {% endwith %}
                                                         </select>
                                                     </td>
-                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="checkbox" class="test-checkbox" data-inspection-id="{{ product.remote_id }}" data-test-type="fat" 
+                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %} px-1 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <input type="checkbox" class="test-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" data-inspection-id="{{ product.remote_id }}" data-test-type="fat"
                                                                {% if product.fat %}checked{% endif %} {% if not product.is_sample_taken %}disabled{% endif %} onchange="updateTestResult(this)">
                                                     </td>
-                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="checkbox" class="test-checkbox" data-inspection-id="{{ product.remote_id }}" data-test-type="protein" 
+                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %} px-1 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <input type="checkbox" class="test-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" data-inspection-id="{{ product.remote_id }}" data-test-type="protein"
                                                                {% if product.protein %}checked{% endif %} {% if not product.is_sample_taken %}disabled{% endif %} onchange="updateTestResult(this)">
                                                     </td>
-                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="checkbox" class="test-checkbox" data-inspection-id="{{ product.remote_id }}" data-test-type="calcium" 
+                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %} px-1 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <input type="checkbox" class="test-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" data-inspection-id="{{ product.remote_id }}" data-test-type="calcium"
                                                                {% if product.calcium %}checked{% endif %} {% if not product.is_sample_taken %}disabled{% endif %} onchange="updateTestResult(this)">
                                                     </td>
-                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="checkbox" class="test-checkbox" data-inspection-id="{{ product.remote_id }}" data-test-type="dna" 
+                                                    <td class="col-test {% if not product.is_sample_taken %}blurred{% endif %} px-1 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <input type="checkbox" class="test-checkbox w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary" data-inspection-id="{{ product.remote_id }}" data-test-type="dna"
                                                                {% if product.dna %}checked{% endif %} {% if not product.is_sample_taken %}disabled{% endif %} onchange="updateTestResult(this)">
                                                     </td>
-                                                    <td class="col-bought-sample {% if not product.is_sample_taken %}blurred{% endif %}">
-                                                        <input type="number" class="form-control form-control-sm bought-sample-input" 
-                                                               data-inspection-id="{{ product.remote_id }}" 
-                                                               value="{{ product.bought_sample|default:'' }}" 
-                                                               placeholder="0.00" 
-                                                               step="0.01" 
-                                                               min="0" 
+                                                    <td class="col-bought-sample {% if not product.is_sample_taken %}blurred{% endif %} px-2 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <input type="number" class="form-control form-control-sm bought-sample-input w-full px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-primary focus:border-primary"
+                                                               data-inspection-id="{{ product.remote_id }}"
+                                                               value="{{ product.bought_sample|default:'' }}"
+                                                               placeholder="0.00"
+                                                               step="0.01"
+                                                               min="0"
                                                                onchange="updateBoughtSample(this)"
                                                                onblur="updateBoughtSample(this)"
                                                                {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - cannot enter bought sample"{% endif %}>
                                                     </td>
-                                                    <td class="col-lab-dropdown">
-                                                        <select class="form-control form-control-sm lab-dropdown" 
-                                                                data-inspection-id="{{ product.remote_id }}" 
+                                                    <td class="col-lab-dropdown px-2 py-2 text-center text-xs sm:text-sm whitespace-nowrap">
+                                                        <select class="form-control form-control-sm lab-dropdown w-full px-2 py-1 border border-gray-300 rounded text-xs sm:text-sm focus:ring-primary focus:border-primary"
+                                                                data-inspection-id="{{ product.remote_id }}"
                                                                 onchange="updateLab(this)"
                                                                 {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - Lab selection disabled"{% endif %}>
                                                             <option value="">Select Lab...</option>
@@ -6805,57 +7244,74 @@
                                                             <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                         </select>
                                                     </td>
-                                                    {% if request.user.role != 'inspector' %}
-                                                    <td>
-                                                        <!-- Lab upload buttons - disabled for admin roles but still visible for status -->
-                                                        {% if product.is_sample_taken %}
-                                                        <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}" 
-                                                                data-group-id="{{ fallback_group_id }}"
-                                                                data-client-name="{{ shipment.client_name }}"
-                                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
-                                                                disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
-                                                                title="Lab upload - View only (upload restricted for {{ request.user.role }})"
-                                                                {% else %}
-                                                                onclick="uploadLab('{{ product.remote_id|escapejs }}')" 
-                                                                title="Lab result upload available"
-                                                                {% endif %}>
-                                                            <i class="fas fa-flask"></i> Lab
-                                                        </button>
-                                                        <button class="btn btn-sm btn-lab-form" id="lab-form-{{ product.remote_id }}" 
-                                                                data-group-id="{{ fallback_group_id }}"
-                                                                data-client-name="{{ shipment.client_name }}"
-                                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
-                                                                disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
-                                                                title="Lab form - View only (upload restricted for {{ request.user.role }})"
-                                                                {% else %}
-                                                                onclick="uploadLabForm('{{ product.remote_id|escapejs }}')" 
-                                                                title="Lab form submission upload available"
-                                                                {% endif %}>
-                                                            <i class="fas fa-file-alt"></i> Lab Form
-                                                        </button>
-                                                        <button class="btn btn-sm btn-retest" id="retest-{{ product.remote_id }}" 
-                                                                data-group-id="{{ fallback_group_id }}"
-                                                                data-client-name="{{ shipment.client_name }}"
-                                                                data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                                                {% if product.needs_retest != 'YES' and product.needs_retest != 'yes' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
-                                                                {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
-                                                                {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ request.user.role }})"{% endif %}
-                                                                {% else %}
-                                                                {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')" title="Retest required - Please upload retest document"{% endif %}
-                                                                {% endif %}
-                                                                {% if product.needs_retest != 'YES' and product.needs_retest != 'yes' %}title="No retest required - Upload disabled"{% endif %}>
-                                                            <i class="fas fa-redo"></i> Retest
-                                                        </button>
+                                                    <td class="px-3 py-2 text-center text-xs sm:text-sm">
+                                                        {% if request.user.role == 'inspector' %}
+                                                            <!-- Inspectors: Only show Lab Form button -->
+                                                            {% if product.is_sample_taken %}
+                                                            <button class="btn btn-sm btn-lab-form" id="lab-form-{{ product.remote_id }}"
+                                                                    data-group-id="{{ fallback_group_id }}"
+                                                                    data-client-name="{{ shipment.client_name }}"
+                                                                    data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                    onclick="uploadLabForm('{{ product.remote_id|escapejs }}')"
+                                                                    title="Lab form submission upload available">
+                                                                <i class="fas fa-file-alt"></i> Lab Form
+                                                            </button>
+                                                            {% else %}
+                                                            <!-- No sample taken - show message -->
+                                                            <span class="text-muted" style="font-size: 0.85em; font-style: italic;">
+                                                                <i class="fas fa-info-circle"></i> No sample taken
+                                                            </span>
+                                                            {% endif %}
                                                         {% else %}
-                                                        <!-- No sample taken - show message instead of buttons -->
-                                                        <span class="text-muted" style="font-size: 0.85em; font-style: italic;">
-                                                            <i class="fas fa-info-circle"></i> No sample taken
-                                                        </span>
+                                                            <!-- Other roles: Show Lab, Lab Form, and Retest buttons -->
+                                                            {% if product.is_sample_taken %}
+                                                            <button class="btn btn-sm btn-lab" id="lab-{{ product.remote_id }}"
+                                                                    data-group-id="{{ fallback_group_id }}"
+                                                                    data-client-name="{{ shipment.client_name }}"
+                                                                    data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                    {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
+                                                                    disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
+                                                                    title="Lab upload - View only (upload restricted for {{ request.user.role }})"
+                                                                    {% else %}
+                                                                    onclick="uploadLab('{{ product.remote_id|escapejs }}')"
+                                                                    title="Lab result upload available"
+                                                                    {% endif %}>
+                                                                <i class="fas fa-flask"></i> Lab
+                                                            </button>
+                                                            <button class="btn btn-sm btn-lab-form" id="lab-form-{{ product.remote_id }}"
+                                                                    data-group-id="{{ fallback_group_id }}"
+                                                                    data-client-name="{{ shipment.client_name }}"
+                                                                    data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                    {% if request.user.role == 'financial_administrator' %}
+                                                                    disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;"
+                                                                    title="Lab form - View only (upload restricted for {{ request.user.role }})"
+                                                                    {% else %}
+                                                                    onclick="uploadLabForm('{{ product.remote_id|escapejs }}')"
+                                                                    title="Lab form submission upload available"
+                                                                    {% endif %}>
+                                                                <i class="fas fa-file-alt"></i> Lab Form
+                                                            </button>
+                                                            <button class="btn btn-sm btn-retest" id="retest-{{ product.remote_id }}"
+                                                                    data-group-id="{{ fallback_group_id }}"
+                                                                    data-client-name="{{ shipment.client_name }}"
+                                                                    data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                                                    {% if product.needs_retest != 'YES' and product.needs_retest != 'yes' %}disabled style="opacity: 0.5; cursor: not-allowed;"{% endif %}
+                                                                    {% if request.user.role == 'administrator' or request.user.role == 'financial_administrator' %}
+                                                                    {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}disabled style="opacity: 0.4; background-color: #6c757d !important; border-color: #6c757d !important; color: #fff !important; cursor: not-allowed;" title="Retest - View only (upload restricted for {{ request.user.role }})"{% endif %}
+                                                                    {% else %}
+                                                                    {% if product.needs_retest == 'YES' or product.needs_retest == 'yes' %}onclick="uploadRetest('{{ product.remote_id|escapejs }}')" title="Retest required - Please upload retest document"{% endif %}
+                                                                    {% endif %}
+                                                                    {% if product.needs_retest != 'YES' and product.needs_retest != 'yes' %}title="No retest required - Upload disabled"{% endif %}>
+                                                                <i class="fas fa-redo"></i> Retest
+                                                            </button>
+                                                            {% else %}
+                                                            <!-- No sample taken - show message instead of buttons -->
+                                                            <span class="text-muted" style="font-size: 0.85em; font-style: italic;">
+                                                                <i class="fas fa-info-circle"></i> No sample taken
+                                                            </span>
+                                                            {% endif %}
                                                         {% endif %}
                                                     </td>
-                                                    {% endif %}
                                                 </tr>
                                                     {% endfor %}
                                                 {% else %}
@@ -7270,7 +7726,7 @@
     <!-- Load sent status functionality from external file -->
     <script src="{% static 'js/sent_status.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load clean upload functions -->
-    <script src="{% static 'js/upload_functions.js' %}?v=20251030-OCCURRENCE-API-FIX"></script>
+    <script src="{% static 'js/upload_functions.js'%}?v=20251102-OCCURRENCE-SPELLING-FIX"></script>
     <!-- Load bought sample functionality -->
     <script src="{% static 'js/bought_sample.js' %}?v=20251003-FINAL-FIX"></script>
     <!-- Load KM and Hours functions fix (before main JS to ensure functions are available) -->
@@ -7318,6 +7774,47 @@
 
             // Basic safe initializer for existing inputs so inline handlers don't fail
             document.addEventListener('DOMContentLoaded', function() {
+                // === DEBUG: Screen Size and Detail Table Styling ===
+                console.log('=== DETAIL TABLE DEBUG INFO ===');
+                console.log('Screen Width:', window.innerWidth + 'px');
+                console.log('Screen Height:', window.innerHeight + 'px');
+                console.log('Device Pixel Ratio:', window.devicePixelRatio);
+
+                // Log detail table styling
+                const detailTable = document.querySelector('.detail-table');
+                if (detailTable) {
+                    const computedStyle = window.getComputedStyle(detailTable);
+                    console.log('Detail Table Width:', detailTable.offsetWidth + 'px');
+                    console.log('Detail Table Display:', computedStyle.display);
+                    console.log('Detail Table Table Layout:', computedStyle.tableLayout);
+                    console.log('Detail Table Min Width:', computedStyle.minWidth);
+                }
+
+                // Log detail table wrapper styling
+                const detailWrapper = document.querySelector('.detail-table-wrapper');
+                if (detailWrapper) {
+                    const wrapperStyle = window.getComputedStyle(detailWrapper);
+                    console.log('Wrapper Width:', detailWrapper.offsetWidth + 'px');
+                    console.log('Wrapper Overflow-X:', wrapperStyle.overflowX);
+                    console.log('Wrapper Max Width:', wrapperStyle.maxWidth);
+                }
+
+                // Log breakpoint info
+                if (window.innerWidth <= 640) {
+                    console.log('Breakpoint: MOBILE (≤640px)');
+                } else if (window.innerWidth <= 1024) {
+                    console.log('Breakpoint: TABLET (641-1024px)');
+                } else {
+                    console.log('Breakpoint: DESKTOP (≥1025px)');
+                }
+                console.log('=== END DEBUG INFO ===');
+
+                // Listen for window resize
+                window.addEventListener('resize', function() {
+                    console.log('Window Resized - New Width:', window.innerWidth + 'px');
+                });
+                // === END DEBUG ===
+
                 try {
                     const containers = document.querySelectorAll('.additional-emails-container');
                     containers.forEach(function(container) {
@@ -9452,9 +9949,9 @@
                             console.log('   🔴 Applied RED color to button');
                             break;
                         case 'partial_files':
-                            button.classList.add('status-blue');
+                            button.classList.add('status-orange');
                             button.title = 'Some files available';
-                            console.log('   🔵 Applied BLUE color to button');
+                            console.log('   🟠 Applied ORANGE color to button');
                             break;
                         default:
                             button.classList.add('status-red');
@@ -10962,7 +11459,9 @@
                 alert('Error in upload function: ' + error.message);
             }
         }
-        
+
+        // Note: uploadComposition function is now in upload_functions.js
+
         // Upload Invoice function
         function uploadInvoice(groupId) {
             // Create a file input element
@@ -12161,6 +12660,109 @@
         });
         
         // Function to handle Send button clicks with validation
+        // DEBUG: Function to check Lab Form column positioning
+        function debugLabFormColumn() {
+            console.log('=== DEBUG: Lab Form Column Positioning ===');
+
+            // Check body class for role
+            const bodyClass = document.body.className;
+            console.log('Body class:', bodyClass);
+            const isInspector = bodyClass.includes('user-role-inspector');
+            console.log('Is inspector:', isInspector);
+
+            // Find all detail tables
+            const detailTables = document.querySelectorAll('.detail-table');
+            console.log('Found detail tables:', detailTables.length);
+
+            detailTables.forEach((table, index) => {
+                console.log(`\n--- Detail Table ${index + 1} ---`);
+
+                // Check table dimensions
+                const tableRect = table.getBoundingClientRect();
+                console.log('Table width:', tableRect.width);
+                console.log('Table position:', tableRect.left, tableRect.top);
+
+                // Check column 15 (Lab Form/Actions)
+                const col15Headers = table.querySelectorAll('th:nth-child(15)');
+                const col15Cells = table.querySelectorAll('td:nth-child(15)');
+
+                console.log('Column 15 headers found:', col15Headers.length);
+                console.log('Column 15 cells found:', col15Cells.length);
+
+                col15Headers.forEach((header, i) => {
+                    const rect = header.getBoundingClientRect();
+                    console.log(`Header ${i}:`, {
+                        text: header.textContent.trim(),
+                        width: rect.width,
+                        left: rect.left,
+                        right: rect.right,
+                        visible: rect.width > 0 && rect.height > 0
+                    });
+                });
+
+                col15Cells.forEach((cell, i) => {
+                    const rect = cell.getBoundingClientRect();
+                    const computedStyle = window.getComputedStyle(cell);
+
+                    // Check buttons inside this cell
+                    const labBtn = cell.querySelector('.btn-lab');
+                    const labFormBtn = cell.querySelector('.btn-lab-form');
+                    const retestBtn = cell.querySelector('.btn-retest');
+
+                    console.log(`Cell ${i}:`, {
+                        content: cell.textContent.trim().substring(0, 30),
+                        width: rect.width,
+                        left: rect.left,
+                        right: rect.right,
+                        visible: rect.width > 0 && rect.height > 0,
+                        overflow: computedStyle.overflow,
+                        position: computedStyle.position,
+                        zIndex: computedStyle.zIndex,
+                        buttons: {
+                            labBtn: labBtn ? {
+                                exists: true,
+                                display: window.getComputedStyle(labBtn).display,
+                                visibility: window.getComputedStyle(labBtn).visibility
+                            } : 'not found',
+                            labFormBtn: labFormBtn ? {
+                                exists: true,
+                                display: window.getComputedStyle(labFormBtn).display,
+                                visibility: window.getComputedStyle(labFormBtn).visibility
+                            } : 'not found',
+                            retestBtn: retestBtn ? {
+                                exists: true,
+                                display: window.getComputedStyle(retestBtn).display,
+                                visibility: window.getComputedStyle(retestBtn).visibility
+                            } : 'not found'
+                        }
+                    });
+                });
+
+                // Check detail-content container
+                const detailContent = table.closest('.detail-content');
+                if (detailContent) {
+                    const contentRect = detailContent.getBoundingClientRect();
+                    const contentStyle = window.getComputedStyle(detailContent);
+                    console.log('Detail-content container:', {
+                        width: contentRect.width,
+                        overflowX: contentStyle.overflowX,
+                        scrollWidth: detailContent.scrollWidth,
+                        clientWidth: detailContent.clientWidth,
+                        canScroll: detailContent.scrollWidth > detailContent.clientWidth
+                    });
+                }
+            });
+
+            console.log('=== END DEBUG ===');
+        }
+
+        // Run debug when a detail row is expanded
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.expand-btn')) {
+                setTimeout(debugLabFormColumn, 500);
+            }
+        });
+
         function handleSendButtonClick(groupId, clientName, inspectionDate, hasAllDocuments) {
             if (!hasAllDocuments) {
                 console.warn('[WARNING] Cannot send: Missing required documents. Ensure all compliance documents are downloaded and RFI/Invoice are uploaded.');
@@ -13404,6 +14006,118 @@
                     }
                 }
             }
+        }
+
+        // Function to check if a group has both PMP and RAW products
+        function checkCompositionButtonVisibility() {
+            console.log('[COMPOSITION] Checking composition button visibility...');
+
+            // Get all group rows
+            const groupRows = document.querySelectorAll('.group-row');
+
+            groupRows.forEach(row => {
+                const groupId = row.getAttribute('data-group-id');
+                const clientName = row.getAttribute('data-client-name');
+                const inspectionDate = row.getAttribute('data-inspection-date');
+
+                if (!groupId) return;
+
+                console.log(`[COMPOSITION] Checking group: ${groupId}`);
+
+                // Find all detail rows for this group
+                const detailRow = row.nextElementSibling;
+                if (!detailRow || !detailRow.classList.contains('detail-row')) {
+                    console.log(`[COMPOSITION] No detail row found for ${groupId}`);
+                    return;
+                }
+
+                // Get all product class dropdowns within this group's detail table
+                const classDropdowns = detailRow.querySelectorAll('.product-class-select');
+
+                let hasPMP = false;
+                let hasRAW = false;
+
+                classDropdowns.forEach(dropdown => {
+                    const commodity = (dropdown.getAttribute('data-commodity') || '').toLowerCase().trim();
+
+                    // Check commodity type - not product class!
+                    if (commodity) {
+                        if (commodity === 'raw') {
+                            hasRAW = true;
+                            console.log(`[COMPOSITION] Found RAW commodity: ${commodity}`);
+                        } else if (commodity === 'pmp') {
+                            hasPMP = true;
+                            console.log(`[COMPOSITION] Found PMP commodity: ${commodity}`);
+                        }
+                    }
+                });
+
+                // Show composition button if group has RAW or PMP (or both)
+                const compositionBtn = document.getElementById('composition-' + groupId);
+                const compositionBtnMobile = document.getElementById('composition-mobile-' + groupId);
+                const compositionCell = row.querySelector('.col-composition');
+
+                if (compositionBtn && !compositionBtn.classList.contains('btn-success')) {
+                    // Only modify non-uploaded buttons
+                    // Show button if group has RAW OR PMP (or both)
+                    if (hasPMP || hasRAW) {
+                        compositionBtn.style.display = 'inline-block';
+                        if (compositionCell) {
+                            compositionCell.querySelector('.composition-indicator')?.remove();
+                        }
+                        const commodityTypes = [];
+                        if (hasRAW) commodityTypes.push('RAW');
+                        if (hasPMP) commodityTypes.push('PMP');
+                        console.log(`[COMPOSITION] ✅ Showing composition button for ${groupId} (has ${commodityTypes.join(' and ')} commodities)`);
+                    } else {
+                        compositionBtn.style.display = 'none';
+                        if (compositionCell && !compositionCell.querySelector('.composition-indicator')) {
+                            // Add dash if not already present
+                            const indicator = document.createElement('span');
+                            indicator.className = 'composition-indicator';
+                            indicator.textContent = '-';
+                            compositionCell.appendChild(indicator);
+                        }
+                        console.log(`[COMPOSITION] ❌ Hiding composition button for ${groupId} - No RAW or PMP commodities found`);
+                    }
+                }
+
+                // Also update mobile button
+                if (compositionBtnMobile && !compositionBtnMobile.classList.contains('btn-success')) {
+                    if (hasPMP || hasRAW) {
+                        compositionBtnMobile.style.display = 'block';
+                        console.log(`[COMPOSITION] ✅ Showing MOBILE composition button for ${groupId}`);
+                    } else {
+                        compositionBtnMobile.style.display = 'none';
+                        console.log(`[COMPOSITION] ❌ Hiding MOBILE composition button for ${groupId}`);
+                    }
+                }
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('[COMPOSITION] DOM loaded, checking composition buttons...');
+            // Delay to ensure product classes are loaded
+            setTimeout(checkCompositionButtonVisibility, 1000);
+        });
+
+        // Also run when product class is updated
+        const originalUpdateProductClass = window.updateProductClass;
+        window.updateProductClass = function(dropdown) {
+            originalUpdateProductClass(dropdown);
+            // Recheck composition button visibility after class update
+            setTimeout(checkCompositionButtonVisibility, 500);
+        };
+
+        // Run when groups are expanded to ensure visibility is correct
+        const originalToggleGroup = window.toggleGroup;
+        if (originalToggleGroup) {
+            window.toggleGroup = function(event, groupId) {
+                originalToggleGroup(event, groupId);
+                // Recheck composition button visibility after group toggle
+                setTimeout(checkCompositionButtonVisibility, 500);
+            };
         }
     </script>
 </body>

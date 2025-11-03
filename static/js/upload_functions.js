@@ -122,21 +122,20 @@ function uploadRFI(groupId) {
         uploadInProgress = false;
         console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
         
+        // SIMPLIFIED: Just refresh all button states like page load does
         setTimeout(() => {
-            console.log('TIMER Timer fired! Starting delayed color update...');
-            console.log('DEBUG [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
-            console.log('DEBUG [DEBUG] Status check in progress flag:', statusCheckInProgress);
+            console.log('✅ Refreshing ALL button states after RFI upload (simple approach)...');
+
+            // Refresh View Files buttons
             if (typeof updateAllViewFilesButtonColors === 'function') {
-                console.log('INFO Delayed file status check after RFI upload...');
                 updateAllViewFilesButtonColors();
-            } else {
-                console.warn('updateAllViewFilesButtonColors function not available');
             }
-            
-            // Also update RFI button color with delayed check
-            console.log('INFO Delayed RFI button color update...');
-            updateRFIButtonColorDelayed(groupId);
-        }, 5000); // 5 second delay to ensure server processing is complete
+
+            // Refresh composition buttons (this checks actual files and sets correct colors)
+            if (typeof initializeCompositionButtonsSimple === 'function') {
+                initializeCompositionButtonsSimple();
+            }
+        }, 2000); // 2 second delay for server to save file
                                     
                                     // Check if View Files popup is open - if so, auto-refresh it
                                     const modal = document.getElementById('filesModal');
@@ -194,7 +193,7 @@ function uploadRFI(groupId) {
     }
 }
 
-// Upload Accurance function
+// Upload Occurrence function
 function uploadOccurrence(groupId) {
     console.log('uploadOccurrence called with groupId:', groupId);
 
@@ -250,18 +249,18 @@ function uploadOccurrence(groupId) {
                     alert = originalAlert; // Restore alert
                     uploadInProgress = false; // Clear upload flag
                         if (data.success) {
-                            alert(data.message || 'Accurance document uploaded successfully!');
+                            alert(data.message || 'Occurrence document uploaded successfully!');
                             console.log('Upload successful:', data);
 
                             // Update button directly to show username
                             const buttonId = 'occurrence-' + groupId;
-                            console.log('DEBUG: Updating Accurance button to show username for:', buttonId);
+                            console.log('DEBUG: Updating Occurrence button to show username for:', buttonId);
 
                                 // Find and update the button - simplified approach
                                 let button = document.getElementById(buttonId);
 
                                 if (button) {
-                                    console.log('SUCCESS Found Accurance button, updating to green success state');
+                                    console.log('SUCCESS Found Occurrence button, updating to green success state');
 
                                     // Clear file-deleted attributes since we now have a file
                                     button.removeAttribute('data-file-deleted');
@@ -273,13 +272,13 @@ function uploadOccurrence(groupId) {
                                     button.style.backgroundColor = '#28a745';
                                     button.style.borderColor = '#28a745';
                                     button.style.cursor = 'not-allowed';
-                                    button.innerHTML = 'Accurance ✓';
-                                    button.title = 'Accurance file exists';
+                                    button.innerHTML = 'Occurrence ✓';
+                                    button.title = 'Occurrence file exists';
 
                                     // Remove the onclick handler since button is now disabled
                                     button.onclick = null;
 
-                                    console.log('SUCCESS Updated Accurance button to green success state');
+                                    console.log('SUCCESS Updated Occurrence button to green success state');
 
         // IMPORTANT: Mark that files need refresh for this client
         if (window.uploadedFiles) {
@@ -289,7 +288,7 @@ function uploadOccurrence(groupId) {
         }
 
                         // Update View Files button colors after upload with delay to ensure server processing
-                        console.log('Updating button colors after Accurance upload...');
+                        console.log('Updating button colors after Occurrence upload...');
                         console.log('Setting 5-second timer for delayed color update...');
                         console.log('[DEBUG] Upload in progress flag:', uploadInProgress);
 
@@ -299,16 +298,31 @@ function uploadOccurrence(groupId) {
 
         // Clear upload flag
         uploadInProgress = false;
-        console.log('SUCCESS Accurance button will stay green (like RFI button)');
+        console.log('SUCCESS Occurrence button will stay green (like RFI button)');
+
+        // SIMPLIFIED: Just refresh all button states like page load does
+        setTimeout(() => {
+            console.log('✅ Refreshing ALL button states after Occurrence upload (simple approach)...');
+
+            // Refresh View Files buttons
+            if (typeof updateAllViewFilesButtonColors === 'function') {
+                updateAllViewFilesButtonColors();
+            }
+
+            // Refresh composition buttons (this checks actual files and sets correct colors)
+            if (typeof initializeCompositionButtonsSimple === 'function') {
+                initializeCompositionButtonsSimple();
+            }
+        }, 2000); // 2 second delay for server to save file
 
                                     // Check if View Files popup is open - if so, auto-refresh it
                                     const modal = document.getElementById('filesModal');
                                     if (modal && modal.style.display === 'block') {
-                                        console.log('INFO View Files popup is open - auto-refreshing after Accurance upload...');
+                                        console.log('INFO View Files popup is open - auto-refreshing after Occurrence upload...');
 
                                         // Wait 2 seconds for file to be saved, then refresh the popup
                                         setTimeout(() => {
-                                            console.log('INFO Auto-refreshing View Files popup with new Accurance file...');
+                                            console.log('INFO Auto-refreshing View Files popup with new Occurrence file...');
 
                                             // Get the current popup data from the groupId
                                             const dateStr = groupId.match(/\d{8}$/);
@@ -322,7 +336,7 @@ function uploadOccurrence(groupId) {
                                         }, 2000);
                                     }
                                 } else {
-                                    console.log('⚠️ Accurance button not found, but continuing without page refresh');
+                                    console.log('⚠️ Occurrence button not found, but continuing without page refresh');
                                     // Page refresh removed to prevent button color reset
                                 }
                     } else {
@@ -353,6 +367,184 @@ function uploadOccurrence(groupId) {
 
     } catch (error) {
         console.error('Error in uploadOccurrence function:', error);
+        alert('Error in upload function: ' + error.message);
+    }
+}
+
+// Upload Composition function
+function uploadComposition(groupId) {
+    console.log('uploadComposition called with groupId:', groupId);
+
+    if (!groupId) {
+        alert('Error: Group ID is missing');
+        return;
+    }
+
+    try {
+        // Create a file input element
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.pdf';
+        fileInput.style.display = 'none';
+
+        console.log('File input element created successfully');
+
+        fileInput.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate PDF file
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Only PDF files are allowed. Please select a PDF document.');
+                    return;
+                }
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('group_id', groupId);
+                formData.append('document_type', 'composition');
+                formData.append('csrfmiddlewaretoken', getCSRFToken());
+
+                console.log('Uploading file:', file.name, 'for group:', groupId);
+                uploadInProgress = true; // Set upload flag to prevent status check override
+
+                // Show loading message
+                const originalAlert = alert;
+                alert = function(msg) { console.log('Alert:', msg); };
+
+                // Upload file
+                fetch('/upload-document/', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
+                        if (data.success) {
+                            alert(data.message || 'Composition document uploaded successfully!');
+                            console.log('Upload successful:', data);
+
+                            // Update button directly to show username
+                            const buttonId = 'composition-' + groupId;
+                            console.log('DEBUG: Updating Composition button to show username for:', buttonId);
+
+                                // Find and update the button - simplified approach
+                                let button = document.getElementById(buttonId);
+
+                                if (button) {
+                                    console.log('SUCCESS Found Composition button, updating to green success state');
+
+                                    // Clear file-deleted attributes since we now have a file
+                                    button.removeAttribute('data-file-deleted');
+                                    button.removeAttribute('data-last-updated');
+
+                                    // Update button to green success state
+                                    button.disabled = true;
+                                    button.className = 'btn btn-sm btn-success success';
+                                    button.style.backgroundColor = '#28a745';
+                                    button.style.borderColor = '#28a745';
+                                    button.style.cursor = 'not-allowed';
+                                    button.innerHTML = 'Composition ✓';
+                                    button.title = 'Composition file exists';
+
+                                    // Remove the onclick handler since button is now disabled
+                                    button.onclick = null;
+
+                                    console.log('SUCCESS Updated Composition button to green success state');
+
+        // IMPORTANT: Mark that files need refresh for this client
+        if (window.uploadedFiles) {
+            window.uploadedFiles[groupId] = true;
+        } else {
+            window.uploadedFiles = {[groupId]: true};
+        }
+
+                        // Update View Files button colors after upload with delay to ensure server processing
+                        console.log('Updating button colors after Composition upload...');
+                        console.log('Setting 5-second timer for delayed color update...');
+                        console.log('[DEBUG] Upload in progress flag:', uploadInProgress);
+
+                        // Immediately make View Files button ORANGE since we just uploaded a file
+                        makeViewFilesButtonOrange(groupId);
+        console.log('DEBUG [DEBUG] Marked groupId for file refresh:', groupId);
+
+        // Clear upload flag before setting delayed update to prevent race condition
+        uploadInProgress = false;
+        console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
+
+        // SIMPLIFIED: Just refresh all button states like page load does
+        setTimeout(() => {
+            console.log('✅ Refreshing ALL button states after Composition upload (simple approach)...');
+
+            // Refresh View Files buttons
+            if (typeof updateAllViewFilesButtonColors === 'function') {
+                updateAllViewFilesButtonColors();
+            }
+
+            // Refresh composition buttons (this checks actual files and sets correct colors)
+            if (typeof initializeCompositionButtonsSimple === 'function') {
+                initializeCompositionButtonsSimple();
+            }
+        }, 2000); // 2 second delay for server to save file
+
+                                    // Check if View Files popup is open - if so, auto-refresh it
+                                    const modal = document.getElementById('filesModal');
+                                    if (modal && modal.style.display === 'block') {
+                                        console.log('INFO View Files popup is open - auto-refreshing after Composition upload...');
+
+                                        // Wait 2 seconds for file to be saved, then refresh the popup
+                                        setTimeout(() => {
+                                            console.log('INFO Auto-refreshing View Files popup with new Composition file...');
+
+                                            // Get the current popup data from the groupId
+                                            const dateStr = groupId.match(/\d{8}$/);
+                                            if (dateStr) {
+                                                const formattedDate = dateStr[0].substring(0,4) + '-' + dateStr[0].substring(4,6) + '-' + dateStr[0].substring(6,8);
+                                                const clientName = groupId.replace(/_\d{8}$/, '').replace(/_/g, ' ');
+
+                                                console.log('INFO Refreshing files for:', clientName, 'on', formattedDate, 'with groupId:', groupId);
+                                                loadInspectionFiles(groupId, clientName, formattedDate);
+                                            }
+                                        }, 2000);
+                                    }
+                                } else {
+                                    console.log('⚠️ Composition button not found, but continuing without page refresh');
+                                    // Page refresh removed to prevent button color reset
+                                }
+                    } else {
+                        alert('Upload failed: ' + (data.error || 'Unknown error'));
+                        console.error('Upload failed:', data);
+                    }
+                })
+                .catch(error => {
+                    alert = originalAlert; // Restore alert
+                    uploadInProgress = false; // Clear upload flag
+                    console.error('Upload error:', error);
+                    alert('Upload error: ' + error.message);
+                });
+            }
+        };
+
+        // Add to DOM and trigger click
+        document.body.appendChild(fileInput);
+        fileInput.click();
+
+        // Clean up after a short delay
+        setTimeout(() => {
+            if (document.body.contains(fileInput)) {
+                document.body.removeChild(fileInput);
+                console.log('File input removed from body');
+            }
+        }, 100);
+
+    } catch (error) {
+        console.error('Error in uploadComposition function:', error);
         alert('Error in upload function: ' + error.message);
     }
 }
@@ -1106,12 +1298,13 @@ function displayFiles(files, message = null, isTestData = false) {
                 // Map category keys to proper capitalized labels
                 const categoryLabels = {
                     'rfi': 'Request For Invoice',
-                    'occurrence': 'Accurance',
+                    'occurrence': 'Occurrence',
                     'invoice': 'Invoice',
                     'lab': 'Lab Results',
                     'lab_form': 'Lab Forms',
                     'retest': 'Retest',
-                    'compliance': 'Compliance'
+                    'compliance': 'Compliance',
+                    'composition': 'Composition'
                 };
                 
                 console.log(`FOLDER Processing category: ${category} with ${fileList.length} files`);
@@ -1333,10 +1526,15 @@ async function deleteFile(filePath, fileName) {
                 console.log('🟢 [OCCURRENCE DELETE] Occurrence file detected!');
                 console.log('🟢 [OCCURRENCE DELETE] File path:', filePath);
                 console.log('🟢 [OCCURRENCE DELETE] Group ID:', groupId);
+            } else if (filePath.includes('/composition/')) {
+                documentType = 'composition';
+                console.log('🟢 [COMPOSITION DELETE] Composition file detected!');
+                console.log('🟢 [COMPOSITION DELETE] File path:', filePath);
+                console.log('🟢 [COMPOSITION DELETE] Group ID:', groupId);
             } else if (filePath.includes('/retest/')) {
                 documentType = 'retest';
                 console.log('DEBUG [DEBUG] Retest file detected!');
-            } else if ((filePath.includes('/lab results/') || filePath.includes('/lab/')) && (filePath.toLowerCase().includes('lab_form') || filePath.toLowerCase().includes('labform') || filePath.toLowerCase().includes('lab form'))) {
+            } else if ((filePath.includes('/lab results/') || filePath.includes('/lab/')) && (filePath.toLowerCase().includes('lab_form') || filePath.toLowerCase().includes('labform') || filePath.toLowerCase().includes('lab form') || filePath.toLowerCase().includes('lab-form') || filePath.toLowerCase().includes('-lab-form'))) {
                 documentType = 'lab_form';
                 console.log('DEBUG [DEBUG] Lab Form file detected!');
             } else if (filePath.includes('/lab results/') || filePath.includes('/lab/')) {
@@ -1379,22 +1577,22 @@ async function deleteFile(filePath, fileName) {
                             // Reset this specific button to grey
                             specificButton.disabled = false;
                             specificButton.classList.remove('uploaded', 'btn-success');
-                            specificButton.classList.add('btn-outline-secondary', 'btn-sm');
-                            specificButton.style.background = '';
-                            specificButton.style.color = '';
-                            specificButton.style.border = '';
+                            specificButton.className = 'btn btn-secondary btn-sm';
+                            specificButton.style.backgroundColor = '#6c757d';
+                            specificButton.style.borderColor = '#6c757d';
+                            specificButton.style.color = 'white';
                             specificButton.style.cursor = 'pointer';
                             // Set the button content with appropriate icon
                             if (documentType === 'lab') {
-                                specificButton.innerHTML = `<i class="fas fa-flask"></i> LAB`;
+                                specificButton.innerHTML = `<i class="fas fa-flask"></i> Lab`;
                             } else if (documentType === 'lab_form') {
-                                specificButton.innerHTML = `<i class="fas fa-file-alt"></i> LAB FORM`;
+                                specificButton.innerHTML = `<i class="fas fa-file-alt"></i> Lab Form`;
                             } else if (documentType === 'retest') {
-                                specificButton.innerHTML = `<i class="fas fa-redo"></i> RETEST`;
+                                specificButton.innerHTML = `<i class="fas fa-redo"></i> Retest`;
                             } else {
-                                specificButton.innerHTML = documentType.toUpperCase();
+                                specificButton.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
                             }
-                            specificButton.title = `Upload ${documentType.toUpperCase()}`;
+                            specificButton.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
                             specificButton.setAttribute('data-file-deleted', 'true');
                             
                             // Re-enable onclick functionality
@@ -1465,11 +1663,11 @@ async function deleteFile(filePath, fileName) {
                         button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.cursor = 'pointer';
-                        button.innerHTML = documentType.toUpperCase();
-                        button.title = `Upload ${documentType.toUpperCase()}`;
+                        button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+                        button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
                         button.setAttribute('data-file-deleted', 'true');
                         button.setAttribute('data-last-updated', Date.now().toString());
-                        
+
                         // Re-enable onclick functionality
                         if (documentType === 'rfi') {
                             button.onclick = function() { uploadRFI(groupId); };
@@ -1477,6 +1675,8 @@ async function deleteFile(filePath, fileName) {
                             button.onclick = function() { uploadInvoice(groupId); };
                         } else if (documentType === 'occurrence') {
                             button.onclick = function() { uploadOccurrence(groupId); };
+                        } else if (documentType === 'composition') {
+                            button.onclick = function() { uploadComposition(groupId); };
                         }
                         console.log(`SUCCESS ${documentType.toUpperCase()} button directly reset to gray state`);
                     } else {
@@ -1506,19 +1706,25 @@ async function deleteFile(filePath, fileName) {
                         delete uploadStatus[buttonId];
                         localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
                         
-                        // Force the button to stay in uploadable state
+                        // Force the button to stay in uploadable state - GREY
                         button.disabled = false;
-                        button.style.background = '#28a745';
+                        button.className = 'btn btn-secondary btn-sm';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.cursor = 'pointer';
-                        button.innerHTML = `<i class="fas fa-upload"></i> ${documentType.toUpperCase()}`;
-                        button.title = `Upload ${documentType.toUpperCase()}`;
-                        
+                        button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+                        button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
+
                         // Re-enable onclick functionality
                         if (documentType === 'rfi') {
                             button.onclick = function() { uploadRFI(groupId); };
                         } else if (documentType === 'invoice') {
                             button.onclick = function() { uploadInvoice(groupId); };
+                        } else if (documentType === 'occurrence') {
+                            button.onclick = function() { uploadOccurrence(groupId); };
+                        } else if (documentType === 'composition') {
+                            button.onclick = function() { uploadComposition(groupId); };
                         }
                         
                         console.log(`SUCCESS Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
@@ -1745,6 +1951,44 @@ function toggleGroup(e, groupId) {
             icon.classList.add('fa-chevron-down');
         }
         console.log('Expanded group:', groupId);
+
+        // === DEBUG: Screen Size and Detail Table Styling ===
+        setTimeout(() => {
+            console.log('=== DETAIL TABLE DEBUG INFO ===');
+            console.log('Screen Width:', window.innerWidth + 'px');
+            console.log('Screen Height:', window.innerHeight + 'px');
+            console.log('Device Pixel Ratio:', window.devicePixelRatio);
+
+            // Log detail table styling
+            const detailTable = detailRow.querySelector('.detail-table');
+            if (detailTable) {
+                const computedStyle = window.getComputedStyle(detailTable);
+                console.log('Detail Table Width:', detailTable.offsetWidth + 'px');
+                console.log('Detail Table Display:', computedStyle.display);
+                console.log('Detail Table Table Layout:', computedStyle.tableLayout);
+                console.log('Detail Table Min Width:', computedStyle.minWidth);
+            }
+
+            // Log detail table wrapper styling
+            const detailWrapper = detailRow.querySelector('.detail-table-wrapper');
+            if (detailWrapper) {
+                const wrapperStyle = window.getComputedStyle(detailWrapper);
+                console.log('Wrapper Width:', detailWrapper.offsetWidth + 'px');
+                console.log('Wrapper Overflow-X:', wrapperStyle.overflowX);
+                console.log('Wrapper Max Width:', wrapperStyle.maxWidth);
+            }
+
+            // Log breakpoint info
+            if (window.innerWidth <= 640) {
+                console.log('Breakpoint: MOBILE (≤640px)');
+            } else if (window.innerWidth <= 1024) {
+                console.log('Breakpoint: TABLET (641-1024px)');
+            } else {
+                console.log('Breakpoint: DESKTOP (≥1025px)');
+            }
+            console.log('=== END DEBUG INFO ===');
+        }, 100);
+        // === END DEBUG ===
     } else {
         // Collapse
         detailRow.style.display = 'none';
@@ -1864,6 +2108,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('DEBUG [PAGE] Initializing Occurrence buttons immediately...');
         initializeOccurrenceButtonsSimple();
     }, 1400);
+
+    // SIMPLE COMPOSITION BUTTON INITIALIZATION - Run immediately
+    setTimeout(() => {
+        console.log('DEBUG [PAGE] Initializing Composition buttons immediately...');
+        initializeCompositionButtonsSimple();
+    }, 1600);
 });
 
 // Cookie utility function
@@ -2673,9 +2923,10 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
     
     buttons.forEach((button, index) => {
         if (button.textContent.includes('View Files') || button.textContent.includes('Files')) {
-            console.log('   Button ' + (index + 1) + ': "' + button.textContent.trim() + '"');
-            console.log('   Button ' + (index + 1) + ' current classes:', button.className);
-            console.log('   Button ' + (index + 1) + ' current styles:', {
+            const timestamp = new Date().toLocaleTimeString();
+            console.log(`   🕐 [${timestamp}] Button ${index + 1}: "${button.textContent.trim()}"`);
+            console.log(`   🎨 BEFORE UPDATE - Button ${index + 1} current classes:`, button.className);
+            console.log(`   🎨 BEFORE UPDATE - Button ${index + 1} current styles:`, {
                 backgroundColor: button.style.backgroundColor,
                 color: button.style.color,
                 borderColor: button.style.borderColor
@@ -2701,9 +2952,10 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     button.style.backgroundColor = '#28a745';
                     button.style.color = 'white';
                     button.title = 'All files available (RFI, Invoice, Lab, Compliance)';
-                    console.log('   🟢 Applied GREEN color to button');
-                    console.log('   🟢 Button after update - classes:', button.className);
-                    console.log('   🟢 Button after update - styles:', {
+                    const ts1 = new Date().toLocaleTimeString();
+                    console.log(`   🟢 [${ts1}] CHANGED TO GREEN - Applied GREEN color to button`);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} classes:`, button.className);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} styles:`, {
                         backgroundColor: button.style.backgroundColor,
                         color: button.style.color,
                         borderColor: button.style.borderColor
@@ -2714,9 +2966,10 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     button.style.backgroundColor = '#ffc107';
                     button.style.color = 'black';
                     button.title = 'Only compliance documents available';
-                    console.log('   🟠 Applied ORANGE color to button');
-                    console.log('   🟠 Button after update - classes:', button.className);
-                    console.log('   🟠 Button after update - styles:', {
+                    const ts2 = new Date().toLocaleTimeString();
+                    console.log(`   🟡 [${ts2}] CHANGED TO YELLOW - Applied YELLOW color to button`);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} classes:`, button.className);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} styles:`, {
                         backgroundColor: button.style.backgroundColor,
                         color: button.style.color,
                         borderColor: button.style.borderColor
@@ -2725,10 +2978,13 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                 case 'partial_files':
                     // ANY file detected - make View Files button ORANGE
                     button.classList.add('btn-view-files-orange');
+                    button.style.setProperty('background-color', '#ff8c00', 'important');  // CRITICAL: Force inline style with !important
+                    button.style.setProperty('color', 'white', 'important');
                     button.title = 'Files uploaded';
-                    console.log('   ORANGE Applied ORANGE color to button (files detected)');
-                    console.log('   Button after update - classes:', button.className);
-                    console.log('   Button after update - styles:', {
+                    const ts3 = new Date().toLocaleTimeString();
+                    console.log(`   🟠 [${ts3}] CHANGED TO ORANGE - Applied ORANGE color to button (files detected) with !important`);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} classes:`, button.className);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} styles:`, {
                         backgroundColor: button.style.backgroundColor,
                         color: button.style.color,
                         borderColor: button.style.borderColor
@@ -2739,9 +2995,10 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     button.style.backgroundColor = '#dc3545';
                     button.style.color = 'white';
                     button.title = 'No files available';
-                    console.log('   🔴 Applied RED color to button');
-                    console.log('   🔴 Button after update - classes:', button.className);
-                    console.log('   🔴 Button after update - styles:', {
+                    const ts4 = new Date().toLocaleTimeString();
+                    console.log(`   🔴 [${ts4}] CHANGED TO RED - Applied RED color to button`);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} classes:`, button.className);
+                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} styles:`, {
                         backgroundColor: button.style.backgroundColor,
                         color: button.style.color,
                         borderColor: button.style.borderColor
@@ -2856,14 +3113,100 @@ function updateRFIButtonColorDelayed(groupId) {
     });
 }
 
-// Function to update occurrence button color with delayed file check
-function updateAccuranceButtonColorDelayed(groupId) {
-    console.log('INFO [DELAYED] Updating Accurance button color for group:', groupId);
+// Function to update composition button color with delayed file check
+function updateCompositionButtonColorDelayed(groupId) {
+    console.log('INFO [DELAYED] Updating Composition button color for group:', groupId);
 
     // Extract client name and date from groupId
     const parts = groupId.split('_');
     if (parts.length < 3) {
-        console.warn('Invalid groupId format for Accurance button update:', groupId);
+        console.warn('Invalid groupId format for Composition button update:', groupId);
+        return;
+    }
+
+    // Reconstruct client name (handle cases with underscores in client name)
+    const datePart = parts[parts.length - 1];
+    const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+
+    // Reconstruct client name by joining all parts except the last one (date)
+    let clientName = parts.slice(0, -1).join('_');
+
+    // Handle special cases for common patterns
+    if (clientName.includes('Pty_Ltd')) {
+        clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+    } else {
+        clientName = clientName.replace(/_/g, ' ');
+    }
+
+    console.log('DEBUG [DELAYED] Extracted client name:', clientName);
+    console.log('DEBUG [DELAYED] Extracted inspection date:', inspectionDate);
+
+    // Check if Composition files exist for this client+date combination
+    fetch('/inspections/files/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            client_name: clientName,
+            inspection_date: inspectionDate,
+            _force_refresh: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.files) {
+            const hasComposition = data.files.composition && data.files.composition.length > 0;
+            console.log('DEBUG [DELAYED] Composition file check result:', hasComposition);
+
+            const buttonId = 'composition-' + groupId;
+            const button = document.getElementById(buttonId);
+
+            if (button) {
+                if (hasComposition) {
+                    // Update to green success state
+                    button.disabled = true;
+                    button.className = 'btn btn-sm btn-success success';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.borderColor = '#28a745';
+                    button.style.cursor = 'not-allowed';
+                    button.innerHTML = 'Composition ✓';
+                    button.title = 'Composition file exists';
+                    button.onclick = null;
+                    console.log('SUCCESS [DELAYED] Updated Composition button to green success state');
+                } else {
+                    // Update to grey state (no file)
+                    button.disabled = false;
+                    button.className = 'btn btn-sm btn-secondary';
+                    button.style.backgroundColor = '#6c757d';
+                    button.style.borderColor = '#6c757d';
+                    button.style.cursor = 'pointer';
+                    button.innerHTML = 'Composition';
+                    button.title = 'Upload Composition file';
+                    button.onclick = () => uploadComposition(groupId);
+                    console.log('GREY [DELAYED] Updated Composition button to grey state (no file)');
+                }
+            } else {
+                console.warn('Composition button not found for delayed update:', buttonId);
+            }
+        } else {
+            console.warn('Failed to get file status for Composition button update:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking Composition file status for delayed update:', error);
+    });
+}
+
+// Function to update occurrence button color with delayed file check
+function updateOccurrenceButtonColorDelayed(groupId) {
+    console.log('INFO [DELAYED] Updating Occurrence button color for group:', groupId);
+
+    // Extract client name and date from groupId
+    const parts = groupId.split('_');
+    if (parts.length < 3) {
+        console.warn('Invalid groupId format for Occurrence button update:', groupId);
         return;
     }
 
@@ -2904,25 +3247,25 @@ function updateAccuranceButtonColorDelayed(groupId) {
         console.log('DEBUG [DELAYED] data.files.occurrence:', data.files ? data.files.occurrence : 'files object missing');
 
         if (data.success && data.files) {
-            const hasAccurance = data.files.occurrence && data.files.occurrence.length > 0;
-            console.log('DEBUG [DELAYED] Accurance file check result:', hasAccurance);
+            const hasOccurrence = data.files.occurrence && data.files.occurrence.length > 0;
+            console.log('DEBUG [DELAYED] Occurrence file check result:', hasOccurrence);
             console.log('DEBUG [DELAYED] occurrence array length:', data.files.occurrence ? data.files.occurrence.length : 0);
 
             const buttonId = 'occurrence-' + groupId;
             const button = document.getElementById(buttonId);
 
             if (button) {
-                if (hasAccurance) {
+                if (hasOccurrence) {
                     // Update to green success state
                     button.disabled = true;
                     button.className = 'btn btn-sm btn-success success';
                     button.style.backgroundColor = '#28a745';
                     button.style.borderColor = '#28a745';
                     button.style.cursor = 'not-allowed';
-                    button.innerHTML = 'Accurance ✓';
-                    button.title = 'Accurance file exists';
+                    button.innerHTML = 'Occurrence ✓';
+                    button.title = 'Occurrence file exists';
                     button.onclick = null;
-                    console.log('SUCCESS [DELAYED] Updated Accurance button to green success state');
+                    console.log('SUCCESS [DELAYED] Updated Occurrence button to green success state');
                 } else {
                     // Update to grey state (no file)
                     button.disabled = false;
@@ -2930,20 +3273,20 @@ function updateAccuranceButtonColorDelayed(groupId) {
                     button.style.backgroundColor = '#6c757d';
                     button.style.borderColor = '#6c757d';
                     button.style.cursor = 'pointer';
-                    button.innerHTML = 'Accurance';
-                    button.title = 'Upload Accurance file';
+                    button.innerHTML = 'Occurrence';
+                    button.title = 'Upload Occurrence file';
                     button.onclick = () => uploadOccurrence(groupId);
-                    console.log('GREY [DELAYED] Updated Accurance button to grey state (no file)');
+                    console.log('GREY [DELAYED] Updated Occurrence button to grey state (no file)');
                 }
             } else {
-                console.warn('Accurance button not found for delayed update:', buttonId);
+                console.warn('Occurrence button not found for delayed update:', buttonId);
             }
         } else {
-            console.warn('Failed to get file status for Accurance button update:', data.error);
+            console.warn('Failed to get file status for Occurrence button update:', data.error);
         }
     })
     .catch(error => {
-        console.error('Error checking Accurance file status for delayed update:', error);
+        console.error('Error checking Occurrence file status for delayed update:', error);
     });
 }
 
@@ -3786,8 +4129,8 @@ function immediateOccurrenceButtonCheck(groupId, clientName, inspectionDate) {
                         button.style.backgroundColor = '#28a745';
                         button.style.borderColor = '#28a745';
                         button.style.cursor = 'not-allowed';
-                        button.innerHTML = 'Accurance ✓';
-                        button.title = 'Accurance file exists';
+                        button.innerHTML = 'Occurrence ✓';
+                        button.title = 'Occurrence file exists';
                         button.onclick = null;
                         console.log(`SUCCESS [IMMEDIATE] Updated Occurrence button to GREEN for: ${clientName}`);
                     } else {
@@ -3797,8 +4140,8 @@ function immediateOccurrenceButtonCheck(groupId, clientName, inspectionDate) {
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.cursor = 'pointer';
-                        button.innerHTML = 'Accurance';
-                        button.title = 'Upload Accurance file';
+                        button.innerHTML = 'Occurrence';
+                        button.title = 'Upload Occurrence file';
                         button.onclick = () => uploadOccurrence(groupId);
                         console.log(`GREY [IMMEDIATE] Updated Occurrence button to GREY for: ${clientName}`);
                     }
@@ -4268,8 +4611,8 @@ async function initializeOccurrenceButtonsSimple() {
                         button.style.backgroundColor = '#28a745';
                         button.style.borderColor = '#28a745';
                         button.style.cursor = 'not-allowed';
-                        button.innerHTML = 'Accurance ✓';
-                        button.title = 'Accurance file exists';
+                        button.innerHTML = 'Occurrence ✓';
+                        button.title = 'Occurrence file exists';
                         button.onclick = null;
                         console.log(`SUCCESS [SIMPLE] Set ${clientName} Occurrence button to GREEN`);
                     } else {
@@ -4279,8 +4622,8 @@ async function initializeOccurrenceButtonsSimple() {
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.cursor = 'pointer';
-                        button.innerHTML = 'Accurance';
-                        button.title = 'Upload Accurance file';
+                        button.innerHTML = 'Occurrence';
+                        button.title = 'Upload Occurrence file';
                         button.onclick = () => uploadOccurrence(groupId);
                         console.log(`GREY [SIMPLE] Set ${clientName} Occurrence button to GREY`);
                     }
@@ -4294,26 +4637,122 @@ async function initializeOccurrenceButtonsSimple() {
     console.log('SUCCESS [SIMPLE] Occurrence button initialization complete');
 }
 
+// Initialize Composition buttons - check if files exist and update button states
+async function initializeCompositionButtonsSimple() {
+    console.log('DEBUG [SIMPLE] Initializing Composition buttons...');
+
+    const compositionButtons = document.querySelectorAll('button[id^="composition-"]');
+    console.log(`DEBUG [SIMPLE] Found ${compositionButtons.length} Composition buttons`);
+
+    for (const button of compositionButtons) {
+        const buttonId = button.id;
+        const groupId = buttonId.replace('composition-', '');
+
+        // Extract client name and date from groupId
+        const parts = groupId.split('_');
+        if (parts.length < 3) continue;
+
+        const datePart = parts[parts.length - 1];
+        const inspectionDate = datePart.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
+        let clientName = parts.slice(0, -1).join('_');
+
+        if (clientName.includes('Pty_Ltd')) {
+            clientName = clientName.replace(/_/g, ' ').replace(/Pty Ltd/g, '(Pty) Ltd.');
+        } else {
+            clientName = clientName.replace(/_/g, ' ');
+        }
+
+        try {
+            const response = await fetch('/list-client-folder-files/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({
+                    client_name: clientName,
+                    inspection_date: inspectionDate,
+                    inspection_id: groupId,
+                    _force_refresh: true  // CRITICAL: Force cache refresh to get latest files
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`DEBUG [COMPOSITION] Response for ${clientName}:`, data);
+                console.log(`DEBUG [COMPOSITION] Files object:`, data.files);
+                console.log(`DEBUG [COMPOSITION] Composition files:`, data.files?.composition);
+                if (data.success && data.files) {
+                    const hasComposition = data.files.composition && data.files.composition.length > 0;
+                    console.log(`DEBUG [COMPOSITION] hasComposition check result: ${hasComposition}`);
+
+                    if (hasComposition) {
+                        // GREEN - Composition file exists
+                        button.disabled = true;
+                        button.className = 'btn btn-sm btn-success success';
+                        button.style.backgroundColor = '#28a745';
+                        button.style.borderColor = '#28a745';
+                        button.style.cursor = 'not-allowed';
+                        button.innerHTML = 'Composition ✓';
+                        button.title = 'Composition file exists';
+                        button.onclick = null;
+                        console.log(`SUCCESS [SIMPLE] Set ${clientName} Composition button to GREEN`);
+                    } else {
+                        // GREY - No Composition file
+                        button.disabled = false;
+                        button.className = 'btn btn-sm btn-secondary';
+                        button.style.backgroundColor = '#6c757d';
+                        button.style.borderColor = '#6c757d';
+                        button.style.cursor = 'pointer';
+                        button.innerHTML = 'Composition';
+                        button.title = 'Upload Composition file';
+                        button.onclick = () => uploadComposition(groupId);
+                        console.log(`GREY [SIMPLE] Set ${clientName} Composition button to GREY`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`ERROR [SIMPLE] Error checking Composition for ${clientName}:`, error);
+        }
+    }
+
+    console.log('SUCCESS [SIMPLE] Composition button initialization complete');
+}
+
 // Simple function to immediately make View Files button ORANGE after file upload
 function makeViewFilesButtonOrange(groupId) {
-    console.log('Making View Files button ORANGE for groupId:', groupId);
-    
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🟠 [${timestamp}] makeViewFilesButtonOrange() called for groupId:`, groupId);
+
     // Find the View Files button for this group
     const viewFilesButton = document.querySelector(`button[onclick*="${groupId}"][onclick*="openFilesPopup"]`);
-    
+
     if (viewFilesButton) {
+        console.log(`   🎨 BEFORE - Button classes:`, viewFilesButton.className);
+        console.log(`   🎨 BEFORE - Button styles:`, {
+            backgroundColor: viewFilesButton.style.backgroundColor,
+            color: viewFilesButton.style.color,
+            borderColor: viewFilesButton.style.borderColor
+        });
+
         // Remove existing color classes including the problematic btn-files-none
         viewFilesButton.classList.remove('btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
-        
+
         // Make it ORANGE
         viewFilesButton.classList.add('btn-warning');
-        viewFilesButton.style.backgroundColor = '#ff8c00';
-        viewFilesButton.style.color = 'white';
+        viewFilesButton.style.setProperty('background-color', '#ff8c00', 'important');  // CRITICAL: Force with !important
+        viewFilesButton.style.setProperty('color', 'white', 'important');
         viewFilesButton.title = 'Files uploaded';
-        
-        console.log('SUCCESS: Made View Files button ORANGE');
+
+        console.log(`   🟠 [${timestamp}] CHANGED TO ORANGE - Set View Files button to ORANGE`);
+        console.log(`   🎨 AFTER - Button classes:`, viewFilesButton.className);
+        console.log(`   🎨 AFTER - Button styles:`, {
+            backgroundColor: viewFilesButton.style.backgroundColor,
+            color: viewFilesButton.style.color,
+            borderColor: viewFilesButton.style.borderColor
+        });
     } else {
-        console.log('View Files button not found for groupId:', groupId);
+        console.log(`   ❌ View Files button not found for groupId:`, groupId);
     }
 }
 
@@ -4359,17 +4798,23 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
                 // Button shows as uploaded but no files exist - fix this
                 console.log(`🔧 Fixing ${documentType} button for ${clientName} - no actual files found`);
                 button.disabled = false;
-                button.style.background = '#28a745';
+                button.className = 'btn btn-secondary btn-sm';
+                button.style.backgroundColor = '#6c757d';
+                button.style.borderColor = '#6c757d';
                 button.style.color = 'white';
                 button.style.cursor = 'pointer';
-                button.innerHTML = `<i class="fas fa-upload"></i> ${documentType.toUpperCase()}`;
-                button.title = `Upload ${documentType.toUpperCase()}`;
-                
+                button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+                button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
+
                 // Re-enable onclick if it was disabled
                 if (documentType === 'rfi') {
                     button.onclick = function() { uploadRFI(groupId); };
                 } else if (documentType === 'invoice') {
                     button.onclick = function() { uploadInvoice(groupId); };
+                } else if (documentType === 'occurrence') {
+                    button.onclick = function() { uploadOccurrence(groupId); };
+                } else if (documentType === 'composition') {
+                    button.onclick = function() { uploadComposition(groupId); };
                 }
             } else if (hasFiles && !button.disabled) {
                 // Files exist but button doesn't show as uploaded - check if this is correct
@@ -4406,61 +4851,35 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
     
     // Find all View Files buttons for this client and date
     const buttons = document.querySelectorAll('button');
-    const matchingButtons = Array.from(buttons).filter(button => {
+    let matchingButtons = Array.from(buttons).filter(button => {
         const buttonText = button.textContent.trim();
         const dataClientName = button.getAttribute('data-client-name') || '';
         const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
         const onclick = button.getAttribute('onclick') || '';
-        
+
+        // Clean the button's client name and date for comparison
+        let buttonClientName = dataClientName;
+        let buttonDate = dataInspectionDate;
+
+        try {
+            buttonClientName = JSON.parse('"' + buttonClientName + '"');
+        } catch (e) {
+            buttonClientName = buttonClientName.replace(/\\u002D/g, '-');
+        }
+
+        try {
+            buttonDate = JSON.parse('"' + buttonDate + '"');
+        } catch (e) {
+            buttonDate = buttonDate.replace(/\\u002D/g, '-');
+        }
+
         // Check if this button is for the correct client and date using data attributes
         return (buttonText.includes('Files') || onclick.includes('openFilesPopup')) &&
-               dataClientName === clientName && 
-               dataInspectionDate === cleanDate;
+               buttonClientName === clientName &&
+               buttonDate === cleanDate;
     });
-    
+
     console.log(`DEBUG [IMMEDIATE] Found ${matchingButtons.length} View Files buttons for ${clientName} on ${cleanDate}`);
-    
-    // Debug: Log all buttons to see what we're working with
-    if (matchingButtons.length === 0) {
-        console.log(`DEBUG [DEBUG] No matching buttons found. Searching all buttons...`);
-        const allButtons = document.querySelectorAll('button');
-        console.log(`DEBUG [DEBUG] Total buttons found: ${allButtons.length}`);
-        
-        allButtons.forEach((button, index) => {
-            const buttonText = button.textContent.trim();
-            const dataClientName = button.getAttribute('data-client-name') || '';
-            const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
-            
-            if (buttonText.includes('Files')) {
-                console.log(`DEBUG [DEBUG] Button ${index}: text="${buttonText}", data-client-name="${dataClientName}", data-inspection-date="${dataInspectionDate}"`);
-            }
-        });
-        
-        // Fallback: Try to find buttons by partial matching with better date handling
-        console.log(`DEBUG [DEBUG] Trying fallback search with partial matching...`);
-        const fallbackButtons = Array.from(allButtons).filter(button => {
-            const buttonText = button.textContent.trim();
-            const dataClientName = button.getAttribute('data-client-name') || '';
-            const dataInspectionDate = button.getAttribute('data-inspection-date') || '';
-            
-            // Clean the button's date for comparison
-            let buttonDate = dataInspectionDate;
-            try {
-                buttonDate = JSON.parse('"' + buttonDate + '"');
-            } catch (e) {
-                buttonDate = buttonDate.replace(/\\u002D/g, '-');
-            }
-            
-            return buttonText.includes('Files') && 
-                   dataClientName === clientName && 
-                   buttonDate === cleanDate;
-        });
-        
-        if (fallbackButtons.length > 0) {
-            console.log(`DEBUG [DEBUG] Found ${fallbackButtons.length} buttons with fallback search`);
-            matchingButtons.push(...fallbackButtons);
-        }
-    }
     
     // For now, we'll check the current file state by making a quick API call
     // but we'll optimize this later to avoid the race condition
@@ -4486,6 +4905,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             const hasRfi = !!(result.files.rfi && result.files.rfi.length > 0);
             const hasInvoice = !!(result.files.invoice && result.files.invoice.length > 0);
             const hasLab = !!(result.files.lab && result.files.lab.length > 0);
+            const hasLabForm = !!(result.files.lab_form && result.files.lab_form.length > 0);
             const hasRetest = !!(result.files.retest && result.files.retest.length > 0);
             const hasOccurrence = !!(result.files.occurrence && result.files.occurrence.length > 0);
             const hasCompliance = !!(result.files.compliance && result.files.compliance.length > 0);
@@ -4495,13 +4915,13 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
                 fileStatus = 'all_files';
             } else if (hasCompliance) {
                 fileStatus = 'compliance_only';
-            } else if (hasRfi || hasInvoice || hasLab || hasRetest || hasOccurrence) {
+            } else if (hasRfi || hasInvoice || hasLab || hasLabForm || hasRetest || hasOccurrence) {
                 fileStatus = 'partial_files';
             } else {
                 fileStatus = 'no_files';
             }
 
-            console.log(`📊 [IMMEDIATE] File status after deletion: ${fileStatus} (RFI:${hasRfi}, Invoice:${hasInvoice}, Lab:${hasLab}, Occurrence:${hasOccurrence}, Compliance:${hasCompliance})`);
+            console.log(`📊 [IMMEDIATE] File status after deletion: ${fileStatus} (RFI:${hasRfi}, Invoice:${hasInvoice}, Lab:${hasLab}, LabForm:${hasLabForm}, Retest:${hasRetest}, Occurrence:${hasOccurrence}, Compliance:${hasCompliance})`);
             
             // Update the button colors immediately - bypass the skip logic for file deletion
             matchingButtons.forEach(button => {
@@ -4730,28 +5150,33 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     
     if (button) {
         console.log(`SUCCESS Found ${documentType} button: ${buttonId}`);
-            
-            // Reset button to default state (no files)
+
+            // Reset button to default state (no files) - GREY
             button.disabled = false;
-            button.classList.remove('uploaded');
-            button.classList.add('btn-outline-secondary', 'btn-sm');
-            button.style.background = '';
-            button.style.color = '';
+            button.classList.remove('uploaded', 'btn-success');
+            button.className = 'btn btn-secondary btn-sm';
+            button.style.backgroundColor = '#6c757d';
+            button.style.borderColor = '#6c757d';
+            button.style.color = 'white';
             button.style.cursor = 'pointer';
-            button.innerHTML = documentType.toUpperCase();
-            button.title = `Upload ${documentType.toUpperCase()}`;
-            
+            button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+            button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
+
             // Mark button as file-deleted to prevent UI updates from overriding this state
             button.setAttribute('data-file-deleted', 'true');
             button.setAttribute('data-last-updated', Date.now().toString());
-            
+
             // Re-enable onclick functionality
             if (documentType === 'rfi') {
                 button.onclick = function() { uploadRFI(groupId); };
             } else if (documentType === 'invoice') {
                 button.onclick = function() { uploadInvoice(groupId); };
+            } else if (documentType === 'occurrence') {
+                button.onclick = function() { uploadOccurrence(groupId); };
+            } else if (documentType === 'composition') {
+                button.onclick = function() { uploadComposition(groupId); };
             }
-            
+
         console.log(`SUCCESS ${documentType.toUpperCase()} button reset to uploadable state for ${clientName}`);
     } else {
         console.log(`⚠️ Button still not found: ${buttonId}`);
@@ -5374,9 +5799,11 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
     
     if (!button) {
         console.log(`DEBUG Button not found by ID, searching by pattern...`);
-        const allButtons = document.querySelectorAll(`button[id^="${documentType}-"]`);
-        console.log(`DEBUG Found ${allButtons.length} buttons with pattern "${documentType}-"`);
-        
+        // Convert lab_form to lab-form for HTML button ID format
+        const buttonPattern = documentType.replace(/_/g, '-');
+        const allButtons = document.querySelectorAll(`button[id^="${buttonPattern}-"]`);
+        console.log(`DEBUG Found ${allButtons.length} buttons with pattern "${buttonPattern}-"`);
+
         // For individual inspection buttons (lab, lab_form, retest), search by group data attribute
         if (documentType === 'lab' || documentType === 'lab_form' || documentType === 'retest') {
             for (let btn of allButtons) {
@@ -5422,8 +5849,8 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
             button.innerHTML = '<i class="fas fa-redo"></i> Retest';
             button.title = 'Retest upload available';
         } else {
-            button.innerHTML = documentType.toUpperCase();
-            button.title = `Upload ${documentType.toUpperCase()}`;
+            button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+            button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
         }
         
         // Mark button as file-deleted to prevent UI updates from overriding this state
@@ -5437,6 +5864,8 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadInvoice(groupId); };
         } else if (documentType === 'occurrence') {
             button.onclick = function() { uploadOccurrence(groupId); };
+        } else if (documentType === 'composition') {
+            button.onclick = function() { uploadComposition(groupId); };
         } else if (documentType === 'lab') {
             // For lab buttons, use the inspection ID from the button's data attributes
             const inspectionId = button.getAttribute('data-inspection-id') || button.id.replace('lab-', '');
@@ -5496,8 +5925,8 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
         button.style.borderColor = '#6c757d';
         button.style.color = 'white';
         button.style.cursor = 'pointer';
-        button.innerHTML = documentType.toUpperCase();
-        button.title = `Upload ${documentType.toUpperCase()}`;
+        button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
+        button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
         
         // Mark button as file-deleted
         button.setAttribute('data-file-deleted', 'true');
@@ -5510,6 +5939,8 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
             button.onclick = function() { uploadInvoice(groupId); };
         } else if (documentType === 'occurrence') {
             button.onclick = function() { uploadOccurrence(groupId); };
+        } else if (documentType === 'composition') {
+            button.onclick = function() { uploadComposition(groupId); };
         } else if (documentType === 'lab') {
             button.onclick = function() { uploadLab(groupId); };
         } else if (documentType === 'lab_form') {
@@ -5517,7 +5948,7 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
         } else if (documentType === 'retest') {
             button.onclick = function() { uploadRetest(groupId); };
         }
-        
+
         console.log(`SUCCESS Main table ${documentType} button reset to uploadable state`);
     } else {
         console.log(`⚠️ Main table button not found: ${buttonId}`);

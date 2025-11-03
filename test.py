@@ -1,93 +1,119 @@
-import os
-import django
+#!/usr/bin/env python3
+"""
+Test script to verify commodity detection logic for Composition button visibility
+"""
 
-# Setup Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
-django.setup()
+# Sample inspection data
+inspections = [
+    {
+        'client_name': 'Foodzone Kakamas',
+        'account_code': 'RE-IND-PMP-NA-4707',
+        'date': '31/10/2025',
+        'products': [
+            {'inspection_no': '9619', 'commodity': 'RAW', 'product_name': 'single mince'},
+            {'inspection_no': '9620', 'commodity': 'RAW', 'product_name': 'wilgenhof boerewors'},
+            {'inspection_no': '9621', 'commodity': 'RAW', 'product_name': 'mumbai chilli sausage'},
+            {'inspection_no': '9622', 'commodity': 'RAW', 'product_name': 'Biltong flaboured kaas wors'},
+        ]
+    },
+    {
+        'client_name': 'Test Client Mixed',
+        'account_code': 'RE-IND-MIXED-123',
+        'date': '31/10/2025',
+        'products': [
+            {'inspection_no': '1001', 'commodity': 'RAW', 'product_name': 'raw sausage'},
+            {'inspection_no': '1002', 'commodity': 'PMP', 'product_name': 'processed ham'},
+            {'inspection_no': '1003', 'commodity': 'RAW', 'product_name': 'raw mince'},
+        ]
+    },
+    {
+        'client_name': 'Test Client PMP Only',
+        'account_code': 'RE-IND-PMP-456',
+        'date': '31/10/2025',
+        'products': [
+            {'inspection_no': '2001', 'commodity': 'PMP', 'product_name': 'salami'},
+            {'inspection_no': '2002', 'commodity': 'PMP', 'product_name': 'bacon'},
+        ]
+    },
+]
 
-from django.contrib.auth.models import User
 
-def display_all_users():
-    """Display all users in the system with their roles"""
-    print("\n" + "="*80)
-    print("ALL USERS IN THE SYSTEM")
-    print("="*80)
+def check_composition_button_visibility(inspection):
+    """
+    Check if Composition button should be visible based on commodities
 
-    users = User.objects.all().order_by('username')
+    Logic: Show button if inspection has RAW OR PMP (or both)
+    """
+    has_raw = False
+    has_pmp = False
 
-    if not users:
-        print("No users found in the database.")
-        return
+    for product in inspection['products']:
+        commodity = product['commodity'].upper().strip()
 
-    print(f"\nTotal Users: {users.count()}\n")
+        if commodity == 'RAW':
+            has_raw = True
+        elif commodity == 'PMP':
+            has_pmp = True
 
-    for user in users:
-        role = getattr(user, 'role', 'Not Set')
-        is_superuser = "Yes" if user.is_superuser else "No"
-        is_staff = "Yes" if user.is_staff else "No"
-        is_active = "Yes" if user.is_active else "No"
+    # Show button if RAW OR PMP exists (or both)
+    show_button = has_raw or has_pmp
 
-        print(f"Username: {user.username}")
-        print(f"  Email: {user.email or 'Not Set'}")
-        print(f"  Full Name: {user.get_full_name() or 'Not Set'}")
-        print(f"  Role: {role}")
-        print(f"  Superuser: {is_superuser}")
-        print(f"  Staff: {is_staff}")
-        print(f"  Active: {is_active}")
-        print(f"  Last Login: {user.last_login or 'Never'}")
-        print(f"  Date Joined: {user.date_joined}")
-        print("-" * 80)
+    return {
+        'has_raw': has_raw,
+        'has_pmp': has_pmp,
+        'show_composition_button': show_button
+    }
 
-def make_super_admin(username):
-    """Make a user a super admin"""
-    try:
-        user = User.objects.get(username__iexact=username)
-        user.role = 'super_admin'
-        user.is_superuser = True
-        user.is_staff = True
-        user.is_active = True
-        user.save()
-        print(f"✓ Successfully made '{user.username}' a super admin!")
-        return True
-    except User.DoesNotExist:
-        print(f"✗ User '{username}' not found in the database.")
-        return False
-    except Exception as e:
-        print(f"✗ Error updating user '{username}': {str(e)}")
-        return False
 
 def main():
-    print("\n" + "="*80)
-    print("USER MANAGEMENT SCRIPT")
-    print("="*80)
+    print("=" * 80)
+    print("COMPOSITION BUTTON VISIBILITY TEST")
+    print("=" * 80)
+    print()
 
-    # Display all users first
-    display_all_users()
+    for inspection in inspections:
+        print(f"Inspection: {inspection['client_name']}")
+        print(f"   Account Code: {inspection['account_code']}")
+        print(f"   Date: {inspection['date']}")
+        print(f"   Products: {len(inspection['products'])}")
+        print()
 
-    # Make Armand and Anthony super admins
-    print("\n" + "="*80)
-    print("MAKING USERS SUPER ADMINS")
-    print("="*80 + "\n")
+        # List all products and their commodities
+        print("   Products breakdown:")
+        for product in inspection['products']:
+            print(f"      - {product['product_name']}: Commodity = {product['commodity']}")
+        print()
 
-    success_count = 0
+        # Check visibility
+        result = check_composition_button_visibility(inspection)
 
-    print("Processing Armand...")
-    if make_super_admin('Armand'):
-        success_count += 1
+        print(f"   Analysis:")
+        print(f"      Has RAW products: {'[YES]' if result['has_raw'] else '[NO]'}")
+        print(f"      Has PMP products: {'[YES]' if result['has_pmp'] else '[NO]'}")
+        print()
 
-    print("\nProcessing Anthony...")
-    if make_super_admin('Anthony'):
-        success_count += 1
+        if result['show_composition_button']:
+            commodities = []
+            if result['has_raw']:
+                commodities.append('RAW')
+            if result['has_pmp']:
+                commodities.append('PMP')
+            print(f"   >>> COMPOSITION BUTTON: VISIBLE (has {' and '.join(commodities)})")
+        else:
+            print(f"   >>> COMPOSITION BUTTON: HIDDEN (no RAW or PMP commodities found)")
 
-    # Display updated users
-    print("\n" + "="*80)
-    print("UPDATED USER LIST")
-    print("="*80)
-    display_all_users()
+        print()
+        print("-" * 80)
+        print()
 
-    print("\n" + "="*80)
-    print(f"SUMMARY: {success_count} user(s) successfully updated to super admin")
-    print("="*80 + "\n")
 
 if __name__ == '__main__':
     main()
+
+    print("\nSUMMARY:")
+    print("The Composition button shows when an inspection group contains:")
+    print("   * At least one product with commodity = 'RAW'")
+    print("   * OR at least one product with commodity = 'PMP'")
+    print("   * OR BOTH")
+    print()
+    print("The button is hidden only if there are NO RAW or PMP commodities.")
