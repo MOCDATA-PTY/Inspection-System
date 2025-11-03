@@ -1022,6 +1022,8 @@ def shipment_list(request):
     from django.db.models import Prefetch, Q
     
     # Start with base queryset - only select needed fields to reduce memory usage
+    from datetime import datetime as dt
+
     inspections = FoodSafetyAgencyInspection.objects.select_related('rfi_uploaded_by', 'invoice_uploaded_by', 'composition_uploaded_by', 'sent_by').only(
         'client_name', 'date_of_inspection', 'inspector_name', 'inspector_id',
         'commodity', 'remote_id', 'is_sample_taken', 'needs_retest',
@@ -1033,9 +1035,10 @@ def shipment_list(request):
         'composition_uploaded_by__username', 'composition_uploaded_by__first_name', 'composition_uploaded_by__last_name',
         'sent_by__username', 'sent_by__first_name', 'sent_by__last_name'
     )
-    
-    # All inspections are now from October 2025 onwards after cleanup
-    # No additional date filtering needed since old data has been removed
+
+    # Filter inspections to only show from October 1, 2025 onwards
+    october_2025_start = dt(2025, 10, 1).date()
+    inspections = inspections.filter(date_of_inspection__gte=october_2025_start)
     
     # No automatic background fetching - only manual via settings button
     
