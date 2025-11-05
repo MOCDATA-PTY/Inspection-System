@@ -426,6 +426,17 @@
         
         <!-- Navigation Bar -->
         <div class="nav-bar">
+            {% if request.user.role == 'inspector' %}
+            <a href="{% url 'inspector_dashboard' %}" class="btn btn-info">
+                <i class="fas fa-chart-line"></i> My Analytics
+            </a>
+            <a href="{% url 'shipment_list' %}" class="btn btn-secondary">
+                <i class="fas fa-clipboard-check"></i> Inspections
+            </a>
+            <a href="{% url 'settings' %}" class="btn btn-info">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            {% else %}
             <a href="{% url 'client_list' %}" class="btn btn-secondary">
                 <i class="fas fa-users"></i> Manage Clients
             </a>
@@ -449,6 +460,7 @@
             <a href="{% url 'settings' %}" class="btn btn-info">
                 <i class="fas fa-cog"></i> Settings
             </a>
+            {% endif %}
             
             <!-- Logout Button -->
             <form action="{% url 'logout' %}" method="post" class="logout-form">

@@ -1084,6 +1084,20 @@
             </div>
             
             <ul class="nav-menu">
+                {% if request.user.role == 'inspector' %}
+                <li class="nav-item">
+                    <a href="{% url 'inspector_dashboard' %}" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        My Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'shipment_list' %}" class="nav-link">
+                        <i class="fas fa-clipboard-check"></i>
+                        Inspections
+                    </a>
+                </li>
+                {% else %}
                 <li class="nav-item">
                     <a href="{% url 'home' %}" class="nav-link">
                         <i class="fas fa-home"></i>
@@ -1124,6 +1138,8 @@
                 {% endif %}
                 {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                 <li class="nav-item">
+                {% endif %}
+                {% endif %}
                     <a href="{% url 'server_view' %}" class="nav-link">
                         <i class="fas fa-tachometer-alt"></i>
                         Server View
