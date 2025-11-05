@@ -6674,15 +6674,18 @@
                                                         {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - lab selection disabled"{% endif %}
                                                         onchange="updateLab(this)">
                                                     <option value="">Select Lab</option>
-                                                    <option value="lab1" {% if product.lab == 'lab1' %}selected{% endif %}>Lab 1</option>
-                                                    <option value="lab2" {% if product.lab == 'lab2' %}selected{% endif %}>Lab 2</option>
-                                                    <option value="lab3" {% if product.lab == 'lab3' %}selected{% endif %}>Lab 3</option>
+                                                    <option value="lab_b" {% if product.lab == 'lab_b' %}selected{% endif %}>Merieux NutriSciences</option>
+                                                    <option value="lab_c" {% if product.lab == 'lab_c' %}selected{% endif %}>AGRI Food Laboratory (SGS)</option>
+                                                    <option value="lab_d" {% if product.lab == 'lab_d' %}selected{% endif %}>SANBI</option>
+                                                    <option value="lab_e" {% if product.lab == 'lab_e' %}selected{% endif %}>SMT</option>
+                                                    <option value="lab_f" {% if product.lab == 'lab_f' %}selected{% endif %}>ARC</option>
+                                                    <option value="lab_a" {% if product.lab == 'lab_a' %}selected{% endif %}>Food Safety Laboratory</option>
                                                 </select>
                                             </div>
                                             
                                             <!-- Needs Retest Dropdown -->
                                             <div class="mb-3">
-                                                <label class="block text-gray-600 font-medium mb-1 text-xs">Needs Retest</label>
+                                                <label class="block text-gray-600 font-medium mb-1 text-xs">Retest</label>
                                                 <select class="w-full text-xs border border-gray-300 rounded px-2 py-1 needs-retest-dropdown" 
                                                         data-inspection-id="{{ product.remote_id }}"
                                                         {% if not product.is_sample_taken %}disabled style="opacity: 0.5; cursor: not-allowed;" title="No sample taken - retest options disabled"{% endif %}
@@ -6690,7 +6693,6 @@
                                                     <option value="">Select Option</option>
                                                     <option value="yes" {% if product.needs_retest == 'yes' %}selected{% endif %}>Yes</option>
                                                     <option value="no" {% if product.needs_retest == 'no' %}selected{% endif %}>No</option>
-                                                    <option value="pending" {% if product.needs_retest == 'pending' %}selected{% endif %}>Pending</option>
                                                 </select>
                                             </div>
                                             
