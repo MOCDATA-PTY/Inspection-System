@@ -1620,6 +1620,7 @@ def shipment_list(request):
             'is_complete': False,  # Default to False - will be checked on-demand
             'group_id': group_id,
             'inspector_name': inspector_name,
+            'inspector_id': next((inspection.inspector_id for inspection in group_inspections if getattr(inspection, 'inspector_id', None)), None),
             'location': None,  # No location field in model
             'total_products': inspection_count,
             'km_traveled': group_km_traveled,  # From actual inspection data
@@ -4030,17 +4031,38 @@ def inspector_dashboard(request):
     if request.user.role != 'inspector':
         return redirect('analytics_dashboard')
     
-    from ..models import Client, Inspection, FoodSafetyAgencyInspection
+    from ..models import Client, Inspection, FoodSafetyAgencyInspection, InspectorMapping
     from django.db.models import Count, Q
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, date
     
-    # Get inspector's name for filtering
+    # Resolve inspector_id via mapping (handles cases where source has 'Unknown' names)
     inspector_name = request.user.get_full_name() or request.user.username
+    inspector_id = None
+    try:
+        mapping = InspectorMapping.objects.get(
+            inspector_name__iexact=inspector_name
+        )
+        inspector_id = mapping.inspector_id
+    except InspectorMapping.DoesNotExist:
+        # Fallback to username-only mapping if full name was not stored
+        try:
+            mapping = InspectorMapping.objects.get(
+                inspector_name__iexact=request.user.username
+            )
+            inspector_id = mapping.inspector_id
+        except InspectorMapping.DoesNotExist:
+            inspector_id = None
     
-    # Get inspector-specific statistics
-    inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
-        inspector_name__icontains=inspector_name
-    )
+    # Get inspector-specific statistics using inspector_id when available
+    if inspector_id is not None:
+        inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
+            inspector_id=inspector_id
+        )
+    else:
+        # As a last resort (unlikely), try name match so page still loads
+        inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
+            inspector_name__icontains=inspector_name
+        )
     
     total_inspections = inspector_inspections.count()
     

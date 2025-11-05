@@ -3,6 +3,7 @@
 <head>
     {% load static %}
     {% load group_filters %}
+    {% load inspector_extras %}
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -6372,7 +6373,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-500">Inspector:</span>
-                                    <span class="font-medium">{{ shipment.inspector_name|default:"-" }}</span>
+                                    <span class="font-medium">{{ shipment.inspector_name|display_inspector:shipment.inspector_id }}</span>
                                 </div>
                                 <div class="flex justify-between items-center">
                                     <span class="text-gray-500">Distance:</span>
@@ -6850,7 +6851,7 @@
                                         {{ shipment.additional_email|default:"-" }}
                                     {% endif %}
                                 </td>
-                                <td class="col-inspector px-6 py-4 text-xs text-gray-500 text-center" data-label="Inspector" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ shipment.inspector_name|default:"-" }}</td>
+                                <td class="col-inspector px-6 py-4 text-xs text-gray-500 text-center" data-label="Inspector" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ shipment.inspector_name|display_inspector:shipment.inspector_id }}</td>
                                 <td class="col-view-files px-6 py-4 whitespace-nowrap text-sm text-center" data-label="View Files">
                                     <button class="btn btn-sm btn-view-files
                                            {% if shipment.file_status == 'complete' %}
