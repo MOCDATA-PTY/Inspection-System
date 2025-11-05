@@ -4062,6 +4062,11 @@ def inspector_dashboard(request):
         inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
             inspector_id=inspector_id
         )
+        # If the selected mapping yields no data (e.g., stale/dummy ID), fall back to name match
+        if not inspector_inspections.exists():
+            inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
+                inspector_name__icontains=inspector_name
+            )
     else:
         # As a last resort (unlikely), try name match so page still loads
         inspector_inspections = FoodSafetyAgencyInspection.objects.filter(
