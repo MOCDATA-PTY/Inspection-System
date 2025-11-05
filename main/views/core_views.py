@@ -4038,20 +4038,24 @@ def inspector_dashboard(request):
     # Resolve inspector_id via mapping (handles cases where source has 'Unknown' names)
     inspector_name = request.user.get_full_name() or request.user.username
     inspector_id = None
-    try:
-        mapping = InspectorMapping.objects.get(
-            inspector_name__iexact=inspector_name
-        )
-        inspector_id = mapping.inspector_id
-    except InspectorMapping.DoesNotExist:
+
+    # Prefer active mappings and the most recently updated one if duplicates exist
+    mapping = (
+        InspectorMapping.objects
+        .filter(inspector_name__iexact=inspector_name)
+        .order_by('-is_active', '-updated_at')
+        .first()
+    )
+    if not mapping:
         # Fallback to username-only mapping if full name was not stored
-        try:
-            mapping = InspectorMapping.objects.get(
-                inspector_name__iexact=request.user.username
-            )
-            inspector_id = mapping.inspector_id
-        except InspectorMapping.DoesNotExist:
-            inspector_id = None
+        mapping = (
+            InspectorMapping.objects
+            .filter(inspector_name__iexact=request.user.username)
+            .order_by('-is_active', '-updated_at')
+            .first()
+        )
+    if mapping:
+        inspector_id = mapping.inspector_id
     
     # Get inspector-specific statistics using inspector_id when available
     if inspector_id is not None:

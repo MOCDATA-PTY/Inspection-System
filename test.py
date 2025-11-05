@@ -17,6 +17,17 @@ from main.models import InspectorMapping
 User = get_user_model()
 
 if __name__ == '__main__':
+    # Ensure a test user exists: username=Dimakatso, password=password123
+    usr, created = User.objects.get_or_create(username='Dimakatso', defaults={
+        'first_name': 'Dimakatso',
+        'last_name': 'Modiba',
+        'email': ''
+    })
+    usr.set_password('password123')
+    usr.is_active = True
+    usr.save()
+    print("Created user 'Dimakatso' with password 'password123'" if created else "Updated password for user 'Dimakatso'")
+
     print("=" * 100)
     print("ALL USERS IN DATABASE WITH ROLES")
     print("=" * 100)
