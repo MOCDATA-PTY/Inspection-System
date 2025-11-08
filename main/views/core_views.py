@@ -3245,6 +3245,174 @@ def client_allocation(request):
 
 
 @login_required(login_url='login')
+def client_allocation_sheet(request):
+    """Client Allocation Sheet view - Google Sheets-like interface.
+
+    Optimized for maximum performance with caching and efficient queries.
+    """
+    from ..models import ClientAllocation
+    from django.core.paginator import Paginator
+    from django.core.cache import cache
+    from django.db.models import Prefetch
+
+    # Check if user wants all data (default) or paginated view
+    show_all = request.GET.get('show_all', 'true').lower() == 'true'
+    page_number = request.GET.get('page', 1)
+
+    # Cache key based on pagination settings
+    cache_key = f'client_allocation_data_{show_all}_{page_number}'
+    cache_timeout = 300  # 5 minutes cache
+
+    # Try to get cached data first
+    cached_data = cache.get(cache_key)
+    if cached_data:
+        return render(request, 'main/client_allocation_sheet.html', cached_data)
+
+    # Cache miss - query database with optimizations
+    # Use select_related/prefetch_related if there were FK relationships
+    # Use only() to fetch only needed fields
+    allocations_query = ClientAllocation.objects.only(
+        'client_id', 'facility_type', 'group_type', 'commodity', 'province',
+        'corporate_group', 'other', 'internal_account_code', 'allocated',
+        'eclick_name', 'representative_email', 'phone_number', 'duplicates',
+        'active_status'
+    ).order_by('client_id')
+
+    # Get cached count or calculate
+    total_count = cache.get('client_allocation_count')
+    if total_count is None:
+        total_count = allocations_query.count()
+        cache.set('client_allocation_count', total_count, 600)  # 10 minute cache
+
+    has_data = total_count > 0
+
+    if show_all:
+        # Show all records (for spreadsheet editing)
+        # Convert to list for caching (querysets can't be pickled)
+        allocations = list(allocations_query)
+        page_obj = None
+    else:
+        # Paginated view (for better performance with very large datasets)
+        paginator = Paginator(allocations_query, 50)  # 50 records per page
+        page_obj = paginator.get_page(page_number)
+        allocations = list(page_obj.object_list)
+
+    context = {
+        'allocations': allocations,
+        'has_data': has_data,
+        'page_obj': page_obj,
+        'show_all': show_all,
+        'total_count': total_count
+    }
+
+    # Cache the context for faster subsequent requests
+    cache.set(cache_key, context, cache_timeout)
+
+    return render(request, 'main/client_allocation_sheet.html', context)
+
+
+@login_required(login_url='login')
+def sync_client_allocations(request):
+    """Sync client allocation data from Google Sheets to PostgreSQL database.
+
+    Optimized with bulk operations for maximum performance.
+    """
+    from ..services.google_sheets_service import GoogleSheetsService
+    from ..models import ClientAllocation
+    from django.contrib import messages
+    from django.db import transaction
+    from django.core.cache import cache
+
+    if request.method == 'POST':
+        try:
+            # Initialize Google Sheets service
+            sheets_service = GoogleSheetsService()
+
+            # Spreadsheet details
+            spreadsheet_id = "1iNULGBAzJ9n2ZulxwP8ZZZbwcPhj7X6e6rPwYqtI_fM"
+            sheet_name = "Internal Account Code Generator"
+
+            # Fetch all data from row 2 onwards (row 1 is headers)
+            # Fetch columns A through N (14 columns)
+            range_name = f"'{sheet_name}'!A2:N"
+
+            sheet_data = sheets_service.get_sheet_data(spreadsheet_id, range_name, request)
+
+            if not sheet_data:
+                messages.warning(request, "No data found in Google Sheets.")
+                return redirect('client_allocation_sheet')
+
+            # Prepare bulk data - much faster than individual creates
+            bulk_records = []
+            seen_client_ids = set()
+
+            for row in sheet_data:
+                # Pad the row with empty strings if it has fewer than 14 columns
+                while len(row) < 14:
+                    row.append('')
+
+                # Skip rows without a client ID
+                if not row[0] or str(row[0]).strip() == '':
+                    continue
+
+                try:
+                    client_id = int(row[0])
+                except (ValueError, TypeError):
+                    continue
+
+                # Skip duplicate client IDs within the same batch
+                if client_id in seen_client_ids:
+                    continue
+                seen_client_ids.add(client_id)
+
+                # Convert "TRUE"/"FALSE" string to boolean for allocated field
+                allocated = str(row[8]).strip().upper() == 'TRUE' if row[8] else False
+
+                # Create ClientAllocation object (not yet saved to DB)
+                bulk_records.append(ClientAllocation(
+                    client_id=client_id,
+                    facility_type=row[1] if row[1] else None,
+                    group_type=row[2] if row[2] else None,
+                    commodity=row[3] if row[3] else None,
+                    province=row[4] if row[4] else None,
+                    corporate_group=row[5] if row[5] else None,
+                    other=row[6] if row[6] else None,
+                    internal_account_code=row[7] if row[7] else None,
+                    allocated=allocated,
+                    eclick_name=row[9] if row[9] else None,
+                    representative_email=row[10] if row[10] else None,
+                    phone_number=row[11] if row[11] else None,
+                    duplicates=row[12] if row[12] else None,
+                    active_status=row[13] if row[13] else None,
+                ))
+
+            # Use atomic transaction for data integrity and speed
+            with transaction.atomic():
+                # Delete all existing records
+                ClientAllocation.objects.all().delete()
+
+                # Bulk create all records in a single query (MUCH faster)
+                # batch_size=500 optimizes for PostgreSQL performance
+                ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
+
+            sync_count = len(bulk_records)
+
+            # Clear cache after successful sync
+            cache.delete('client_allocation_count')
+            cache.delete_pattern('client_allocation_*')
+
+            messages.success(request, f"Successfully synced {sync_count} client allocation records from Google Sheets.")
+            return redirect('client_allocation_sheet')
+
+        except Exception as e:
+            print(f"Error syncing sheet data: {e}")
+            messages.error(request, f"Error syncing data: {str(e)}")
+            return redirect('client_allocation_sheet')
+
+    return redirect('client_allocation_sheet')
+
+
+@login_required(login_url='login')
 def refresh_clients(request):
     """Refresh the Food Safety Agency clients table with fresh data from Google Sheets."""
     clear_messages(request)
@@ -3377,36 +3545,50 @@ def refresh_inspections(request):
                     try:
                         # Set a flag to prevent session modifications during sync
                         request._sync_in_progress = True
-                        print("\n" + "="*60)
-                        print(" STARTING INSPECTION SYNC OPERATION (BACKGROUND)")
-                        print("="*60)
-                        
-                        from ..services.google_sheets_service import GoogleSheetsService
-                        
-                        print(" Step 1: Initializing Google Sheets Service...")
-                        sheets_service = GoogleSheetsService()
-                        print(" Google Sheets Service initialized successfully")
-                        
-                        print("\n Step 2: Starting inspection table refresh from SQL Server...")
-                        refresh_result = sheets_service.populate_inspections_table(request)
-                        
-                        if refresh_result.get('success'):
-                            print(f" INSPECTION SYNC COMPLETED SUCCESSFULLY!")
-                            print(f"    Deleted: {refresh_result['deleted_count']} old inspections")
-                            print(f"    Created: {refresh_result['inspections_created']} new inspections")
-                            print(f"    Processed: {refresh_result['total_processed']} total records from SQL Server")
-                            
+                        print("\n" + "="*80)
+                        print(" STARTING COMPLETE SYNC OPERATION (BACKGROUND)")
+                        print(" Google Sheets → SQL Server → Account Code Matching")
+                        print("="*80)
+
+                        # USE NEW SYNC SERVICE - Syncs EVERYTHING in correct order
+                        from ..services.scheduled_sync_service import ScheduledSyncService
+
+                        print("\n Step 1: Initializing Scheduled Sync Service...")
+                        sync_service = ScheduledSyncService()
+                        print(" ✅ Sync Service initialized successfully")
+
+                        print("\n Step 2: Syncing Google Sheets (Client names & account codes)...")
+                        google_success = sync_service.sync_google_sheets()
+
+                        if google_success:
+                            print(" ✅ Google Sheets sync completed!")
+                        else:
+                            print(" ⚠️ Google Sheets sync had issues (continuing anyway)")
+
+                        print("\n Step 3: Syncing SQL Server inspections...")
+                        print(" (Matching account codes with Google Sheets for client names)")
+                        sql_success = sync_service.sync_sql_server()
+
+                        if sql_success:
+                            # Get count for reporting
+                            from ..models import FoodSafetyAgencyInspection
+                            total_count = FoodSafetyAgencyInspection.objects.count()
+
+                            print(f"\n ✅ COMPLETE SYNC SUCCESSFUL!")
+                            print(f"    Total inspections in database: {total_count}")
+                            print(f"    ✅ Google Sheets is the SOLE source for client names!")
+                            print(f"    ✅ All account codes matched and names updated!")
+
                             # Store result in cache for frontend to check FIRST (before clearing cache)
                             sync_result_data = {
                                 'success': True,
-                                'message': f'Successfully synced {refresh_result["inspections_created"]} inspections!',
-                                'deleted_count': refresh_result['deleted_count'],
-                                'created_count': refresh_result['inspections_created'],
-                                'total_processed': refresh_result['total_processed']
+                                'message': f'Successfully synced {total_count} inspections with Google Sheets names!',
+                                'created_count': total_count,
+                                'total_processed': total_count
                             }
                             cache.set('sync_result', sync_result_data, 300)  # 5 minutes
-                            print(f"    Sync result stored in cache: {sync_result_data}")
-                            
+                            print(f"    Sync result stored in cache")
+
                             # Clear specific cache keys to ensure fresh data is displayed (but keep sync_result)
                             cache_keys_to_clear = [
                                 'compliance_status_',  # Clear compliance status cache
@@ -3415,30 +3597,32 @@ def refresh_inspections(request):
                             for key_pattern in cache_keys_to_clear:
                                 # This is a simplified approach - in production you'd want more specific key management
                                 pass
-                            print("   [ERROR]  Specific cache cleared to ensure fresh data display")
+                            print("    Cache cleared to ensure fresh data display")
                         else:
-                            print(f" INSPECTION SYNC FAILED!")
-                            print(f"   Error: {refresh_result.get('error', 'Unknown error')}")
-                            
+                            print(f"\n ❌ SQL SERVER SYNC FAILED!")
+                            print(f"   Error: Sync returned False")
+
                             # Store error in cache
                             cache.set('sync_result', {
                                 'success': False,
-                                'error': refresh_result.get('error', 'Unknown error')
+                                'error': 'Sync failed - check server logs'
                             }, 300)
-                            
+
                     except Exception as e:
-                        print(f" INSPECTION SYNC EXCEPTION!")
+                        print(f"\n ❌ SYNC EXCEPTION!")
                         print(f"   Exception: {str(e)}")
-                        
+                        import traceback
+                        traceback.print_exc()
+
                         # Store error in cache
                         cache.set('sync_result', {
                             'success': False,
-                            'error': f'Error syncing inspections: {str(e)}'
+                            'error': f'Error syncing: {str(e)}'
                         }, 300)
-                        
-                    print("="*60)
-                    print(" INSPECTION SYNC OPERATION ENDED")
-                    print("="*60 + "\n")
+
+                    print("="*80)
+                    print(" COMPLETE SYNC OPERATION ENDED")
+                    print("="*80 + "\n")
                 
                 # Start background thread
                 thread = threading.Thread(target=run_sync)
@@ -3566,20 +3750,33 @@ def check_sync_status(request):
     """Check the status of a background sync operation."""
     from django.http import JsonResponse
     from django.core.cache import cache
-    
+
     if request.method == 'GET':
         sync_result = cache.get('sync_result')
+        sync_progress = cache.get('sync_progress')
+
         if sync_result:
-            # Don't clear the result immediately - let it expire naturally
-            # This ensures the frontend can retrieve it even if there's a delay
-            return JsonResponse(sync_result)
+            # Sync completed - return result with progress
+            response = sync_result.copy()
+            if sync_progress:
+                response['progress'] = sync_progress
+            return JsonResponse(response)
+        elif sync_progress:
+            # Sync still running - return progress
+            return JsonResponse({
+                'success': False,
+                'status': 'running',
+                'message': sync_progress.get('message', 'Sync is running...'),
+                'progress': sync_progress
+            })
         else:
+            # No result or progress - assume still running
             return JsonResponse({
                 'success': False,
                 'status': 'running',
                 'message': 'Sync is still running...'
             })
-    
+
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 

@@ -45,6 +45,8 @@ from .core_views import (
     
     # Google Sheets integration views
     client_allocation,
+    client_allocation_sheet,
+    sync_client_allocations,
     refresh_clients,
     refresh_inspections,
     google_oauth_callback,
@@ -124,6 +126,8 @@ __all__ = [
     
     # Google Sheets integration views
     'client_allocation',
+    'client_allocation_sheet',
+    'sync_client_allocations',
     'refresh_clients',
     'refresh_inspections',
     'google_oauth_callback',

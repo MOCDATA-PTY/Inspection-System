@@ -98,6 +98,8 @@ urlpatterns = [
     # GOOGLE SHEETS INTEGRATION URLS
     # =============================================================================
     path('client-allocation/', views.client_allocation, name='client_allocation'),
+    path('client-allocation-sheet/', views.client_allocation_sheet, name='client_allocation_sheet'),
+    path('client-allocation-sheet/sync/', views.sync_client_allocations, name='sync_client_allocations'),
     path('client-allocation/sync-emails/', sync_client_emails_from_sheets, name='sync_client_emails'),
     path('client/save-manual-email/', save_manual_client_email, name='save_manual_client_email'),
     path('client/delete-email/', delete_client_email, name='delete_client_email'),

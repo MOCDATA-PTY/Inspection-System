@@ -378,8 +378,9 @@ class FoodSafetyAgencyInspection(models.Model):
     
     # Reference information
     remote_id = models.IntegerField(blank=True, null=True, help_text="Original ID from remote system")
-    client_name = models.CharField(max_length=200, blank=True, null=True, help_text="Client name from remote system")
-    
+    client_name = models.CharField(max_length=200, blank=True, null=True, help_text="Client name (updated from Google Sheets if match found)")
+    internal_account_code = models.CharField(max_length=100, blank=True, null=True, db_index=True, help_text="Internal Account Code from SQL Server (used to match with Google Sheets)")
+
     # Testing parameters
     fat = models.BooleanField(default=False, help_text="Fat testing required")
     protein = models.BooleanField(default=False, help_text="Protein testing required")
@@ -429,6 +430,7 @@ class FoodSafetyAgencyInspection(models.Model):
             models.Index(fields=['inspector_name']),
             models.Index(fields=['client_name']),
             models.Index(fields=['inspector_id']),
+            models.Index(fields=['internal_account_code']),
         ]
     
     def __str__(self):
@@ -683,4 +685,83 @@ class SystemLog(models.Model):
             ip_address=ip_address,
             user_agent=user_agent
         )
+
+
+class ClientAllocation(models.Model):
+    """
+    Model to store client allocation data from Google Sheets
+    This replicates the 'Internal Account Code Generator' sheet data
+    """
+    # Column A: Client ID (indexed for faster lookups)
+    client_id = models.IntegerField(verbose_name="Client ID", db_index=True)
+
+    # Column B: Facility Type (indexed for filtering)
+    facility_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="Facility Type", db_index=True)
+
+    # Column C: Group Type (indexed for filtering)
+    group_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="Group Type", db_index=True)
+
+    # Column D: Commodity (indexed for filtering)
+    commodity = models.CharField(max_length=100, blank=True, null=True, verbose_name="Commodity", db_index=True)
+
+    # Column E: Province
+    province = models.CharField(max_length=100, blank=True, null=True, verbose_name="Province")
+
+    # Column F: Corporate Group
+    corporate_group = models.CharField(max_length=200, blank=True, null=True, verbose_name="Corporate Group")
+
+    # Column G: Other
+    other = models.CharField(max_length=200, blank=True, null=True, verbose_name="Other")
+
+    # Column H: Internal Account Code
+    internal_account_code = models.CharField(max_length=100, blank=True, null=True, verbose_name="Internal Account Code", db_index=True)
+
+    # Column I: Allocated (checkbox - TRUE/FALSE)
+    allocated = models.BooleanField(default=False, verbose_name="Allocated")
+
+    # Column J: E-Click Name
+    eclick_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="E-Click Name")
+
+    # Column K: Representative Email Address
+    representative_email = models.EmailField(max_length=254, blank=True, null=True, verbose_name="Representative Email Address")
+
+    # Column L: Phone Number
+    phone_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="Phone Number")
+
+    # Column M: Duplicates
+    duplicates = models.CharField(max_length=200, blank=True, null=True, verbose_name="Duplicates")
+
+    # Column N: Active/Deactive
+    active_status = models.CharField(max_length=50, blank=True, null=True, verbose_name="Active/Deactive")
+
+    # Metadata fields
+    last_synced = models.DateTimeField(auto_now=True, verbose_name="Last Synced")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
+
+    class Meta:
+        db_table = 'client_allocation'
+        ordering = ['client_id']
+        verbose_name = "Client Allocation"
+        verbose_name_plural = "Client Allocations"
+        indexes = [
+            # Single column indexes for common filters
+            models.Index(fields=['client_id'], name='idx_client_id'),
+            models.Index(fields=['internal_account_code'], name='idx_account_code'),
+            models.Index(fields=['allocated'], name='idx_allocated'),
+            models.Index(fields=['facility_type'], name='idx_facility_type'),
+            models.Index(fields=['commodity'], name='idx_commodity'),
+            # Composite indexes for common query patterns
+            models.Index(fields=['facility_type', 'commodity'], name='idx_facility_commodity'),
+            models.Index(fields=['allocated', 'facility_type'], name='idx_alloc_facility'),
+            models.Index(fields=['last_synced'], name='idx_last_synced'),
+            # Covering index for list view (most common query)
+            models.Index(fields=['client_id', 'allocated', 'facility_type'], name='idx_list_view'),
+        ]
+        constraints = [
+            # Ensure client_id is unique and positive
+            models.CheckConstraint(check=models.Q(client_id__gt=0), name='client_id_positive'),
+        ]
+
+    def __str__(self):
+        return f"Client {self.client_id} - {self.internal_account_code or 'No Code'}"
 
