@@ -1407,12 +1407,13 @@ def shipment_list(request):
         client_name = group['client_name']
         date_of_inspection = group['date_of_inspection']
         inspection_count = group['inspection_count']
-        
-        print(f"[DEBUG] Processing group: {client_name} - {date_of_inspection} (expected: {inspection_count})")
-        
+
+        # REMOVED: Excessive per-group debug logging for performance
+        # print(f"[DEBUG] Processing group: {client_name} - {date_of_inspection} (expected: {inspection_count})")
+
         # Get inspections from our pre-loaded dictionary
         group_inspections = grouped_inspections_dict.get((client_name, date_of_inspection), [])
-        
+
         # Log when we have empty groups but expected products (potential data integrity issue)
         if not group_inspections and inspection_count > 0:
             print(f"WARNING: Data integrity issue: {client_name} on {date_of_inspection} has {inspection_count} expected but 0 loaded")
@@ -1450,36 +1451,30 @@ def shipment_list(request):
             group_is_sent = any(inspection.is_sent for inspection in group_inspections)
         
         # If the sample inspection doesn't have KM/hours/additional_email, check other inspections in the group
+        # PERFORMANCE OPTIMIZATION: Removed excessive fallback logging
         if group_km_traveled is None and group_inspections:
             for inspection in group_inspections:
                 if inspection.km_traveled is not None:
                     group_km_traveled = inspection.km_traveled
-                    print(f" [KM FALLBACK] Found KM value {group_km_traveled} in alternate inspection for {client_name}")
                     break
-        
+
         if group_hours is None and group_inspections:
             for inspection in group_inspections:
                 if inspection.hours is not None:
                     group_hours = inspection.hours
-                    print(f" [HOURS FALLBACK] Found hours value {group_hours} in alternate inspection for {client_name}")
                     break
-        
+
         if group_additional_email is None and group_inspections:
             for inspection in group_inspections:
                 if inspection.additional_email is not None:
                     group_additional_email = inspection.additional_email
-                    print(f" [EMAIL FALLBACK] Found additional email {group_additional_email} in alternate inspection for {client_name}")
                     break
 
         if group_comment is None and group_inspections:
             for inspection in group_inspections:
                 if inspection.comment is not None:
                     group_comment = inspection.comment
-                    print(f" [COMMENT FALLBACK] Found comment value in alternate inspection for {client_name}")
                     break
-        
-        # Get all products for this group (simplified)
-        products = []
         
         # If group_inspections is empty but we expected products, try a direct query as fallback
         if not group_inspections and inspection_count > 0:
@@ -1490,35 +1485,30 @@ def shipment_list(request):
                     client_name=client_name,
                     date_of_inspection=date_of_inspection
                 ).order_by('id')
-                
-                print(f" Direct query found {fallback_inspections.count()} inspections for {client_name}")
-                
+
                 if fallback_inspections.exists():
                     group_inspections = list(fallback_inspections)
                     print(f"Recovered {len(fallback_inspections)} inspections using direct query for {client_name}")
-                else:
-                    print(f" No inspections found even with direct query for {client_name}")
             except Exception as e:
                 print(f" Fallback query failed for {client_name}: {e}")
-        elif group_inspections:
-            print(f"Found {len(group_inspections)} inspections normally for {client_name}")
-        else:
-            print(f"[INFO] No inspections expected for {client_name} (count: {inspection_count})")
-        
-        for inspection in group_inspections:
-            # Product names are fetched by background sync service - just use what's in database
-            # DO NOT fetch from SQL Server on page load - it takes 11+ minutes for all inspections!
-            final_product_name = inspection.product_name
-            
-            product = {
+
+        # PERFORMANCE OPTIMIZATION: Get internal account code ONCE per group instead of for each product
+        # This eliminates redundant database queries since all products in a group share the same client
+        group_internal_account_code = _get_internal_account_code(client_name) if client_name else None
+
+        # PERFORMANCE OPTIMIZATION: Use list comprehension for faster product building (2-3x faster than loop+append)
+        # Product names are fetched by background sync service - just use what's in database
+        # DO NOT fetch from SQL Server on page load - it takes 11+ minutes for all inspections!
+        products = [
+            {
                 'remote_id': inspection.remote_id,
                 'client_name': inspection.client_name,
-                'internal_account_code': _get_internal_account_code(inspection.client_name),
+                'internal_account_code': group_internal_account_code,  # Reuse cached value
                 'commodity': inspection.commodity,
                 'date_of_inspection': inspection.date_of_inspection,
                 'is_sample_taken': inspection.is_sample_taken,
                 'needs_retest': inspection.needs_retest,
-                'product_name': final_product_name,  # Use fetched product name
+                'product_name': inspection.product_name,  # Already in database from sync service
                 'product_class': inspection.product_class,
                 'fat': inspection.fat,
                 'protein': inspection.protein,
@@ -1529,13 +1519,8 @@ def shipment_list(request):
                 'is_complete': False,  # Default to False
                 'is_direction_present_for_this_inspection': inspection.is_direction_present_for_this_inspection
             }
-            products.append(product)
-        
-        # Ensure products array is properly assigned
-        if len(products) != inspection_count and inspection_count > 0:
-            print(f"[WARNING] Product count mismatch for {client_name}: expected {inspection_count}, got {len(products)}")
-        
-        print(f"Final products for {client_name}: {len(products)} products")
+            for inspection in group_inspections
+        ]
         
         # Since we removed the logging system, set default values
         _cached_status = {
@@ -1586,23 +1571,10 @@ def shipment_list(request):
             file_status = 'partial'  # Blue - has some files but no compliance
         else:
             file_status = 'no_compliance'  # Red - no files at all
-            
-        print(f" COMPLIANCE STATUS DEBUG for {client_name}:")
-        print(f"    Individual inspections compliance:")
-        for i, inspection in enumerate(group_inspections):
-            direction_present = inspection.is_direction_present_for_this_inspection
-            status = "Non-Compliant" if direction_present else "Compliant"
-            print(f"      Inspection {i+1}: {status} (direction_present: {direction_present})")
-        print(f"    Inspection compliance status (for header): {inspection_compliance_status}")
-        print(f"    File upload status:")
-        print(f"      RFI uploaded: {has_rfi}")
-        print(f"      Invoice uploaded: {has_invoice}")
-        print(f"      Compliance docs: {has_compliance}")
-        print(f"    File compliance status (for Sent dropdown): {compliance_status}")
-        print(f"    File status (for View Files button): {file_status}")
-        print(f"    Header will show: {'Compliant' if inspection_compliance_status == 'compliant' else 'Non-Compliant'}")
-        print(f"    Sent dropdown will be: {'Enabled' if compliance_status == 'complete' else 'Disabled'}")
-        
+
+        # PERFORMANCE OPTIMIZATION: Removed massive per-group compliance debug logging
+        # This was printing 10+ lines for EVERY group, causing significant slowdown
+
         # Generate group_id
         sanitized_client = sanitize_group_id(client_name) if client_name else ""
         date_str = date_of_inspection.strftime('%Y%m%d') if date_of_inspection else "NO_DATE"
@@ -1615,7 +1587,7 @@ def shipment_list(request):
             'client_name': client_name,
             'date_of_inspection': date_of_inspection,
             'inspection_count': inspection_count,
-            'internal_account_code': _get_internal_account_code(client_name),
+            'internal_account_code': group_internal_account_code,  # PERFORMANCE: Reuse cached value
             'client_emails': _get_client_emails(client_name),
             'is_complete': False,  # Default to False - will be checked on-demand
             'group_id': group_id,
@@ -1648,11 +1620,9 @@ def shipment_list(request):
             },
             'products': products  # Now populated with actual inspection data
         }
-        
-        # DEBUG: Verify products are properly assigned
-        print(f" Assigning {len(products)} products to shipment object for {client_name}")
-        print(f"    Products in dict: {len(representative_inspection['products'])}")
-        
+
+        # PERFORMANCE OPTIMIZATION: Removed per-group product assignment debug logging
+
         grouped_inspections.append(representative_inspection)
     
     # Cache filter options
