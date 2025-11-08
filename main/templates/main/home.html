@@ -580,51 +580,80 @@
                         </a>
                     </li>
                     {% else %}
+                   
+
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-home mr-2 w-4 text-center"></i>
-                            Dashboard
-                        </a>
+                  <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+    <i class="fas fa-users mr-2 w-4 text-center"></i>
+    Client Directory
+</a>
+
                     </li>
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-users mr-2 w-4 text-center"></i>
-                            Clients
-                        </a>
+                       <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+    <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+    Inspection Records
+</a>
+
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
-                            Inspections
+                        <a href="{% url 'client_allocation_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            <i class="fas fa-table mr-2 w-4 text-center text-green-500"></i>
+                            Client Allocation Sheet
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-users-cog mr-2 w-4 text-center"></i>
-                            User Management
-                        </a>
-                    </li>
+                  <a href="{% url 'user_management' %}" title="Manage system users and permissions"
+   class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+    <i class="fas fa-users-cog mr-2 w-4 text-center text-blue-500"></i>
+    User Management
+</a>
+
                     {% endif %}
-                    <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-list-alt mr-2 w-4 text-center"></i>
-                            System Logs
-                        </a>
-                    </li>
-                    {% if request.user.role == 'developer' %}
-                    <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-cloud mr-2 w-4 text-center"></i>
-                            OneDrive View
-                        </a>
-                    </li>
-                    {% endif %}
+                  <li>
+    <a href="{% url 'system_logs' %}" 
+       class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+        <i class="fas fa-clipboard-list mr-2 w-4 text-center text-yellow-500"></i>
+        System Logs
+    </a>
+</li>
+
+                {% if request.user.role == 'developer' %}
+<li>
+    <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+        <i class="fas fa-cloud-upload-alt mr-2 w-4 text-center text-blue-400"></i>
+        OneDrive View
+    </a>
+</li>
+{% endif %}
+
+                   {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+<li>
+  <a href="{% url 'server_view' %}" 
+     class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+      <i class="fas fa-server mr-2 w-4 text-center text-orange-400"></i>
+      Server View
+  </a>
+</li>
+{% endif %}
+
+                   {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+<li>
+  <a href="{% url 'export_sheet' %}" 
+     class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+      <i class="fas fa-file-export mr-2 w-4 text-center text-emerald-400"></i>
+      Export Sheet
+  </a>
+</li>
+{% endif %}
+
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'server_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-tachometer-alt mr-2 w-4 text-center"></i>
-                            Server View
-                        </a>
+                        <a href="{% url 'analytics_dashboard' %}" 
+   class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+    <i class="fas fa-chart-line mr-2 w-4 text-center text-blue-400"></i>
+    Inspector Analytics
+</a>
+
                     </li>
                     {% endif %}
                     <li>
@@ -665,20 +694,28 @@
                 </p>
                 
                 {% if request.user.role != 'admin' %}
-                <div class="sync-buttons flex flex-col sm:flex-row gap-4">
-                    <button id="sync-clients-btn" onclick="syncClients()" class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
-                        <i class="fas fa-sync-alt"></i>
-                        <span id="sync-clients-text">Sync Clients</span>
-                    </button>
-                    
+                <div class="sync-buttons flex flex-col gap-4">
                     <button id="sync-inspections-btn" onclick="syncInspections()" class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
-                        <i class="fas fa-clipboard-check"></i>
-                        <span id="sync-inspections-text">Sync Inspections</span>
+                        <i class="fas fa-sync-alt"></i>
+                        <span id="sync-inspections-text">Sync Everything</span>
                     </button>
+                    <p class="text-sm text-gray-600">
+                        Syncs Google Sheets client names + SQL Server inspections in one go!
+                    </p>
                 </div>
                 {% endif %}
-                
+
                 <div id="sync-status" class="mt-4"></div>
+
+                <!-- Progress Bar -->
+                <div id="sync-progress-container" class="mt-4 hidden">
+                    <div class="bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
+                        <div id="sync-progress-bar" class="bg-gradient-to-r from-primary to-blue-600 h-full transition-all duration-300 flex items-center justify-center text-white text-xs font-semibold" style="width: 0%">
+                            <span id="sync-progress-text">0%</span>
+                        </div>
+                    </div>
+                    <div id="sync-progress-details" class="text-sm text-gray-600 mt-2 text-center"></div>
+                </div>
             </div>
             
             <!-- Statistics Grid -->
@@ -933,7 +970,7 @@
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
-            if (text.textContent === 'Syncing...') {
+            if (text.textContent.includes('Syncing')) {
                 const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
                 if (userConfirm) {
                     resetButton();
@@ -944,9 +981,27 @@
             }
 
             btn.disabled = true;
-            text.textContent = 'Starting...';
+            text.textContent = 'Syncing Everything...';
             btn.style.opacity = '0.7';
-            statusDiv.innerHTML = '';
+            statusDiv.innerHTML = `
+                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                    <p class="text-sm text-primary font-semibold">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Step 1/2: Syncing Google Sheets (client names & account codes)...
+                    </p>
+                </div>
+            `;
+
+            // Show and initialize progress bar
+            const progressContainer = document.getElementById('sync-progress-container');
+            const progressBar = document.getElementById('sync-progress-bar');
+            const progressText = document.getElementById('sync-progress-text');
+            const progressDetails = document.getElementById('sync-progress-details');
+
+            progressContainer.classList.remove('hidden');
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+            progressDetails.textContent = 'Starting sync...';
 
             let pollCount = 0;
             const maxPolls = 1800;
@@ -1029,21 +1084,40 @@
                 })
                 .then(data => {
                     if (data.success && data.message) {
+                        // Sync completed successfully
+                        const progressContainer = document.getElementById('sync-progress-container');
+                        const progressBar = document.getElementById('sync-progress-bar');
+                        const progressText = document.getElementById('sync-progress-text');
+
+                        // Set to 100% before hiding
+                        progressBar.style.width = '100%';
+                        progressText.textContent = '100%';
+
                         statusDiv.innerHTML = `
                             <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
                                 <i class="fas fa-check-circle mr-2"></i>
                                 ✅ ${data.message}
                                 <br>Deleted: ${data.deleted_count || 0} old inspections
-                                <br>Created: ${data.created_count || 0} new inspections  
+                                <br>Created: ${data.created_count || 0} new inspections
                                 <br>Total processed: ${data.total_processed || 0} records
                             </div>
                         `;
+
+                        // Hide progress bar after a short delay
+                        setTimeout(() => {
+                            progressContainer.classList.add('hidden');
+                        }, 1000);
+
                         clearTimeout(maxTimeout);
                         resetButton();
                         setTimeout(() => {
                             window.location.reload();
                         }, 2000);
                     } else if (data.success === false && data.error) {
+                        // Sync failed
+                        const progressContainer = document.getElementById('sync-progress-container');
+                        progressContainer.classList.add('hidden');
+
                         statusDiv.innerHTML = `
                             <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                                 <i class="fas fa-exclamation-circle mr-2"></i>
@@ -1053,7 +1127,42 @@
                         clearTimeout(maxTimeout);
                         resetButton();
                     } else if (data.status === 'running' || data.message === 'Sync is still running...') {
+                        // Sync still running - update progress bar
                         text.textContent = 'Syncing...';
+
+                        const progressContainer = document.getElementById('sync-progress-container');
+                        const progressBar = document.getElementById('sync-progress-bar');
+                        const progressText = document.getElementById('sync-progress-text');
+                        const progressDetails = document.getElementById('sync-progress-details');
+
+                        // Show progress bar container
+                        progressContainer.classList.remove('hidden');
+
+                        // Update progress if available
+                        if (data.progress) {
+                            const percent = data.progress.percent || 0;
+                            const message = data.progress.message || 'Processing...';
+
+                            // Update progress bar width
+                            progressBar.style.width = percent + '%';
+
+                            // Update percentage text
+                            progressText.textContent = percent + '%';
+
+                            // Update details message
+                            progressDetails.textContent = message;
+
+                            // Update status div with current step
+                            statusDiv.innerHTML = `
+                                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                                    <p class="text-sm text-primary font-semibold">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                                        ${message}
+                                    </p>
+                                </div>
+                            `;
+                        }
+
                         setTimeout(pollSyncStatus, 2000);
                     } else {
                         resetButton();
@@ -1103,15 +1212,21 @@
             const inspectionsBtn = document.getElementById('sync-inspections-btn');
             const inspectionsText = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
-            
+            const progressContainer = document.getElementById('sync-progress-container');
+
             if (inspectionsBtn && inspectionsText) {
                 inspectionsBtn.disabled = false;
-                inspectionsText.textContent = 'Sync Inspections';
+                inspectionsText.textContent = 'Sync Everything';
                 inspectionsBtn.style.opacity = '1';
             }
-            
+
             if (statusDiv) {
                 statusDiv.innerHTML = '';
+            }
+
+            // Hide progress bar
+            if (progressContainer) {
+                progressContainer.classList.add('hidden');
             }
         }
         
