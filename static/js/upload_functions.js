@@ -121,15 +121,13 @@ function uploadRFI(groupId) {
         // Clear upload flag before setting delayed update to prevent race condition
         uploadInProgress = false;
         console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
-        
-        // SIMPLIFIED: Just refresh all button states like page load does
-        setTimeout(() => {
-            console.log('✅ Refreshing ALL button states after RFI upload (simple approach)...');
 
-            // Refresh View Files buttons
-            if (typeof updateAllViewFilesButtonColors === 'function') {
-                updateAllViewFilesButtonColors();
-            }
+        // DON'T call updateAllViewFilesButtonColors() here - it will reset the orange button!
+        // The View Files button is already set to orange above with makeViewFilesButtonOrange()
+        // The delayed backend check might not have indexed the file yet, causing it to incorrectly reset to red
+        // Just refresh composition buttons after a delay
+        setTimeout(() => {
+            console.log('✅ Refreshing composition buttons after RFI upload (NOT View Files - already orange)...');
 
             // Refresh composition buttons (this checks actual files and sets correct colors)
             if (typeof initializeCompositionButtonsSimple === 'function') {
@@ -478,14 +476,11 @@ function uploadComposition(groupId) {
         uploadInProgress = false;
         console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
 
-        // SIMPLIFIED: Just refresh all button states like page load does
+        // DON'T call updateAllViewFilesButtonColors() here - it will reset the orange button!
+        // The View Files button is already set to orange above with makeViewFilesButtonOrange()
+        // Just refresh composition buttons after a delay
         setTimeout(() => {
-            console.log('✅ Refreshing ALL button states after Composition upload (simple approach)...');
-
-            // Refresh View Files buttons
-            if (typeof updateAllViewFilesButtonColors === 'function') {
-                updateAllViewFilesButtonColors();
-            }
+            console.log('✅ Refreshing composition buttons after Composition upload (NOT View Files - already orange)...');
 
             // Refresh composition buttons (this checks actual files and sets correct colors)
             if (typeof initializeCompositionButtonsSimple === 'function') {
@@ -648,19 +643,14 @@ function uploadInvoice(groupId) {
                             // Clear upload flag before setting delayed update to prevent race condition
                             uploadInProgress = false;
                             console.log('DEBUG [DEBUG] Cleared upload flag before delayed update');
-                            
+
+                            // DON'T call updateAllViewFilesButtonColors() here - it will reset the orange button!
+                            // The View Files button is already set to orange above with makeViewFilesButtonOrange()
+                            // The delayed backend check might not have indexed the file yet, causing it to incorrectly reset to red
                             setTimeout(() => {
-                                console.log('TIMER Timer fired! Starting delayed color update...');
-                                console.log('DEBUG [DEBUG] Upload in progress flag at timer execution:', uploadInProgress);
-                                console.log('DEBUG [DEBUG] Status check in progress flag:', statusCheckInProgress);
-                                if (typeof updateAllViewFilesButtonColors === 'function') {
-                                    console.log('INFO Delayed file status check after Invoice upload...');
-                                    updateAllViewFilesButtonColors();
-                                } else {
-                                    console.warn('updateAllViewFilesButtonColors function not available');
-                                }
-                                
-                                // Also update Invoice button color with delayed check
+                                console.log('TIMER Timer fired! Starting delayed Invoice button update (NOT View Files - already orange)...');
+
+                                // Only update Invoice button color with delayed check (NOT View Files)
                                 console.log('INFO Delayed Invoice button color update...');
                                 updateInvoiceButtonColorDelayed(groupId);
                             }, 5000); // 5 second delay to ensure server processing is complete
@@ -4445,7 +4435,14 @@ async function initializeRFIButtonsSimple() {
                 const data = await response.json();
                 if (data.success && data.files) {
                     const hasRFI = data.files.rfi && data.files.rfi.length > 0;
-                    
+
+                    // DEBUG: Log file categorization
+                    console.log(`[RFI CHECK] ${clientName}:`, {
+                        rfi_files: data.files.rfi || [],
+                        invoice_files: data.files.invoice || [],
+                        hasRFI: hasRFI
+                    });
+
                     if (hasRFI) {
                         // GREEN - RFI file exists
                         button.disabled = true;
