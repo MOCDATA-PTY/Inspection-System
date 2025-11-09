@@ -6660,22 +6660,13 @@
                                                         <span class="text-green-600 font-medium">Compliant</span>
                                                     {% endif %}
                                                 </div>
-                                                <div class="flex items-center justify-between">
-                                                    <span class="text-gray-500">Sample Taken:</span>
-                                                    <label class="flex items-center cursor-pointer">
-                                                        <input type="checkbox"
-                                                               class="sample-taken-checkbox w-5 h-5 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 mr-2"
-                                                               data-inspection-id="{{ product.remote_id }}"
-                                                               {% if product.is_sample_taken %}checked{% endif %}
-                                                               onchange="updateSampleTaken(this)">
-                                                        <span class="text-xs font-medium">
-                                                            {% if product.is_sample_taken %}
-                                                                <span class="text-green-600">✓ Yes</span>
-                                                            {% else %}
-                                                                <span class="text-gray-500">No</span>
-                                                            {% endif %}
-                                                        </span>
-                                                    </label>
+                                                <div>
+                                                    <span class="text-gray-500">Sample:</span>
+                                                    {% if product.is_sample_taken %}
+                                                        <span class="text-green-600 font-medium">✓ Taken</span>
+                                                    {% else %}
+                                                        <span class="text-gray-500">Not Taken</span>
+                                                    {% endif %}
                                                 </div>
                                             </div>
 

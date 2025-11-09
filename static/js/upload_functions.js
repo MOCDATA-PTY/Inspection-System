@@ -4725,9 +4725,16 @@ function makeViewFilesButtonOrange(groupId) {
     console.log(`🟠 [${timestamp}] makeViewFilesButtonOrange() called for groupId:`, groupId);
 
     // Find the View Files button for this group (works for both desktop and mobile)
-    const viewFilesButton = document.querySelector(`button[onclick*="${groupId}"][onclick*="openFilesPopup"]`);
+    // Try multiple selectors to catch both desktop and mobile buttons
+    let viewFilesButton = document.querySelector(`button[onclick*="${groupId}"][onclick*="openFilesPopup"]`);
+
+    // If not found, try by ID for mobile button
+    if (!viewFilesButton) {
+        viewFilesButton = document.getElementById(`view-files-mobile-${groupId}`);
+    }
 
     if (viewFilesButton) {
+        console.log(`   🎨 BEFORE - Button ID:`, viewFilesButton.id);
         console.log(`   🎨 BEFORE - Button classes:`, viewFilesButton.className);
         console.log(`   🎨 BEFORE - Button styles:`, {
             backgroundColor: viewFilesButton.style.backgroundColor,
@@ -4735,17 +4742,24 @@ function makeViewFilesButtonOrange(groupId) {
             borderColor: viewFilesButton.style.borderColor
         });
 
-        // Remove existing color classes including the problematic btn-files-none
-        viewFilesButton.classList.remove('btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
+        // Remove ALL possible color-related classes
+        const classesToRemove = [
+            'btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking',
+            'bg-primary', 'bg-primary-dark', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500',
+            'bg-blue-500', 'bg-gray-500', 'hover:bg-primary-dark', 'bg-danger', 'bg-secondary'
+        ];
+        classesToRemove.forEach(cls => viewFilesButton.classList.remove(cls));
 
-        // MOBILE FIX: Remove Tailwind background classes that override inline styles
-        viewFilesButton.classList.remove('bg-primary', 'bg-primary-dark', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500');
+        // Add orange classes
+        viewFilesButton.classList.add('btn-warning', 'btn-view-files-orange', '!bg-orange-500');
 
-        // Make it ORANGE - use cssText with !important to override all styles
-        viewFilesButton.classList.add('btn-warning', 'btn-view-files-orange');
-        // Preserve existing styles and add orange colors with !important
-        const currentStyles = viewFilesButton.style.cssText;
-        viewFilesButton.style.cssText = currentStyles + 'background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important;';
+        // CRITICAL: Use setAttribute to forcefully set inline styles with !important
+        // This overrides ALL Tailwind classes
+        viewFilesButton.setAttribute('style',
+            'background-color: #f59e0b !important; ' +
+            'color: white !important; ' +
+            'border-color: #d97706 !important;'
+        );
         viewFilesButton.title = 'Files uploaded';
 
         console.log(`   🟠 [${timestamp}] CHANGED TO ORANGE - Set View Files button to ORANGE`);
@@ -4757,6 +4771,7 @@ function makeViewFilesButtonOrange(groupId) {
         });
     } else {
         console.log(`   ❌ View Files button not found for groupId:`, groupId);
+        console.log(`   🔍 Tried selectors: button[onclick*="${groupId}"][onclick*="openFilesPopup"], #view-files-mobile-${groupId}`);
     }
 }
 
