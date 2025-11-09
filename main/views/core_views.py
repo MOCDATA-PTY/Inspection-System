@@ -4092,19 +4092,19 @@ def home(request):
         """Check Google Sheets API connectivity with automatic token refresh"""
         try:
             from ..services.google_sheets_service import GoogleSheetsService
-            
+
             service = GoogleSheetsService()
             is_connected, message = service.check_connection_status()
-            
+
             if is_connected:
-                print(f"✅ Google Sheets: {message}")
+                print(f"[OK] Google Sheets: {message}")
                 return True
             else:
-                print(f"❌ Google Sheets: {message}")
+                print(f"[ERROR] Google Sheets: {message}")
                 return False
-                
+
         except Exception as e:
-            print(f"❌ Google Sheets status check failed: {e}")
+            print(f"[ERROR] Google Sheets status check failed: {e}")
             return False
     
     
@@ -5594,13 +5594,65 @@ def update_test_result(request):
 
 
 @login_required
+def update_sample_taken(request):
+    """Update sample taken status for an inspection"""
+    if request.method == 'POST':
+        try:
+            inspection_id = request.POST.get('inspection_id')
+            is_sample_taken = request.POST.get('is_sample_taken') == 'true'
+
+            print(f"[DEBUG] update_sample_taken called - Inspection ID: {inspection_id}, Sample Taken: {is_sample_taken}")
+
+            # Get the inspection record - handle potential duplicates by getting the first one
+            try:
+                inspections = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id)
+                inspection = inspections.first()
+                if not inspection:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Inspection with ID {inspection_id} not found'
+                    })
+                # Log if there are duplicates for debugging
+                if inspections.count() > 1:
+                    print(f"Warning: Found {inspections.count()} inspections with remote_id {inspection_id}, using the first one")
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Error finding inspection: {str(e)}'
+                })
+
+            # Update the sample taken field
+            inspection.is_sample_taken = is_sample_taken
+            inspection.save()
+
+            print(f"[SUCCESS] Sample taken status updated to {is_sample_taken} for inspection {inspection_id}")
+
+            return JsonResponse({
+                'success': True,
+                'message': f'Sample taken status updated successfully to {is_sample_taken}'
+            })
+
+        except Exception as e:
+            print(f"[ERROR] Error updating sample taken status: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Error updating sample taken status: {str(e)}'
+            })
+
+    return JsonResponse({
+        'success': False,
+        'error': 'Invalid request method'
+    })
+
+
+@login_required
 def update_needs_retest(request):
     """Update needs retest field for an inspection"""
     if request.method == 'POST':
         try:
             inspection_id = request.POST.get('inspection_id')
             needs_retest = request.POST.get('needs_retest')
-            
+
             # Get the inspection record - handle potential duplicates by getting the first one
             try:
                 inspections = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id)

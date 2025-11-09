@@ -6660,13 +6660,22 @@
                                                         <span class="text-green-600 font-medium">Compliant</span>
                                                     {% endif %}
                                                 </div>
-                                                <div>
-                                                    <span class="text-gray-500">Sample:</span>
-                                                    {% if product.is_sample_taken %}
-                                                        <span class="text-green-600 font-medium">✓ Taken</span>
-                                                    {% else %}
-                                                        <span class="text-gray-500">Not Taken</span>
-                                                    {% endif %}
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-gray-500">Sample Taken:</span>
+                                                    <label class="flex items-center cursor-pointer">
+                                                        <input type="checkbox"
+                                                               class="sample-taken-checkbox w-5 h-5 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2 mr-2"
+                                                               data-inspection-id="{{ product.remote_id }}"
+                                                               {% if product.is_sample_taken %}checked{% endif %}
+                                                               onchange="updateSampleTaken(this)">
+                                                        <span class="text-xs font-medium">
+                                                            {% if product.is_sample_taken %}
+                                                                <span class="text-green-600">✓ Yes</span>
+                                                            {% else %}
+                                                                <span class="text-gray-500">No</span>
+                                                            {% endif %}
+                                                        </span>
+                                                    </label>
                                                 </div>
                                             </div>
 
@@ -11934,6 +11943,85 @@
             document.body.removeChild(fileInput);
         }
 
+
+        // Update sample taken status function
+        window.updateSampleTaken = function(checkbox) {
+            const inspectionId = checkbox.getAttribute('data-inspection-id');
+            const isSampleTaken = checkbox.checked;
+
+            // Get CSRF token
+            const csrfToken = getCSRFToken();
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('inspection_id', inspectionId);
+            formData.append('is_sample_taken', isSampleTaken);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // Send update request
+            fetch('/update-sample-taken/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('[SUCCESS] Sample taken status updated successfully');
+                    // Show success feedback
+                    checkbox.style.backgroundColor = isSampleTaken ? '#d4edda' : '#f8f9fa';
+                    setTimeout(() => {
+                        checkbox.style.backgroundColor = '';
+                    }, 500);
+
+                    // Update the label text next to the checkbox
+                    const label = checkbox.parentElement.querySelector('span.text-xs');
+                    if (label) {
+                        label.innerHTML = isSampleTaken ?
+                            '<span class="text-green-600">✓ Yes</span>' :
+                            '<span class="text-gray-500">No</span>';
+                    }
+
+                    // Enable/disable related fields based on sample taken status
+                    const productCard = checkbox.closest('.bg-white');
+                    if (productCard) {
+                        // Find all fields that depend on sample taken status
+                        const testCheckboxes = productCard.querySelectorAll('.test-checkbox');
+                        const boughtSampleInput = productCard.querySelector('.bought-sample-input');
+                        const labDropdown = productCard.querySelector('.lab-dropdown');
+                        const retestDropdown = productCard.querySelector('.needs-retest-dropdown');
+
+                        [testCheckboxes, boughtSampleInput, labDropdown, retestDropdown].forEach(elements => {
+                            if (elements) {
+                                if (elements.length !== undefined) {
+                                    // It's a collection
+                                    elements.forEach(el => {
+                                        el.disabled = !isSampleTaken;
+                                        el.style.opacity = isSampleTaken ? '1' : '0.5';
+                                        el.style.cursor = isSampleTaken ? 'pointer' : 'not-allowed';
+                                        el.title = isSampleTaken ? '' : 'No sample taken';
+                                    });
+                                } else {
+                                    // It's a single element
+                                    elements.disabled = !isSampleTaken;
+                                    elements.style.opacity = isSampleTaken ? '1' : '0.5';
+                                    elements.style.cursor = isSampleTaken ? 'pointer' : 'not-allowed';
+                                    elements.title = isSampleTaken ? '' : 'No sample taken - cannot enter';
+                                }
+                            }
+                        });
+                    }
+                } else {
+                    // Revert checkbox state on error
+                    checkbox.checked = !isSampleTaken;
+                    alert('Error updating sample taken status: ' + data.error);
+                }
+            })
+            .catch(error => {
+                // Revert checkbox state on error
+                checkbox.checked = !isSampleTaken;
+                alert('Error updating sample taken status: ' + error.message);
+            });
+        };
 
         // Update test result function
         window.updateTestResult = function(checkbox) {

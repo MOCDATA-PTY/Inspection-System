@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
 from .views.core_views import (
-    settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients, 
-    refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment, 
+    settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients,
+    refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment,
     delete_inspection, upload_document, user_management, system_logs, refresh_tokens,
-    update_bought_sample, update_group_approved, dashboard, compliance_documents, onedrive_view, compliance_linking_page, 
+    update_bought_sample, update_group_approved, update_sample_taken, dashboard, compliance_documents, onedrive_view, compliance_linking_page, 
     get_inspection_data, process_document_links, download_compliance_documents, 
     process_all_compliance_documents, start_compliance_document_download, 
     get_inspection_files, download_inspection_file, download_all_inspection_files, get_zip_contents, 
@@ -24,7 +24,7 @@ from .views.core_views import (
     reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets
 )
 from .views.data_views import (
-    export_shipments, 
+    export_shipments,
 )
 
 urlpatterns = [
@@ -70,6 +70,7 @@ urlpatterns = [
     path('list-uploaded-files/', views.list_uploaded_files, name='list_uploaded_files'),
     path('list-client-folder-files/', views.list_client_folder_files, name='list_client_folder_files'),
     path('update-test-result/', views.update_test_result, name='update_test_result'),
+    path('update-sample-taken/', update_sample_taken, name='update_sample_taken'),
     path('update-needs-retest/', views.update_needs_retest, name='update_needs_retest'),
     path('update-km-traveled/', views.update_km_traveled, name='update_km_traveled'),
     path('update-group-km-traveled/', views.update_group_km_traveled, name='update_group_km_traveled'),

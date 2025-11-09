@@ -1300,7 +1300,7 @@ function displayFiles(files, message = null, isTestData = false) {
                     'rfi': 'Request For Invoice',
                     'occurrence': 'Occurrence',
                     'invoice': 'Invoice',
-                    'lab': 'Lab Results',
+                    'lab': 'COA Results',
                     'lab_form': 'Lab Forms',
                     'retest': 'Retest',
                     'compliance': 'Compliance',
@@ -4196,7 +4196,7 @@ function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
         .then(result => {
             if (result.success && result.files) {
                 const hasLab = result.files.lab && result.files.lab.length > 0;
-                console.log(`🎯 [IMMEDIATE] Lab file check result for ${clientName}: ${hasLab}`);
+                console.log(`🎯 [IMMEDIATE] COA file check result for ${clientName}: ${hasLab}`);
                 
                 const buttonId = 'lab-' + groupId;
                 const button = document.getElementById(buttonId);
@@ -4209,8 +4209,8 @@ function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
                         button.style.backgroundColor = '#28a745';
                         button.style.borderColor = '#28a745';
                         button.style.cursor = 'not-allowed';
-                        button.innerHTML = 'Lab ✓';
-                        button.title = 'Lab file exists';
+                        button.innerHTML = 'COA ✓';
+                        button.title = 'COA file exists';
                         button.onclick = null;
                         console.log(`SUCCESS [IMMEDIATE] Updated Lab button to GREEN for: ${clientName}`);
                     } else {
@@ -4220,8 +4220,8 @@ function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.cursor = 'pointer';
-                        button.innerHTML = 'Lab';
-                        button.title = 'Upload Lab file';
+                        button.title = 'Upload COA file';
+                        button.title = 'Upload COA file';
                         button.onclick = () => uploadLab(groupId);
                         console.log(`GREY [IMMEDIATE] Updated Lab button to GREY for: ${clientName}`);
                     }
@@ -4724,7 +4724,7 @@ function makeViewFilesButtonOrange(groupId) {
     const timestamp = new Date().toLocaleTimeString();
     console.log(`🟠 [${timestamp}] makeViewFilesButtonOrange() called for groupId:`, groupId);
 
-    // Find the View Files button for this group
+    // Find the View Files button for this group (works for both desktop and mobile)
     const viewFilesButton = document.querySelector(`button[onclick*="${groupId}"][onclick*="openFilesPopup"]`);
 
     if (viewFilesButton) {
@@ -4738,10 +4738,14 @@ function makeViewFilesButtonOrange(groupId) {
         // Remove existing color classes including the problematic btn-files-none
         viewFilesButton.classList.remove('btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
 
-        // Make it ORANGE
-        viewFilesButton.classList.add('btn-warning');
-        viewFilesButton.style.setProperty('background-color', '#ff8c00', 'important');  // CRITICAL: Force with !important
-        viewFilesButton.style.setProperty('color', 'white', 'important');
+        // MOBILE FIX: Remove Tailwind background classes that override inline styles
+        viewFilesButton.classList.remove('bg-primary', 'bg-primary-dark', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500');
+
+        // Make it ORANGE - use cssText with !important to override all styles
+        viewFilesButton.classList.add('btn-warning', 'btn-view-files-orange');
+        // Preserve existing styles and add orange colors with !important
+        const currentStyles = viewFilesButton.style.cssText;
+        viewFilesButton.style.cssText = currentStyles + 'background-color: #f59e0b !important; color: white !important; border-color: #d97706 !important;';
         viewFilesButton.title = 'Files uploaded';
 
         console.log(`   🟠 [${timestamp}] CHANGED TO ORANGE - Set View Files button to ORANGE`);
@@ -5064,8 +5068,8 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
             
             // Set appropriate content based on document type
             if (documentType === 'lab') {
-                button.innerHTML = '<i class="fas fa-flask"></i> Lab';
-                button.title = 'Lab result upload available';
+                button.innerHTML = '<i class="fas fa-flask"></i> COA';
+                button.title = 'COA result upload available';
             } else if (documentType === 'lab_form') {
                 button.innerHTML = '<i class="fas fa-file-alt"></i> Lab Form';
                 button.title = 'Lab form upload available';
@@ -5840,8 +5844,8 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
         
         // Set appropriate content based on document type
         if (documentType === 'lab') {
-            button.innerHTML = '<i class="fas fa-flask"></i> Lab';
-            button.title = 'Lab result upload available';
+            button.innerHTML = '<i class="fas fa-flask"></i> COA';
+            button.title = 'COA result upload available';
         } else if (documentType === 'lab_form') {
             button.innerHTML = '<i class="fas fa-file-alt"></i> Lab Form';
             button.title = 'Lab form upload available';
@@ -6050,7 +6054,7 @@ function updateButtonStates(inspectionId, needsRetest) {
         labButton.style.opacity = '';
         labButton.style.cursor = '';
         labButton.onclick = function() { uploadLab(inspectionId); };
-        labButton.title = 'Lab result upload available';
+        labbutton.title = 'COA result upload available';
     }
     
     if (labFormButton) {
