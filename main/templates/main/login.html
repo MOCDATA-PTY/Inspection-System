@@ -68,6 +68,31 @@
             z-index: 1;
         }
 
+        /* Universal mobile browser fixes for horizontal scroll */
+        @media (max-width: 768px) {
+            html {
+                position: relative;
+                overflow-x: hidden !important;
+                overflow-y: auto;
+            }
+
+            body {
+                position: relative;
+                overflow-x: hidden !important;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                min-width: 100%;
+            }
+
+            * {
+                max-width: 100%;
+            }
+
+            .container, .logo, .header, .card, .form-group, .form-control, .btn {
+                max-width: 100% !important;
+            }
+        }
+
         .container {
             width: calc(100% - var(--spacing)*2);
             max-width: 100%;
