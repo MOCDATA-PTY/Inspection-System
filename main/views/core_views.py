@@ -2780,13 +2780,24 @@ def list_client_folder_files(request):
         if not client_name or not inspection_date:
             return JsonResponse({'success': False, 'error': 'Client name and inspection date are required'})
 
-        # Parse date
-        try:
-            date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
-            year_folder = date_obj.strftime('%Y')
-            month_folder = date_obj.strftime('%B')
-        except ValueError:
-            return JsonResponse({'success': False, 'error': 'Invalid date format'})
+        # Parse date - support multiple formats
+        date_obj = None
+        date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d']
+        for date_format in date_formats:
+            try:
+                date_obj = datetime.strptime(inspection_date, date_format)
+                break
+            except ValueError:
+                continue
+
+        if not date_obj:
+            return JsonResponse({
+                'success': False,
+                'error': f'Invalid date format. Received: {inspection_date}. Expected formats: YYYY-MM-DD or DD/MM/YYYY'
+            })
+
+        year_folder = date_obj.strftime('%Y')
+        month_folder = date_obj.strftime('%B')
 
         # Sanitize client name to match folder structure (same as upload_document)
         import re
@@ -7779,12 +7790,30 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         from django.conf import settings
         from django.core.cache import cache
         import re
-        
-        # Parse date and build folder path
-        date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+
+        # Parse date and build folder path - support multiple formats
+        date_obj = None
+        date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d']
+        for date_format in date_formats:
+            try:
+                date_obj = datetime.strptime(inspection_date, date_format)
+                break
+            except ValueError:
+                continue
+
+        if not date_obj:
+            print(f"ERROR: Invalid date format: {inspection_date}")
+            return {
+                'rfi': [],
+                'invoice': [],
+                'lab': [],
+                'retest': [],
+                'compliance': []
+            }
+
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
-        
+
         print(f"[BACKEND] Parsed date in get_inspection_files_local:")
         print(f"  - date_obj: {date_obj}")
         print(f"  - year_folder: '{year_folder}'")
@@ -8350,12 +8379,26 @@ def get_inspection_files(request):
         # Create media folder structure for this inspection using correct format
         from datetime import datetime
         import re
-        
-        # Parse date and build folder path
-        date_obj = datetime.strptime(inspection_date, '%Y-%m-%d')
+
+        # Parse date and build folder path - support multiple formats
+        date_obj = None
+        date_formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%Y%m%d']
+        for date_format in date_formats:
+            try:
+                date_obj = datetime.strptime(inspection_date, date_format)
+                break
+            except ValueError:
+                continue
+
+        if not date_obj:
+            return JsonResponse({
+                'success': False,
+                'error': f'time data \'{inspection_date}\' does not match format \'%Y-%m-%d\''
+            })
+
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
-        
+
         print(f"[BACKEND] Parsed date info:")
         print(f"  - date_obj: {date_obj}")
         print(f"  - year_folder: '{year_folder}'")

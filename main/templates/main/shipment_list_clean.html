@@ -9675,14 +9675,16 @@
                     console.log('[DEBUG] DEBUG: Files object length:', result.files ? Object.keys(result.files).length : 'N/A');
                     console.log('[DEBUG] DEBUG: Message:', result.message);
 
-                    // Check if files exist
-                    const hasFiles = result.files && Object.keys(result.files).length > 0;
+                    // Check if files exist - verify at least one category has files
+                    const hasFiles = result.files && Object.values(result.files).some(fileList =>
+                        Array.isArray(fileList) && fileList.length > 0
+                    );
                     console.log('[DEBUG] DEBUG: Has files check result:', hasFiles);
                     console.log('[DEBUG] DEBUG: Files check breakdown:');
                     console.log('  - result.files exists:', !!result.files);
                     console.log('  - result.files is object:', typeof result.files === 'object');
                     console.log('  - Object.keys(result.files).length:', result.files ? Object.keys(result.files).length : 'N/A');
-                    console.log('  - Object.keys(result.files).length > 0:', result.files ? Object.keys(result.files).length > 0 : 'N/A');
+                    console.log('  - At least one category has files:', hasFiles);
 
                     if (hasFiles) {
                         console.log('📁 Files found - displaying file list');
