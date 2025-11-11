@@ -9653,9 +9653,12 @@ def get_page_clients_file_status(request):
                 file_status = 'no_files'
 
             except Exception as e:
-                print(f" Error checking files for {unique_key}: {e}")
+                import traceback
+                print(f"❌ [ERROR] Exception checking files for {unique_key}: {e}")
+                print(f"   Traceback: {traceback.format_exc()}")
                 has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = has_composition = False
-                file_status = 'error'
+                # Use 'no_files' instead of 'error' so button turns RED instead of staying GREY
+                file_status = 'no_files'
             
             # Store optimized status for this specific combination (common for all cases)
             combination_statuses[unique_key] = {
