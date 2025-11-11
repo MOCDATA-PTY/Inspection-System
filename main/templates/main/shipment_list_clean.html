@@ -6464,8 +6464,10 @@
                                     <input type="number"
                                            class="group-km-input text-xs border border-gray-300 rounded px-2 py-1 w-20"
                                            data-group-id="{{ fallback_group_id }}"
-                                           value="{{ shipment.km_travelled|default:'' }}"
+                                           value="{{ shipment.km_traveled|default:'' }}"
                                            placeholder="0.0"
+                                           step="0.1"
+                                           min="0"
                                            onchange="updateGroupKmTraveled(this)"
                                            onblur="updateGroupKmTraveled(this)"
                                            title="Total kilometers traveled">
@@ -6476,9 +6478,10 @@
                                     <input type="number"
                                            class="group-hours-input text-xs border border-gray-300 rounded px-2 py-1 w-20"
                                            data-group-id="{{ fallback_group_id }}"
-                                           value="{{ shipment.hours_worked|default:'' }}"
+                                           value="{{ shipment.hours|default:'' }}"
                                            placeholder="0.0"
                                            step="0.1"
+                                           min="0"
                                            onchange="updateGroupHours(this)"
                                            onblur="updateGroupHours(this)"
                                            title="Total hours worked">
@@ -6682,19 +6685,19 @@
                                             {% if shipment.sent_date %}Sent{% else %}Not Sent{% endif %}
                                         </span>
                                     </div>
-                                    {% if shipment.km_travelled %}
+                                    {% if shipment.km_traveled %}
                                     <div>
                                         <label class="block text-gray-600 font-medium mb-1">Distance</label>
                                         <span class="text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {{ shipment.km_travelled }} km
+                                            {{ shipment.km_traveled }} km
                                         </span>
                                     </div>
                                     {% endif %}
-                                    {% if shipment.hours_worked %}
+                                    {% if shipment.hours %}
                                     <div>
                                         <label class="block text-gray-600 font-medium mb-1">Hours Worked</label>
                                         <span class="text-xs bg-gray-100 px-2 py-1 rounded">
-                                            {{ shipment.hours_worked }}
+                                            {{ shipment.hours }} hrs
                                         </span>
                                     </div>
                                     {% endif %}
