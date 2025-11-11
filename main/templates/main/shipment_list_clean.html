@@ -9,8 +9,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="-1">
-    <!-- CACHE BUSTER: 20251028-EMAIL-FIX -->
+    <meta http-equiv="Expires" content="0">
+    <!-- CACHE BUSTER: 20251109-OCCURRENCE-MOBILE-FIX -->
     <link rel="icon" type="image/png" href="{% static 'images/Food safetyagencylogo.png' %}">
 
     <title>Claims Records Management</title>
@@ -3074,14 +3074,16 @@
             color: white !important;
         }
 
+        /* REMOVED - This CSS was preventing JavaScript from changing button colors after file upload
         .btn-view-files[style*="rgb(239, 68, 68)"],
         .btn-view-files[style*="#ef4444"],
         .btn-view-files[style*="rgb(220, 53, 69)"],
         .btn-view-files[style*="#dc3545"] {
-            background-color: #ef4444 !important; /* Red - no files */
+            background-color: #ef4444 !important;
             border-color: #dc2626 !important;
             color: white !important;
         }
+        */
 
         /* Hover effects removed for file status buttons */
 
@@ -3516,20 +3518,20 @@
             background-color: #c3e6cb;
         }
 
-        /* Ensure all RFI buttons have consistent width regardless of content */
-        button[id^="rfi-"] {
+        /* Desktop RFI buttons - fixed width for table */
+        button[id^="rfi-"]:not([id*="mobile"]) {
             width: 60px !important;
             max-width: 60px !important;
             text-align: center !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
-            font-size: 0.7rem !important;
+            font-size: 0.55rem !important;
             color: white !important;
         }
 
-        /* Ensure all Invoice buttons have consistent width regardless of content */
-        button[id^="invoice-"] {
+        /* Desktop Invoice buttons - fixed width for table */
+        button[id^="invoice-"]:not([id*="mobile"]) {
             min-width: 60px !important;
             width: 60px !important;
             max-width: 60px !important;
@@ -3537,8 +3539,40 @@
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
-            font-size: 0.7rem !important;
+            font-size: 0.55rem !important;
             color: white !important;
+        }
+
+        /* Desktop Occurrence buttons - fixed width for table with smaller font */
+        button[id^="occurrence-"]:not([id*="mobile"]) {
+            min-width: 85px !important;
+            width: 85px !important;
+            max-width: 85px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            font-size: 0.55rem !important;
+            color: white !important;
+        }
+
+        /* Desktop Composition buttons - fixed width for table */
+        button[id^="composition-"]:not([id*="mobile"]) {
+            min-width: 60px !important;
+            width: 60px !important;
+            max-width: 60px !important;
+            text-align: center !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            font-size: 0.55rem !important;
+            color: white !important;
+        }
+
+        /* Mobile buttons - full width */
+        button[id*="-mobile-"] {
+            width: 100% !important;
+            max-width: 100% !important;
         }
 
         /* Keep icons white in Invoice buttons */
@@ -6467,7 +6501,16 @@
                             <!-- Action Buttons -->
                             <div class="mt-4 space-y-2">
                                 <button id="view-files-mobile-{{ fallback_group_id }}"
-                                        class="btn-view-files w-full bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors duration-200"
+                                        class="btn btn-sm btn-view-files w-full text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200
+                                           {% if shipment.file_status == 'complete' %}
+                                               btn-files-complete
+                                           {% elif shipment.file_status == 'compliance_only' or shipment.file_status == 'partial' %}
+                                               btn-files-partial
+                                           {% elif shipment.file_status == 'no_compliance' %}
+                                               btn-files-none
+                                           {% else %}
+                                               btn-files-checking
+                                           {% endif %}"
                                         data-group-id="{{ fallback_group_id }}"
                                         data-client-name="{{ shipment.client_name }}"
                                         data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
@@ -6477,15 +6520,15 @@
                             <div class="grid grid-cols-1 gap-2">
                                 {% if shipment.rfi_uploaded %}
                                 <button id="rfi-mobile-{{ fallback_group_id }}"
-                                        class="btn btn-sm btn-success bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
+                                        class="w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
                                         style="background-color: #28a745; border-color: #28a745; color: white;"
                                         disabled
                                         title="RFI file exists">
-                                    <i class="fas fa-check mr-1"></i> RFI ✓
+                                    <i class="fas fa-check mr-1"></i> RFI
                                 </button>
                                 {% else %}
                                 <button id="rfi-mobile-{{ fallback_group_id }}"
-                                        class="btn btn-sm btn-secondary bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
+                                        class="w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
                                         onclick="uploadRFI('{{ fallback_group_id|escapejs }}')"
                                         data-client-name="{{ shipment.client_name }}"
                                         data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
@@ -6493,38 +6536,20 @@
                                     <i class="fas fa-file-alt mr-1"></i> RFI
                                 </button>
                                 {% endif %}
-
-                                <!-- Composition Button (mobile card) -->
-                                {% if shipment.composition_uploaded %}
-                                <button class="composition-btn bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
-                                        id="composition-mobile-{{ fallback_group_id }}"
-                                        disabled>
-                                    <i class="fas fa-check mr-1"></i> Composition ✓
-                                </button>
-                                {% else %}
-                                <button class="composition-btn bg-gray-500 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-600 transition-colors duration-200"
-                                        id="composition-mobile-{{ fallback_group_id }}"
-                                        onclick="uploadComposition('{{ fallback_group_id|escapejs }}')"
-                                        data-client-name="{{ shipment.client_name }}"
-                                        data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
-                                        style="display: none;">
-                                    <i class="fas fa-flask mr-1"></i> Composition
-                                </button>
-                                {% endif %}
                             </div>
                                 {% if user.role != 'inspector' %}
                                 <div class="mt-2">
                                     {% if shipment.invoice_uploaded %}
                                     <button id="invoice-mobile-{{ fallback_group_id }}"
-                                            class="btn btn-sm btn-success w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
+                                            class="w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
                                             style="background-color: #28a745; border-color: #28a745; color: white;"
                                             disabled
                                             title="Invoice file exists">
-                                        <i class="fas fa-check mr-1"></i> Invoice ✓
+                                        <i class="fas fa-check mr-1"></i> Invoice
                                     </button>
                                     {% else %}
                                     <button id="invoice-mobile-{{ fallback_group_id }}"
-                                            class="btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
+                                            class="w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
                                             onclick="uploadInvoice('{{ fallback_group_id|escapejs }}')"
                                             data-client-name="{{ shipment.client_name }}"
                                             data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
@@ -6534,6 +6559,67 @@
                                     {% endif %}
                                 </div>
                                 {% endif %}
+
+                                <!-- Occurrence Button (mobile card) -->
+                                {% if request.user.role == 'inspector' or request.user.role != 'scientist' %}
+                                <div class="mt-2">
+                                    {% if shipment.occurrence_uploaded %}
+                                    <button id="occurrence-mobile-{{ fallback_group_id }}"
+                                            class="w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
+                                            style="background-color: #28a745; border-color: #28a745; color: white;"
+                                            disabled
+                                            title="Occurrence file exists">
+                                        <i class="fas fa-check mr-1"></i> Occurrence
+                                    </button>
+                                    {% else %}
+                                    <button id="occurrence-mobile-{{ fallback_group_id }}"
+                                            class="w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
+                                            onclick="uploadOccurrence('{{ fallback_group_id|escapejs }}')"
+                                            data-client-name="{{ shipment.client_name }}"
+                                            data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                            title="Upload Occurrence">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i> Occurrence
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Composition Button (mobile card) -->
+                                {% if request.user.role != 'scientist' %}
+                                <div class="mt-2">
+                                    {% if shipment.composition_uploaded %}
+                                    <button id="composition-mobile-{{ fallback_group_id }}"
+                                            class="composition-btn w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium"
+                                            style="background-color: #28a745; border-color: #28a745; color: white;"
+                                            disabled
+                                            title="Composition file exists">
+                                        <i class="fas fa-check mr-1"></i> Composition
+                                    </button>
+                                    {% else %}
+                                    <button id="composition-mobile-{{ fallback_group_id }}"
+                                            class="composition-btn w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200"
+                                            onclick="uploadComposition('{{ fallback_group_id|escapejs }}')"
+                                            data-client-name="{{ shipment.client_name }}"
+                                            data-inspection-date="{{ shipment.date_of_inspection|date:"Y-m-d" }}"
+                                            title="Upload Composition">
+                                        <i class="fas fa-flask mr-1"></i> Composition
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
+                                <!-- Comment Input (mobile card) -->
+                                <div class="mt-3">
+                                    <label class="block text-gray-600 font-medium mb-1 text-xs">Comment</label>
+                                    <input type="text"
+                                           class="form-control form-control-sm group-comment-input w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           data-group-id="{{ fallback_group_id }}"
+                                           value="{{ shipment.comment|default:'' }}"
+                                           placeholder="Add comment..."
+                                           onchange="updateGroupComment(this)"
+                                           onblur="updateGroupComment(this)"
+                                           title="Comment for this inspection group">
+                                </div>
                             </div>
                         </div>
 
@@ -6547,11 +6633,8 @@
                                     <div class="space-y-1">
                                         {% if shipment.client_emails %}
                                             {% for item in shipment.client_emails %}
-                                                <div class="flex items-center justify-between bg-white p-2 rounded border">
-                                                    <span class="text-xs">{{ item.email }}</span>
-                                                    {% if item.removable %}
-                                                        <button class="text-red-500 hover:text-red-700 text-xs">×</button>
-                                                    {% endif %}
+                                                <div class="bg-white p-2 rounded border">
+                                                    <span class="text-xs" style="display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;" title="{{ item.email }}">{{ item.email }}</span>
                                                 </div>
                                             {% endfor %}
                                         {% else %}
@@ -6564,15 +6647,15 @@
                                 <div class="mt-4">
                                     <label class="block text-gray-600 font-medium mb-2">Additional Email</label>
                                     <div class="additional-emails-container" data-group-id="{{ fallback_group_id }}" data-initial-emails="{{ shipment.additional_email|default:'' }}">
-                                        <div class="email-inputs space-y-2">
-                                            <div class="email-input-row">
+                                        <div class="email-inputs space-y-2" style="width: 100%;">
+                                            <div class="email-input-row" style="width: 100%;">
                                                 <input type="email"
-                                                       class="group-additional-email-input w-full text-xs border border-gray-300 rounded px-3 py-2"
+                                                       class="group-additional-email-input border border-gray-300 rounded px-3 py-2"
                                                        value=""
                                                        placeholder="email@example.com"
                                                        onchange="updateGroupAdditionalEmails(this)"
                                                        onblur="updateGroupAdditionalEmails(this)"
-                                                       style="min-height: 44px; font-size: 16px;"
+                                                       style="width: 100%; min-height: 44px; font-size: 16px; box-sizing: border-box;"
                                                        title="Enter additional email address">
                                             </div>
                                         </div>
@@ -7028,7 +7111,7 @@
                                         {% if shipment.occurrence_uploaded %}
                                         <button class="btn btn-sm btn-success" id="occurrence-{{ fallback_group_id }}" disabled
                                                 title="Occurrence file exists" style="background-color: #28a745; border-color: #28a745;">
-                                            Occurrence ✓
+                                            <i class="fas fa-check"></i> Occurrence
                                         </button>
                                         {% else %}
                                         <button class="btn btn-sm btn-secondary" id="occurrence-{{ fallback_group_id }}" onclick="uploadOccurrence('{{ fallback_group_id|escapejs }}')"
@@ -7042,7 +7125,7 @@
                                         {% if shipment.occurrence_uploaded %}
                                         <button class="btn btn-sm btn-success" id="occurrence-{{ fallback_group_id }}" disabled
                                                 title="Occurrence file exists" style="background-color: #28a745; border-color: #28a745;">
-                                            Occurrence ✓
+                                            <i class="fas fa-check"></i> Occurrence
                                         </button>
                                         {% else %}
                                         <button class="btn btn-sm btn-secondary" id="occurrence-{{ fallback_group_id }}" onclick="uploadOccurrence('{{ fallback_group_id|escapejs }}')"
@@ -7061,7 +7144,7 @@
                                         {% if shipment.composition_uploaded %}
                                         <button class="btn btn-sm btn-success composition-btn" id="composition-{{ fallback_group_id }}" disabled
                                                 title="Composition file exists" style="background-color: #28a745; border-color: #28a745;">
-                                            Composition ✓
+                                            <i class="fas fa-check mr-1"></i> Comp
                                         </button>
                                         {% else %}
                                         <button class="btn btn-sm btn-secondary composition-btn" id="composition-{{ fallback_group_id }}"
@@ -11563,7 +11646,31 @@
                         .then(data => {
                             if (data.success) {
                                 console.log('✅ Occurrence uploaded successfully!');
-                                markAsUploaded('occurrence-' + groupId);
+
+                                // CRITICAL: Update BOTH desktop and mobile Occurrence buttons
+                                const desktopButtonId = 'occurrence-' + groupId;
+                                const mobileButtonId = 'occurrence-mobile-' + groupId;
+                                const desktopButton = document.getElementById(desktopButtonId);
+                                const mobileButton = document.getElementById(mobileButtonId);
+
+                                const buttonsToUpdate = [];
+                                if (desktopButton) buttonsToUpdate.push({ button: desktopButton, type: 'desktop' });
+                                if (mobileButton) buttonsToUpdate.push({ button: mobileButton, type: 'mobile' });
+
+                                if (buttonsToUpdate.length > 0) {
+                                    buttonsToUpdate.forEach(({ button, type }) => {
+                                        console.log(`✅ Marking ${type} Occurrence button as uploaded`);
+                                        // Update button to green success state
+                                        button.disabled = true;
+                                        button.className = 'btn btn-sm btn-success w-full bg-green-500 text-white py-2 px-3 rounded-lg text-xs font-medium';
+                                        button.style.backgroundColor = '#28a745';
+                                        button.style.borderColor = '#28a745';
+                                        button.style.color = 'white';
+                                        button.innerHTML = '<i class="fas fa-check mr-1"></i> Occurrence';
+                                        button.title = 'Occurrence file exists';
+                                    });
+                                    console.log(`✅ Updated ${buttonsToUpdate.length} Occurrence button(s) to green`);
+                                }
 
                                 // Update View Files button colors after upload with delay to ensure server processing
                                 console.log('🎨 Updating button colors after Occurrence upload...');
@@ -11575,10 +11682,10 @@
                                 }, 3000); // 3 second delay to ensure server processing is complete
 
                                 // Auto-open files popup after successful upload
-                                const button = document.getElementById('occurrence-' + groupId);
-                                if (button) {
-                                    const clientName = button.getAttribute('data-client-name');
-                                    const inspectionDate = button.getAttribute('data-inspection-date');
+                                const buttonWithData = desktopButton || mobileButton;
+                                if (buttonWithData) {
+                                    const clientName = buttonWithData.getAttribute('data-client-name');
+                                    const inspectionDate = buttonWithData.getAttribute('data-inspection-date');
                                     if (clientName && inspectionDate) {
                                         // Longer delay to ensure the upload is processed and indexed
                                         setTimeout(() => {
