@@ -9085,6 +9085,8 @@ def get_page_clients_files(request):
             'has_invoice': has_invoice,
             'has_lab': has_lab,
             'has_retest': has_retest,
+            'has_occurrence': has_occurrence,
+            'has_composition': has_composition,
             'has_compliance': has_compliance
         })
         
@@ -9659,6 +9661,8 @@ def get_page_clients_file_status(request):
                 'has_invoice': has_invoice,
                 'has_lab': has_lab,
                 'has_retest': has_retest,
+                'has_occurrence': has_occurrence,
+                'has_composition': has_composition,
                 'has_compliance': has_compliance
             }
             
