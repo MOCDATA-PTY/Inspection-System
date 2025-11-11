@@ -848,7 +848,8 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
         # Check Inspection-* folders for compliance files
         inspection_folders = []
         if os.path.exists(client_base):
-            inspection_folders = [d for d in os.listdir(client_base) if d.startswith('Inspection-')]
+            # Case-insensitive check for inspection folders
+            inspection_folders = [d for d in os.listdir(client_base) if d.lower().startswith('inspection-')]
         
         has_compliance_files = False
         
@@ -899,7 +900,8 @@ def check_compliance_documents_status_local(inspections, client_name, date_of_in
             # Check Inspection-* folders
             try:
                 folders = os.listdir(client_base)
-                inspection_folders = [d for d in folders if d.startswith('Inspection-')]
+                # Case-insensitive check for inspection folders
+                inspection_folders = [d for d in folders if d.lower().startswith('inspection-')]
                 print(f"   [DEBUG] Found inspection folders: {inspection_folders}")
                 
                 for folder in inspection_folders:
@@ -2519,7 +2521,8 @@ def upload_document(request):
 def scan_inspection_folders(test_path, seen_files):
     """Scan Inspection-XXXX folders for files and return a list of files by category."""
     files_list = {}
-    inspection_folders = [d for d in os.listdir(test_path) if d.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, d))]
+    # Case-insensitive check for inspection folders (handles both Inspection-XXX and inspection-XXX)
+    inspection_folders = [d for d in os.listdir(test_path) if d.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, d))]
     
     for inspection_folder in sorted(inspection_folders):
         inspection_path = os.path.join(test_path, inspection_folder)
@@ -2594,7 +2597,8 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
     """Scan Inspection-XXXX folders for files and return a list of files by category."""
     import os
     files_list = {}
-    inspection_folders = [d for d in os.listdir(base_path) if d.startswith('Inspection-') and os.path.isdir(os.path.join(base_path, d))]
+    # Case-insensitive check for inspection folders (handles both Inspection-XXX and inspection-XXX)
+    inspection_folders = [d for d in os.listdir(base_path) if d.lower().startswith('inspection-') and os.path.isdir(os.path.join(base_path, d))]
     
     for inspection_folder in sorted(inspection_folders):
         inspection_path = os.path.join(base_path, inspection_folder)
@@ -7963,9 +7967,9 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                     print(f"[WARN] Error accessing compliance folder {base_path}: {str(e)}")
             return found_files
 
-        # Check for Inspection-XXXX folders that might contain files
+        # Check for Inspection-XXXX folders that might contain files (case insensitive)
         for item in os.listdir(actual_client_path):
-            if item.startswith('Inspection-'):
+            if item.lower().startswith('inspection-'):
                 inspection_path = os.path.join(actual_client_path, item)
                 if os.path.isdir(inspection_path):
                     for category_key in categories:
@@ -8028,7 +8032,8 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         # Scan nested Inspection-XXXX folders for all file types
         try:
             for item in os.listdir(actual_client_path):
-                if item.startswith('Inspection-') and os.path.isdir(os.path.join(actual_client_path, item)):
+                # Case-insensitive check for inspection folders
+                if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(actual_client_path, item)):
                     inspection_folder = os.path.join(actual_client_path, item)
                     print(f"[FILES] Checking inspection folder: {item}")
                     
@@ -9290,10 +9295,10 @@ def get_page_clients_file_status(request):
                                     else:
                                         print(f" [BUTTON] '{rfi_variant}' folder does not exist: {rfi_path}")
                                 
-                                # Also check nested Inspection-XXXX folders
+                                # Also check nested Inspection-XXXX folders (case insensitive)
                                 if not has_rfi_dir:
                                     for item in os.listdir(test_path):
-                                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
                                             # Check all RFI folder variations in nested folder
                                             for rfi_variant in rfi_variations:
                                                 nested_rfi_path = os.path.join(test_path, item, rfi_variant)
@@ -9326,10 +9331,10 @@ def get_page_clients_file_status(request):
                                             except Exception as e:
                                                 print(f" [BUTTON] Error listing invoice folder contents: {e}")
                                 
-                                # Also check nested Inspection-XXXX folders
+                                # Also check nested Inspection-XXXX folders (case insensitive)
                                 if not has_invoice_dir:
                                     for item in os.listdir(test_path):
-                                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
                                             # Check both uppercase and lowercase
                                             nested_invoice_path = os.path.join(test_path, item, 'Invoice')
                                             if not os.path.exists(nested_invoice_path):
@@ -9355,11 +9360,11 @@ def get_page_clients_file_status(request):
                                     lab_path = os.path.join(test_path, 'lab')
                                     has_lab_dir = os.path.exists(lab_path) and any(os.path.isfile(os.path.join(lab_path, f)) for f in os.listdir(lab_path)) if os.path.exists(lab_path) else False
                                 
-                                # Also check nested Inspection-XXXX folders
+                                # Also check nested Inspection-XXXX folders (case insensitive)
                                 if not has_lab_dir:
                                     for item in os.listdir(test_path):
-                                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
-                                            # Check multiple variations
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                            # Check multiple variations: Lab, lab results, lab
                                             nested_lab_path = os.path.join(test_path, item, 'Lab')
                                             if not os.path.exists(nested_lab_path):
                                                 nested_lab_path = os.path.join(test_path, item, 'lab results')
@@ -9367,7 +9372,7 @@ def get_page_clients_file_status(request):
                                                 nested_lab_path = os.path.join(test_path, item, 'lab')
                                             if os.path.exists(nested_lab_path) and any(os.path.isfile(os.path.join(nested_lab_path, f)) for f in os.listdir(nested_lab_path)):
                                                 has_lab_dir = True
-                                                print(f" [BUTTON] Found Lab files in nested folder {item}")
+                                                print(f" [BUTTON] Found Lab (COA) files in nested folder {item}: {nested_lab_path}")
                                                 break
                             
                             # Check Retest files (check both uppercase and lowercase)
@@ -9381,10 +9386,10 @@ def get_page_clients_file_status(request):
                                     retest_path = os.path.join(test_path, 'retest')
                                     has_retest_dir = os.path.exists(retest_path) and any(os.path.isfile(os.path.join(retest_path, f)) for f in os.listdir(retest_path)) if os.path.exists(retest_path) else False
                                 
-                                # Also check nested Inspection-XXXX folders
+                                # Also check nested Inspection-XXXX folders (case insensitive)
                                 if not has_retest_dir:
                                     for item in os.listdir(test_path):
-                                        if item.startswith('Inspection-') and os.path.isdir(os.path.join(test_path, item)):
+                                        if item.lower().startswith('inspection-') and os.path.isdir(os.path.join(test_path, item)):
                                             # Check both uppercase and lowercase
                                             nested_retest_path = os.path.join(test_path, item, 'Retest')
                                             if not os.path.exists(nested_retest_path):

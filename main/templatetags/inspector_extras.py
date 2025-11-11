@@ -20,14 +20,14 @@ def display_inspector(inspector_name, inspector_id):
     """
     name = (inspector_name or '').strip()
     if name and name.lower() != 'unknown':
-        return f"{name} ({inspector_id})" if inspector_id else name
+        return name
 
     if not inspector_id:
         return name or '-'
 
     mapped = _id_to_name_map().get(inspector_id)
     if mapped:
-        return f"{mapped} ({inspector_id})"
-    return f"Unknown ({inspector_id})"
+        return mapped
+    return "Unknown"
 
 
