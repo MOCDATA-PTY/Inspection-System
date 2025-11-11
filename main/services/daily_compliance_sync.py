@@ -39,6 +39,9 @@ class DailyComplianceSyncService:
             'last_sync_time': None,
             'next_sync_time': None
         }
+
+        # Auto-restart service if it was running before (persists across Django reloads/page refreshes)
+        self._auto_restart_if_needed()
     
     def get_system_settings(self):
         """Get current system settings."""
@@ -393,22 +396,50 @@ class DailyComplianceSyncService:
             
         except Exception as e:
             print(f"❌ Error in daily compliance sync: {e}")
-    
+
+    def _auto_restart_if_needed(self):
+        """Auto-restart service if it was running before Django reloaded."""
+        try:
+            was_running = cache.get('daily_compliance_sync:running', False)
+            if was_running:
+                # Don't print on every page load - only on actual restart
+                if not self.sync_thread or not self.sync_thread.is_alive():
+                    print("🔄 Auto-restarting daily compliance sync (was running before)...")
+                    self.is_running = True
+
+                    # Reset global stop flag
+                    import threading
+                    if not hasattr(threading, '_global_stop_flag'):
+                        threading._global_stop_flag = threading.Event()
+                    threading._global_stop_flag.clear()
+
+                    self.sync_thread = threading.Thread(target=self._run_daily_sync_loop, daemon=True)
+                    self.sync_thread.start()
+                    print("✅ Daily compliance sync auto-restarted successfully")
+        except Exception as e:
+            print(f"⚠️ Failed to auto-restart daily compliance sync: {e}")
+
     def start_daily_sync(self, manual_start=False):
         """Start the daily sync service."""
-        if self.is_running:
-            print("⚠️  Daily compliance sync is already running.")
-            return
-        
+        # Check if already running via cache (persistent across page refreshes)
+        if cache.get('daily_compliance_sync:running'):
+            if self.sync_thread and self.sync_thread.is_alive():
+                print("⚠️  Daily compliance sync is already running.")
+                return
+            # Thread died but cache says running - restart it
+            print("⚠️ Service was marked running but thread died. Restarting...")
+
         self.is_running = True
         self.manual_start = manual_start  # Store manual start flag
-        
+        # Increase cache TTL to 7 days (604800 seconds) for true persistence
+        cache.set('daily_compliance_sync:running', True, 604800)
+
         # Reset global stop flag
         import threading
         if not hasattr(threading, '_global_stop_flag'):
             threading._global_stop_flag = threading.Event()
         threading._global_stop_flag.clear()
-        
+
         self.sync_thread = threading.Thread(target=self._run_daily_sync_loop, daemon=True)
         self.sync_thread.start()
         print("START: Daily compliance sync service started.")
@@ -417,7 +448,9 @@ class DailyComplianceSyncService:
         """Stop the daily sync service."""
         print("STOP: Stopping daily compliance sync service...")
         self.is_running = False
-        
+        # Clear cache to prevent auto-restart
+        cache.delete('daily_compliance_sync:running')
+
         # Force stop any ongoing operations
         if hasattr(self, 'manual_start'):
             self.manual_start = False

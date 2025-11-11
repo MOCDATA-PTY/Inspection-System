@@ -33,12 +33,16 @@ class OneDriveDirectUploadService:
         self.is_processing = False  # Track if currently processing
         self.access_token = None
         self.last_sync = None
+        self.service_thread = None  # Track service thread
         self.stats = {
             'total_processed': 0,
             'total_uploaded': 0,
             'total_errors': 0,
             'last_run_time': None
         }
+
+        # Auto-restart service if it was running before (persists across Django reloads/page refreshes)
+        self._auto_restart_if_needed()
     
     def authenticate_onedrive(self):
         """Authenticate with OneDrive using saved tokens."""
@@ -1058,22 +1062,48 @@ class OneDriveDirectUploadService:
             
         except Exception as e:
             print(f"❌ Error scanning media folder: {e}")
-    
+
+    def _auto_restart_if_needed(self):
+        """Auto-restart service if it was running before Django reloaded."""
+        try:
+            was_running = cache.get('onedrive_direct_service:running', False)
+            if was_running:
+                # Don't print on every page load - only on actual restart
+                if not self.service_thread or not self.service_thread.is_alive():
+                    print("🔄 Auto-restarting OneDrive direct service (was running before)...")
+                    self.is_running = True
+
+                    # Start background thread
+                    self.service_thread = threading.Thread(target=self._background_service_loop, daemon=True)
+                    self.service_thread.start()
+
+                    # Start token monitoring
+                    self.start_token_monitor()
+
+                    print("✅ OneDrive direct service auto-restarted successfully")
+        except Exception as e:
+            print(f"⚠️ Failed to auto-restart OneDrive direct service: {e}")
+
     def start_background_service(self):
         """Start the background service."""
-        if self.is_running:
-            return False, "Background service already running"
-        
+        # Check if already running via cache (persistent across page refreshes)
+        if cache.get('onedrive_direct_service:running'):
+            if self.service_thread and self.service_thread.is_alive():
+                return False, "Background service already running"
+            # Thread died but cache says running - restart it
+            print("⚠️ Service was marked running but thread died. Restarting...")
+
         self.is_running = True
-        cache.set('onedrive_direct_service:running', True, 3600)
-        
+        # Increase cache TTL to 7 days (604800 seconds) for true persistence
+        cache.set('onedrive_direct_service:running', True, 604800)
+
         # Start background thread
-        service_thread = threading.Thread(target=self._background_service_loop, daemon=True)
-        service_thread.start()
-        
+        self.service_thread = threading.Thread(target=self._background_service_loop, daemon=True)
+        self.service_thread.start()
+
         # Start token monitoring
         self.start_token_monitor()
-        
+
         return True, "Direct OneDrive background service started"
     
     def stop_background_service(self):

@@ -44,6 +44,9 @@ class ScheduledSyncService:
             'last_sync_time': None,
             'next_sync_time': None
         }
+
+        # Auto-restart service if it was running before (persists across Django reloads/page refreshes)
+        self._auto_restart_if_needed()
     
     def get_system_settings(self):
         """Get current system settings."""
@@ -166,16 +169,23 @@ class ScheduledSyncService:
     def sync_sql_server(self):
         """Sync inspection data with SQL Server - fetch inspections and product names."""
         try:
-            print("🗄️ Starting SQL Server sync...")
+            print("\n" + "="*80)
+            print("🗄️  STARTING SQL SERVER SYNC")
+            print("="*80)
 
             from ..models import FoodSafetyAgencyInspection, Inspection
-            from ..utils.sql_server_utils import fetch_product_names_for_inspection
+            from ..utils.sql_server_utils import fetch_all_product_names_bulk
             from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
             import pymssql
             from datetime import datetime, timedelta
 
             # Connect to SQL Server using pymssql
             sql_server_config = settings.DATABASES.get('sql_server', {})
+
+            print(f"\n📡 Connecting to SQL Server...")
+            print(f"   Server: {sql_server_config.get('HOST')}:{sql_server_config.get('PORT', 1433)}")
+            print(f"   Database: {sql_server_config.get('NAME')}")
+
             connection = pymssql.connect(
                 server=sql_server_config.get('HOST'),
                 port=int(sql_server_config.get('PORT', 1433)),
@@ -185,24 +195,50 @@ class ScheduledSyncService:
                 timeout=30
             )
             cursor = connection.cursor(as_dict=True)
+            print(f"✅ Connected successfully!\n")
 
-            print(f"   📅 Fetching inspections from SQL Server...")
+            print(f"📅 Fetching inspections and account codes from SQL Server...")
+            print(f"   Query: FSA_INSPECTION_QUERY (includes InternalAccountNumber)")
 
             # Use the FSA_INSPECTION_QUERY that's already working
             cursor.execute(FSA_INSPECTION_QUERY)
 
             sql_inspections = cursor.fetchall()
-            print(f"   📊 Found {len(sql_inspections)} inspections in SQL Server")
+            print(f"\n📊 Retrieved {len(sql_inspections)} inspections from SQL Server")
+            print(f"   Each inspection includes: Client Name, Account Code, Date, Inspector, Commodity")
 
-            # Sync each inspection
+            # Tracking stats
             synced_count = 0
             updated_count = 0
             product_names_updated = 0
 
-            for sql_insp in sql_inspections:
+            # NEW: Account code tracking
+            account_codes_found = 0
+            google_sheets_matched = 0
+            google_sheets_used = 0
+            sql_server_fallback = 0
+
+            # Set initial progress
+            cache.set('sync_progress', {
+                'status': 'running',
+                'current': 0,
+                'total': len(sql_inspections),
+                'percent': 0,
+                'message': 'Phase 1/3: Syncing inspections with Google Sheets...'
+            }, 300)
+
+            print(f"\n" + "="*80)
+            print(f"📋 PHASE 1/3: SYNC INSPECTIONS + MATCH CLIENT NAMES")
+            print(f"   SQL Server → Inspection Data + Account Codes")
+            print(f"   Google Sheets → Client Names (SOLE SOURCE)")
+            print(f"   (Product names will be fetched in bulk in Phase 2)")
+            print("="*80)
+
+            for idx, sql_insp in enumerate(sql_inspections, 1):
                 try:
                     inspection_id = sql_insp.get('Id')
-                    client_name = sql_insp.get('Client')
+                    client_name_sql = sql_insp.get('Client')  # Client name from SQL Server
+                    internal_account_code = sql_insp.get('InternalAccountNumber')  # Account code from SQL Server
                     inspection_date = sql_insp.get('DateOfInspection')
                     inspector_id = sql_insp.get('InspectorId')
                     commodity = sql_insp.get('Commodity')
@@ -214,24 +250,79 @@ class ScheduledSyncService:
                         inspector_id_int = None
                     inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
 
-                    # Fetch product names for this inspection
-                    product_names = fetch_product_names_for_inspection(
-                        inspection_id=inspection_id,
-                        client_name=client_name,
-                        inspection_date=inspection_date
-                    )
-                    product_name_str = ', '.join(product_names) if product_names else None
+                    # IMPORTANT: ONLY use Google Sheets for client names
+                    # SQL Server ONLY provides: inspection data, account code
+                    # Google Sheets is the SOLE source for client names
+                    from ..models import Client
+                    client_name = None  # Will be set from Google Sheets ONLY
+                    google_sheets_match_found = False
 
-                    # Update or create inspection in PostgreSQL
+                    # Log only every 100th inspection to reduce console spam (was every 10th - too verbose!)
+                    # Only log first 3 inspections for initial verification
+                    show_detailed_log = (idx <= 3) or (idx % 100 == 0)
+
+                    if internal_account_code:
+                        account_codes_found += 1
+
+                        # Look up client in Google Sheets by account code
+                        try:
+                            google_client = Client.objects.filter(
+                                internal_account_code=internal_account_code
+                            ).first()
+
+                            if google_client and google_client.name:
+                                # Use Google Sheets name (ONLY source for names)
+                                google_sheets_matched += 1
+                                google_sheets_match_found = True
+                                client_name = google_client.name
+                                google_sheets_used += 1
+
+                                if show_detailed_log:
+                                    print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                                    print(f"      📋 Account Code: {internal_account_code}")
+                                    print(f"      ✅ Google Sheets Match: FOUND")
+                                    print(f"      📊 Google Sheets Name: {google_client.name}")
+                                    print(f"      ⭐ USING: {client_name} (from Google Sheets)")
+                            else:
+                                # No match in Google Sheets - leave as "-"
+                                sql_server_fallback += 1
+                                client_name = "-"
+                                if show_detailed_log:
+                                    print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                                    print(f"      📋 Account Code: {internal_account_code}")
+                                    print(f"      ❌ Google Sheets Match: NOT FOUND")
+                                    print(f"      ⚠️  Client name set to: -")
+                                    print(f"      → Add account code '{internal_account_code}' to Google Sheets to set client name!")
+
+                        except Exception as e:
+                            # Error looking up Google Sheets - leave as "-"
+                            sql_server_fallback += 1
+                            client_name = "-"
+                            if show_detailed_log:
+                                print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                                print(f"      📋 Account Code: {internal_account_code}")
+                                print(f"      ⚠️  Error looking up Google Sheets: {e}")
+                                print(f"      ⚠️  Client name set to: -")
+                    else:
+                        # No account code - leave as "-" (cannot look up in Google Sheets without account code)
+                        sql_server_fallback += 1
+                        client_name = "-"
+                        if show_detailed_log:
+                            print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                            print(f"      📋 Account Code: NONE")
+                            print(f"      ⚠️  Cannot look up in Google Sheets without account code")
+                            print(f"      ⚠️  Client name set to: -")
+
+                    # PHASE 1: Save inspection WITHOUT product names (products will be added in bulk in Phase 2)
                     inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
                         remote_id=inspection_id,
                         defaults={
-                            'client_name': client_name,
+                            'client_name': client_name,  # Use Google Sheets name if matched
+                            'internal_account_code': internal_account_code,  # Store account code for future matches
                             'date_of_inspection': inspection_date,
                             'inspector_name': inspector_name,
-                            'commodity': commodity,
-                            'product_name': product_name_str,
-                            'last_synced': datetime.now()
+                            'commodity': commodity
+                            # Note: product_name will be added in Phase 2 bulk fetch
                         }
                     )
 
@@ -240,32 +331,152 @@ class ScheduledSyncService:
                     else:
                         updated_count += 1
 
-                    if product_name_str:
-                        product_names_updated += 1
+                    # Progress indicator every 250 inspections (was 50 - reduced console spam)
+                    if idx % 250 == 0:
+                        print(f"\n   📈 Phase 1 Progress: {idx}/{len(sql_inspections)} inspections synced...")
+                        print(f"      - Account codes found: {account_codes_found}")
+                        print(f"      - Google Sheets matches: {google_sheets_matched}")
+                        print(f"      - Using Google Sheets names: {google_sheets_used}")
+                        print(f"      - Using placeholder names: {sql_server_fallback}")
 
-                    if (synced_count + updated_count) % 50 == 0:
-                        print(f"   📈 Progress: {synced_count + updated_count}/{len(sql_inspections)} inspections processed...")
+                        # Update progress in cache for frontend (Phase 1 = 0-60% of total progress)
+                        progress_percent = int((idx / len(sql_inspections)) * 60)
+                        cache.set('sync_progress', {
+                            'status': 'running',
+                            'current': idx,
+                            'total': len(sql_inspections),
+                            'percent': progress_percent,
+                            'message': f'Phase 1/3: Syncing inspections {idx}/{len(sql_inspections)} ({progress_percent}%)'
+                        }, 300)
 
                 except Exception as e:
-                    print(f"   ⚠️ Error syncing inspection {inspection_id}: {e}")
+                    print(f"\n   ⚠️  Error syncing inspection {inspection_id}: {e}")
                     continue
+
+            # PHASE 1 COMPLETE
+            print(f"\n" + "="*80)
+            print(f"✅ PHASE 1 COMPLETE: Inspections synced with client names!")
+            print(f"   - New inspections: {synced_count}")
+            print(f"   - Updated inspections: {updated_count}")
+            print(f"   - Google Sheets matches: {google_sheets_matched}/{account_codes_found}")
+            print("="*80)
+
+            # Update progress: Phase 1 done (60%)
+            cache.set('sync_progress', {
+                'status': 'running',
+                'current': len(sql_inspections),
+                'total': len(sql_inspections),
+                'percent': 60,
+                'message': 'Phase 2/3: Fetching product names in bulk...'
+            }, 300)
+
+            # PHASE 2: BULK FETCH ALL PRODUCT NAMES
+            print(f"\n" + "="*80)
+            print(f"📦 PHASE 2/3: BULK FETCH PRODUCT NAMES")
+            print(f"   Fetching products for ALL {len(sql_inspections)} inspections at once...")
+            print(f"   (This is MUCH faster than fetching individually!)")
+            print("="*80)
+
+            # Get all inspection IDs
+            inspection_ids = [insp.get('Id') for insp in sql_inspections if insp.get('Id')]
+
+            # Bulk fetch all product names
+            product_map = fetch_all_product_names_bulk(inspection_ids)
+
+            # Update progress: Phase 2 done (80%)
+            cache.set('sync_progress', {
+                'status': 'running',
+                'current': len(sql_inspections),
+                'total': len(sql_inspections),
+                'percent': 80,
+                'message': 'Phase 3/3: Updating inspections with product names...'
+            }, 300)
+
+            # PHASE 3: UPDATE INSPECTIONS WITH PRODUCT NAMES
+            print(f"\n" + "="*80)
+            print(f"🔄 PHASE 3/3: UPDATE INSPECTIONS WITH PRODUCT NAMES")
+            print(f"   Updating {len(sql_inspections)} inspections...")
+            print("="*80)
+
+            # Batch update inspections with product names
+            for idx, sql_insp in enumerate(sql_inspections, 1):
+                try:
+                    inspection_id = sql_insp.get('Id')
+
+                    if inspection_id in product_map:
+                        product_names = product_map[inspection_id]
+                        if product_names:
+                            product_name_str = ', '.join(product_names)
+
+                            # Update the inspection with product names
+                            FoodSafetyAgencyInspection.objects.filter(
+                                remote_id=inspection_id
+                            ).update(
+                                product_name=product_name_str
+                            )
+
+                            product_names_updated += 1
+
+                    # Progress every 200 inspections
+                    if idx % 200 == 0:
+                        progress_percent = 80 + int((idx / len(sql_inspections)) * 20)  # 80-100%
+                        print(f"   📈 Phase 3 Progress: {idx}/{len(sql_inspections)} updated ({progress_percent}%)...")
+                        cache.set('sync_progress', {
+                            'status': 'running',
+                            'current': idx,
+                            'total': len(sql_inspections),
+                            'percent': progress_percent,
+                            'message': f'Phase 3/3: Updating products {idx}/{len(sql_inspections)} ({progress_percent}%)'
+                        }, 300)
+
+                except Exception as e:
+                    print(f"   ⚠️  Error updating products for inspection {inspection_id}: {e}")
+                    continue
+
+            print(f"\n✅ PHASE 3 COMPLETE: Product names updated!")
+            print(f"   - Inspections with products: {product_names_updated}/{len(sql_inspections)}")
 
             cursor.close()
             connection.close()
 
             # Summary
             total_inspections = FoodSafetyAgencyInspection.objects.count()
-            print(f"\n   ✅ Sync completed:")
-            print(f"      - New inspections: {synced_count}")
-            print(f"      - Updated inspections: {updated_count}")
-            print(f"      - Product names synced: {product_names_updated}")
-            print(f"      - Total inspections in database: {total_inspections}")
+
+            print(f"\n" + "="*80)
+            print(f"✅ SQL SERVER SYNC COMPLETED")
+            print("="*80)
+            print(f"\n📊 Sync Statistics:")
+            print(f"   - Total inspections processed: {len(sql_inspections)}")
+            print(f"   - New inspections created: {synced_count}")
+            print(f"   - Existing inspections updated: {updated_count}")
+            print(f"   - Product names synced: {product_names_updated}")
+            print(f"\n📋 Account Code & Name Matching Statistics:")
+            print(f"   - Inspections with account codes: {account_codes_found} ({(account_codes_found/len(sql_inspections)*100) if len(sql_inspections) > 0 else 0:.1f}%)")
+            print(f"   - Google Sheets matches found: {google_sheets_matched} ({(google_sheets_matched/account_codes_found*100) if account_codes_found > 0 else 0:.1f}% of those with codes)")
+            print(f"   - Using Google Sheets names: {google_sheets_used}")
+            print(f"   - Using placeholders (no match): {sql_server_fallback}")
+            print(f"\n💾 Database Status:")
+            print(f"   - Total inspections in database: {total_inspections}")
+            print(f"\n⭐ Google Sheets is the SOLE source for client names!")
+            print(f"   - SQL Server provides: inspection data + account codes")
+            print(f"   - Google Sheets provides: client names (via account code lookup)")
+            print(f"   - Update client names in Google Sheets and resync to see changes instantly!")
+            print("="*80 + "\n")
+
+            # Set final progress to 100%
+            cache.set('sync_progress', {
+                'status': 'completed',
+                'current': len(sql_inspections),
+                'total': len(sql_inspections),
+                'percent': 100,
+                'message': f'Sync completed! Processed {len(sql_inspections)} inspections.'
+            }, 300)
 
             self.last_sync_times['sql_server'] = datetime.now()
             return True
 
         except Exception as e:
-            print(f"❌ Error in SQL Server sync: {e}")
+            print(f"\n❌ Error in SQL Server sync: {e}")
             import traceback
             traceback.print_exc()
             return False
@@ -398,26 +609,48 @@ class ScheduledSyncService:
             cached_stats = cache.get('scheduled_sync_service:stats')
             if cached_stats:
                 self.sync_stats = cached_stats
-            
+
             cached_times = cache.get('scheduled_sync_service:last_sync_times')
             if cached_times:
                 self.last_sync_times = cached_times
         except Exception as e:
             print(f"⚠️ Failed to load sync stats: {e}")
-    
+
+    def _auto_restart_if_needed(self):
+        """Auto-restart service if it was running before Django reloaded."""
+        try:
+            was_running = cache.get('scheduled_sync_service:running', False)
+            if was_running:
+                # Don't print on every page load - only on actual restart
+                if not self.sync_thread or not self.sync_thread.is_alive():
+                    print("🔄 Auto-restarting sync service (was running before)...")
+                    self.is_running = True
+                    self._load_stats()
+                    self.sync_thread = threading.Thread(target=self._background_service_loop, daemon=True)
+                    self.sync_thread.start()
+                    print("✅ Sync service auto-restarted successfully")
+        except Exception as e:
+            print(f"⚠️ Failed to auto-restart sync service: {e}")
+
     def start_background_service(self):
         """Start the background sync service."""
-        if self.is_running:
-            return False, "Background sync service already running"
-        
+        # Check if already running via cache (persistent across page refreshes)
+        if cache.get('scheduled_sync_service:running'):
+            if self.sync_thread and self.sync_thread.is_alive():
+                return False, "Background sync service already running"
+            # Thread died but cache says running - restart it
+            print("⚠️ Service was marked running but thread died. Restarting...")
+
         self.is_running = True
         self._load_stats()
-        cache.set('scheduled_sync_service:running', True, 3600)
-        
-        # Start background thread
+        # Increase cache TTL to 7 days (604800 seconds) for true persistence
+        cache.set('scheduled_sync_service:running', True, 604800)
+
+        # Start background thread (daemon=True means it won't block shutdown)
         self.sync_thread = threading.Thread(target=self._background_service_loop, daemon=True)
         self.sync_thread.start()
-        
+
+        print("✅ Scheduled sync service started successfully")
         return True, "Scheduled sync service started"
     
     def stop_background_service(self):
