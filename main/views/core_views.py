@@ -1539,8 +1539,9 @@ def shipment_list(request):
         # File status is now based on actual files on disk
         has_rfi = rfi_uploader is not None
         has_invoice = invoice_uploader is not None
+        has_composition = composition_uploader is not None
         has_compliance = compliance_status_result.get('has_any_compliance', False)
-        
+
         # Determine INSPECTION compliance status (for display in header)
         # Check if ALL individual inspections in the group are compliant
         all_inspections_compliant = True
@@ -1548,12 +1549,12 @@ def shipment_list(request):
             if inspection.is_direction_present_for_this_inspection:
                 all_inspections_compliant = False
                 break
-        
+
         if all_inspections_compliant:
             inspection_compliance_status = 'compliant'  # All inspections are compliant
         else:
             inspection_compliance_status = 'non_compliant'  # At least one inspection is non-compliant
-        
+
         # Determine FILE UPLOAD compliance status (controls "Sent" status dropdown)
         if has_rfi and has_invoice and has_compliance:
             compliance_status = 'complete'  # All required files uploaded
@@ -1561,14 +1562,14 @@ def shipment_list(request):
             compliance_status = 'partial'  # Some files uploaded but not all
         else:
             compliance_status = 'no_compliance'  # No files uploaded
-        
+
         # Determine file status for View Files button (separate from compliance status)
         if has_rfi and has_invoice and has_compliance:
             file_status = 'complete'  # Green - all required files present
         elif has_compliance:
             file_status = 'compliance_only'  # Orange - compliance exists (with or without other docs)
-        elif has_rfi or has_invoice:
-            file_status = 'partial'  # Blue - has some files but no compliance
+        elif has_rfi or has_invoice or has_composition:
+            file_status = 'partial'  # Blue/Orange - has some files but no compliance
         else:
             file_status = 'no_compliance'  # Red - no files at all
 
@@ -9207,7 +9208,7 @@ def get_page_clients_file_status(request):
                 print(f" [BUTTON] Checking {unique_key}: {client_name} on {inspection_date}")
                 
                 # Initialize results for this specific combination
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = has_composition = False
                 file_status = 'no_files'
                 
                 # OPTIMIZATION 1: Database check first (fastest - no file system access)
@@ -9246,8 +9247,9 @@ def get_page_clients_file_status(request):
                 # Also try with apostrophes replaced by spaces (for names like "Mamma's Eggs")
                 name_with_spaces_for_apostrophe = client_name.replace("'", ' ')
                 sanitized_with_apostrophe = create_folder_name(name_with_spaces_for_apostrophe)
-                
+
                 # Use sanitized client name first, then apostrophe version, then original for backward compatibility
+                # Note: Mobile and desktop uploads both use the same folder (no mobile_ prefix)
                 client_folder_variations = [sanitized_client_name, sanitized_with_apostrophe, client_name]
                 
                 # Check all folder variations for files for this specific date
@@ -9640,12 +9642,12 @@ def get_page_clients_file_status(request):
                         
             except ValueError:
                 print(f"[ERROR] Invalid date format for {unique_key}: {inspection_date}")
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = has_composition = False
                 file_status = 'no_files'
 
             except Exception as e:
                 print(f" Error checking files for {unique_key}: {e}")
-                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = False
+                has_rfi = has_invoice = has_lab = has_retest = has_compliance = has_occurrence = has_composition = False
                 file_status = 'error'
             
             # Store optimized status for this specific combination (common for all cases)
@@ -12398,12 +12400,24 @@ def scheduled_backup_service_status(request):
     """Get scheduled backup service status."""
     try:
         from ..services.scheduled_backup_service import get_scheduled_backup_service_status
-        
+
         status = get_scheduled_backup_service_status()
         return JsonResponse(status)
-        
+
+    except ImportError:
+        # Service module not available - return graceful status instead of 500 error
+        return JsonResponse({
+            'is_running': False,
+            'status': 'not_available',
+            'message': 'Backup service not configured'
+        })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        # Other errors - return graceful status to avoid console spam
+        return JsonResponse({
+            'is_running': False,
+            'status': 'error',
+            'message': f'Service error: {str(e)}'
+        })
 
 
 @login_required
