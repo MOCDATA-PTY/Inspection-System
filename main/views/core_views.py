@@ -9529,13 +9529,13 @@ def get_page_clients_file_status(request):
                             )
                             print(f" [SYNC] Updated Invoice database records for {client_name} - files exist on disk")
                         
-                        if has_lab and not matching_inspections.filter(lab_uploaded_by__isnull=False).exists():
+                        if has_lab and not matching_inspections.filter(coa_uploaded_by__isnull=False).exists():
                             # Files exist but database doesn't have uploader info - set to system user
                             matching_inspections.update(
-                                lab_uploaded_by_id=1,  # System user
-                                lab_uploaded_date=current_time
+                                coa_uploaded_by_id=1,  # System user
+                                coa_uploaded_date=current_time
                             )
-                            print(f" [SYNC] Updated Lab database records for {client_name} - files exist on disk")
+                            print(f" [SYNC] Updated Lab/COA database records for {client_name} - files exist on disk")
                         
                         if has_retest and not matching_inspections.filter(retest_uploaded_by__isnull=False).exists():
                             # Files exist but database doesn't have uploader info - set to system user
