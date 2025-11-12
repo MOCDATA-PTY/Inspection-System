@@ -129,89 +129,134 @@ class DailyComplianceSyncService:
         return f"{inspection.id}_{inspection.date_of_inspection.strftime('%Y%m%d')}"
     
     def load_drive_files_standalone(self):
-        """Load Google Drive files without requiring a request object."""
+        """Load Google Drive files from specific month folders (October 2025+) only."""
         try:
             # Check if force stop was requested
             if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
                 print("🛑 Force stop requested - aborting file loading")
                 return None
-                
+
             from ..services.google_drive_service import GoogleDriveService
             import re
             from datetime import datetime
-            
+
             drive_service = GoogleDriveService()
-            folder_id = "18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4"  # From Apps Script
-            
-            print("[Cloud] Loading Google Drive files for daily sync...")
-            print("[Wait] This may take a few minutes for large folders...")
+            # NEW: Parent folder that contains month folders
+            parent_folder_id = "1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP"
+
+            print("[Cloud] Loading Google Drive files for daily sync (October 2025+)...")
+            print("[Wait] Fetching month folders...")
             start_time = datetime.now()
 
-            # Get ALL files from Drive folder (not limited to 1000)
-            files = drive_service.list_files_in_folder(folder_id, request=None, max_items=None)
-            print(f"[Retrieved] {len(files)} files from Drive, now filtering for October 2025+...")
+            # Step 1: Get all folders in the parent folder
+            all_items = drive_service.list_files_in_folder(parent_folder_id, request=None, max_items=None)
+            print(f"[Retrieved] {len(all_items)} items from parent folder")
 
-            file_lookup = {}
-            file_count = 0
-            skipped_old_files = 0
+            # Step 2: Filter for month folders (October 2025+)
+            month_folders = []
+            for item in all_items:
+                # Check if it's a folder (mimeType = 'application/vnd.google-apps.folder')
+                if item.get('mimeType') != 'application/vnd.google-apps.folder':
+                    continue
 
-            for file in files:
-                # Check stop flag and force stop during file processing
-                if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
-                    print("[STOP] Stop requested during file loading - aborting")
-                    break
+                folder_name = item.get('name', '')
+                folder_id = item.get('id', '')
 
-                # Check global stop flag
-                import threading
-                if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                    print("[STOP] Global stop flag detected during file loading - aborting")
-                    break
-
-                file_name = file.get('name', '')
-                file_id = file.get('id', '')
-                web_view_link = file.get('webViewLink', '')
-
-                # Apps Script pattern: COMMODITY-ACCOUNT_CODE-DATE
-                # Example: RAW-RE-IND-RAW-NA-1000-2025-01-15
-                full_pattern = re.match(r'^([A-Za-z]+)-([A-Z]{2}-[A-Z]{3}-[A-Z]{3}-[A-Z]{2,3}-\d+)-(\d{4}-\d{2}-\d{2})', file_name)
-
-                if full_pattern and file_id:
-                    commodity_prefix = full_pattern.group(1)
-                    account_code = full_pattern.group(2)
-                    zip_date_str = full_pattern.group(3)
+                # Parse folder name like "October 2025", "November 2025"
+                # Pattern: Month Year
+                month_year_pattern = re.match(r'^([A-Za-z]+)\s+(\d{4})$', folder_name)
+                if month_year_pattern:
+                    month_name = month_year_pattern.group(1)
+                    year = int(month_year_pattern.group(2))
 
                     try:
-                        zip_date = datetime.strptime(zip_date_str, '%Y-%m-%d')
-                    except:
+                        # Parse month name to month number
+                        month_date = datetime.strptime(f"{month_name} {year}", "%B %Y")
+                        folder_date = month_date.date()
+
+                        # Only include folders from October 2025 onwards
+                        if folder_date >= date(2025, 10, 1):
+                            month_folders.append({
+                                'name': folder_name,
+                                'id': folder_id,
+                                'date': folder_date
+                            })
+                            print(f"   ✅ Including: {folder_name}")
+                        else:
+                            print(f"   ⏭️  Skipping: {folder_name} (before October 2025)")
+                    except ValueError:
+                        print(f"   ⚠️  Could not parse folder name: {folder_name}")
                         continue
 
-                    # FILTER: Only include files from October 2025 onwards
-                    if zip_date.date() < date(2025, 10, 1):
-                        skipped_old_files += 1
-                        continue
+            print(f"[OK] Found {len(month_folders)} month folders to process (October 2025+)")
 
-                    # Create compound key exactly like Apps Script
-                    compound_key = f"{commodity_prefix.lower()}|{account_code}|{zip_date_str}"
+            # Step 3: Load files from each month folder
+            file_lookup = {}
+            total_file_count = 0
 
-                    file_lookup[compound_key] = {
-                        'url': web_view_link or f"https://drive.google.com/file/d/{file_id}/view",
-                        'name': file_name,
-                        'commodity': commodity_prefix,
-                        'accountCode': account_code,
-                        'zipDate': zip_date,
-                        'zipDateStr': zip_date_str,
-                        'file_id': file_id
-                    }
+            for month_folder in sorted(month_folders, key=lambda x: x['date']):
+                # Check stop flag
+                if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
+                    print("[STOP] Stop requested during folder processing - aborting")
+                    break
 
-                    file_count += 1
+                print(f"\n[Fetching] Files from: {month_folder['name']}")
+                folder_files = drive_service.list_files_in_folder(month_folder['id'], request=None, max_items=None)
+                print(f"   [Retrieved] {len(folder_files)} files from {month_folder['name']}")
 
-                    # Progress logging - show progress every 500 files
-                    if file_count % 500 == 0 and file_count > 0:
-                        print(f"[Progress] Processed {file_count} files from Oct 2025+...")
+                # Process files from this month folder
+                month_file_count = 0
+                for file in folder_files:
+                    # Check stop flag
+                    if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
+                        print("[STOP] Stop requested during file loading - aborting")
+                        break
+
+                    # Check global stop flag
+                    import threading
+                    if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
+                        print("[STOP] Global stop flag detected during file loading - aborting")
+                        break
+
+                    file_name = file.get('name', '')
+                    file_id = file.get('id', '')
+                    web_view_link = file.get('webViewLink', '')
+
+                    # Apps Script pattern: COMMODITY-ACCOUNT_CODE-DATE
+                    # Example: RAW-RE-IND-RAW-NA-1000-2025-10-15
+                    full_pattern = re.match(r'^([A-Za-z]+)-([A-Z]{2}-[A-Z]{3}-[A-Z]{3}-[A-Z]{2,3}-\d+)-(\d{4}-\d{2}-\d{2})', file_name)
+
+                    if full_pattern and file_id:
+                        commodity_prefix = full_pattern.group(1)
+                        account_code = full_pattern.group(2)
+                        zip_date_str = full_pattern.group(3)
+
+                        try:
+                            zip_date = datetime.strptime(zip_date_str, '%Y-%m-%d')
+                        except:
+                            continue
+
+                        # Create compound key exactly like Apps Script
+                        compound_key = f"{commodity_prefix.lower()}|{account_code}|{zip_date_str}"
+
+                        file_lookup[compound_key] = {
+                            'url': web_view_link or f"https://drive.google.com/file/d/{file_id}/view",
+                            'name': file_name,
+                            'commodity': commodity_prefix,
+                            'accountCode': account_code,
+                            'zipDate': zip_date,
+                            'zipDateStr': zip_date_str,
+                            'file_id': file_id
+                        }
+
+                        month_file_count += 1
+                        total_file_count += 1
+
+                print(f"   [OK] Processed {month_file_count} compliance files from {month_folder['name']}")
 
             load_time = (datetime.now() - start_time).total_seconds()
-            print(f"[OK] Loaded {len(file_lookup)} files from October 2025+ in {load_time:.1f} seconds")
-            print(f"[Skipped] {skipped_old_files} files before October 2025")
+            print(f"\n[COMPLETE] Loaded {len(file_lookup)} compliance files from {len(month_folders)} month folders in {load_time:.1f} seconds")
+            print(f"[Optimization] Only fetched from October 2025+ folders (much faster!)")
 
             return file_lookup
 
