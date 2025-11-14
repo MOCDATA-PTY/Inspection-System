@@ -3418,7 +3418,7 @@ def client_allocation_sheet(request):
 
 @login_required(login_url='login')
 def export_client_allocations(request):
-    """Export all client allocation records to Excel file."""
+    """Export ALL client allocation records to Excel file."""
     from django.http import HttpResponse
     from ..models import ClientAllocation
     from openpyxl import Workbook
@@ -3426,17 +3426,16 @@ def export_client_allocations(request):
     from openpyxl.utils import get_column_letter
     from io import BytesIO
 
-    # Create a new workbook and select the active sheet
+    # Create workbook
     wb = Workbook()
     ws = wb.active
     ws.title = "Client Allocations"
 
-    # Define styles
+    # Styles
     header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
     header_fill = PatternFill(start_color='007890', end_color='007890', fill_type='solid')
     header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-
-    cell_alignment = Alignment(horizontal='left', vertical='center', wrap_text=False)
+    cell_alignment = Alignment(horizontal='left', vertical='center')
     cell_border = Border(
         left=Side(style='thin', color='E5E7EB'),
         right=Side(style='thin', color='E5E7EB'),
@@ -3444,7 +3443,7 @@ def export_client_allocations(request):
         bottom=Side(style='thin', color='E5E7EB')
     )
 
-    # Write header row
+    # Header row
     headers = [
         'Client ID', 'Business Name (E-Click)', 'Facility Type', 'Group Type', 'Commodity',
         'Province', 'Corporate Group', 'Internal Account Code', 'Allocated',
@@ -3460,14 +3459,10 @@ def export_client_allocations(request):
         cell.alignment = header_alignment
         cell.border = cell_border
 
-    # Get all records or filter by client_id if provided
-    client_id = request.GET.get('client_id')
-    if client_id:
-        allocations = ClientAllocation.objects.filter(client_id=client_id).order_by('client_id')
-    else:
-        allocations = ClientAllocation.objects.all().order_by('client_id')
+    # ALWAYS return all clients
+    allocations = ClientAllocation.objects.all().order_by('client_id')
 
-    # Write data rows
+    # Data rows
     for row_num, allocation in enumerate(allocations, 2):
         data = [
             allocation.client_id,
@@ -3493,49 +3488,31 @@ def export_client_allocations(request):
             cell.alignment = cell_alignment
             cell.border = cell_border
 
-    # Auto-adjust column widths
+    # Column widths
     column_widths = {
-        1: 10,  # Client ID
-        2: 30,  # Business Name
-        3: 20,  # Facility Type
-        4: 25,  # Group Type
-        5: 12,  # Commodity
-        6: 15,  # Province
-        7: 25,  # Corporate Group
-        8: 25,  # Account Code
-        9: 10,  # Allocated
-        10: 30, # Email
-        11: 15, # Phone
-        12: 15, # Duplicates
-        13: 15, # Active/Deactive
-        14: 20, # Last Synced
-        15: 20  # Created At
+        1: 10,  2: 30, 3: 20, 4: 25, 5: 12,
+        6: 15, 7: 25, 8: 25, 9: 10, 10: 30,
+        11: 15, 12: 15, 13: 15, 14: 20, 15: 20
     }
 
     for col_num, width in column_widths.items():
         ws.column_dimensions[get_column_letter(col_num)].width = width
 
-    # Freeze the header row
+    # Freeze header
     ws.freeze_panes = 'A2'
 
-    # Save to BytesIO buffer
+    # Save workbook to buffer
     buffer = BytesIO()
     wb.save(buffer)
     buffer.seek(0)
 
-    # Create the HttpResponse object with Excel content type
+    # Response
     response = HttpResponse(
         buffer.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
-    # Set filename based on whether we're exporting a single client or all
-    if client_id:
-        filename = f'client_{client_id}_export.xlsx'
-    else:
-        filename = 'client_allocations_export.xlsx'
-
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response['Content-Disposition'] = 'attachment; filename="client_allocations_export.xlsx"'
 
     return response
 
