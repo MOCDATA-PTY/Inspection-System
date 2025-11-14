@@ -3058,13 +3058,15 @@ def list_client_folder_files(request):
 
                                     # Determine document type based on filename or folder
                                     doc_type = 'compliance'
-                                    if 'rfi' in filename.lower():
+                                    filename_lower = filename.lower()
+                                    # Check for new naming conventions (FSA-RFI, FSA-INV, FSL-)
+                                    if 'rfi' in filename_lower or filename_lower.startswith('fsa-rfi'):
                                         doc_type = 'rfi'
-                                    elif 'invoice' in filename.lower():
+                                    elif 'inv' in filename_lower or 'invoice' in filename_lower or filename_lower.startswith('fsa-inv'):
                                         doc_type = 'invoice'
-                                    elif 'lab' in filename.lower():
+                                    elif 'lab' in filename_lower or filename_lower.startswith('fsl-') or filename_lower.startswith('lab-'):
                                         doc_type = 'lab'
-                                    elif 'retest' in filename.lower():
+                                    elif 'retest' in filename_lower:
                                         doc_type = 'retest'
 
                                     file_info = get_file_info(file_path, doc_type)
