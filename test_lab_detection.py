@@ -21,7 +21,7 @@ def test_lab_file_detection():
     # Get recent inspections with lab commodities
     inspections = Inspection.objects.filter(
         inspection_date__gte='2025-11-01'
-    ).select_related('facility_client_name').order_by('-inspection_date')[:50]
+    ).order_by('-inspection_date')[:50]
 
     print(f"Testing {len(inspections)} recent inspections...\n")
 
@@ -31,7 +31,7 @@ def test_lab_file_detection():
     for inspection in inspections:
         # Check if inspection has RAW commodity (which should have lab files)
         if inspection.commodity and 'RAW' in inspection.commodity.upper():
-            client_name = inspection.facility_client_name.name if inspection.facility_client_name else 'Unknown'
+            client_name = inspection.facility_client_name if inspection.facility_client_name else 'Unknown'
             date_str = inspection.inspection_date.strftime('%Y-%m-%d')
 
             # Clean client name for folder path
@@ -122,10 +122,10 @@ def test_lab_file_detection():
     test_inspection = Inspection.objects.filter(
         inspection_date__gte='2025-11-01',
         commodity__icontains='RAW'
-    ).select_related('facility_client_name').first()
+    ).first()
 
     if test_inspection:
-        client_name = test_inspection.facility_client_name.name if test_inspection.facility_client_name else 'Unknown'
+        client_name = test_inspection.facility_client_name if test_inspection.facility_client_name else 'Unknown'
         print(f"Testing API for: {client_name} ({test_inspection.inspection_date})")
         print(f"Inspection ID: {test_inspection.id}\n")
 
