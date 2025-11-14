@@ -2,8 +2,9 @@ import os
 import shutil
 from pathlib import Path
 
-# Base directory
-MEDIA_ROOT = r'c:\Users\Ethan\Desktop\Inspection-System-master\Inspection-System-master\media\inspection'
+# Base directory - auto-detect based on script location
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+MEDIA_ROOT = os.path.join(SCRIPT_DIR, 'media', 'inspection')
 
 def move_mobile_files():
     """Move files from mobile_ prefixed folders to their correct cleaned folders"""
