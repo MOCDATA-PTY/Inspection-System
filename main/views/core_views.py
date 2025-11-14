@@ -3075,10 +3075,13 @@ def list_client_folder_files(request):
                                     print(f"Added compliance file: {filename}")
 
                         if files:
-                            if 'compliance' not in files_list:
-                                files_list['compliance'] = []
-                            files_list['compliance'].extend(files)
-                            print(f"Found {len(files)} compliance files in {commodity_folder}")
+                            # Group files by their actual document type
+                            for file_info in files:
+                                actual_doc_type = file_info.get('document_type', 'compliance')
+                                if actual_doc_type not in files_list:
+                                    files_list[actual_doc_type] = []
+                                files_list[actual_doc_type].append(file_info)
+                            print(f"Found {len(files)} files in {commodity_folder}")
 
         # Initialize any missing categories before returning
         for category in ['rfi', 'invoice', 'lab', 'retest', 'compliance', 'occurrence', 'composition']:
