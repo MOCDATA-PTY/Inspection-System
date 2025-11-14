@@ -773,8 +773,9 @@ function uploadLab(inspectionId) {
 
                         // Trigger delayed color update
                         setTimeout(() => {
+                            console.log('✅ Refreshing ALL button states after COA upload...');
                             updateAllViewFilesButtonColors();
-                        }, 1000);
+                        }, 2000);
                     } else {
                         alert(data.message || 'Failed to upload COA');
                         console.error('COA upload failed:', data);
@@ -850,11 +851,12 @@ function uploadLabForm(inspectionId) {
                             button.disabled = true;
                             button.title = 'Lab form uploaded';
                         }
-                        
+
                         // Trigger delayed color update
                         setTimeout(() => {
+                            console.log('✅ Refreshing ALL button states after Lab Form upload...');
                             updateAllViewFilesButtonColors();
-                        }, 1000);
+                        }, 2000);
                     } else {
                         alert(data.message || 'Failed to upload lab form');
                         console.error('Lab form upload failed:', data);
@@ -930,11 +932,12 @@ function uploadRetest(inspectionId) {
                             button.disabled = true;
                             button.title = 'Retest document uploaded';
                         }
-                        
+
                         // Trigger delayed color update
                         setTimeout(() => {
+                            console.log('✅ Refreshing ALL button states after Retest upload...');
                             updateAllViewFilesButtonColors();
-                        }, 1000);
+                        }, 2000);
                     } else {
                         alert(data.message || 'Failed to upload retest document');
                         console.error('Retest upload failed:', data);

@@ -210,3 +210,134 @@ def fetch_product_names_for_inspection(inspection_id=None, client_name=None, ins
             return []
     finally:
         sql_conn.disconnect()
+
+
+def fetch_all_product_names_bulk(inspection_ids):
+    """
+    OPTIMIZED: Fetch product names for ALL inspections in BULK
+    Instead of 2,268 connections × 6 queries = ~13,600 queries
+    This does 1 connection × 6 queries = 6 queries total!
+
+    Args:
+        inspection_ids: List of inspection IDs
+
+    Returns:
+        dict: {inspection_id: [product_name1, product_name2, ...]}
+    """
+    if not inspection_ids:
+        return {}
+
+    sql_conn = SQLServerConnection()
+    if not sql_conn.connect():
+        logger.error("Failed to connect to SQL Server for bulk product fetch")
+        return {}
+
+    product_map = {iid: [] for iid in inspection_ids}
+
+    try:
+        cursor = sql_conn.connection.cursor()
+
+        # Convert inspection IDs to comma-separated string for SQL IN clause
+        # Need to batch if too many IDs (SQL Server has limit of ~2100 parameters)
+        batch_size = 2000
+
+        for i in range(0, len(inspection_ids), batch_size):
+            batch_ids = inspection_ids[i:i + batch_size]
+            ids_str = ','.join(str(iid) for iid in batch_ids)
+
+            print(f"   📦 Fetching products for inspection IDs {i} to {i+len(batch_ids)}...")
+
+            # Query 1: PMP (Processed Meat Products) table
+            try:
+                pmp_query = f"""
+                    SELECT InspectionId, PMPItemDetails
+                    FROM PMPInspectedProductRecordTypes
+                    WHERE InspectionId IN ({ids_str})
+                    AND PMPItemDetails IS NOT NULL
+                    AND PMPItemDetails != ''
+                """
+                cursor.execute(pmp_query)
+                pmp_results = cursor.fetchall()
+
+                for row in pmp_results:
+                    inspection_id, product_name = row
+                    if product_name and product_name.strip():
+                        if inspection_id in product_map:
+                            product_map[inspection_id].append(product_name.strip())
+
+                print(f"      ✅ PMP table: {len(pmp_results)} products found")
+            except Exception as e:
+                logger.error(f"PMP bulk query failed: {e}")
+
+            # Query 2-5: Poultry tables
+            poultry_tables = [
+                'PoultryGradingInspectionRecordTypes',
+                'PoultryLabelInspectionChecklistRecords',
+                'PoultryQuidInspectionRecordTypes',
+                'PoultryInspectionRecordTypes'
+            ]
+
+            for table in poultry_tables:
+                try:
+                    poultry_query = f"""
+                        SELECT Id, ProductName
+                        FROM {table}
+                        WHERE Id IN ({ids_str})
+                        AND ProductName IS NOT NULL
+                        AND ProductName != ''
+                    """
+                    cursor.execute(poultry_query)
+                    poultry_results = cursor.fetchall()
+
+                    for row in poultry_results:
+                        inspection_id, product_name = row
+                        if product_name and product_name.strip():
+                            if inspection_id in product_map:
+                                product_map[inspection_id].append(product_name.strip())
+
+                    if poultry_results:
+                        print(f"      ✅ {table}: {len(poultry_results)} products found")
+                except Exception as e:
+                    # Table might not exist or have different structure - that's okay
+                    logger.debug(f"{table} query failed (expected): {e}")
+
+            # Query 6: Raw RMP table
+            try:
+                raw_rmp_query = f"""
+                    SELECT InspectionId, NewProductItemDetails
+                    FROM RawRMPInspectedProductRecordTypes
+                    WHERE InspectionId IN ({ids_str})
+                    AND NewProductItemDetails IS NOT NULL
+                    AND NewProductItemDetails != ''
+                """
+                cursor.execute(raw_rmp_query)
+                raw_rmp_results = cursor.fetchall()
+
+                for row in raw_rmp_results:
+                    inspection_id, product_name = row
+                    if product_name and product_name.strip():
+                        if inspection_id in product_map:
+                            product_map[inspection_id].append(product_name.strip())
+
+                print(f"      ✅ Raw RMP table: {len(raw_rmp_results)} products found")
+            except Exception as e:
+                logger.error(f"Raw RMP bulk query failed: {e}")
+
+        # Remove duplicates for each inspection
+        for inspection_id in product_map:
+            product_map[inspection_id] = list(set(product_map[inspection_id]))
+
+        total_products = sum(len(products) for products in product_map.values())
+        inspections_with_products = sum(1 for products in product_map.values() if products)
+
+        print(f"\n   📊 Bulk Product Fetch Complete:")
+        print(f"      - Total products found: {total_products}")
+        print(f"      - Inspections with products: {inspections_with_products}/{len(inspection_ids)}")
+
+        return product_map
+
+    except Exception as e:
+        logger.error(f"Error in bulk product fetch: {e}")
+        return {}
+    finally:
+        sql_conn.disconnect()

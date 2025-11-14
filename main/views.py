@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse, FileResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.contrib.auth.models import User
 from .forms import ShipmentForm, LoginForm, RegisterForm, ClientForm
 from .models import Shipment, Client, Inspection
 from django.db import models
@@ -25,6 +26,8 @@ from pathlib import Path
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+import secrets
+import string
 
 
 
@@ -66,8 +69,339 @@ def index(request):
    return redirect('login')
 
 
+# ============================================
+# GOOGLE SHEETS SYNC FUNCTIONS
+# ============================================
 
-# Client management views
+@transaction.atomic
+def sync_clients_by_account_code(sheet_data, request=None):
+    """
+    Sync clients from Google Sheets using ACCOUNT CODE matching ONLY.
+    
+    Simple and reliable:
+    1. Delete ALL clients from database
+    2. Create fresh clients from Google Sheets
+    3. Re-link shipments by matching account codes
+    
+    Args:
+        sheet_data: List of dicts with keys: 'client_name', 'internal_account_code', 'email'
+        request: Django request object (optional, for messages)
+    
+    Returns:
+        dict: Statistics about the sync
+    """
+    
+    print("="*80)
+    print("GOOGLE SHEETS CLIENT SYNC - ACCOUNT CODE MATCHING")
+    print("="*80)
+    
+    # Step 1: Save shipment-client relationships by ACCOUNT CODE
+    print("\n[Step 1/4] Saving shipment-client relationships...")
+    shipment_account_map = {}
+    
+    for shipment in Shipment.objects.select_related('client').all():
+        if shipment.client and shipment.client.internal_account_code:
+            # Save the account code as the key
+            shipment_account_map[shipment.id] = shipment.client.internal_account_code
+    
+    saved_relationships = len(shipment_account_map)
+    print(f"✓ Saved {saved_relationships} shipment-client relationships")
+    
+    # Step 2: Delete ALL clients
+    print("\n[Step 2/4] Deleting ALL clients...")
+    old_client_count = Client.objects.count()
+    
+    # Disconnect shipments first
+    Shipment.objects.all().update(client=None)
+    print(f"  → Disconnected shipments from clients")
+    
+    # Delete all clients
+    Client.objects.all().delete()
+    print(f"✓ Deleted {old_client_count} clients")
+    
+    # Step 3: Create fresh clients from Google Sheets
+    print("\n[Step 3/4] Creating fresh clients from Google Sheets...")
+    new_clients_map = {}  # account_code -> Client object
+    created_count = 0
+    skipped_count = 0
+    error_count = 0
+    
+    for row in sheet_data:
+        try:
+            client_name = row.get('client_name', '').strip()
+            account_code = row.get('internal_account_code', '').strip()
+            email = row.get('email', '').strip()
+            
+            # Must have account code - this is the key!
+            if not account_code:
+                skipped_count += 1
+                print(f"  ⊘ Skipped: No account code (Name: {client_name or 'N/A'})")
+                continue
+            
+            # Skip if already created in this batch
+            if account_code in new_clients_map:
+                skipped_count += 1
+                continue
+            
+            # Create new client
+            client = Client.objects.create(
+                name=client_name or "Unnamed Client",
+                internal_account_code=account_code,
+                email=email
+            )
+            
+            new_clients_map[account_code] = client
+            created_count += 1
+            print(f"  ✓ Created: {client.name} ({account_code})")
+            
+        except Exception as e:
+            error_count += 1
+            print(f"  ✗ Error: {str(e)}")
+    
+    print(f"\n✓ Created {created_count} fresh clients")
+    if skipped_count > 0:
+        print(f"  ⊘ Skipped {skipped_count} entries")
+    if error_count > 0:
+        print(f"  ✗ {error_count} errors")
+    
+    # Step 4: Restore shipment-client relationships by ACCOUNT CODE
+    print("\n[Step 4/4] Restoring shipment-client relationships...")
+    restored_count = 0
+    unmatched_count = 0
+    unmatched_codes = []
+    
+    for shipment_id, account_code in shipment_account_map.items():
+        try:
+            shipment = Shipment.objects.get(id=shipment_id)
+            
+            # Find client by account code
+            if account_code in new_clients_map:
+                shipment.client = new_clients_map[account_code]
+                shipment.save(update_fields=['client'])
+                restored_count += 1
+            else:
+                unmatched_count += 1
+                unmatched_codes.append(account_code)
+                print(f"  ⚠ Warning: Account code '{account_code}' not found in Google Sheets")
+        
+        except Shipment.DoesNotExist:
+            continue
+        except Exception as e:
+            print(f"  ✗ Error restoring relationship: {str(e)}")
+    
+    print(f"✓ Restored {restored_count} shipment-client relationships")
+    
+    if unmatched_count > 0:
+        print(f"\n⚠ WARNING: {unmatched_count} shipments could not be matched")
+        print(f"  Missing account codes: {', '.join(unmatched_codes[:5])}")
+        if len(unmatched_codes) > 5:
+            print(f"  ... and {len(unmatched_codes) - 5} more")
+    
+    # Summary
+    print("\n" + "="*80)
+    print("SYNC COMPLETE!")
+    print("="*80)
+    print(f"Clients deleted:           {old_client_count}")
+    print(f"Clients created:           {created_count}")
+    print(f"Relationships saved:       {saved_relationships}")
+    print(f"Relationships restored:    {restored_count}")
+    print(f"Unmatched shipments:       {unmatched_count}")
+    print(f"Errors:                    {error_count}")
+    print("="*80 + "\n")
+    
+    # Add messages if request provided
+    if request:
+        if error_count == 0 and unmatched_count == 0:
+            messages.success(
+                request,
+                f'✓ Sync successful! Deleted {old_client_count} old clients, '
+                f'created {created_count} fresh clients from Google Sheets.'
+            )
+        elif unmatched_count > 0:
+            messages.warning(
+                request,
+                f'Sync completed with warnings. Created {created_count} clients, '
+                f'but {unmatched_count} shipments have account codes not in Google Sheets.'
+            )
+        if error_count > 0:
+            messages.error(
+                request,
+                f'{error_count} errors occurred during sync.'
+            )
+    
+    return {
+        'deleted': old_client_count,
+        'created': created_count,
+        'relationships_saved': saved_relationships,
+        'restored': restored_count,
+        'unmatched': unmatched_count,
+        'skipped': skipped_count,
+        'errors': error_count
+    }
+
+
+@login_required(login_url='login')
+def sync_clients_from_google_sheets(request):
+    """
+    View to trigger client sync from Google Sheets.
+    Uses ACCOUNT CODE matching ONLY - simple and reliable.
+    """
+    
+    if request.method == 'POST':
+        try:
+            # TODO: Replace this with actual Google Sheets API call
+            # Example format:
+            # sheet_data = [
+            #     {'client_name': 'Spar Hillbrow', 'internal_account_code': 'RE-COR-EGG-SPR-4636', 'email': 'spar@example.com'},
+            #     {'client_name': 'Superspar Sedgefield', 'internal_account_code': 'RE-COR-RAW-SSP-2365', 'email': 'superspar@example.com'},
+            # ]
+            
+            messages.error(
+                request,
+                'Google Sheets sync not yet configured. '
+                'Please add Google Sheets API integration first.'
+            )
+            return redirect('client_list')
+            
+            # When Google Sheets API is ready, uncomment:
+            # sheet_data = fetch_google_sheets_data()  # Your function
+            # stats = sync_clients_by_account_code(sheet_data, request)
+            # return redirect('client_list')
+            
+        except Exception as e:
+            messages.error(request, f'Sync failed: {str(e)}')
+            return redirect('client_list')
+    
+    return render(request, 'main/sync_clients.html')
+
+
+# ============================================
+# USER MANAGEMENT VIEWS
+# ============================================
+
+@login_required(login_url='login')
+def user_management(request):
+    """
+    User management view with manual password reset, toggle status, and delete functionality.
+    """
+    
+    # Handle POST actions
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        user_id = request.POST.get('user_id')
+        
+        # Reset Password Action with Custom Password
+        if action == 'reset_password':
+            try:
+                user = User.objects.get(id=user_id)
+                
+                # Get the custom password from the form
+                new_password = request.POST.get('new_password', '').strip()
+                confirm_password = request.POST.get('confirm_password', '').strip()
+                
+                # Validate password
+                if not new_password:
+                    messages.error(request, 'Password cannot be empty.')
+                    return redirect('user_management')
+                
+                if len(new_password) < 8:
+                    messages.error(request, 'Password must be at least 8 characters long.')
+                    return redirect('user_management')
+                
+                if new_password != confirm_password:
+                    messages.error(request, 'Passwords do not match.')
+                    return redirect('user_management')
+                
+                # Set the new password
+                user.set_password(new_password)
+                user.save()
+                
+                # Show success message
+                messages.success(
+                    request, 
+                    f'Password successfully reset for user "{user.username}". '
+                    f'The user can now login with their new password.'
+                )
+                
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+            except Exception as e:
+                messages.error(request, f'Error resetting password: {str(e)}')
+            
+            return redirect('user_management')
+        
+        # Toggle User Status Action
+        elif action == 'toggle_user_status':
+            try:
+                user = User.objects.get(id=user_id)
+                user.is_active = not user.is_active
+                user.save()
+                
+                status = 'activated' if user.is_active else 'deactivated'
+                messages.success(request, f'User "{user.username}" has been {status}.')
+                
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+            except Exception as e:
+                messages.error(request, f'Error updating user status: {str(e)}')
+            
+            return redirect('user_management')
+        
+        # Delete User Action
+        elif action == 'delete_user':
+            try:
+                user = User.objects.get(id=user_id)
+                username = user.username
+                
+                # Prevent deleting yourself
+                if user == request.user:
+                    messages.error(request, 'You cannot delete your own account.')
+                else:
+                    user.delete()
+                    messages.success(request, f'User "{username}" has been deleted.')
+                
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+            except Exception as e:
+                messages.error(request, f'Error deleting user: {str(e)}')
+            
+            return redirect('user_management')
+        
+        # Edit User Action
+        elif action == 'edit_user':
+            try:
+                user = User.objects.get(id=user_id)
+                
+                # Update user fields from POST data
+                user.first_name = request.POST.get('first_name', user.first_name)
+                user.last_name = request.POST.get('last_name', user.last_name)
+                user.email = request.POST.get('email', user.email)
+                user.role = request.POST.get('role', getattr(user, 'role', 'inspector'))
+                
+                user.save()
+                messages.success(request, f'User "{user.username}" has been updated.')
+                
+            except User.DoesNotExist:
+                messages.error(request, 'User not found.')
+            except Exception as e:
+                messages.error(request, f'Error updating user: {str(e)}')
+            
+            return redirect('user_management')
+    
+    # GET request - display user list
+    users = User.objects.all().order_by('username')
+    
+    context = {
+        'users': users,
+    }
+    
+    return render(request, 'main/user_management.html', context)
+
+
+# ============================================
+# CLIENT MANAGEMENT VIEWS
+# ============================================
+
 @login_required(login_url='login')
 def client_list(request):
    """View to list all clients."""
@@ -132,6 +466,11 @@ def delete_client(request, pk):
    
    return render(request, 'main/delete_client_confirm.html', {'client': client, 'shipment_count': shipment_count})
 
+
+# ============================================
+# SHIPMENT MANAGEMENT VIEWS
+# ============================================
+
 @login_required(login_url='login')
 def add_shipment(request):
    """Add a new shipment."""
@@ -153,20 +492,6 @@ def add_shipment(request):
            })
 
        if form.is_valid():
-           # Check if client exists
-           client_name = form.cleaned_data.get('client_name')
-           client, created = Client.objects.get_or_create(
-               name__iexact=client_name,
-               defaults={'name': client_name}
-           )
-           
-           # Add success message about client
-           if created:
-               messages.info(request, f'New client "{client_name}" created with ID: {client.client_id}')
-           else:
-               messages.info(request, f'Using existing client "{client_name}" (ID: {client.client_id})')
-           
-           # Save the form
            form.save()
            messages.success(request, 'Shipment added successfully.')
            return redirect('shipment_list')
@@ -192,19 +517,6 @@ def shipment_list(request):
    # Apply filters
    shipments = apply_filters(request, shipments)
    
-   # Check if we need to handle legacy data
-   for shipment in shipments:
-       if not hasattr(shipment, 'client') or shipment.client is None:
-           # Create a client for this shipment if it doesn't have one
-           if hasattr(shipment, 'Claiming_Client') and shipment.Claiming_Client:
-               client, created = Client.objects.get_or_create(
-                   name=shipment.Claiming_Client,
-                   defaults={'name': shipment.Claiming_Client}
-               )
-               # Link the client to the shipment
-               shipment.client = client
-               shipment.save(update_fields=['client'])
-   
    return render(request, 'main/shipment_list.html', {
        'shipments': shipments,
        'branches': branches,
@@ -226,20 +538,6 @@ def edit_shipment(request, pk):
    if request.method == 'POST':
        form = ShipmentForm(request.POST, instance=shipment)
        if form.is_valid():
-           # Check if client exists
-           client_name = form.cleaned_data.get('client_name')
-           client, created = Client.objects.get_or_create(
-               name__iexact=client_name,
-               defaults={'name': client_name}
-           )
-           
-           # Add success message about client
-           if created:
-               messages.info(request, f'New client "{client_name}" created with ID: {client.client_id}')
-           else:
-               messages.info(request, f'Using existing client "{client_name}" (ID: {client.client_id})')
-           
-           # Save the form
            form.save()
            messages.success(request, 'Shipment updated successfully.')
            return redirect('shipment_list')
@@ -253,6 +551,21 @@ def edit_shipment(request, pk):
        'shipment': shipment,
        'clients': clients
    })
+
+@login_required(login_url='login')
+def delete_shipment(request, pk):
+   """Delete a shipment entry."""
+   clear_messages(request)
+   shipment = get_object_or_404(Shipment, pk=pk)
+   if request.method == 'POST':
+       shipment.delete()
+       messages.success(request, 'Shipment deleted successfully.')
+   return redirect('shipment_list')
+
+
+# ============================================
+# EXPORT FUNCTIONS
+# ============================================
 
 @login_required(login_url='login')
 def export_shipments(request):
@@ -281,8 +594,6 @@ def export_shipments(request):
     
     # Create filename based on client and date
     filename_base = f"claims_{client_name}_{timestamp}"
-    
-
     
     # Export based on selected format
     if export_format == 'excel':
@@ -364,8 +675,6 @@ def export_to_excel(shipments, filename_base):
         adjusted_width = (max_length + 2)
         worksheet.column_dimensions[column_letter].width = adjusted_width
     
-
-    
     # Create response for download
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -390,7 +699,6 @@ def export_to_csv(shipments, filename_base):
         'Intend Date', 'Formal Date', 'Claimed Amount', 'Amount Paid by Carrier', 
         'Amount Paid by AWA', 'Amount Paid by Insurance', 'Closed Date'
     ]
-    backup_writer.writerow(headers)
     response_writer.writerow(headers)
     
     # Write data rows
@@ -422,8 +730,6 @@ def export_to_csv(shipments, filename_base):
         # Write to response
         response_writer.writerow(row)
     
-
-    
     # Create response
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{filename_base}.csv"'
@@ -442,8 +748,6 @@ def export_to_pdf(shipments, filename_base):
         pagesize=landscape(letter),
         title=f"Claims Report - {filename_base}"
     )
-    
-
     
     # Container for the 'Flowable' objects
     elements = []
@@ -530,8 +834,6 @@ def export_to_pdf(shipments, filename_base):
     pdf_data = buffer.getvalue()
     buffer.close()
     
-
-    
     # Create response
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename_base}.pdf"'
@@ -540,12 +842,16 @@ def export_to_pdf(shipments, filename_base):
     return response
 
 
-
 # Legacy function for compatibility
 @login_required(login_url='login')
 def export_shipments_excel(request):
     """Legacy function that redirects to the more flexible export_shipments function."""
     return export_shipments(request)
+
+
+# ============================================
+# IMPORT FUNCTIONS
+# ============================================
 
 @login_required(login_url='login')
 def import_shipments(request):
@@ -572,6 +878,11 @@ def import_shipments(request):
 
        return render(request, 'main/import_shipments.html')
    return render(request, 'main/import_shipments.html')
+
+
+# ============================================
+# AUTHENTICATION VIEWS
+# ============================================
 
 @login_required(login_url='login')
 def client_autocomplete(request):
@@ -652,17 +963,11 @@ def user_logout(request):
    logout(request)  # Clears user session
    return redirect('login')
 
-@login_required(login_url='login')
-def delete_shipment(request, pk):
-   """Delete a shipment entry."""
-   clear_messages(request)
-   shipment = get_object_or_404(Shipment, pk=pk)
-   if request.method == 'POST':
-       shipment.delete()
-       messages.success(request, 'Shipment deleted successfully.')
-   return redirect('shipment_list')
 
-# Helper functions below
+# ============================================
+# HELPER FUNCTIONS
+# ============================================
+
 def apply_filters(request, shipments):
    """Apply filters to the shipments queryset based on request parameters."""
    
@@ -821,12 +1126,15 @@ def process_excel_data(worksheet):
             if branch and branch not in [choice[0] for choice in Shipment.BRANCH_CHOICES]:
                 branch = ""  # Set to empty if invalid
             
-            # Get or create client
+            # Get client by name - must exist already
             client_name = row[1] or "Unknown Client"
-            client, created = Client.objects.get_or_create(
-                name__iexact=client_name,
-                defaults={'name': client_name}
-            )
+            try:
+                # Try to find existing client by name
+                client = Client.objects.get(name__iexact=client_name)
+            except Client.DoesNotExist:
+                # If client doesn't exist, skip this shipment
+                error_entries.append(f'Row with Claim No {claim_no}: Client "{client_name}" not found')
+                continue
             
             shipment = Shipment(
                 Claim_No=claim_no,
