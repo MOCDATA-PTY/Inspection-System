@@ -2734,12 +2734,14 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
                                     elif doc_type == 'Compliance':
                                         category_key = 'compliance'
                                     
-                                    # Filter by inspection ID if provided
+                                    # Filter by inspection ID if provided (but allow old naming conventions)
                                     if inspection_id:
-                                        # Check if filename starts with the inspection ID
-                                        if not filename.startswith(f"{inspection_id}_"):
-                                            print(f" [DEBUG] Skipped file {filename} - doesn't match inspection ID {inspection_id}")
-                                            continue
+                                        # Check if filename starts with the inspection ID (new format)
+                                        # OR allow old format files without inspection ID prefix
+                                        has_inspection_id = filename.startswith(f"{inspection_id}_")
+                                        if not has_inspection_id:
+                                            print(f" [DEBUG] Accepting file without inspection ID prefix (old format): {filename}")
+                                        # Continue processing - don't skip
                                     
                                     # Use get_file_info to create proper file structure
                                     file_info = get_file_info(file_path, category_key)
@@ -3004,12 +3006,16 @@ def list_client_folder_files(request):
                                         elif doc_type == 'composition':
                                             actual_doc_type = 'composition'
 
-                                        # Filter by inspection ID if provided
+                                        # Filter by inspection ID if provided (but allow old naming conventions)
                                         if inspection_id:
-                                            # Check if filename starts with the inspection ID
-                                            if not filename.startswith(f"{inspection_id}_"):
-                                                print(f"Skipped file {filename} - doesn't match inspection ID {inspection_id}")
-                                                continue
+                                            # Check if filename starts with the inspection ID (new format)
+                                            # OR contains the client name and date (old format)
+                                            has_inspection_id = filename.startswith(f"{inspection_id}_")
+                                            # For old format, just accept all files in the folder (since we're already in the right client/date folder)
+                                            # Don't filter out files without inspection ID prefix
+                                            if not has_inspection_id:
+                                                print(f"Accepting file without inspection ID prefix (old format): {filename}")
+                                            # Continue processing - don't skip
 
                                         file_info = get_file_info(file_path, actual_doc_type)
                                         files.append(file_info)
