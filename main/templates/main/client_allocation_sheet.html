@@ -322,6 +322,9 @@
             /* Performance: Lazy render rows not in viewport */
             content-visibility: auto;
             contain-intrinsic-size: auto 40px;
+            /* Always have border to prevent layout shift */
+            border-left: 3px solid transparent;
+            cursor: pointer;
         }
 
         tbody tr:hover {
@@ -356,13 +359,9 @@
         }
 
         /* Selected row styles */
-        tbody tr {
-            cursor: pointer;
-        }
-
         tbody tr.selected {
             background: #bfdbfe !important;
-            border-left: 3px solid #007890 !important;
+            border-left-color: #007890 !important;
         }
 
         tbody tr.selected td {
@@ -461,6 +460,106 @@
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.1);
+        }
+
+        /* Custom dropdown styles */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-dropdown input {
+            width: 100%;
+            padding-right: 2.5rem;
+        }
+
+        .custom-dropdown-arrow {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .custom-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            margin-top: 0.25rem;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-dropdown-menu.show {
+            display: block;
+        }
+
+        .custom-dropdown-item {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.15s;
+        }
+
+        .custom-dropdown-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .custom-dropdown-item.selected {
+            background-color: #e6f3f7;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Context menu styles */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            display: none;
+            min-width: 180px;
+        }
+
+        .context-menu-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.15s;
+        }
+
+        .context-menu-item:hover {
+            background-color: #f3f4f6;
+        }
+
+        .context-menu-item:first-child {
+            border-radius: 0.375rem 0.375rem 0 0;
+        }
+
+        .context-menu-item:last-child {
+            border-radius: 0 0 0.375rem 0.375rem;
+        }
+
+        .context-menu-item.danger {
+            color: var(--danger);
+        }
+
+        .context-menu-item.danger:hover {
+            background-color: #fee2e2;
         }
 
         .required {
@@ -838,12 +937,9 @@
                 <button type="button" class="btn btn-primary" onclick="openAddClientModal()">
                     <i class="fas fa-plus"></i> Add New Client
                 </button>
-                <button type="button" class="btn btn-primary" id="editClientBtn" onclick="openEditClientModal()" disabled>
-                    <i class="fas fa-edit"></i> Edit Client
+                <button type="button" class="btn btn-secondary" onclick="openManageOptionsModal()">
+                    <i class="fas fa-cog"></i> Manage Dropdown Options
                 </button>
-                <a href="{% url 'export_client_allocations' %}" class="btn btn-secondary">
-                    <i class="fas fa-file-excel"></i> Export All Records to Excel
-                </a>
             </div>
 
             {% if not has_data %}
@@ -936,7 +1032,7 @@
 
                         <!-- Data Rows from Database -->
                         {% for allocation in allocations %}
-                        <tr onclick="selectRow(this)"
+                        <tr onclick="selectRow(this)" oncontextmenu="showContextMenu(event, this)"
                             data-client-id="{{ allocation.client_id }}"
                             data-business-name="{{ allocation.eclick_name }}"
                             data-facility-type="{{ allocation.facility_type }}"
@@ -989,15 +1085,18 @@
                         </div>
                         <div class="form-group">
                             <label for="facility_type">Facility Type</label>
-                            <select id="facility_type" name="facility_type">
-                                <option value="">Select...</option>
-                                <option value="Retailer">Retailer</option>
-                                <option value="Butchery">Butchery</option>
-                                <option value="Re-Packer">Re-Packer</option>
-                                <option value="Production Plant">Production Plant</option>
-                                <option value="Farm">Farm</option>
-                                <option value="Abattoir">Abattoir</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="facility_type" name="facility_type" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('facility_type_dropdown')" oninput="filterDropdown('facility_type', 'facility_type_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="facility_type_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Retailer', 'facility_type_dropdown')">Retailer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Butchery', 'facility_type_dropdown')">Butchery</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Re-Packer', 'facility_type_dropdown')">Re-Packer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Production Plant', 'facility_type_dropdown')">Production Plant</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Farm', 'facility_type_dropdown')">Farm</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('facility_type', 'Abattoir', 'facility_type_dropdown')">Abattoir</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="group_type">Group Type</label>
@@ -1013,13 +1112,16 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="commodity">Commodity</label>
-                            <select id="commodity" name="commodity">
-                                <option value="">Select...</option>
-                                <option value="EGG">EGG</option>
-                                <option value="PMP">PMP</option>
-                                <option value="RAW">RAW</option>
-                                <option value="PLT">PLT</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="commodity" name="commodity" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('commodity_dropdown')" oninput="filterDropdown('commodity', 'commodity_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="commodity_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('commodity', 'EGG', 'commodity_dropdown')">EGG</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('commodity', 'PMP', 'commodity_dropdown')">PMP</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('commodity', 'RAW', 'commodity_dropdown')">RAW</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('commodity', 'PLT', 'commodity_dropdown')">PLT</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="province">Province</label>
@@ -1044,41 +1146,44 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="corporate_group">Corporate Group</label>
-                            <select id="corporate_group" name="corporate_group">
-                                <option value="">Select...</option>
-                                <option value="Not Applicable (None)">Not Applicable (None)</option>
-                                <option value="Pick n Pay - Franchise">Pick n Pay - Franchise</option>
-                                <option value="Pick n Pay - Corporate">Pick n Pay - Corporate</option>
-                                <option value="Fruit & Veg">Fruit & Veg</option>
-                                <option value="OK Foods">OK Foods</option>
-                                <option value="Checkers">Checkers</option>
-                                <option value="Spar">Spar</option>
-                                <option value="SuperSpar">SuperSpar</option>
-                                <option value="Spar - Northrand">Spar - Northrand</option>
-                                <option value="Shoprite">Shoprite</option>
-                                <option value="Massmart">Massmart</option>
-                                <option value="Chester Butcheries">Chester Butcheries</option>
-                                <option value="Boxer">Boxer</option>
-                                <option value="Food Lovers Market">Food Lovers Market</option>
-                                <option value="Cambridge">Cambridge</option>
-                                <option value="Woolworths">Woolworths</option>
-                                <option value="Jwayelani">Jwayelani</option>
-                                <option value="Usave">Usave</option>
-                                <option value="Other (Unlisted Group)">Other (Unlisted Group)</option>
-                                <option value="OBC">OBC</option>
-                                <option value="Roots">Roots</option>
-                                <option value="Meat World">Meat World</option>
-                                <option value="Quantum Foods Nulaid">Quantum Foods Nulaid</option>
-                                <option value="Bluff Meat Supply">Bluff Meat Supply</option>
-                                <option value="Eat Sum Meat">Eat Sum Meat</option>
-                                <option value="Waltloo Meat and Chicken">Waltloo Meat and Chicken</option>
-                                <option value="Choppies">Choppies</option>
-                                <option value="Econo Foods">Econo Foods</option>
-                                <option value="Makro">Makro</option>
-                                <option value="Boma Vleismark">Boma Vleismark</option>
-                                <option value="Eskort">Eskort</option>
-                                <option value="Nesta Foods">Nesta Foods</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="corporate_group" name="corporate_group" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('corporate_group_dropdown')" oninput="filterDropdown('corporate_group', 'corporate_group_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="corporate_group_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Not Applicable (None)', 'corporate_group_dropdown')">Not Applicable (None)</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Pick n Pay - Franchise', 'corporate_group_dropdown')">Pick n Pay - Franchise</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Pick n Pay - Corporate', 'corporate_group_dropdown')">Pick n Pay - Corporate</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Fruit & Veg', 'corporate_group_dropdown')">Fruit & Veg</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'OK Foods', 'corporate_group_dropdown')">OK Foods</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Checkers', 'corporate_group_dropdown')">Checkers</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Spar', 'corporate_group_dropdown')">Spar</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'SuperSpar', 'corporate_group_dropdown')">SuperSpar</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Spar - Northrand', 'corporate_group_dropdown')">Spar - Northrand</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Shoprite', 'corporate_group_dropdown')">Shoprite</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Massmart', 'corporate_group_dropdown')">Massmart</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Chester Butcheries', 'corporate_group_dropdown')">Chester Butcheries</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Boxer', 'corporate_group_dropdown')">Boxer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Food Lovers Market', 'corporate_group_dropdown')">Food Lovers Market</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Cambridge', 'corporate_group_dropdown')">Cambridge</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Woolworths', 'corporate_group_dropdown')">Woolworths</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Jwayelani', 'corporate_group_dropdown')">Jwayelani</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Usave', 'corporate_group_dropdown')">Usave</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Other (Unlisted Group)', 'corporate_group_dropdown')">Other (Unlisted Group)</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'OBC', 'corporate_group_dropdown')">OBC</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Roots', 'corporate_group_dropdown')">Roots</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Meat World', 'corporate_group_dropdown')">Meat World</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Quantum Foods Nulaid', 'corporate_group_dropdown')">Quantum Foods Nulaid</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Bluff Meat Supply', 'corporate_group_dropdown')">Bluff Meat Supply</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Eat Sum Meat', 'corporate_group_dropdown')">Eat Sum Meat</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Waltloo Meat and Chicken', 'corporate_group_dropdown')">Waltloo Meat and Chicken</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Choppies', 'corporate_group_dropdown')">Choppies</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Econo Foods', 'corporate_group_dropdown')">Econo Foods</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Makro', 'corporate_group_dropdown')">Makro</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Boma Vleismark', 'corporate_group_dropdown')">Boma Vleismark</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Eskort', 'corporate_group_dropdown')">Eskort</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('corporate_group', 'Nesta Foods', 'corporate_group_dropdown')">Nesta Foods</div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="allocated">Allocated</label>
@@ -1127,15 +1232,18 @@
                         </div>
                         <div class="form-group">
                             <label for="edit_facility_type">Facility Type</label>
-                            <select id="edit_facility_type" name="facility_type">
-                                <option value="">Select...</option>
-                                <option value="Retailer">Retailer</option>
-                                <option value="Butchery">Butchery</option>
-                                <option value="Re-Packer">Re-Packer</option>
-                                <option value="Production Plant">Production Plant</option>
-                                <option value="Farm">Farm</option>
-                                <option value="Abattoir">Abattoir</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="edit_facility_type" name="facility_type" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('edit_facility_type_dropdown')" oninput="filterDropdown('edit_facility_type', 'edit_facility_type_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="edit_facility_type_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Retailer', 'edit_facility_type_dropdown')">Retailer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Butchery', 'edit_facility_type_dropdown')">Butchery</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Re-Packer', 'edit_facility_type_dropdown')">Re-Packer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Production Plant', 'edit_facility_type_dropdown')">Production Plant</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Farm', 'edit_facility_type_dropdown')">Farm</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_facility_type', 'Abattoir', 'edit_facility_type_dropdown')">Abattoir</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1151,13 +1259,16 @@
                         </div>
                         <div class="form-group">
                             <label for="edit_commodity">Commodity</label>
-                            <select id="edit_commodity" name="commodity">
-                                <option value="">Select...</option>
-                                <option value="EGG">EGG</option>
-                                <option value="PMP">PMP</option>
-                                <option value="RAW">RAW</option>
-                                <option value="PLT">PLT</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="edit_commodity" name="commodity" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('edit_commodity_dropdown')" oninput="filterDropdown('edit_commodity', 'edit_commodity_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="edit_commodity_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_commodity', 'EGG', 'edit_commodity_dropdown')">EGG</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_commodity', 'PMP', 'edit_commodity_dropdown')">PMP</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_commodity', 'RAW', 'edit_commodity_dropdown')">RAW</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_commodity', 'PLT', 'edit_commodity_dropdown')">PLT</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1182,19 +1293,44 @@
                         </div>
                         <div class="form-group">
                             <label for="edit_corporate_group">Corporate Group</label>
-                            <select id="edit_corporate_group" name="corporate_group">
-                                <option value="">Select...</option>
-                                <option value="Not Applicable (None)">Not Applicable (None)</option>
-                                <option value="Pick n Pay - Franchise">Pick n Pay - Franchise</option>
-                                <option value="Pick n Pay - Corporate">Pick n Pay - Corporate</option>
-                                <option value="Spar">Spar</option>
-                                <option value="SuperSpar">SuperSpar</option>
-                                <option value="Shoprite">Shoprite</option>
-                                <option value="Checkers">Checkers</option>
-                                <option value="Boxer">Boxer</option>
-                                <option value="Woolworths">Woolworths</option>
-                                <option value="Food Lovers Market">Food Lovers Market</option>
-                            </select>
+                            <div class="custom-dropdown">
+                                <input type="text" id="edit_corporate_group" name="corporate_group" placeholder="Select or type new..." autocomplete="off" onfocus="showDropdown('edit_corporate_group_dropdown')" oninput="filterDropdown('edit_corporate_group', 'edit_corporate_group_dropdown')">
+                                <i class="fas fa-chevron-down custom-dropdown-arrow"></i>
+                                <div id="edit_corporate_group_dropdown" class="custom-dropdown-menu">
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Not Applicable (None)', 'edit_corporate_group_dropdown')">Not Applicable (None)</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Pick n Pay - Franchise', 'edit_corporate_group_dropdown')">Pick n Pay - Franchise</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Pick n Pay - Corporate', 'edit_corporate_group_dropdown')">Pick n Pay - Corporate</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Fruit & Veg', 'edit_corporate_group_dropdown')">Fruit & Veg</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'OK Foods', 'edit_corporate_group_dropdown')">OK Foods</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Checkers', 'edit_corporate_group_dropdown')">Checkers</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Spar', 'edit_corporate_group_dropdown')">Spar</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'SuperSpar', 'edit_corporate_group_dropdown')">SuperSpar</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Spar - Northrand', 'edit_corporate_group_dropdown')">Spar - Northrand</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Shoprite', 'edit_corporate_group_dropdown')">Shoprite</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Massmart', 'edit_corporate_group_dropdown')">Massmart</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Chester Butcheries', 'edit_corporate_group_dropdown')">Chester Butcheries</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Boxer', 'edit_corporate_group_dropdown')">Boxer</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Food Lovers Market', 'edit_corporate_group_dropdown')">Food Lovers Market</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Cambridge', 'edit_corporate_group_dropdown')">Cambridge</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Woolworths', 'edit_corporate_group_dropdown')">Woolworths</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Jwayelani', 'edit_corporate_group_dropdown')">Jwayelani</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Usave', 'edit_corporate_group_dropdown')">Usave</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Other (Unlisted Group)', 'edit_corporate_group_dropdown')">Other (Unlisted Group)</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'OBC', 'edit_corporate_group_dropdown')">OBC</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Roots', 'edit_corporate_group_dropdown')">Roots</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Meat World', 'edit_corporate_group_dropdown')">Meat World</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Quantum Foods Nulaid', 'edit_corporate_group_dropdown')">Quantum Foods Nulaid</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Bluff Meat Supply', 'edit_corporate_group_dropdown')">Bluff Meat Supply</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Eat Sum Meat', 'edit_corporate_group_dropdown')">Eat Sum Meat</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Waltloo Meat and Chicken', 'edit_corporate_group_dropdown')">Waltloo Meat and Chicken</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Choppies', 'edit_corporate_group_dropdown')">Choppies</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Econo Foods', 'edit_corporate_group_dropdown')">Econo Foods</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Makro', 'edit_corporate_group_dropdown')">Makro</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Boma Vleismark', 'edit_corporate_group_dropdown')">Boma Vleismark</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Eskort', 'edit_corporate_group_dropdown')">Eskort</div>
+                                    <div class="custom-dropdown-item" onclick="selectDropdownItem('edit_corporate_group', 'Nesta Foods', 'edit_corporate_group_dropdown')">Nesta Foods</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1236,9 +1372,59 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" onclick="editClientFromContext()">
+            <i class="fas fa-edit"></i>
+            <span>Edit Client</span>
+        </div>
+        <div class="context-menu-item" onclick="exportClientFromContext()">
+            <i class="fas fa-file-excel"></i>
+            <span>Export to Excel</span>
+        </div>
+        <div class="context-menu-item danger" onclick="deleteClientFromContext()">
+            <i class="fas fa-trash"></i>
+            <span>Delete Client</span>
+        </div>
+    </div>
+
+    <!-- Manage Dropdown Options Modal -->
+    <div id="manageOptionsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Manage Dropdown Options</h3>
+                <button type="button" class="modal-close" onclick="closeManageOptionsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;">Facility Types</h4>
+                    <div id="facilityTypesList" style="display: grid; gap: 0.5rem;">
+                        <p style="color: #6b7280;">Loading...</p>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;">Commodities</h4>
+                    <div id="commoditiesList" style="display: grid; gap: 0.5rem;">
+                        <p style="color: #6b7280;">Loading...</p>
+                    </div>
+                </div>
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="color: var(--primary); margin-bottom: 1rem;">Corporate Groups</h4>
+                    <div id="corporateGroupsList" style="display: grid; gap: 0.5rem;">
+                        <p style="color: #6b7280;">Loading...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeManageOptionsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Selected row tracking
         let selectedRow = null;
+        let contextMenuRow = null;
 
         function selectRow(row) {
             // Remove previous selection
@@ -1249,13 +1435,144 @@
             // Select new row
             row.classList.add('selected');
             selectedRow = row;
-
-            // Enable edit button
-            document.getElementById('editClientBtn').disabled = false;
         }
+
+        function showContextMenu(event, row) {
+            event.preventDefault();
+            contextMenuRow = row;
+
+            const contextMenu = document.getElementById('contextMenu');
+
+            // Show the menu first to get its dimensions
+            contextMenu.style.display = 'block';
+
+            // Get menu dimensions
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Calculate position (use clientX/Y for position relative to viewport)
+            let left = event.clientX;
+            let top = event.clientY;
+
+            // Adjust if menu would go off-screen to the right
+            if (left + menuWidth > viewportWidth) {
+                left = viewportWidth - menuWidth - 5;
+            }
+
+            // Adjust if menu would go off-screen at the bottom
+            if (top + menuHeight > viewportHeight) {
+                top = viewportHeight - menuHeight - 5;
+            }
+
+            // Apply position
+            contextMenu.style.left = left + 'px';
+            contextMenu.style.top = top + 'px';
+
+            return false;
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+        }
+
+        function editClientFromContext() {
+            if (contextMenuRow) {
+                selectedRow = contextMenuRow;
+                selectedRow.classList.add('selected');
+                openEditClientModal();
+            }
+            hideContextMenu();
+        }
+
+        function exportClientFromContext() {
+            if (!contextMenuRow) {
+                hideContextMenu();
+                return;
+            }
+
+            const clientId = contextMenuRow.dataset.clientId;
+            const businessName = contextMenuRow.dataset.businessName;
+
+            // Create a temporary link to trigger the export with client_id filter
+            const exportUrl = '{% url "export_client_allocations" %}' + '?client_id=' + encodeURIComponent(clientId);
+            window.location.href = exportUrl;
+
+            hideContextMenu();
+        }
+
+        function deleteClientFromContext() {
+            if (!contextMenuRow) {
+                hideContextMenu();
+                return;
+            }
+
+            const clientId = contextMenuRow.dataset.clientId;
+            const businessName = contextMenuRow.dataset.businessName;
+
+            if (!confirm(`Are you sure you want to delete "${businessName}" (Client ID: ${clientId})?\n\nThis action cannot be undone.`)) {
+                hideContextMenu();
+                return;
+            }
+
+            fetch('{% url "delete_client_allocation" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    client_id: clientId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the row from the table with a fade effect
+                    contextMenuRow.style.transition = 'opacity 0.3s';
+                    contextMenuRow.style.opacity = '0';
+
+                    setTimeout(() => {
+                        contextMenuRow.remove();
+
+                        // Update row numbers
+                        const rows = document.querySelectorAll('tbody tr');
+                        rows.forEach((row, index) => {
+                            const rowNumberCell = row.querySelector('.row-number');
+                            if (rowNumberCell) {
+                                rowNumberCell.textContent = index + 1;
+                            }
+                        });
+
+                        // Clear selection
+                        selectedRow = null;
+                        contextMenuRow = null;
+                    }, 300);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting client');
+            });
+
+            hideContextMenu();
+        }
+
+        // Hide context menu when clicking anywhere
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.context-menu')) {
+                hideContextMenu();
+            }
+        });
 
         function openAddClientModal() {
             document.getElementById('addClientModal').style.display = 'block';
+            loadDropdownOptionsForForms();
         }
 
         function closeAddClientModal() {
@@ -1283,12 +1600,197 @@
             document.getElementById('edit_active_status').value = selectedRow.dataset.activeStatus || '';
 
             document.getElementById('editClientModal').style.display = 'block';
+            loadDropdownOptionsForForms();
         }
 
         function closeEditClientModal() {
             document.getElementById('editClientModal').style.display = 'none';
             document.getElementById('editClientForm').reset();
         }
+
+        function openManageOptionsModal() {
+            document.getElementById('manageOptionsModal').style.display = 'block';
+            loadDropdownOptions();
+        }
+
+        function closeManageOptionsModal() {
+            document.getElementById('manageOptionsModal').style.display = 'none';
+        }
+
+        function loadDropdownOptions() {
+            fetch('{% url "get_dropdown_options" %}')
+                .then(response => response.json())
+                .then(data => {
+                    // Load facility types
+                    const facilityTypesList = document.getElementById('facilityTypesList');
+                    facilityTypesList.innerHTML = '';
+                    data.facility_types.forEach(item => {
+                        facilityTypesList.innerHTML += createOptionItem('facility_type', item.value, item.count);
+                    });
+
+                    // Load commodities
+                    const commoditiesList = document.getElementById('commoditiesList');
+                    commoditiesList.innerHTML = '';
+                    data.commodities.forEach(item => {
+                        commoditiesList.innerHTML += createOptionItem('commodity', item.value, item.count);
+                    });
+
+                    // Load corporate groups
+                    const corporateGroupsList = document.getElementById('corporateGroupsList');
+                    corporateGroupsList.innerHTML = '';
+                    data.corporate_groups.forEach(item => {
+                        corporateGroupsList.innerHTML += createOptionItem('corporate_group', item.value, item.count);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading options:', error);
+                    alert('Error loading dropdown options');
+                });
+        }
+
+        function createOptionItem(fieldType, value, count) {
+            if (!value) return '';
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem; border: 1px solid #e5e7eb;">
+                    <div>
+                        <span style="font-weight: 500;">${value}</span>
+                        <span style="color: #6b7280; font-size: 0.875rem; margin-left: 0.5rem;">(${count} client${count !== 1 ? 's' : ''})</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;" onclick="deleteOption('${fieldType}', '${value.replace(/'/g, "\\'")}', ${count})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            `;
+        }
+
+        function deleteOption(fieldType, value, count) {
+            if (count > 0) {
+                if (!confirm(`This ${fieldType.replace('_', ' ')} is used by ${count} client(s). Deleting it will set those clients to empty. Continue?`)) {
+                    return;
+                }
+            } else {
+                if (!confirm(`Delete "${value}"?`)) {
+                    return;
+                }
+            }
+
+            fetch('{% url "delete_dropdown_option" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    field_type: fieldType,
+                    value: value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadDropdownOptions();
+                    alert('Option deleted successfully');
+                    // Reload the page to refresh the main table
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting option');
+            });
+        }
+
+        function loadDropdownOptionsForForms() {
+            fetch('{% url "get_dropdown_options" %}')
+                .then(response => response.json())
+                .then(data => {
+                    // Update facility type dropdowns
+                    updateCustomDropdown('facility_type_dropdown', data.facility_types);
+                    updateCustomDropdown('edit_facility_type_dropdown', data.facility_types);
+
+                    // Update commodity dropdowns
+                    updateCustomDropdown('commodity_dropdown', data.commodities);
+                    updateCustomDropdown('edit_commodity_dropdown', data.commodities);
+
+                    // Update corporate group dropdowns
+                    updateCustomDropdown('corporate_group_dropdown', data.corporate_groups);
+                    updateCustomDropdown('edit_corporate_group_dropdown', data.corporate_groups);
+                })
+                .catch(error => {
+                    console.error('Error loading dropdown options:', error);
+                });
+        }
+
+        function updateCustomDropdown(dropdownId, options) {
+            const dropdown = document.getElementById(dropdownId);
+            if (!dropdown) return;
+
+            // Clear existing options
+            dropdown.innerHTML = '';
+
+            // Add options from database
+            options.forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'custom-dropdown-item';
+                div.textContent = option.value;
+
+                // Determine which input this dropdown belongs to
+                const inputId = dropdownId.replace('_dropdown', '');
+                div.onclick = function() {
+                    selectDropdownItem(inputId, option.value, dropdownId);
+                };
+
+                dropdown.appendChild(div);
+            });
+        }
+
+        // Custom dropdown functions
+        function showDropdown(dropdownId) {
+            // Hide all other dropdowns first
+            document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+                if (menu.id !== dropdownId) {
+                    menu.classList.remove('show');
+                }
+            });
+            // Show this dropdown
+            document.getElementById(dropdownId).classList.add('show');
+        }
+
+        function hideDropdown(dropdownId) {
+            document.getElementById(dropdownId).classList.remove('show');
+        }
+
+        function selectDropdownItem(inputId, value, dropdownId) {
+            document.getElementById(inputId).value = value;
+            hideDropdown(dropdownId);
+        }
+
+        function filterDropdown(inputId, dropdownId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const dropdown = document.getElementById(dropdownId);
+            const items = dropdown.getElementsByClassName('custom-dropdown-item');
+
+            for (let i = 0; i < items.length; i++) {
+                const txtValue = items[i].textContent || items[i].innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    items[i].style.display = '';
+                } else {
+                    items[i].style.display = 'none';
+                }
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.custom-dropdown')) {
+                document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
 
         // Close modal when clicking outside of it
         window.onclick = function(event) {

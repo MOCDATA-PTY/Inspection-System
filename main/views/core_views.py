@@ -3460,8 +3460,12 @@ def export_client_allocations(request):
         cell.alignment = header_alignment
         cell.border = cell_border
 
-    # Get all records ordered by client_id
-    allocations = ClientAllocation.objects.all().order_by('client_id')
+    # Get all records or filter by client_id if provided
+    client_id = request.GET.get('client_id')
+    if client_id:
+        allocations = ClientAllocation.objects.filter(client_id=client_id).order_by('client_id')
+    else:
+        allocations = ClientAllocation.objects.all().order_by('client_id')
 
     # Write data rows
     for row_num, allocation in enumerate(allocations, 2):
@@ -3524,7 +3528,14 @@ def export_client_allocations(request):
         buffer.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="client_allocations_export.xlsx"'
+
+    # Set filename based on whether we're exporting a single client or all
+    if client_id:
+        filename = f'client_{client_id}_export.xlsx'
+    else:
+        filename = 'client_allocations_export.xlsx'
+
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
     return response
 
@@ -3689,6 +3700,108 @@ def edit_client_allocation(request):
             messages.error(request, f'Error updating client: {str(e)}')
 
     return redirect('client_allocation_sheet')
+
+
+@login_required(login_url='login')
+def get_dropdown_options(request):
+    """Get all unique values for facility_type, commodity, and corporate_group with counts."""
+    from ..models import ClientAllocation
+    from django.db.models import Count, Q
+    from django.http import JsonResponse
+
+    # Get facility types with counts
+    facility_types = ClientAllocation.objects.values('facility_type').annotate(
+        count=Count('id')
+    ).filter(~Q(facility_type='') & ~Q(facility_type__isnull=True)).order_by('facility_type')
+
+    # Get commodities with counts
+    commodities = ClientAllocation.objects.values('commodity').annotate(
+        count=Count('id')
+    ).filter(~Q(commodity='') & ~Q(commodity__isnull=True)).order_by('commodity')
+
+    # Get corporate groups with counts
+    corporate_groups = ClientAllocation.objects.values('corporate_group').annotate(
+        count=Count('id')
+    ).filter(~Q(corporate_group='') & ~Q(corporate_group__isnull=True)).order_by('corporate_group')
+
+    return JsonResponse({
+        'facility_types': [{'value': item['facility_type'], 'count': item['count']} for item in facility_types],
+        'commodities': [{'value': item['commodity'], 'count': item['count']} for item in commodities],
+        'corporate_groups': [{'value': item['corporate_group'], 'count': item['count']} for item in corporate_groups],
+    })
+
+
+@login_required(login_url='login')
+def delete_dropdown_option(request):
+    """Delete a dropdown option by setting it to empty for all clients using it."""
+    from ..models import ClientAllocation
+    from django.http import JsonResponse
+    import json
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            field_type = data.get('field_type')
+            value = data.get('value')
+
+            if not field_type or not value:
+                return JsonResponse({'success': False, 'error': 'Missing field_type or value'})
+
+            # Map field_type to actual model field
+            field_map = {
+                'facility_type': 'facility_type',
+                'commodity': 'commodity',
+                'corporate_group': 'corporate_group'
+            }
+
+            if field_type not in field_map:
+                return JsonResponse({'success': False, 'error': 'Invalid field type'})
+
+            field_name = field_map[field_type]
+
+            # Update all clients with this value to empty string
+            updated_count = ClientAllocation.objects.filter(**{field_name: value}).update(**{field_name: ''})
+
+            return JsonResponse({
+                'success': True,
+                'updated_count': updated_count
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+
+@login_required(login_url='login')
+def delete_client_allocation(request):
+    """Delete a client allocation record."""
+    from ..models import ClientAllocation
+    from django.http import JsonResponse
+    import json
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            client_id = data.get('client_id')
+
+            if not client_id:
+                return JsonResponse({'success': False, 'error': 'Missing client_id'})
+
+            # Delete the client
+            deleted_count = ClientAllocation.objects.filter(client_id=client_id).delete()[0]
+
+            if deleted_count > 0:
+                return JsonResponse({
+                    'success': True,
+                    'message': f'Client {client_id} deleted successfully'
+                })
+            else:
+                return JsonResponse({'success': False, 'error': 'Client not found'})
+
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
 @login_required(login_url='login')

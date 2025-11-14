@@ -21,7 +21,8 @@ from .views.core_views import (
     scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
-    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets, export_client_allocations, add_client_allocation, edit_client_allocation
+    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets, export_client_allocations, add_client_allocation, edit_client_allocation,
+    get_dropdown_options, delete_dropdown_option, delete_client_allocation
 )
 from .views.data_views import (
     export_shipments,
@@ -104,6 +105,9 @@ urlpatterns = [
     path('client-allocation-sheet/export/', export_client_allocations, name='export_client_allocations'),
     path('client-allocation-sheet/add/', add_client_allocation, name='add_client_allocation'),
     path('client-allocation-sheet/edit/', edit_client_allocation, name='edit_client_allocation'),
+    path('client-allocation-sheet/delete/', delete_client_allocation, name='delete_client_allocation'),
+    path('client-allocation-sheet/get-dropdown-options/', get_dropdown_options, name='get_dropdown_options'),
+    path('client-allocation-sheet/delete-dropdown-option/', delete_dropdown_option, name='delete_dropdown_option'),
     path('client-allocation/sync-emails/', sync_client_emails_from_sheets, name='sync_client_emails'),
     path('client/save-manual-email/', save_manual_client_email, name='save_manual_client_email'),
     path('client/delete-email/', delete_client_email, name='delete_client_email'),
