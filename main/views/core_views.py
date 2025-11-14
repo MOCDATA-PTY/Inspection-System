@@ -3336,12 +3336,19 @@ def client_allocation_sheet(request):
     from django.core.cache import cache
     from django.db.models import Prefetch
 
+    # Get filter parameters
+    client_name = request.GET.get('client_name', '').strip()
+    commodity = request.GET.get('commodity', '').strip()
+    corporate_group = request.GET.get('corporate_group', '').strip()
+    has_email = request.GET.get('has_email', '').strip()
+    has_phone = request.GET.get('has_phone', '').strip()
+
     # Check if user wants all data (default) or paginated view
     show_all = request.GET.get('show_all', 'true').lower() == 'true'
     page_number = request.GET.get('page', 1)
 
-    # Cache key based on pagination settings
-    cache_key = f'client_allocation_data_{show_all}_{page_number}'
+    # Cache key based on pagination settings and filters
+    cache_key = f'client_allocation_data_{show_all}_{page_number}_{client_name}_{commodity}_{corporate_group}_{has_email}_{has_phone}'
     cache_timeout = 300  # 5 minutes cache
 
     # Try to get cached data first
@@ -3352,44 +3359,336 @@ def client_allocation_sheet(request):
     # Cache miss - query database with optimizations
     # Use select_related/prefetch_related if there were FK relationships
     # Use only() to fetch only needed fields
+    # Start with base query
     allocations_query = ClientAllocation.objects.only(
         'client_id', 'facility_type', 'group_type', 'commodity', 'province',
         'corporate_group', 'other', 'internal_account_code', 'allocated',
         'eclick_name', 'representative_email', 'phone_number', 'duplicates',
         'active_status'
-    ).order_by('client_id')
+    )
 
-    # Get cached count or calculate
+    # Apply filters
+    if client_name:
+        allocations_query = allocations_query.filter(eclick_name__icontains=client_name)
+    if commodity:
+        allocations_query = allocations_query.filter(commodity=commodity)
+    if corporate_group:
+        allocations_query = allocations_query.filter(corporate_group=corporate_group)
+    if has_email == 'yes':
+        allocations_query = allocations_query.exclude(representative_email__isnull=True).exclude(representative_email='')
+    elif has_email == 'no':
+        from django.db.models import Q
+        allocations_query = allocations_query.filter(Q(representative_email__isnull=True) | Q(representative_email=''))
+    if has_phone == 'yes':
+        allocations_query = allocations_query.exclude(phone_number__isnull=True).exclude(phone_number='')
+    elif has_phone == 'no':
+        from django.db.models import Q
+        allocations_query = allocations_query.filter(Q(phone_number__isnull=True) | Q(phone_number=''))
+
+    # Order and limit to latest 100 records
+    allocations_query = allocations_query.order_by('-last_synced')[:100]
+
+    # Get total count (all records in database)
     total_count = cache.get('client_allocation_count')
     if total_count is None:
-        total_count = allocations_query.count()
+        total_count = ClientAllocation.objects.count()
         cache.set('client_allocation_count', total_count, 600)  # 10 minute cache
 
     has_data = total_count > 0
 
-    if show_all:
-        # Show all records (for spreadsheet editing)
-        # Convert to list for caching (querysets can't be pickled)
-        allocations = list(allocations_query)
-        page_obj = None
-    else:
-        # Paginated view (for better performance with very large datasets)
-        paginator = Paginator(allocations_query, 50)  # 50 records per page
-        page_obj = paginator.get_page(page_number)
-        allocations = list(page_obj.object_list)
+    # Always show latest 100 records (simplified - no pagination)
+    # Convert to list for caching (querysets can't be pickled)
+    allocations = list(allocations_query)
+    page_obj = None
 
     context = {
         'allocations': allocations,
         'has_data': has_data,
         'page_obj': page_obj,
         'show_all': show_all,
-        'total_count': total_count
+        'total_count': total_count,
+        'displayed_count': len(allocations)
     }
 
     # Cache the context for faster subsequent requests
     cache.set(cache_key, context, cache_timeout)
 
     return render(request, 'main/client_allocation_sheet.html', context)
+
+
+@login_required(login_url='login')
+def export_client_allocations(request):
+    """Export all client allocation records to Excel file."""
+    from django.http import HttpResponse
+    from ..models import ClientAllocation
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+    from io import BytesIO
+
+    # Create a new workbook and select the active sheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Client Allocations"
+
+    # Define styles
+    header_font = Font(name='Calibri', size=11, bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='007890', end_color='007890', fill_type='solid')
+    header_alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    cell_alignment = Alignment(horizontal='left', vertical='center', wrap_text=False)
+    cell_border = Border(
+        left=Side(style='thin', color='E5E7EB'),
+        right=Side(style='thin', color='E5E7EB'),
+        top=Side(style='thin', color='E5E7EB'),
+        bottom=Side(style='thin', color='E5E7EB')
+    )
+
+    # Write header row
+    headers = [
+        'Client ID', 'Business Name (E-Click)', 'Facility Type', 'Group Type', 'Commodity',
+        'Province', 'Corporate Group', 'Internal Account Code', 'Allocated',
+        'Representative Email', 'Phone Number', 'Duplicates',
+        'Active/Deactive', 'Last Synced', 'Created At'
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = cell_border
+
+    # Get all records ordered by client_id
+    allocations = ClientAllocation.objects.all().order_by('client_id')
+
+    # Write data rows
+    for row_num, allocation in enumerate(allocations, 2):
+        data = [
+            allocation.client_id,
+            allocation.eclick_name or '',
+            allocation.facility_type or '',
+            allocation.group_type or '',
+            allocation.commodity or '',
+            allocation.province or '',
+            allocation.corporate_group or '',
+            allocation.internal_account_code or '',
+            'Yes' if allocation.allocated else 'No',
+            allocation.representative_email or '',
+            allocation.phone_number or '',
+            allocation.duplicates or '',
+            allocation.active_status or '',
+            allocation.last_synced.strftime('%Y-%m-%d %H:%M:%S') if allocation.last_synced else '',
+            allocation.created_at.strftime('%Y-%m-%d %H:%M:%S') if allocation.created_at else ''
+        ]
+
+        for col_num, value in enumerate(data, 1):
+            cell = ws.cell(row=row_num, column=col_num)
+            cell.value = value
+            cell.alignment = cell_alignment
+            cell.border = cell_border
+
+    # Auto-adjust column widths
+    column_widths = {
+        1: 10,  # Client ID
+        2: 30,  # Business Name
+        3: 20,  # Facility Type
+        4: 25,  # Group Type
+        5: 12,  # Commodity
+        6: 15,  # Province
+        7: 25,  # Corporate Group
+        8: 25,  # Account Code
+        9: 10,  # Allocated
+        10: 30, # Email
+        11: 15, # Phone
+        12: 15, # Duplicates
+        13: 15, # Active/Deactive
+        14: 20, # Last Synced
+        15: 20  # Created At
+    }
+
+    for col_num, width in column_widths.items():
+        ws.column_dimensions[get_column_letter(col_num)].width = width
+
+    # Freeze the header row
+    ws.freeze_panes = 'A2'
+
+    # Save to BytesIO buffer
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    # Create the HttpResponse object with Excel content type
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="client_allocations_export.xlsx"'
+
+    return response
+
+
+@login_required(login_url='login')
+def add_client_allocation(request):
+    """Add a new client allocation record."""
+    from ..models import ClientAllocation
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    from django.core.cache import cache
+
+    if request.method == 'POST':
+        try:
+            # Auto-generate next Client ID
+            from django.db.models import Max
+            max_id = ClientAllocation.objects.aggregate(Max('client_id'))['client_id__max']
+            client_id = (max_id or 0) + 1
+
+            # Get form data
+            business_name = request.POST.get('business_name')
+            facility_type = request.POST.get('facility_type')
+            group_type = request.POST.get('group_type')
+            commodity = request.POST.get('commodity')
+            province = request.POST.get('province')
+            corporate_group = request.POST.get('corporate_group')
+            allocated = request.POST.get('allocated') == 'yes'
+            representative_email = request.POST.get('representative_email')
+            phone_number = request.POST.get('phone_number')
+
+            # Generate internal account code
+            def generate_account_code(facility_type, group_type, commodity, corporate_group, client_id):
+                # Corporate Group code mapping
+                corporate_group_codes = {
+                    'Not Applicable (None)': 'NA',
+                    'Pick n Pay - Franchise': 'PNP-F',
+                    'Pick n Pay - Corporate': 'PNP-C',
+                    'Fruit & Veg': 'FNV',
+                    'OK Foods': 'OK',
+                    'Checkers': 'CHK',
+                    'Spar': 'SPR',
+                    'SuperSpar': 'SSPR',
+                    'Spar - Northrand': 'SPR-N',
+                    'Shoprite': 'SHO',
+                    'Massmart': 'MAS',
+                    'Chester Butcheries': 'CHE',
+                    'Boxer': 'BOX',
+                    'Food Lovers Market': 'FLM',
+                    'Cambridge': 'CAM',
+                    'Woolworths': 'WOO',
+                    'Jwayelani': 'JWA',
+                    'Usave': 'USA',
+                    'Other (Unlisted Group)': 'OTH',
+                    'OBC': 'OBC',
+                    'Roots': 'ROO',
+                    'Meat World': 'MEA',
+                    'Quantum Foods Nulaid': 'QFN',
+                    'Bluff Meat Supply': 'BMS',
+                    'Eat Sum Meat': 'ESM',
+                    'Waltloo Meat and Chicken': 'WMC',
+                    'Choppies': 'CHO',
+                    'Econo Foods': 'ECO',
+                    'Makro': 'MAK',
+                    'Boma Vleismark': 'BOM',
+                    'Eskort': 'ESK',
+                    'Nesta Foods': 'NES'
+                }
+
+                # Part 1: First 2 characters of Facility Type in uppercase
+                part1 = facility_type[:2].upper() if facility_type else '-'
+
+                # Part 2: Group Type mapping
+                part2 = 'IND'
+                if group_type == 'Corporate Store':
+                    part2 = 'COR'
+                elif group_type == 'Franchise Store':
+                    part2 = 'FRN'
+
+                # Part 3: Commodity code
+                part3 = 'OTH'
+                if commodity in ['PMP', 'RAW', 'EGG', 'PLT']:
+                    part3 = commodity
+
+                # Part 4: Corporate Group code lookup
+                part4 = corporate_group_codes.get(corporate_group, '-')
+
+                # Part 5: Client ID padded to 4 digits
+                part5 = str(client_id).zfill(4) if client_id else '0000'
+
+                return f"{part1}-{part2}-{part3}-{part4}-{part5}"
+
+            internal_account_code = generate_account_code(
+                facility_type, group_type, commodity, corporate_group, client_id
+            )
+
+            # Create new ClientAllocation
+            ClientAllocation.objects.create(
+                client_id=client_id,
+                eclick_name=business_name,
+                facility_type=facility_type,
+                group_type=group_type,
+                commodity=commodity,
+                province=province,
+                corporate_group=corporate_group,
+                internal_account_code=internal_account_code,
+                allocated=allocated,
+                representative_email=representative_email,
+                phone_number=phone_number
+            )
+
+            # Clear cache
+            cache.delete('client_allocation_count')
+            cache.delete_pattern('client_allocation_data_*')
+
+            messages.success(request, f'Client {client_id} - {business_name} added successfully!')
+
+        except Exception as e:
+            messages.error(request, f'Error adding client: {str(e)}')
+
+    return redirect('client_allocation_sheet')
+
+
+@login_required(login_url='login')
+def edit_client_allocation(request):
+    """Edit an existing client allocation record."""
+    from ..models import ClientAllocation
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    from django.core.cache import cache
+
+    if request.method == 'POST':
+        try:
+            client_id = request.POST.get('client_id')
+
+            # Get the existing record
+            allocation = ClientAllocation.objects.get(client_id=client_id)
+
+            # Update fields
+            allocation.eclick_name = request.POST.get('business_name')
+            allocation.facility_type = request.POST.get('facility_type')
+            allocation.group_type = request.POST.get('group_type')
+            allocation.commodity = request.POST.get('commodity')
+            allocation.province = request.POST.get('province')
+            allocation.corporate_group = request.POST.get('corporate_group')
+            allocation.allocated = request.POST.get('allocated') == 'yes'
+            allocation.representative_email = request.POST.get('representative_email')
+            allocation.phone_number = request.POST.get('phone_number')
+            allocation.active_status = request.POST.get('active_status')
+
+            # Save changes
+            allocation.save()
+
+            # Clear cache
+            cache.delete('client_allocation_count')
+            cache.delete_pattern('client_allocation_data_*')
+
+            messages.success(request, f'Client {client_id} - {allocation.eclick_name} updated successfully!')
+
+        except ClientAllocation.DoesNotExist:
+            messages.error(request, f'Client {client_id} not found.')
+        except Exception as e:
+            messages.error(request, f'Error updating client: {str(e)}')
+
+    return redirect('client_allocation_sheet')
 
 
 @login_required(login_url='login')

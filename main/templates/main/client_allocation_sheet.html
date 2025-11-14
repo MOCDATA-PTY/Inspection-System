@@ -45,483 +45,10 @@
             }
         }
 
-        // Arrow key navigation for spreadsheet
+        // Simple read-only table - minimal JavaScript needed
         document.addEventListener('DOMContentLoaded', function() {
-            const table = document.querySelector('table');
-            if (!table) return;
-
-            table.addEventListener('keydown', function(e) {
-                const element = e.target;
-                if (element.tagName !== 'INPUT' && element.tagName !== 'SELECT') return;
-
-                const cell = element.parentElement;
-                const row = cell.parentElement;
-                const cells = Array.from(row.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                const currentIndex = cells.indexOf(cell);
-
-                function focusCell(targetCell) {
-                    const input = targetCell.querySelector('input');
-                    const select = targetCell.querySelector('select');
-                    if (input) input.focus();
-                    else if (select) select.focus();
-                }
-
-                if (e.key === 'ArrowRight') {
-                    e.preventDefault();
-                    // Move to next cell
-                    if (currentIndex < cells.length - 1) {
-                        focusCell(cells[currentIndex + 1]);
-                    } else {
-                        // Move to first cell of next row
-                        const nextRow = row.nextElementSibling;
-                        if (nextRow) {
-                            const nextCells = Array.from(nextRow.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                            if (nextCells.length > 0) {
-                                focusCell(nextCells[0]);
-                            }
-                        }
-                    }
-                } else if (e.key === 'ArrowLeft') {
-                    e.preventDefault();
-                    // Move to previous cell
-                    if (currentIndex > 0) {
-                        focusCell(cells[currentIndex - 1]);
-                    } else {
-                        // Move to last cell of previous row
-                        const prevRow = row.previousElementSibling;
-                        if (prevRow) {
-                            const prevCells = Array.from(prevRow.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                            if (prevCells.length > 0) {
-                                focusCell(prevCells[prevCells.length - 1]);
-                            }
-                        }
-                    }
-                } else if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    // Move to same cell in next row
-                    const nextRow = row.nextElementSibling;
-                    if (nextRow) {
-                        const nextCells = Array.from(nextRow.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                        if (nextCells[currentIndex]) {
-                            focusCell(nextCells[currentIndex]);
-                        }
-                    }
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    // Move to same cell in previous row
-                    const prevRow = row.previousElementSibling;
-                    if (prevRow) {
-                        const prevCells = Array.from(prevRow.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                        if (prevCells[currentIndex]) {
-                            focusCell(prevCells[currentIndex]);
-                        }
-                    }
-                }
-            });
-
-            // Auto-add new row when typing in last row
-            table.addEventListener('input', function(e) {
-                const element = e.target;
-                if (element.tagName !== 'INPUT' && element.tagName !== 'SELECT') return;
-
-                const row = element.closest('tr');
-                const tbody = table.querySelector('tbody');
-                const lastRow = tbody.lastElementChild;
-
-                // If user is typing in the last row, add a new row
-                if (row === lastRow) {
-                    addNewRow();
-                }
-            });
-
-            // Also trigger on change for select elements
-            table.addEventListener('change', function(e) {
-                const element = e.target;
-                if (element.tagName !== 'SELECT') return;
-
-                const row = element.closest('tr');
-                const tbody = table.querySelector('tbody');
-                const lastRow = tbody.lastElementChild;
-
-                // If user changes dropdown in the last row, add a new row
-                if (row === lastRow) {
-                    addNewRow();
-                }
-            });
-
-            // Also trigger on focus for better UX
-            table.addEventListener('focus', function(e) {
-                const element = e.target;
-                if (element.tagName !== 'INPUT' && element.tagName !== 'SELECT') return;
-
-                const row = element.closest('tr');
-                const tbody = table.querySelector('tbody');
-                const lastRow = tbody.lastElementChild;
-
-                // If user focuses on the last row, add a new row
-                if (row === lastRow) {
-                    addNewRow();
-                }
-            }, true);
-
-            // Corporate Group code mapping
-            const corporateGroupCodes = {
-                'Not Applicable (None)': 'NA',
-                'Pick n Pay - Franchise': 'PNP-F',
-                'Pick n Pay - Corporate': 'PNP-C',
-                'Fruit & Veg': 'FNV',
-                'OK Foods': 'OK',
-                'Checkers': 'CHK',
-                'Spar': 'SPR',
-                'SuperSpar': 'SSPR',
-                'Spar - Northrand': 'SPR-N',
-                'Shoprite': 'SHO',
-                'Massmart': 'MAS',
-                'Chester Butcheries': 'CHE',
-                'Boxer': 'BOX',
-                'Food Lovers Market': 'FLM',
-                'Cambridge': 'CAM',
-                'Woolworths': 'WOO',
-                'Jwayelani': 'JWA',
-                'Usave': 'USA',
-                'Other (Unlisted Group)': 'OTH',
-                'OBC': 'OBC',
-                'Roots': 'ROO',
-                'Meat World': 'MEA',
-                'Quantum Foods Nulaid': 'QFN',
-                'Bluff Meat Supply': 'BMS',
-                'Eat Sum Meat': 'ESM',
-                'Waltloo Meat and Chicken': 'WMC',
-                'Choppies': 'CHO',
-                'Econo Foods': 'ECO',
-                'Makro': 'MAK',
-                'Boma Vleismark': 'BOM',
-                'Eskort': 'ESK',
-                'Nesta Foods': 'NES'
-            };
-
-            // Function to generate account code
-            function generateAccountCode(row) {
-                const clientId = row.querySelector('.client-id')?.value || '';
-                const facilityType = row.querySelector('.facility-type')?.value || '';
-                const groupType = row.querySelector('.group-type')?.value || '';
-                const commodity = row.querySelector('.commodity')?.value || '';
-                const corporateGroup = row.querySelector('.corporate-group')?.value || '';
-
-                // Part 1: First 2 characters of Facility Type in uppercase
-                const part1 = facilityType ? facilityType.substring(0, 2).toUpperCase() : '-';
-
-                // Part 2: Group Type mapping
-                let part2 = 'IND';
-                if (groupType === 'Corporate Store') {
-                    part2 = 'COR';
-                } else if (groupType === 'Franchise Store') {
-                    part2 = 'FRN';
-                }
-
-                // Part 3: Commodity code
-                let part3 = 'OTH';
-                if (commodity === 'PMP' || commodity === 'RAW' || commodity === 'EGG' || commodity === 'PLT') {
-                    part3 = commodity;
-                }
-
-                // Part 4: Corporate Group code lookup
-                let part4 = corporateGroupCodes[corporateGroup] || '-';
-
-                // Part 5: Client ID padded to 4 digits
-                const part5 = clientId ? clientId.padStart(4, '0') : '0000';
-
-                // Combine all parts
-                return `${part1}-${part2}-${part3}-${part4}-${part5}`;
-            }
-
-            // Add event listeners to update account code when fields change
-            table.addEventListener('input', function(e) {
-                if (e.target.classList.contains('client-id')) {
-                    const row = e.target.closest('tr');
-                    const accountCodeField = row.querySelector('.account-code');
-                    if (accountCodeField) {
-                        accountCodeField.value = generateAccountCode(row);
-                    }
-                }
-            });
-
-            table.addEventListener('change', function(e) {
-                if (e.target.classList.contains('facility-type') ||
-                    e.target.classList.contains('group-type') ||
-                    e.target.classList.contains('commodity') ||
-                    e.target.classList.contains('corporate-group')) {
-                    const row = e.target.closest('tr');
-                    const accountCodeField = row.querySelector('.account-code');
-                    if (accountCodeField) {
-                        accountCodeField.value = generateAccountCode(row);
-                    }
-                }
-            });
-
-            function addNewRow() {
-                const tbody = table.querySelector('tbody');
-                const rows = tbody.querySelectorAll('tr');
-                const newRowNumber = rows.length + 1;
-
-                // Create new row
-                const newRow = document.createElement('tr');
-
-                // Add row number cell
-                const rowNumCell = document.createElement('td');
-                rowNumCell.className = 'row-number';
-                rowNumCell.textContent = newRowNumber;
-                newRow.appendChild(rowNumCell);
-
-                // Add 14 cells (some with dropdowns, some with inputs)
-                for (let i = 0; i < 14; i++) {
-                    const cell = document.createElement('td');
-
-                    // Column A (index 0): Client ID
-                    if (i === 0) {
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.className = 'client-id';
-                        cell.appendChild(input);
-                    }
-                    // Column B (index 1): Facility Type dropdown
-                    else if (i === 1) {
-                        const select = document.createElement('select');
-                        select.className = 'facility-type';
-                        select.style.cssText = 'width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;';
-                        select.innerHTML = `
-                            <option value=""></option>
-                            <option value="Retailer">Retailer</option>
-                            <option value="Butchery">Butchery</option>
-                            <option value="Re-Packer">Re-Packer</option>
-                            <option value="Production Plant">Production Plant</option>
-                            <option value="Farm">Farm</option>
-                            <option value="Abattoir">Abattoir</option>
-                        `;
-                        cell.appendChild(select);
-                    }
-                    // Column C (index 2): Group Type dropdown
-                    else if (i === 2) {
-                        const select = document.createElement('select');
-                        select.className = 'group-type';
-                        select.style.cssText = 'width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;';
-                        select.innerHTML = `
-                            <option value=""></option>
-                            <option value="Individual / Independent Owner">Individual / Independent Owner</option>
-                            <option value="Corporate Store">Corporate Store</option>
-                            <option value="Franchise Store">Franchise Store</option>
-                        `;
-                        cell.appendChild(select);
-                    }
-                    // Column D (index 3): Commodity dropdown
-                    else if (i === 3) {
-                        const select = document.createElement('select');
-                        select.className = 'commodity';
-                        select.style.cssText = 'width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;';
-                        select.innerHTML = `
-                            <option value=""></option>
-                            <option value="EGG">EGG</option>
-                            <option value="PMP">PMP</option>
-                            <option value="RAW">RAW</option>
-                            <option value="PLT">PLT</option>
-                        `;
-                        cell.appendChild(select);
-                    }
-                    // Column E (index 4): Province dropdown
-                    else if (i === 4) {
-                        const select = document.createElement('select');
-                        select.className = 'province';
-                        select.style.cssText = 'width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;';
-                        select.innerHTML = `
-                            <option value=""></option>
-                            <option value="TBC">TBC</option>
-                            <option value="Gauteng">Gauteng</option>
-                            <option value="North West">North West</option>
-                            <option value="Eastern Cape">Eastern Cape</option>
-                            <option value="KwaZulu-Natal">KwaZulu-Natal</option>
-                            <option value="Limpopo">Limpopo</option>
-                            <option value="Mpumalanga">Mpumalanga</option>
-                            <option value="Northern Cape">Northern Cape</option>
-                            <option value="Western Cape">Western Cape</option>
-                            <option value="Free State">Free State</option>
-                            <option value="Unknown/Other">Unknown/Other</option>
-                            <option value="To be declared">To be declared</option>
-                        `;
-                        cell.appendChild(select);
-                    }
-                    // Column F (index 5): Corporate Group dropdown
-                    else if (i === 5) {
-                        const select = document.createElement('select');
-                        select.className = 'corporate-group';
-                        select.style.cssText = 'width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;';
-                        select.innerHTML = `
-                            <option value=""></option>
-                            <option value="Not Applicable (None)">Not Applicable (None)</option>
-                            <option value="Pick n Pay - Franchise">Pick n Pay - Franchise</option>
-                            <option value="Pick n Pay - Corporate">Pick n Pay - Corporate</option>
-                            <option value="Fruit & Veg">Fruit & Veg</option>
-                            <option value="OK Foods">OK Foods</option>
-                            <option value="Checkers">Checkers</option>
-                            <option value="Spar">Spar</option>
-                            <option value="SuperSpar">SuperSpar</option>
-                            <option value="Spar - Northrand">Spar - Northrand</option>
-                            <option value="Shoprite">Shoprite</option>
-                            <option value="Massmart">Massmart</option>
-                            <option value="Chester Butcheries">Chester Butcheries</option>
-                            <option value="Boxer">Boxer</option>
-                            <option value="Food Lovers Market">Food Lovers Market</option>
-                            <option value="Cambridge">Cambridge</option>
-                            <option value="Woolworths">Woolworths</option>
-                            <option value="Jwayelani">Jwayelani</option>
-                            <option value="Usave">Usave</option>
-                            <option value="Other (Unlisted Group)">Other (Unlisted Group)</option>
-                            <option value="OBC">OBC</option>
-                            <option value="Roots">Roots</option>
-                            <option value="Meat World">Meat World</option>
-                            <option value="Quantum Foods Nulaid">Quantum Foods Nulaid</option>
-                            <option value="Bluff Meat Supply">Bluff Meat Supply</option>
-                            <option value="Eat Sum Meat">Eat Sum Meat</option>
-                            <option value="Waltloo Meat and Chicken">Waltloo Meat and Chicken</option>
-                            <option value="Choppies">Choppies</option>
-                            <option value="Econo Foods">Econo Foods</option>
-                            <option value="Makro">Makro</option>
-                            <option value="Boma Vleismark">Boma Vleismark</option>
-                            <option value="Eskort">Eskort</option>
-                            <option value="Nesta Foods">Nesta Foods</option>
-                        `;
-                        cell.appendChild(select);
-                    }
-                    // Column H (index 7): Internal Account Code (readonly)
-                    else if (i === 7) {
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.className = 'account-code';
-                        input.readOnly = true;
-                        input.style.backgroundColor = '#f3f4f6';
-                        cell.appendChild(input);
-                    }
-                    // Column I (index 8): Allocated (checkbox)
-                    else if (i === 8) {
-                        cell.style.textAlign = 'center';
-                        cell.style.padding = '0.25rem';
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.className = 'allocated-checkbox';
-                        checkbox.style.cssText = 'width: 18px; height: 18px; cursor: pointer;';
-                        cell.appendChild(checkbox);
-                    }
-                    // All other columns: text input
-                    else {
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        cell.appendChild(input);
-                    }
-
-                    newRow.appendChild(cell);
-                }
-
-                tbody.appendChild(newRow);
-
-                // Resize columns after adding new row
-                resizeColumns();
-            }
-
-            // Debounce function for performance optimization
-            function debounce(func, wait) {
-                let timeout;
-                return function executedFunction(...args) {
-                    const later = () => {
-                        clearTimeout(timeout);
-                        func(...args);
-                    };
-                    clearTimeout(timeout);
-                    timeout = setTimeout(later, wait);
-                };
-            }
-
-            // Cache for measurement span (reuse instead of creating new ones)
-            const measurementSpan = document.createElement('span');
-            measurementSpan.style.cssText = 'visibility: hidden; position: absolute; font-size: 0.7rem; padding: 0.25rem 0.4rem; white-space: nowrap;';
-            document.body.appendChild(measurementSpan);
-
-            // Optimized function to resize columns based on content
-            function resizeColumns() {
-                requestAnimationFrame(() => {
-                    const rows = table.querySelectorAll('tbody tr');
-                    if (rows.length === 0) return;
-
-                    const firstRow = rows[0];
-                    const cells = Array.from(firstRow.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                    const numColumns = cells.length;
-                    const headerCells = table.querySelectorAll('thead th');
-
-                    // Process columns in batches for better performance
-                    for (let colIndex = 0; colIndex < numColumns; colIndex++) {
-                        let maxWidth = 0;
-
-                        // Check all rows for this column
-                        for (const row of rows) {
-                            const rowCells = Array.from(row.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                            const cell = rowCells[colIndex];
-
-                            if (cell) {
-                                const input = cell.querySelector('input:not([type="checkbox"])');
-                                const select = cell.querySelector('select');
-
-                                let contentWidth = 0;
-                                if (input) {
-                                    measurementSpan.textContent = input.value || input.placeholder || '';
-                                    contentWidth = measurementSpan.offsetWidth + 20;
-                                } else if (select) {
-                                    const selectedText = select.options[select.selectedIndex]?.text || '';
-                                    measurementSpan.textContent = selectedText;
-                                    contentWidth = measurementSpan.offsetWidth + 40; // Extra space for dropdown arrow
-                                }
-
-                                if (contentWidth > maxWidth) {
-                                    maxWidth = contentWidth;
-                                }
-                            }
-                        }
-
-                        // Set minimum width of 80px, maximum width of 400px
-                        maxWidth = Math.max(80, Math.min(maxWidth, 400));
-
-                        // Batch DOM updates
-                        const widthValue = maxWidth + 'px';
-                        for (const row of rows) {
-                            const rowCells = Array.from(row.children).filter(c => c.tagName === 'TD' && !c.classList.contains('row-number'));
-                            const cell = rowCells[colIndex];
-                            if (cell) {
-                                cell.style.minWidth = widthValue;
-                                cell.style.maxWidth = widthValue;
-                            }
-                        }
-
-                        // Apply to header
-                        if (headerCells[colIndex + 1]) {
-                            headerCells[colIndex + 1].style.minWidth = widthValue;
-                            headerCells[colIndex + 1].style.maxWidth = widthValue;
-                        }
-                    }
-                });
-            }
-
-            // Debounced version for input events (300ms delay)
-            const debouncedResize = debounce(resizeColumns, 300);
-
-            // Resize columns on input (debounced for performance)
-            table.addEventListener('input', function(e) {
-                debouncedResize();
-            });
-
-            // Resize columns on change (immediate for dropdowns)
-            table.addEventListener('change', function(e) {
-                resizeColumns();
-            });
-
-            // Initial resize
-            setTimeout(resizeColumns, 100);
+            // No special functionality needed for read-only view
+            console.log('Client Allocation Sheet loaded successfully');
         });
     </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -688,13 +215,21 @@
         .header h1 {
             font-size: 1.875rem;
             font-weight: bold;
-            color: var(--primary);
+            color: white;
             margin-bottom: 0.5rem;
+            margin-top: 0;
         }
 
         .header h2 {
             font-size: 1.25rem;
-            color: var(--text-light);
+            color: white;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            margin-bottom: 0;
+            color: white;
         }
 
         .action-bar {
@@ -750,7 +285,7 @@
 
         table {
             width: 100%;
-            min-width: 1400px;
+            min-width: 800px;
             border-collapse: collapse;
             /* Performance: GPU acceleration for large tables */
             transform: translateZ(0);
@@ -762,22 +297,24 @@
         }
 
         th {
-            padding: 0.25rem 0.5rem;
-            text-align: center;
-            font-size: 0.65rem;
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-size: 0.75rem;
             font-weight: 600;
             color: #1f2937;
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
+            background: #007890;
+            color: white;
+            border: 1px solid #005a6b;
             white-space: nowrap;
         }
 
         th.row-number {
-            background: #f3f4f6;
-            color: #6b7280;
+            background: #005a6b;
+            color: white;
             font-weight: 600;
-            min-width: 40px;
-            width: 40px;
+            min-width: 50px;
+            width: 50px;
+            text-align: center;
         }
 
         tbody tr {
@@ -788,43 +325,167 @@
         }
 
         tbody tr:hover {
-            background: #f9fafb;
+            background: #f0f9ff;
         }
 
         td {
-            padding: 0;
-            font-size: 0.75rem;
+            padding: 0.5rem;
+            font-size: 0.875rem;
             color: var(--text);
-            border: 1px solid #d1d5db;
+            border: 1px solid #e5e7eb;
         }
 
         td.row-number {
-            background: #f3f4f6;
+            background: #f9fafb;
             color: #6b7280;
             font-weight: 600;
             text-align: center;
-            padding: 0.25rem;
-            min-width: 40px;
-            width: 40px;
-            font-size: 0.7rem;
+            padding: 0.5rem;
+            min-width: 50px;
+            width: 50px;
+            font-size: 0.75rem;
         }
 
-        td input, td select {
+        /* Zebra striping for better readability */
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background: #f0f9ff;
+        }
+
+        /* Selected row styles */
+        tbody tr {
+            cursor: pointer;
+        }
+
+        tbody tr.selected {
+            background: #bfdbfe !important;
+            border-left: 3px solid #007890 !important;
+        }
+
+        tbody tr.selected td {
+            background: #bfdbfe !important;
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
             width: 100%;
-            border: none;
-            padding: 0.25rem 0.4rem;
-            font-size: 0.7rem;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 2% auto;
+            border-radius: 0.5rem;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 0.5rem 0.5rem 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
             background: transparent;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
         }
 
-        td input:focus, td select:focus {
-            outline: 2px solid #007890;
-            background: white;
+        .modal-close:hover {
+            opacity: 0.7;
         }
 
-        /* Column sizing */
-        td {
-            white-space: nowrap;
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.1);
+        }
+
+        .required {
+            color: var(--danger);
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 0 0 0.5rem 0.5rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
         }
 
         /* Mobile Styles */
@@ -935,28 +596,20 @@
 
             /* Table adjustments for mobile */
             table {
-                min-width: 1200px; /* Allow horizontal scroll */
+                min-width: 700px; /* Allow horizontal scroll */
                 font-size: 0.75rem;
             }
 
-            /* Touch-friendly inputs */
-            td input, td select {
-                font-size: 16px; /* Prevents zoom on iOS */
-                padding: 0.5rem;
-                min-height: 38px;
-            }
-
-            /* Checkbox size for touch */
-            .allocated-checkbox {
-                width: 24px !important;
-                height: 24px !important;
+            td {
+                font-size: 0.75rem;
+                padding: 0.4rem;
             }
 
             /* Row numbers */
             td.row-number, th.row-number {
-                min-width: 35px;
-                width: 35px;
-                font-size: 0.65rem;
+                min-width: 40px;
+                width: 40px;
+                font-size: 0.7rem;
             }
 
             /* Optimize scrollbars on mobile */
@@ -1172,8 +825,8 @@
                 <h1>Food Safety Agency (Pty) Ltd</h1>
                 <h2>Client Allocation Sheet</h2>
                 {% if total_count %}
-                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
-                    <i class="fas fa-database"></i> {{ total_count }} record{{ total_count|pluralize }} loaded
+                <p style="font-size: 0.875rem; margin-top: 0.5rem;">
+                    <i class="fas fa-database"></i> Displaying {{ displayed_count }} of {{ total_count }} total record{{ total_count|pluralize }} (Latest 100)
                 </p>
                 {% endif %}
             </div>
@@ -1182,15 +835,15 @@
                 <a href="{% url 'home' %}" class="btn btn-primary">
                     <i class="fas fa-home"></i> Home
                 </a>
-                <form method="POST" action="{% url 'sync_client_allocations' %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-secondary">
-                        <i class="fas fa-sync-alt"></i> Sync from Google Sheets
-                    </button>
-                </form>
-                <button type="button" class="btn btn-secondary">
-                    <i class="fas fa-download"></i> Export
+                <button type="button" class="btn btn-primary" onclick="openAddClientModal()">
+                    <i class="fas fa-plus"></i> Add New Client
                 </button>
+                <button type="button" class="btn btn-primary" id="editClientBtn" onclick="openEditClientModal()" disabled>
+                    <i class="fas fa-edit"></i> Edit Client
+                </button>
+                <a href="{% url 'export_client_allocations' %}" class="btn btn-secondary">
+                    <i class="fas fa-file-excel"></i> Export All Records to Excel
+                </a>
             </div>
 
             {% if not has_data %}
@@ -1202,142 +855,115 @@
             </div>
             {% endif %}
 
+            <!-- Filter Section -->
+            <div style="background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <form method="GET" action="{% url 'client_allocation_sheet' %}">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">Client Name</label>
+                            <input type="text" name="client_name" value="{{ request.GET.client_name }}" placeholder="Search by name..." style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">Commodity</label>
+                            <select name="commodity" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                                <option value="">All</option>
+                                <option value="EGG" {% if request.GET.commodity == 'EGG' %}selected{% endif %}>EGG</option>
+                                <option value="PMP" {% if request.GET.commodity == 'PMP' %}selected{% endif %}>PMP</option>
+                                <option value="RAW" {% if request.GET.commodity == 'RAW' %}selected{% endif %}>RAW</option>
+                                <option value="PLT" {% if request.GET.commodity == 'PLT' %}selected{% endif %}>PLT</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">Corporate Group</label>
+                            <select name="corporate_group" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                                <option value="">All</option>
+                                <option value="Pick n Pay - Franchise" {% if request.GET.corporate_group == 'Pick n Pay - Franchise' %}selected{% endif %}>Pick n Pay - Franchise</option>
+                                <option value="Pick n Pay - Corporate" {% if request.GET.corporate_group == 'Pick n Pay - Corporate' %}selected{% endif %}>Pick n Pay - Corporate</option>
+                                <option value="Spar" {% if request.GET.corporate_group == 'Spar' %}selected{% endif %}>Spar</option>
+                                <option value="SuperSpar" {% if request.GET.corporate_group == 'SuperSpar' %}selected{% endif %}>SuperSpar</option>
+                                <option value="Shoprite" {% if request.GET.corporate_group == 'Shoprite' %}selected{% endif %}>Shoprite</option>
+                                <option value="Checkers" {% if request.GET.corporate_group == 'Checkers' %}selected{% endif %}>Checkers</option>
+                                <option value="Boxer" {% if request.GET.corporate_group == 'Boxer' %}selected{% endif %}>Boxer</option>
+                                <option value="Woolworths" {% if request.GET.corporate_group == 'Woolworths' %}selected{% endif %}>Woolworths</option>
+                                <option value="Food Lovers Market" {% if request.GET.corporate_group == 'Food Lovers Market' %}selected{% endif %}>Food Lovers Market</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">Has Email</label>
+                            <select name="has_email" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                                <option value="">All</option>
+                                <option value="yes" {% if request.GET.has_email == 'yes' %}selected{% endif %}>With Email</option>
+                                <option value="no" {% if request.GET.has_email == 'no' %}selected{% endif %}>Without Email</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 0.875rem; font-weight: 600; color: #1f2937; margin-bottom: 0.5rem;">Has Phone</label>
+                            <select name="has_phone" style="width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem;">
+                                <option value="">All</option>
+                                <option value="yes" {% if request.GET.has_phone == 'yes' %}selected{% endif %}>With Phone</option>
+                                <option value="no" {% if request.GET.has_phone == 'no' %}selected{% endif %}>Without Phone</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">
+                            <i class="fas fa-filter"></i> Apply Filters
+                        </button>
+                        <a href="{% url 'client_allocation_sheet' %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; text-decoration: none;">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+
             <div class="table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th class="row-number"></th>
-                            <th>A</th>
-                            <th>B</th>
-                            <th>C</th>
-                            <th>D</th>
-                            <th>E</th>
-                            <th>F</th>
-                            <th>G</th>
-                            <th>H</th>
-                            <th>I</th>
-                            <th>J</th>
-                            <th>K</th>
-                            <th>L</th>
-                            <th>M</th>
-                            <th>N</th>
+                            <th class="row-number">#</th>
+                            <th>Client ID</th>
+                            <th>Business Name</th>
+                            <th>Facility Type</th>
+                            <th>Province</th>
+                            <th>Corporate Group</th>
+                            <th>Account Code</th>
+                            <th>Allocated</th>
+                            <th>Email</th>
+                            <th>Phone Number</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Header Row -->
-                        <tr>
-                            <td class="row-number">1</td>
-                            <td><input type="text" value="Client ID" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Facility Type" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Group Type" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Commodity" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Province" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Corporate Group" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Other" /></td>
-                            <td><input type="text" value="Internal Account Code" style="background-color: #FF9900;" /></td>
-                            <td><input type="text" value="Allocated" style="background-color: #FFFF00;" /></td>
-                            <td><input type="text" value="E-Click Name" style="background-color: red; color: white;" /></td>
-                            <td><input type="text" value="Representative Email Adress" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Phone Number" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Duplciates" style="background-color: #01EFFD;" /></td>
-                            <td><input type="text" value="Active/Deactive" style="background-color: #01EFFD;" /></td>
-                        </tr>
 
                         <!-- Data Rows from Database -->
                         {% for allocation in allocations %}
-                        <tr>
-                            <td class="row-number">{{ forloop.counter|add:1 }}</td>
-                            <td><input type="text" class="client-id" value="{{ allocation.client_id }}" /></td>
-                            <td>
-                                <select class="facility-type" style="width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;">
-                                    <option value="">{% if not allocation.facility_type %}{% endif %}</option>
-                                    <option value="Retailer" {% if allocation.facility_type == "Retailer" %}selected{% endif %}>Retailer</option>
-                                    <option value="Butchery" {% if allocation.facility_type == "Butchery" %}selected{% endif %}>Butchery</option>
-                                    <option value="Re-Packer" {% if allocation.facility_type == "Re-Packer" %}selected{% endif %}>Re-Packer</option>
-                                    <option value="Production Plant" {% if allocation.facility_type == "Production Plant" %}selected{% endif %}>Production Plant</option>
-                                    <option value="Farm" {% if allocation.facility_type == "Farm" %}selected{% endif %}>Farm</option>
-                                    <option value="Abattoir" {% if allocation.facility_type == "Abattoir" %}selected{% endif %}>Abattoir</option>
-                                </select>
+                        <tr onclick="selectRow(this)"
+                            data-client-id="{{ allocation.client_id }}"
+                            data-business-name="{{ allocation.eclick_name }}"
+                            data-facility-type="{{ allocation.facility_type }}"
+                            data-group-type="{{ allocation.group_type }}"
+                            data-commodity="{{ allocation.commodity }}"
+                            data-province="{{ allocation.province }}"
+                            data-corporate-group="{{ allocation.corporate_group }}"
+                            data-allocated="{{ allocation.allocated|yesno:'yes,no' }}"
+                            data-email="{{ allocation.representative_email }}"
+                            data-phone="{{ allocation.phone_number }}"
+                            data-active-status="{{ allocation.active_status }}">
+                            <td class="row-number">{{ forloop.counter }}</td>
+                            <td style="text-align: center; padding: 0.5rem; font-weight: 500;">{{ allocation.client_id }}</td>
+                            <td style="padding: 0.5rem;">{{ allocation.eclick_name|default:'-' }}</td>
+                            <td style="padding: 0.5rem;">{{ allocation.facility_type|default:'-' }}</td>
+                            <td style="padding: 0.5rem;">{{ allocation.province|default:'-' }}</td>
+                            <td style="padding: 0.5rem;">{{ allocation.corporate_group|default:'-' }}</td>
+                            <td style="padding: 0.5rem; font-family: monospace; font-size: 0.65rem; background-color: #f9fafb;">{{ allocation.internal_account_code|default:'-' }}</td>
+                            <td style="text-align: center; padding: 0.5rem;">
+                                {% if allocation.allocated %}
+                                    <span style="color: #10b981; font-weight: 600;">✓ Yes</span>
+                                {% else %}
+                                    <span style="color: #6b7280;">-</span>
+                                {% endif %}
                             </td>
-                            <td>
-                                <select class="group-type" style="width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;">
-                                    <option value="">{% if not allocation.group_type %}{% endif %}</option>
-                                    <option value="Individual / Independent Owner" {% if allocation.group_type == "Individual / Independent Owner" %}selected{% endif %}>Individual / Independent Owner</option>
-                                    <option value="Corporate Store" {% if allocation.group_type == "Corporate Store" %}selected{% endif %}>Corporate Store</option>
-                                    <option value="Franchise Store" {% if allocation.group_type == "Franchise Store" %}selected{% endif %}>Franchise Store</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="commodity" style="width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;">
-                                    <option value="">{% if not allocation.commodity %}{% endif %}</option>
-                                    <option value="EGG" {% if allocation.commodity == "EGG" %}selected{% endif %}>EGG</option>
-                                    <option value="PMP" {% if allocation.commodity == "PMP" %}selected{% endif %}>PMP</option>
-                                    <option value="RAW" {% if allocation.commodity == "RAW" %}selected{% endif %}>RAW</option>
-                                    <option value="PLT" {% if allocation.commodity == "PLT" %}selected{% endif %}>PLT</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="province" style="width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;">
-                                    <option value="">{% if not allocation.province %}{% endif %}</option>
-                                    <option value="TBC" {% if allocation.province == "TBC" %}selected{% endif %}>TBC</option>
-                                    <option value="Gauteng" {% if allocation.province == "Gauteng" %}selected{% endif %}>Gauteng</option>
-                                    <option value="North West" {% if allocation.province == "North West" %}selected{% endif %}>North West</option>
-                                    <option value="Eastern Cape" {% if allocation.province == "Eastern Cape" %}selected{% endif %}>Eastern Cape</option>
-                                    <option value="KwaZulu-Natal" {% if allocation.province == "KwaZulu-Natal" %}selected{% endif %}>KwaZulu-Natal</option>
-                                    <option value="Limpopo" {% if allocation.province == "Limpopo" %}selected{% endif %}>Limpopo</option>
-                                    <option value="Mpumalanga" {% if allocation.province == "Mpumalanga" %}selected{% endif %}>Mpumalanga</option>
-                                    <option value="Northern Cape" {% if allocation.province == "Northern Cape" %}selected{% endif %}>Northern Cape</option>
-                                    <option value="Western Cape" {% if allocation.province == "Western Cape" %}selected{% endif %}>Western Cape</option>
-                                    <option value="Free State" {% if allocation.province == "Free State" %}selected{% endif %}>Free State</option>
-                                    <option value="Unknown/Other" {% if allocation.province == "Unknown/Other" %}selected{% endif %}>Unknown/Other</option>
-                                    <option value="To be declared" {% if allocation.province == "To be declared" %}selected{% endif %}>To be declared</option>
-                                </select>
-                            </td>
-                            <td>
-                                <select class="corporate-group" style="width: 100%; border: none; padding: 0.25rem 0.4rem; font-size: 0.7rem; background: transparent;">
-                                    <option value="">{% if not allocation.corporate_group %}{% endif %}</option>
-                                    <option value="Not Applicable (None)" {% if allocation.corporate_group == "Not Applicable (None)" %}selected{% endif %}>Not Applicable (None)</option>
-                                    <option value="Pick n Pay - Franchise" {% if allocation.corporate_group == "Pick n Pay - Franchise" %}selected{% endif %}>Pick n Pay - Franchise</option>
-                                    <option value="Pick n Pay - Corporate" {% if allocation.corporate_group == "Pick n Pay - Corporate" %}selected{% endif %}>Pick n Pay - Corporate</option>
-                                    <option value="Fruit & Veg" {% if allocation.corporate_group == "Fruit & Veg" %}selected{% endif %}>Fruit & Veg</option>
-                                    <option value="OK Foods" {% if allocation.corporate_group == "OK Foods" %}selected{% endif %}>OK Foods</option>
-                                    <option value="Checkers" {% if allocation.corporate_group == "Checkers" %}selected{% endif %}>Checkers</option>
-                                    <option value="Spar" {% if allocation.corporate_group == "Spar" %}selected{% endif %}>Spar</option>
-                                    <option value="SuperSpar" {% if allocation.corporate_group == "SuperSpar" %}selected{% endif %}>SuperSpar</option>
-                                    <option value="Spar - Northrand" {% if allocation.corporate_group == "Spar - Northrand" %}selected{% endif %}>Spar - Northrand</option>
-                                    <option value="Shoprite" {% if allocation.corporate_group == "Shoprite" %}selected{% endif %}>Shoprite</option>
-                                    <option value="Massmart" {% if allocation.corporate_group == "Massmart" %}selected{% endif %}>Massmart</option>
-                                    <option value="Chester Butcheries" {% if allocation.corporate_group == "Chester Butcheries" %}selected{% endif %}>Chester Butcheries</option>
-                                    <option value="Boxer" {% if allocation.corporate_group == "Boxer" %}selected{% endif %}>Boxer</option>
-                                    <option value="Food Lovers Market" {% if allocation.corporate_group == "Food Lovers Market" %}selected{% endif %}>Food Lovers Market</option>
-                                    <option value="Cambridge" {% if allocation.corporate_group == "Cambridge" %}selected{% endif %}>Cambridge</option>
-                                    <option value="Woolworths" {% if allocation.corporate_group == "Woolworths" %}selected{% endif %}>Woolworths</option>
-                                    <option value="Jwayelani" {% if allocation.corporate_group == "Jwayelani" %}selected{% endif %}>Jwayelani</option>
-                                    <option value="Usave" {% if allocation.corporate_group == "Usave" %}selected{% endif %}>Usave</option>
-                                    <option value="Other (Unlisted Group)" {% if allocation.corporate_group == "Other (Unlisted Group)" %}selected{% endif %}>Other (Unlisted Group)</option>
-                                    <option value="OBC" {% if allocation.corporate_group == "OBC" %}selected{% endif %}>OBC</option>
-                                    <option value="Roots" {% if allocation.corporate_group == "Roots" %}selected{% endif %}>Roots</option>
-                                    <option value="Meat World" {% if allocation.corporate_group == "Meat World" %}selected{% endif %}>Meat World</option>
-                                    <option value="Quantum Foods Nulaid" {% if allocation.corporate_group == "Quantum Foods Nulaid" %}selected{% endif %}>Quantum Foods Nulaid</option>
-                                    <option value="Bluff Meat Supply" {% if allocation.corporate_group == "Bluff Meat Supply" %}selected{% endif %}>Bluff Meat Supply</option>
-                                    <option value="Eat Sum Meat" {% if allocation.corporate_group == "Eat Sum Meat" %}selected{% endif %}>Eat Sum Meat</option>
-                                    <option value="Waltloo Meat and Chicken" {% if allocation.corporate_group == "Waltloo Meat and Chicken" %}selected{% endif %}>Waltloo Meat and Chicken</option>
-                                    <option value="Choppies" {% if allocation.corporate_group == "Choppies" %}selected{% endif %}>Choppies</option>
-                                    <option value="Econo Foods" {% if allocation.corporate_group == "Econo Foods" %}selected{% endif %}>Econo Foods</option>
-                                    <option value="Makro" {% if allocation.corporate_group == "Makro" %}selected{% endif %}>Makro</option>
-                                    <option value="Boma Vleismark" {% if allocation.corporate_group == "Boma Vleismark" %}selected{% endif %}>Boma Vleismark</option>
-                                    <option value="Eskort" {% if allocation.corporate_group == "Eskort" %}selected{% endif %}>Eskort</option>
-                                    <option value="Nesta Foods" {% if allocation.corporate_group == "Nesta Foods" %}selected{% endif %}>Nesta Foods</option>
-                                </select>
-                            </td>
-                            <td><input type="text" value="{{ allocation.other|default:'' }}" /></td>
-                            <td><input type="text" class="account-code" value="{{ allocation.internal_account_code|default:'' }}" readonly style="background-color: #f3f4f6;" /></td>
-                            <td style="text-align: center; padding: 0.25rem;"><input type="checkbox" class="allocated-checkbox" style="width: 18px; height: 18px; cursor: pointer;" {% if allocation.allocated %}checked{% endif %} /></td>
-                            <td><input type="text" value="{{ allocation.eclick_name|default:'' }}" /></td>
-                            <td><input type="text" value="{{ allocation.representative_email|default:'' }}" /></td>
-                            <td><input type="text" value="{{ allocation.phone_number|default:'' }}" /></td>
-                            <td><input type="text" value="{{ allocation.duplicates|default:'' }}" /></td>
-                            <td><input type="text" value="{{ allocation.active_status|default:'' }}" /></td>
+                            <td style="padding: 0.5rem; font-size: 0.75rem;">{{ allocation.representative_email|default:'-' }}</td>
+                            <td style="padding: 0.5rem;">{{ allocation.phone_number|default:'-' }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -1345,5 +971,335 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Client Modal -->
+    <div id="addClientModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Client</h3>
+                <button type="button" class="modal-close" onclick="closeAddClientModal()">&times;</button>
+            </div>
+            <form id="addClientForm" method="POST" action="{% url 'add_client_allocation' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="business_name">Business Name (E-Click)</label>
+                            <input type="text" id="business_name" name="business_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="facility_type">Facility Type</label>
+                            <select id="facility_type" name="facility_type">
+                                <option value="">Select...</option>
+                                <option value="Retailer">Retailer</option>
+                                <option value="Butchery">Butchery</option>
+                                <option value="Re-Packer">Re-Packer</option>
+                                <option value="Production Plant">Production Plant</option>
+                                <option value="Farm">Farm</option>
+                                <option value="Abattoir">Abattoir</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="group_type">Group Type</label>
+                            <select id="group_type" name="group_type">
+                                <option value="">Select...</option>
+                                <option value="Individual / Independent Owner">Individual / Independent Owner</option>
+                                <option value="Corporate Store">Corporate Store</option>
+                                <option value="Franchise Store">Franchise Store</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="commodity">Commodity</label>
+                            <select id="commodity" name="commodity">
+                                <option value="">Select...</option>
+                                <option value="EGG">EGG</option>
+                                <option value="PMP">PMP</option>
+                                <option value="RAW">RAW</option>
+                                <option value="PLT">PLT</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="province">Province</label>
+                            <select id="province" name="province">
+                                <option value="">Select...</option>
+                                <option value="TBC">TBC</option>
+                                <option value="Gauteng">Gauteng</option>
+                                <option value="North West">North West</option>
+                                <option value="Eastern Cape">Eastern Cape</option>
+                                <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                <option value="Limpopo">Limpopo</option>
+                                <option value="Mpumalanga">Mpumalanga</option>
+                                <option value="Northern Cape">Northern Cape</option>
+                                <option value="Western Cape">Western Cape</option>
+                                <option value="Free State">Free State</option>
+                                <option value="Unknown/Other">Unknown/Other</option>
+                                <option value="To be declared">To be declared</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="corporate_group">Corporate Group</label>
+                            <select id="corporate_group" name="corporate_group">
+                                <option value="">Select...</option>
+                                <option value="Not Applicable (None)">Not Applicable (None)</option>
+                                <option value="Pick n Pay - Franchise">Pick n Pay - Franchise</option>
+                                <option value="Pick n Pay - Corporate">Pick n Pay - Corporate</option>
+                                <option value="Fruit & Veg">Fruit & Veg</option>
+                                <option value="OK Foods">OK Foods</option>
+                                <option value="Checkers">Checkers</option>
+                                <option value="Spar">Spar</option>
+                                <option value="SuperSpar">SuperSpar</option>
+                                <option value="Spar - Northrand">Spar - Northrand</option>
+                                <option value="Shoprite">Shoprite</option>
+                                <option value="Massmart">Massmart</option>
+                                <option value="Chester Butcheries">Chester Butcheries</option>
+                                <option value="Boxer">Boxer</option>
+                                <option value="Food Lovers Market">Food Lovers Market</option>
+                                <option value="Cambridge">Cambridge</option>
+                                <option value="Woolworths">Woolworths</option>
+                                <option value="Jwayelani">Jwayelani</option>
+                                <option value="Usave">Usave</option>
+                                <option value="Other (Unlisted Group)">Other (Unlisted Group)</option>
+                                <option value="OBC">OBC</option>
+                                <option value="Roots">Roots</option>
+                                <option value="Meat World">Meat World</option>
+                                <option value="Quantum Foods Nulaid">Quantum Foods Nulaid</option>
+                                <option value="Bluff Meat Supply">Bluff Meat Supply</option>
+                                <option value="Eat Sum Meat">Eat Sum Meat</option>
+                                <option value="Waltloo Meat and Chicken">Waltloo Meat and Chicken</option>
+                                <option value="Choppies">Choppies</option>
+                                <option value="Econo Foods">Econo Foods</option>
+                                <option value="Makro">Makro</option>
+                                <option value="Boma Vleismark">Boma Vleismark</option>
+                                <option value="Eskort">Eskort</option>
+                                <option value="Nesta Foods">Nesta Foods</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="allocated">Allocated</label>
+                            <select id="allocated" name="allocated">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="representative_email">Representative Email</label>
+                            <input type="email" id="representative_email" name="representative_email">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Phone Number</label>
+                            <input type="text" id="phone_number" name="phone_number">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddClientModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Client Modal -->
+    <div id="editClientModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Client</h3>
+                <button type="button" class="modal-close" onclick="closeEditClientModal()">&times;</button>
+            </div>
+            <form id="editClientForm" method="POST" action="{% url 'edit_client_allocation' %}">
+                {% csrf_token %}
+                <input type="hidden" id="edit_client_id" name="client_id">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_business_name">Business Name (E-Click)</label>
+                            <input type="text" id="edit_business_name" name="business_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_facility_type">Facility Type</label>
+                            <select id="edit_facility_type" name="facility_type">
+                                <option value="">Select...</option>
+                                <option value="Retailer">Retailer</option>
+                                <option value="Butchery">Butchery</option>
+                                <option value="Re-Packer">Re-Packer</option>
+                                <option value="Production Plant">Production Plant</option>
+                                <option value="Farm">Farm</option>
+                                <option value="Abattoir">Abattoir</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_group_type">Group Type</label>
+                            <select id="edit_group_type" name="group_type">
+                                <option value="">Select...</option>
+                                <option value="Individual / Independent Owner">Individual / Independent Owner</option>
+                                <option value="Corporate Store">Corporate Store</option>
+                                <option value="Franchise Store">Franchise Store</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_commodity">Commodity</label>
+                            <select id="edit_commodity" name="commodity">
+                                <option value="">Select...</option>
+                                <option value="EGG">EGG</option>
+                                <option value="PMP">PMP</option>
+                                <option value="RAW">RAW</option>
+                                <option value="PLT">PLT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_province">Province</label>
+                            <select id="edit_province" name="province">
+                                <option value="">Select...</option>
+                                <option value="TBC">TBC</option>
+                                <option value="Gauteng">Gauteng</option>
+                                <option value="North West">North West</option>
+                                <option value="Eastern Cape">Eastern Cape</option>
+                                <option value="KwaZulu-Natal">KwaZulu-Natal</option>
+                                <option value="Limpopo">Limpopo</option>
+                                <option value="Mpumalanga">Mpumalanga</option>
+                                <option value="Northern Cape">Northern Cape</option>
+                                <option value="Western Cape">Western Cape</option>
+                                <option value="Free State">Free State</option>
+                                <option value="Unknown/Other">Unknown/Other</option>
+                                <option value="To be declared">To be declared</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_corporate_group">Corporate Group</label>
+                            <select id="edit_corporate_group" name="corporate_group">
+                                <option value="">Select...</option>
+                                <option value="Not Applicable (None)">Not Applicable (None)</option>
+                                <option value="Pick n Pay - Franchise">Pick n Pay - Franchise</option>
+                                <option value="Pick n Pay - Corporate">Pick n Pay - Corporate</option>
+                                <option value="Spar">Spar</option>
+                                <option value="SuperSpar">SuperSpar</option>
+                                <option value="Shoprite">Shoprite</option>
+                                <option value="Checkers">Checkers</option>
+                                <option value="Boxer">Boxer</option>
+                                <option value="Woolworths">Woolworths</option>
+                                <option value="Food Lovers Market">Food Lovers Market</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_allocated">Allocated</label>
+                            <select id="edit_allocated" name="allocated">
+                                <option value="">Select...</option>
+                                <option value="yes">Yes</option>
+                                <option value="no">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_active_status">Active Status</label>
+                            <select id="edit_active_status" name="active_status">
+                                <option value="">Select...</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive / Deactivated</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit_representative_email">Representative Email</label>
+                            <input type="email" id="edit_representative_email" name="representative_email">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit_phone_number">Phone Number</label>
+                            <input type="text" id="edit_phone_number" name="phone_number">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditClientModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Selected row tracking
+        let selectedRow = null;
+
+        function selectRow(row) {
+            // Remove previous selection
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+            }
+
+            // Select new row
+            row.classList.add('selected');
+            selectedRow = row;
+
+            // Enable edit button
+            document.getElementById('editClientBtn').disabled = false;
+        }
+
+        function openAddClientModal() {
+            document.getElementById('addClientModal').style.display = 'block';
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('addClientModal').style.display = 'none';
+            document.getElementById('addClientForm').reset();
+        }
+
+        function openEditClientModal() {
+            if (!selectedRow) {
+                alert('Please select a client row to edit');
+                return;
+            }
+
+            // Populate form with selected row data
+            document.getElementById('edit_client_id').value = selectedRow.dataset.clientId;
+            document.getElementById('edit_business_name').value = selectedRow.dataset.businessName || '';
+            document.getElementById('edit_facility_type').value = selectedRow.dataset.facilityType || '';
+            document.getElementById('edit_group_type').value = selectedRow.dataset.groupType || '';
+            document.getElementById('edit_commodity').value = selectedRow.dataset.commodity || '';
+            document.getElementById('edit_province').value = selectedRow.dataset.province || '';
+            document.getElementById('edit_corporate_group').value = selectedRow.dataset.corporateGroup || '';
+            document.getElementById('edit_allocated').value = selectedRow.dataset.allocated || '';
+            document.getElementById('edit_representative_email').value = selectedRow.dataset.email || '';
+            document.getElementById('edit_phone_number').value = selectedRow.dataset.phone || '';
+            document.getElementById('edit_active_status').value = selectedRow.dataset.activeStatus || '';
+
+            document.getElementById('editClientModal').style.display = 'block';
+        }
+
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').style.display = 'none';
+            document.getElementById('editClientForm').reset();
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addClientModal');
+            const editModal = document.getElementById('editClientModal');
+            if (event.target == addModal) {
+                closeAddClientModal();
+            } else if (event.target == editModal) {
+                closeEditClientModal();
+            }
+        }
+    </script>
 </body>
 </html>
