@@ -20,8 +20,8 @@ def test_lab_file_detection():
 
     # Get recent inspections with lab commodities
     inspections = Inspection.objects.filter(
-        date__gte='2025-11-01'
-    ).select_related('client').order_by('-date')[:50]
+        inspection_date__gte='2025-11-01'
+    ).select_related('facility_client_name').order_by('-inspection_date')[:50]
 
     print(f"Testing {len(inspections)} recent inspections...\n")
 
@@ -30,9 +30,9 @@ def test_lab_file_detection():
 
     for inspection in inspections:
         # Check if inspection has RAW commodity (which should have lab files)
-        if inspection.commodities and 'RAW' in inspection.commodities.upper():
-            client_name = inspection.client.name
-            date_str = inspection.date.strftime('%Y-%m-%d')
+        if inspection.commodity and 'RAW' in inspection.commodity.upper():
+            client_name = inspection.facility_client_name.name if inspection.facility_client_name else 'Unknown'
+            date_str = inspection.inspection_date.strftime('%Y-%m-%d')
 
             # Clean client name for folder path
             cleaned_name = client_name.lower()
@@ -46,8 +46,8 @@ def test_lab_file_detection():
             cleaned_name = cleaned_name.replace('.', '')
 
             # Build expected folder path
-            year = inspection.date.strftime('%Y')
-            month = inspection.date.strftime('%B')
+            year = inspection.inspection_date.strftime('%Y')
+            month = inspection.inspection_date.strftime('%B')
 
             base_path = f'/root/Inspection-System/media/inspection/{year}/{month}'
 
@@ -120,20 +120,21 @@ def test_lab_file_detection():
 
     # Get a test inspection
     test_inspection = Inspection.objects.filter(
-        date__gte='2025-11-01',
-        commodities__icontains='RAW'
-    ).select_related('client').first()
+        inspection_date__gte='2025-11-01',
+        commodity__icontains='RAW'
+    ).select_related('facility_client_name').first()
 
     if test_inspection:
-        print(f"Testing API for: {test_inspection.client.name} ({test_inspection.date})")
+        client_name = test_inspection.facility_client_name.name if test_inspection.facility_client_name else 'Unknown'
+        print(f"Testing API for: {client_name} ({test_inspection.inspection_date})")
         print(f"Inspection ID: {test_inspection.id}\n")
 
         # Create request
         request = factory.get('/list-client-folder-files/')
         request.user = User.objects.first()
         request.GET = QueryDict(mutable=True)
-        request.GET['client_name'] = test_inspection.client.name
-        request.GET['date'] = test_inspection.date.strftime('%Y-%m-%d')
+        request.GET['client_name'] = client_name
+        request.GET['date'] = test_inspection.inspection_date.strftime('%Y-%m-%d')
         request.GET['inspection_id'] = str(test_inspection.id)
 
         # Call the view
