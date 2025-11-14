@@ -1,157 +1,109 @@
 #!/usr/bin/env python3
 """
-Test script to display all users in the database with their roles
-Shows which users are inspectors and displays all user information
+Test script to find and display all users in the database
 """
-
 import os
 import django
+import sys
 
-# Set up Django environment
+# Add the project directory to the Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-from django.contrib.auth import get_user_model
-from main.models import InspectorMapping
+# Import User model after Django setup
+from django.contrib.auth.models import User
 
-User = get_user_model()
+def display_user(user, index, total):
+    """Display a single user in a readable format"""
+    print(f"\n[{index}/{total}]")
+    print("=" * 80)
+    print(f"ID: {user.id}")
+    print(f"Username: {user.username}")
+    print(f"Email: {user.email or 'N/A'}")
+    print(f"Full Name: {user.first_name} {user.last_name}".strip() or 'N/A')
 
-if __name__ == '__main__':
-    # Ensure a test user exists: username=Dimakatso, password=password123
-    usr, created = User.objects.get_or_create(username='Dimakatso', defaults={
-        'first_name': 'Dimakatso',
-        'last_name': 'Modiba',
-        'email': ''
-    })
-    usr.set_password('password123')
-    usr.is_active = True
-    usr.save()
-    print("Created user 'Dimakatso' with password 'password123'" if created else "Updated password for user 'Dimakatso'")
+    # Custom fields
+    print(f"Role: {getattr(user, 'role', 'N/A')}")
+    print(f"Phone Number: {getattr(user, 'phone_number', 'N/A') or 'N/A'}")
+    print(f"Department: {getattr(user, 'department', 'N/A') or 'N/A'}")
+    print(f"Employee ID: {getattr(user, 'employee_id', 'N/A') or 'N/A'}")
 
-    print("=" * 100)
-    print("ALL USERS IN DATABASE WITH ROLES")
-    print("=" * 100)
-    print()
+    # Permissions
+    print(f"\nPermissions:")
+    print(f"  Active: {'Yes' if user.is_active else 'No'}")
+    print(f"  Staff: {'Yes' if user.is_staff else 'No'}")
+    print(f"  Superuser: {'Yes' if user.is_superuser else 'No'}")
 
-    users = User.objects.all().order_by('username')
-    
-    # Get all inspector mappings
-    inspector_mappings = InspectorMapping.objects.all()
-    inspector_id_map = {}
-    for mapping in inspector_mappings:
-        inspector_id_map[mapping.inspector_name] = mapping.inspector_id
+    # Activity
+    print(f"\nActivity:")
+    print(f"  Last Login: {user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'}")
+    print(f"  Date Joined: {user.date_joined.strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 80)
 
-    if not users:
-        print("No users found in database.")
-    else:
-        print(f"Total Users: {users.count()}")
-        print()
-        
-        # Count users by role
-        role_counts = {}
-        inspectors = []
-        
-        for user in users:
-            role = getattr(user, 'role', 'inspector')
-            role_counts[role] = role_counts.get(role, 0) + 1
-            if role == 'inspector':
-                inspectors.append(user)
-        
-        print("=" * 100)
-        print("ROLE SUMMARY")
-        print("=" * 100)
-        role_display = {
-            'inspector': 'Inspector',
-            'admin': 'HR/Admin Staff',
-            'super_admin': 'Super Admin',
-            'financial': 'Financial',
-            'scientist': 'Scientist',
-            'developer': 'Developer',
-        }
-        for role, count in sorted(role_counts.items()):
-            display_name = role_display.get(role, role.title())
-            print(f"  {display_name:20s}: {count}")
-        print()
-        print(f"  Total Inspectors: {len(inspectors)}")
-        print()
-        
-        print("=" * 100)
-        print("ALL USERS DETAILED LIST")
-        print("=" * 100)
-        print()
+def main():
+    """Main function to find and display all users"""
 
-        for i, user in enumerate(users, 1):
-            role = getattr(user, 'role', 'inspector')
-            is_inspector = role == 'inspector'
-            
-            # Mark inspectors with special indicator
-            inspector_marker = " [INSPECTOR]" if is_inspector else ""
-            
-            print(f"{i}. User ID: {user.id}{inspector_marker}")
-            print(f"   Username: {user.username}")
-            print(f"   Full Name: {user.get_full_name() or 'N/A'}")
-            print(f"   First Name: {user.first_name or 'N/A'}")
-            print(f"   Last Name: {user.last_name or 'N/A'}")
-            print(f"   Email: {user.email or 'N/A'}")
-            
-            # Role information
-            role_display_name = role_display.get(role, role.title())
-            print(f"   Role: {role_display_name} ({role})")
-            
-            # Additional user fields
-            phone_number = getattr(user, 'phone_number', None)
-            if phone_number:
-                print(f"   Phone: {phone_number}")
-            
-            department = getattr(user, 'department', None)
-            if department:
-                print(f"   Department: {department}")
-            
-            employee_id = getattr(user, 'employee_id', None)
-            if employee_id:
-                print(f"   Employee ID: {employee_id}")
-            
-            # Inspector-specific information
-            if is_inspector:
-                full_name = user.get_full_name() or user.username
-                inspector_id = inspector_id_map.get(full_name)
-                if inspector_id:
-                    print(f"   Inspector ID: {inspector_id}")
-                else:
-                    print(f"   Inspector ID: Not mapped")
-            
-            # Status flags
-            print(f"   Is Active: {user.is_active}")
-            print(f"   Is Staff: {user.is_staff}")
-            print(f"   Is Superuser: {user.is_superuser}")
-            
-            # Dates
-            print(f"   Date Joined: {user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if user.date_joined else 'N/A'}")
-            print(f"   Last Login: {user.last_login.strftime('%Y-%m-%d %H:%M:%S') if user.last_login else 'Never'}")
-            print()
+    print("\n" + "=" * 80)
+    print("USER DATABASE TEST - ALL USERS")
+    print("=" * 80)
 
-        print("=" * 100)
-        print("INSPECTORS ONLY")
-        print("=" * 100)
-        print()
-        
-        if inspectors:
-            for i, inspector in enumerate(inspectors, 1):
-                full_name = inspector.get_full_name() or inspector.username
-                inspector_id = inspector_id_map.get(full_name)
-                
-                print(f"{i}. {full_name}")
-                print(f"   Username: {inspector.username}")
-                print(f"   Email: {inspector.email or 'N/A'}")
-                if inspector_id:
-                    print(f"   Inspector ID: {inspector_id}")
-                else:
-                    print(f"   Inspector ID: Not mapped")
-                print(f"   Employee ID: {getattr(inspector, 'employee_id', 'N/A')}")
-                print(f"   Active: {inspector.is_active}")
-                print()
-        else:
-            print("No inspectors found in database.")
-            print()
+    # Get all users
+    users = User.objects.all().order_by('id')
+    total_count = users.count()
 
-    print("=" * 100)
+    print(f"\nTotal Users: {total_count}")
+
+    if total_count == 0:
+        print("\nNo users found in the database.")
+        return
+
+    # Display all users
+    print("\n" + "-" * 80)
+    print("USER LIST:")
+    print("-" * 80)
+
+    for idx, user in enumerate(users, 1):
+        display_user(user, idx, total_count)
+
+    # Statistics
+    print("\n" + "=" * 80)
+    print("STATISTICS")
+    print("=" * 80)
+
+    # Count by role
+    roles = User.objects.values_list('role', flat=True).distinct()
+    print("\nUsers by Role:")
+    for role in roles:
+        if role:
+            count = User.objects.filter(role=role).count()
+            print(f"  {role}: {count}")
+
+    # Count by status
+    active_count = User.objects.filter(is_active=True).count()
+    inactive_count = User.objects.filter(is_active=False).count()
+    print(f"\nUsers by Status:")
+    print(f"  Active: {active_count}")
+    print(f"  Inactive: {inactive_count}")
+
+    # Count by permissions
+    staff_count = User.objects.filter(is_staff=True).count()
+    superuser_count = User.objects.filter(is_superuser=True).count()
+    print(f"\nUsers by Permissions:")
+    print(f"  Staff: {staff_count}")
+    print(f"  Superuser: {superuser_count}")
+
+    print("\n" + "=" * 80)
+    print("TEST COMPLETED SUCCESSFULLY")
+    print("=" * 80 + "\n")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as e:
+        print(f"\nERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

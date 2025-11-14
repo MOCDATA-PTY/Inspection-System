@@ -2219,15 +2219,109 @@ def upload_document(request):
             # Generate unique filename with timestamp
             file_extension = os.path.splitext(uploaded_file.name)[1]
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            # Special naming for specific document types: Client name-date-type
-            if document_type in ['rfi', 'invoice', 'lab', 'lab_form', 'retest']:
+
+            # Special naming for COA/Lab documents: FSL-RAW-CN-250703
+            if document_type in ['lab', 'lab_form'] and inspection_id:
+                # Get inspection data
+                inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
+
+                if inspection:
+                    # Get lab name (default to FSL if not set)
+                    lab_map = {
+                        'lab_a': 'FSL',
+                        'lab_b': 'Lab-B',
+                        'lab_c': 'Lab-C',
+                        'lab_d': 'Lab-D',
+                        'lab_e': 'Lab-E',
+                        'lab_f': 'Lab-F',
+                    }
+                    lab_name = lab_map.get(inspection.lab, 'FSL') if inspection.lab else 'FSL'
+
+                    # Get commodity (e.g., RAW, POULTRY, PMP, EGGS)
+                    commodity = inspection.commodity.upper() if inspection.commodity else 'UNKNOWN'
+
+                    # Get uploader's first and last name initials (uppercase)
+                    # e.g., Mpho Sevenster → MS, Chrisna Nel → CN
+                    if request.user.first_name and request.user.last_name:
+                        uploader_initials = (request.user.first_name[0] + request.user.last_name[0]).upper()
+                    elif request.user.first_name:
+                        uploader_initials = request.user.first_name[:2].upper()
+                    else:
+                        uploader_initials = request.user.username[:2].upper()
+
+                    # Get year-month from inspection date (format: YYMM)
+                    if inspection.date_of_inspection:
+                        year_month = inspection.date_of_inspection.strftime('%y%m')
+                    else:
+                        year_month = datetime.now().strftime('%y%m')
+
+                    # Get inspection ID (pad with zeros if needed, max 2 digits)
+                    inspection_suffix = str(inspection_id).zfill(2) if len(str(inspection_id)) <= 2 else str(inspection_id)[-2:]
+
+                    # Format: FSL-RAW-CN-250703
+                    filename = f"{lab_name}-{commodity}-{uploader_initials}-{year_month}{inspection_suffix}{file_extension}"
+                    print(f"[COA NAMING] Generated COA filename: {filename}")
+                    print(f"[COA NAMING] Lab: {lab_name}, Commodity: {commodity}, Uploader: {uploader_initials}, Date: {year_month}, InspectionID: {inspection_suffix}")
+                else:
+                    # Fallback to default naming if inspection not found
+                    filename = f"lab-{inspection_id}-{timestamp}{file_extension}"
+            # Special naming for RFI and Invoice: FSA-INV-CN-250707
+            elif document_type in ['rfi', 'invoice']:
+                # Get uploader's first and last name initials (uppercase)
+                # e.g., Mpho Sevenster → MS, Chrisna Nel → CN
+                if request.user.first_name and request.user.last_name:
+                    uploader_initials = (request.user.first_name[0] + request.user.last_name[0]).upper()
+                elif request.user.first_name:
+                    uploader_initials = request.user.first_name[:2].upper()
+                else:
+                    uploader_initials = request.user.username[:2].upper()
+
+                # Get date from group_id or inspection (format: YYMMDD)
+                if group_id:
+                    parts = group_id.split('_')
+                    if len(parts) >= 2:
+                        date_str = parts[-1]
+                        if len(date_str) == 8:
+                            # Convert YYYYMMDD to YYMMDD format
+                            try:
+                                date_obj = datetime.strptime(date_str, '%Y%m%d')
+                                formatted_date = date_obj.strftime('%y%m%d')
+                            except ValueError:
+                                formatted_date = datetime.now().strftime('%y%m%d')
+                        else:
+                            formatted_date = datetime.now().strftime('%y%m%d')
+                    else:
+                        formatted_date = datetime.now().strftime('%y%m%d')
+                elif inspection_id:
+                    # Get date from inspection
+                    inspection = FoodSafetyAgencyInspection.objects.filter(remote_id=inspection_id).first()
+                    if inspection and inspection.date_of_inspection:
+                        formatted_date = inspection.date_of_inspection.strftime('%y%m%d')
+                    else:
+                        formatted_date = datetime.now().strftime('%y%m%d')
+                else:
+                    formatted_date = datetime.now().strftime('%y%m%d')
+
+                # Map document types to their naming suffixes
+                type_mapping = {
+                    'rfi': 'RFI',
+                    'invoice': 'INV'
+                }
+
+                type_suffix = type_mapping.get(document_type, document_type.upper())
+                # Format: FSA-INV-CN-250707
+                filename = f"FSA-{type_suffix}-{uploader_initials}-{formatted_date}{file_extension}"
+                print(f"[{type_suffix} NAMING] Generated filename: {filename}")
+                print(f"[{type_suffix} NAMING] Uploader: {uploader_initials}, Date: {formatted_date}")
+
+            # Special naming for retest: keep old format with client name
+            elif document_type == 'retest':
                 # Clean client name for filename (remove special characters)
                 import re
                 clean_client_name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', client_name)
                 clean_client_name = clean_client_name.replace(' ', '-').replace('_', '-')
                 clean_client_name = re.sub(r'-+', '-', clean_client_name).strip('-')
-                
+
                 # Get date from group_id or inspection
                 if group_id:
                     parts = group_id.split('_')
@@ -2253,18 +2347,8 @@ def upload_document(request):
                         formatted_date = datetime.now().strftime('%Y-%m-%d')
                 else:
                     formatted_date = datetime.now().strftime('%Y-%m-%d')
-                
-                # Map document types to their naming suffixes
-                type_mapping = {
-                    'rfi': 'rfi',
-                    'invoice': 'invoice',
-                    'lab': 'lab',
-                    'lab_form': 'lab-form',
-                    'retest': 'retest'
-                }
-                
-                type_suffix = type_mapping.get(document_type, document_type)
-                filename = f"{clean_client_name}-{formatted_date}-{type_suffix}{file_extension}"
+
+                filename = f"{clean_client_name}-{formatted_date}-retest{file_extension}"
             else:
                 filename = f"{identifier}_{document_type}_{timestamp}{file_extension}"
             
