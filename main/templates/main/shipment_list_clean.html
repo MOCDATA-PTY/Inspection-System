@@ -14443,6 +14443,12 @@
             console.log('[COMPOSITION] DOM loaded, checking composition buttons...');
             // Delay to ensure product classes are loaded
             setTimeout(checkCompositionButtonVisibility, 1000);
+
+            // Validate RFI and Invoice button states based on actual files
+            console.log('[BUTTON STATE] Validating upload button states...');
+            if (typeof validateUploadButtonStates === 'function') {
+                setTimeout(validateUploadButtonStates, 1500);
+            }
         });
 
         // Also run when product class is updated
