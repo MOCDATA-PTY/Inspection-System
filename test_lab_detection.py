@@ -18,91 +18,125 @@ def test_lab_file_detection():
     print("LAB FILE DETECTION TEST")
     print("="*80 + "\n")
 
-    # Get recent inspections with lab commodities
+    # Get recent inspections - ALL of them
     inspections = Inspection.objects.filter(
         inspection_date__gte='2025-11-01'
-    ).order_by('-inspection_date')[:50]
+    ).order_by('-inspection_date')[:100]
 
     print(f"Testing {len(inspections)} recent inspections...\n")
 
-    lab_count = 0
-    no_lab_count = 0
+    has_files_count = 0
+    no_files_count = 0
 
     for inspection in inspections:
-        # Check if inspection has RAW commodity (which should have lab files)
-        if inspection.commodity and 'RAW' in inspection.commodity.upper():
-            client_name = inspection.facility_client_name if inspection.facility_client_name else 'Unknown'
-            date_str = inspection.inspection_date.strftime('%Y-%m-%d')
+        client_name = inspection.facility_client_name if inspection.facility_client_name else 'Unknown'
+        date_str = inspection.inspection_date.strftime('%Y-%m-%d')
 
-            # Clean client name for folder path
-            cleaned_name = client_name.lower()
-            cleaned_name = cleaned_name.replace(' - ', '_')
-            cleaned_name = cleaned_name.replace('-', '_')
-            cleaned_name = cleaned_name.replace(' ', '_')
-            cleaned_name = cleaned_name.replace('/', '_')
-            cleaned_name = cleaned_name.replace('&', 'and')
-            cleaned_name = cleaned_name.replace("'", '')
-            cleaned_name = cleaned_name.replace('"', '')
-            cleaned_name = cleaned_name.replace('.', '')
+        # Clean client name for folder path
+        cleaned_name = client_name.lower()
+        cleaned_name = cleaned_name.replace(' - ', '_')
+        cleaned_name = cleaned_name.replace('-', '_')
+        cleaned_name = cleaned_name.replace(' ', '_')
+        cleaned_name = cleaned_name.replace('/', '_')
+        cleaned_name = cleaned_name.replace('&', 'and')
+        cleaned_name = cleaned_name.replace("'", '')
+        cleaned_name = cleaned_name.replace('"', '')
+        cleaned_name = cleaned_name.replace('.', '')
 
-            # Build expected folder path
-            year = inspection.inspection_date.strftime('%Y')
-            month = inspection.inspection_date.strftime('%B')
+        # Build expected folder path
+        year = inspection.inspection_date.strftime('%Y')
+        month = inspection.inspection_date.strftime('%B')
 
-            base_path = f'/root/Inspection-System/media/inspection/{year}/{month}'
+        base_path = f'/root/Inspection-System/media/inspection/{year}/{month}'
 
-            # Check multiple folder variations
-            folder_variations = [
-                cleaned_name,
-                f"mobile_{cleaned_name}"
-            ]
+        # Check multiple folder variations
+        folder_variations = [
+            cleaned_name,
+            f"mobile_{cleaned_name}"
+        ]
 
-            found_files = []
-            found_folder = None
+        all_files = []
+        found_folder = None
+        actual_folder_name = None
 
-            for folder_var in folder_variations:
-                folder_path = os.path.join(base_path, folder_var, 'Compliance')
+        for folder_var in folder_variations:
+            folder_path = os.path.join(base_path, folder_var)
 
-                if os.path.exists(folder_path):
-                    found_folder = folder_path
+            if os.path.exists(folder_path):
+                found_folder = folder_path
+                actual_folder_name = folder_var
+
+                # Check for Compliance folder
+                compliance_path = os.path.join(folder_path, 'Compliance')
+                if os.path.exists(compliance_path):
                     # Check all commodity subfolders
-                    for commodity in os.listdir(folder_path):
-                        commodity_path = os.path.join(folder_path, commodity)
+                    for commodity in os.listdir(compliance_path):
+                        commodity_path = os.path.join(compliance_path, commodity)
                         if os.path.isdir(commodity_path):
                             for filename in os.listdir(commodity_path):
                                 if os.path.isfile(os.path.join(commodity_path, filename)):
                                     filename_lower = filename.lower()
-                                    # Check if it's a lab file
-                                    if ('lab' in filename_lower or
-                                        filename_lower.startswith('fsl-') or
-                                        filename_lower.startswith('lab-')):
-                                        found_files.append({
-                                            'file': filename,
-                                            'commodity': commodity,
-                                            'path': os.path.join(commodity_path, filename)
-                                        })
+                                    # Categorize file type
+                                    file_type = 'other'
+                                    if 'lab' in filename_lower or filename_lower.startswith('fsl-') or filename_lower.startswith('lab-'):
+                                        file_type = 'lab'
+                                    elif 'rfi' in filename_lower or filename_lower.startswith('fsa-rfi'):
+                                        file_type = 'rfi'
+                                    elif 'inv' in filename_lower or 'invoice' in filename_lower or filename_lower.startswith('fsa-inv'):
+                                        file_type = 'invoice'
 
-            if found_files:
-                lab_count += 1
-                print(f"✓ [{inspection.id}] {client_name} ({date_str})")
-                print(f"  Folder: {found_folder}")
-                print(f"  Lab files found: {len(found_files)}")
-                for file_info in found_files[:3]:  # Show first 3
-                    print(f"    - {file_info['commodity']}/{file_info['file']}")
-                if len(found_files) > 3:
-                    print(f"    ... and {len(found_files) - 3} more")
-                print()
-            else:
-                no_lab_count += 1
-                print(f"✗ [{inspection.id}] {client_name} ({date_str})")
-                print(f"  Expected folder: {base_path}/{cleaned_name}")
-                print(f"  No lab files found")
-                print()
+                                    all_files.append({
+                                        'file': filename,
+                                        'type': file_type,
+                                        'commodity': commodity,
+                                        'path': os.path.join(commodity_path, filename)
+                                    })
+
+                # Check for RFI folder
+                rfi_path = os.path.join(folder_path, 'rfi')
+                if os.path.exists(rfi_path):
+                    for filename in os.listdir(rfi_path):
+                        if os.path.isfile(os.path.join(rfi_path, filename)):
+                            all_files.append({
+                                'file': filename,
+                                'type': 'rfi',
+                                'folder': 'rfi',
+                                'path': os.path.join(rfi_path, filename)
+                            })
+
+        if all_files:
+            has_files_count += 1
+            # Count by type
+            lab_files = [f for f in all_files if f['type'] == 'lab']
+            rfi_files = [f for f in all_files if f['type'] == 'rfi']
+            invoice_files = [f for f in all_files if f['type'] == 'invoice']
+
+            print(f"✓ [{inspection.id}] {client_name} ({date_str}) - Commodity: {inspection.commodity or 'N/A'}")
+            print(f"  Actual folder: {actual_folder_name}")
+            print(f"  Full path: {found_folder}")
+            print(f"  Files: {len(lab_files)} lab, {len(rfi_files)} rfi, {len(invoice_files)} invoice")
+
+            # Show sample files
+            if lab_files:
+                print(f"  Lab files:")
+                for f in lab_files[:2]:
+                    print(f"    - {f.get('commodity', 'N/A')}/{f['file']}")
+            if rfi_files:
+                print(f"  RFI files:")
+                for f in rfi_files[:2]:
+                    print(f"    - {f['file']}")
+            print()
+        else:
+            no_files_count += 1
+            print(f"✗ [{inspection.id}] {client_name} ({date_str}) - Commodity: {inspection.commodity or 'N/A'}")
+            print(f"  Expected: {base_path}/{cleaned_name}")
+            print(f"  No files found")
+            print()
 
     print("="*80)
     print(f"SUMMARY:")
-    print(f"  Inspections with lab files: {lab_count}")
-    print(f"  Inspections without lab files: {no_lab_count}")
+    print(f"  Inspections with files: {has_files_count}")
+    print(f"  Inspections without files: {no_files_count}")
     print("="*80 + "\n")
 
     # Now test the API endpoint directly
@@ -118,11 +152,17 @@ def test_lab_file_detection():
 
     factory = RequestFactory()
 
-    # Get a test inspection
+    # Get a test inspection with RAW commodity
     test_inspection = Inspection.objects.filter(
         inspection_date__gte='2025-11-01',
         commodity__icontains='RAW'
     ).first()
+
+    if not test_inspection:
+        # Try any inspection
+        test_inspection = Inspection.objects.filter(
+            inspection_date__gte='2025-11-01'
+        ).first()
 
     if test_inspection:
         client_name = test_inspection.facility_client_name if test_inspection.facility_client_name else 'Unknown'
