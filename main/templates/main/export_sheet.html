@@ -162,8 +162,12 @@
         
         .card-body {
             padding: 16px;
-            overflow-x: auto;
             background: var(--background);
+        }
+
+        .card-body .table-responsive {
+            margin: 0 -16px;
+            padding: 0 16px;
         }
         
         .action-bar {
@@ -308,10 +312,10 @@
         }
 
         #exportTable {
-            width: auto;
+            width: max-content;
             border-collapse: collapse;
             min-width: 100%;
-            table-layout: fixed;
+            table-layout: auto;
         }
 
         #exportTable thead {
@@ -327,8 +331,9 @@
             background-color: var(--primary-light);
             border-bottom: 2px solid var(--border);
             white-space: nowrap;
-            padding: 8px 12px;
-            font-size: 0.7rem;
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
 
         #exportTable tbody tr {
@@ -342,74 +347,100 @@
 
         #exportTable tbody td {
             border-bottom: 1px solid var(--border);
-            font-size: 0.7rem;
-            line-height: 1.4;
+            font-size: 0.75rem;
+            line-height: 1.5;
             vertical-align: middle;
-            padding: 10px 12px;
+            padding: 12px 16px;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         #exportTable tbody tr:last-child td {
             border-bottom: none;
         }
 
-        /* Specific column widths to prevent huge rows */
+        /* Specific column widths */
+        /* *ContactName */
         #exportTable th:nth-child(1),
         #exportTable td:nth-child(1) {
-            min-width: 200px;
-            max-width: 250px;
+            min-width: 180px;
         }
 
+        /* Inspector */
         #exportTable th:nth-child(2),
         #exportTable td:nth-child(2) {
             min-width: 150px;
-            max-width: 200px;
         }
 
+        /* POCity */
         #exportTable th:nth-child(3),
-        #exportTable th:nth-child(4),
-        #exportTable th:nth-child(5),
-        #exportTable th:nth-child(6),
-        #exportTable td:nth-child(3),
-        #exportTable td:nth-child(4),
-        #exportTable td:nth-child(5),
-        #exportTable td:nth-child(6) {
+        #exportTable td:nth-child(3) {
             min-width: 120px;
-            max-width: 150px;
         }
 
+        /* POCountry */
+        #exportTable th:nth-child(4),
+        #exportTable td:nth-child(4) {
+            min-width: 100px;
+        }
+
+        /* *InvoiceNumber */
+        #exportTable th:nth-child(5),
+        #exportTable td:nth-child(5) {
+            min-width: 180px;
+        }
+
+        /* Reference */
+        #exportTable th:nth-child(6),
+        #exportTable td:nth-child(6) {
+            min-width: 180px;
+        }
+
+        /* *InvoiceDate */
         #exportTable th:nth-child(7),
         #exportTable td:nth-child(7) {
-            min-width: 120px;
-            max-width: 150px;
+            min-width: 110px;
         }
 
+        /* Total */
         #exportTable th:nth-child(8),
+        #exportTable td:nth-child(8) {
+            min-width: 100px;
+        }
+
+        /* InventoryItemCode */
         #exportTable th:nth-child(9),
-        #exportTable th:nth-child(10),
-        #exportTable td:nth-child(8),
-        #exportTable td:nth-child(9),
-        #exportTable td:nth-child(10) {
-            min-width: 100px;
-            max-width: 120px;
-        }
-
-        #exportTable th:nth-child(11),
-        #exportTable th:nth-child(12),
-        #exportTable td:nth-child(11),
-        #exportTable td:nth-child(12) {
+        #exportTable td:nth-child(9) {
             min-width: 120px;
-            max-width: 150px;
         }
 
+        /* *Description */
+        #exportTable th:nth-child(10),
+        #exportTable td:nth-child(10) {
+            min-width: 350px;
+        }
+
+        /* *Quantity */
+        #exportTable th:nth-child(11),
+        #exportTable td:nth-child(11) {
+            min-width: 90px;
+        }
+
+        /* *UnitAmount */
+        #exportTable th:nth-child(12),
+        #exportTable td:nth-child(12) {
+            min-width: 110px;
+        }
+
+        /* *AccountCode */
         #exportTable th:nth-child(13),
+        #exportTable td:nth-child(13) {
+            min-width: 120px;
+        }
+
+        /* *TaxType */
         #exportTable th:nth-child(14),
-        #exportTable td:nth-child(13),
         #exportTable td:nth-child(14) {
-            min-width: 100px;
-            max-width: 120px;
+            min-width: 180px;
         }
 
         #exportTable th:nth-child(15),
@@ -544,12 +575,54 @@
                 </button>
             </form>
         </div>
-        
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-primary-light p-3 rounded-lg">
+                        <i class="fas fa-file-invoice text-primary text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Total Invoice Items</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_items }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-clipboard-check text-green-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Inspections Processed</p>
+                        <p class="text-2xl font-semibold text-gray-900">{{ inspections_processed }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Unique Clients</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="uniqueClients">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Export content card -->
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    <i class="fas fa-file-export"></i> Export Data
+                    <i class="fas fa-file-export"></i> Invoice Line Items Dashboard
+                </div>
+                <div class="text-sm text-gray-500">
+                    Showing {{ total_items }} invoice line items generated from inspections
                 </div>
             </div>
             <div class="card-body">
@@ -587,6 +660,10 @@
                     <button onclick="clearAllFilters()" class="btn btn-secondary" style="align-self: flex-end;">
                         <i class="fas fa-times"></i> Clear All
                     </button>
+
+                    <button onclick="exportToExcel()" class="btn btn-success" style="align-self: flex-end; margin-left: auto;">
+                        <i class="fas fa-file-excel"></i> Export to Excel
+                    </button>
                 </div>
                 
                 <div class="table-responsive" style="overflow-x: auto;">
@@ -594,31 +671,61 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*ContactName</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">EmailAddress</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine1</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine2</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine3</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POAddressLine4</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Inspector</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCity</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">PORegion</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POPostalCode</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCountry</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceNumber</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Reference</th>
                                 <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceDate</th>
-                                <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">*DueDate</th>
                                 <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">Total</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">InventoryItemCode</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*Description</th>
                                 <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">*Quantity</th>
                                 <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">*UnitAmount</th>
-                                <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">Discount</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*AccountCode</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*TaxType</th>
                             </tr>
                         </thead>
                         <tbody id="exportTableBody" class="bg-white divide-y divide-gray-200">
-                            <!-- Data will be inserted here by JavaScript -->
+                            {% for item in invoice_items %}
+                            <tr class="hover:bg-gray-50 transition-colors"
+                                data-contact="{{ item.client_name }}"
+                                data-reference="{{ item.invoice_ref }}"
+                                data-rfi="{{ item.rfi_ref }}"
+                                data-city="{{ item.city }}"
+                                data-date="{{ item.invoice_date }}"
+                                data-inspector="{{ item.inspector_name }}"
+                                data-country="{{ item.country }}"
+                                data-itemcode="{{ item.item_code }}"
+                                data-description="{{ item.description }}"
+                                data-quantity="{{ item.quantity }}"
+                                data-unitamount="{{ item.unit_amount }}"
+                                data-total="{{ item.total }}"
+                                data-accountcode="{{ item.account_code }}"
+                                data-taxtype="{{ item.tax_rate }}">
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.client_name|default:'' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.inspector_name|default:'' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.city|default:'' }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.country|default:'' }}</td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ item.invoice_ref }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.rfi_ref|default:'' }}</td>
+                                <td class="px-4 py-3 text-sm text-center text-gray-900">{{ item.invoice_date }}</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.total|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.item_code }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.description }}</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.quantity|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.unit_amount|floatformat:2 }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.account_code }}</td>
+                                <td class="px-4 py-3 text-sm text-gray-900">{{ item.tax_rate }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="14" class="px-4 py-8 text-center text-gray-500">
+                                    <i class="fas fa-inbox text-4xl mb-2"></i>
+                                    <p>No invoice items found. Complete inspections with hours, travel, and test data to generate invoice line items.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -865,36 +972,91 @@
 
         // Get data for export
         function getExportData() {
-            const headers = [];
-            document.querySelectorAll('#exportTable thead th').forEach(th => {
-                headers.push(th.textContent.trim());
-            });
+            // Xero-compatible headers with all required columns
+            const headers = [
+                '*ContactName',
+                'EmailAddress',
+                'POAddressLine1',
+                'POAddressLine2',
+                'POAddressLine3',
+                'POAddressLine4',
+                'POCity',
+                'PORegion',
+                'POPostalCode',
+                'POCountry',
+                '*InvoiceNumber',
+                'Reference',
+                '*InvoiceDate',
+                '*DueDate',
+                'Total',
+                'InventoryItemCode',
+                '*Description',
+                '*Quantity',
+                '*UnitAmount',
+                'Discount',
+                '*AccountCode',
+                '*TaxType',
+                'TaxAmount',
+                'TrackingName1',
+                'TrackingOption1',
+                'TrackingName2',
+                'TrackingOption2',
+                'Currency',
+                'BrandingTheme'
+            ];
 
             const data = [headers];
-            filteredData.forEach(row => {
+
+            // Get all visible table rows
+            const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
+            rows.forEach(row => {
+                const contactName = row.getAttribute('data-contact') || '';
+                const city = row.getAttribute('data-city') || '';
+                const country = row.getAttribute('data-country') || '';
+                const invoiceRef = row.getAttribute('data-reference') || '';
+                const rfiRef = row.getAttribute('data-rfi') || '';
+                const invoiceDate = row.getAttribute('data-date') || '';
+                const total = row.getAttribute('data-total') || '';
+                const itemCode = row.getAttribute('data-itemcode') || '';
+                const description = row.getAttribute('data-description') || '';
+                const quantity = row.getAttribute('data-quantity') || '';
+                const unitAmount = row.getAttribute('data-unitamount') || '';
+                const accountCode = row.getAttribute('data-accountcode') || '';
+                const taxType = row.getAttribute('data-taxtype') || '';
+
+                // Calculate tax amount (15% of total)
+                const taxAmount = total ? (parseFloat(total) * 0.15).toFixed(2) : '';
+
                 data.push([
-                    row.ContactName || '',
-                    row.EmailAddress || '',
-                    row.POAddressLine1 || '',
-                    row.POAddressLine2 || '',
-                    row.POAddressLine3 || '',
-                    row.POAddressLine4 || '',
-                    row.POCity || '',
-                    row.PORegion || '',
-                    row.POPostalCode || '',
-                    row.POCountry || '',
-                    row.InvoiceNumber || '',
-                    row.Reference || '',
-                    row.InvoiceDate || '',
-                    row.DueDate || '',
-                    row.Total || '',
-                    row.InventoryItemCode || '',
-                    row.Description || '',
-                    row.Quantity || '',
-                    row.UnitAmount || '',
-                    row.Discount || '',
-                    row.AccountCode || '',
-                    row.TaxType || ''
+                    contactName,              // *ContactName
+                    '',                       // EmailAddress
+                    '',                       // POAddressLine1
+                    '',                       // POAddressLine2
+                    '',                       // POAddressLine3
+                    '',                       // POAddressLine4
+                    city,                     // POCity
+                    '',                       // PORegion
+                    '',                       // POPostalCode
+                    country,                  // POCountry
+                    invoiceRef,               // *InvoiceNumber
+                    rfiRef,                   // Reference
+                    invoiceDate,              // *InvoiceDate
+                    '',                       // *DueDate
+                    total,                    // Total
+                    itemCode,                 // InventoryItemCode
+                    description,              // *Description
+                    quantity,                 // *Quantity
+                    unitAmount,               // *UnitAmount
+                    '0',                      // Discount
+                    accountCode,              // *AccountCode
+                    taxType,                  // *TaxType
+                    taxAmount,                // TaxAmount
+                    '',                       // TrackingName1
+                    '',                       // TrackingOption1
+                    '',                       // TrackingName2
+                    '',                       // TrackingOption2
+                    'ZAR',                    // Currency
+                    ''                        // BrandingTheme
                 ]);
             });
 
@@ -1022,8 +1184,28 @@
             exportAsGoogleSheets();
         }
 
+        // Calculate unique stats
+        function calculateUniqueStats() {
+            const rows = document.querySelectorAll('#exportTableBody tr[data-reference]');
+            const uniqueInvoices = new Set();
+            const uniqueClients = new Set();
+
+            rows.forEach(row => {
+                const ref = row.getAttribute('data-reference');
+                const client = row.getAttribute('data-contact');
+                if (ref) uniqueInvoices.add(ref);
+                if (client) uniqueClients.add(client);
+            });
+
+            document.getElementById('uniqueInspections').textContent = uniqueInvoices.size;
+            document.getElementById('uniqueClients').textContent = uniqueClients.size;
+        }
+
         // Add event listeners for filters (Enter key to apply)
         document.addEventListener('DOMContentLoaded', function() {
+            // Calculate unique inspections and clients
+            calculateUniqueStats();
+
             const filterInputs = [
                 'contactNameFilter',
                 'referenceFilter',

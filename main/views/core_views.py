@@ -4388,8 +4388,441 @@ def dashboard(request):
 
 @login_required(login_url='login')
 def export_sheet(request):
-    """Export Sheet page - blank page with only the word 'Export Sheet'"""
-    return render(request, 'main/export_sheet.html', {})
+    """Export Sheet page - Invoice dashboard replicating Looker Studio"""
+    from datetime import datetime
+    from django.db.models import Q
+
+    # Fetch inspections with billable data (has hours, travel, or tests)
+    # Only include inspections that have at least one billable item
+    inspections = FoodSafetyAgencyInspection.objects.filter(
+        Q(hours__isnull=False) |
+        Q(km_traveled__isnull=False) |
+        Q(fat=True) |
+        Q(protein=True) |
+        Q(calcium=True) |
+        Q(dna=True) |
+        Q(bought_sample__isnull=False)
+    ).select_related(
+        'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
+    ).order_by('date_of_inspection', 'inspector_name')
+
+    # Generate invoice line items
+    invoice_items = []
+    inspection_counter = {}  # Track sequential inspection IDs per inspector
+    inspections_processed = 0
+
+    for inspection in inspections:
+        inspections_processed += 1
+        # Generate unique inspection ID
+        inspector_key = inspection.inspector_name or 'Unknown'
+        if inspector_key not in inspection_counter:
+            inspection_counter[inspector_key] = 1
+        else:
+            inspection_counter[inspector_key] += 1
+
+        inspection_id = inspection_counter[inspector_key]
+
+        # Get inspector code (first letters of each name)
+        inspector_code = ''
+        if inspection.inspector_name:
+            name_parts = inspection.inspector_name.split()
+            inspector_code = ''.join([part[0].upper() for part in name_parts if part])
+
+        # Generate invoice reference number
+        date_str = ''
+        if inspection.date_of_inspection:
+            date_str = inspection.date_of_inspection.strftime('%y%m%d')
+
+        invoice_ref = f"FSA-INV-{inspector_code}-{date_str}" if date_str else ''
+        rfi_ref = f"FSA-RFI-{inspector_code}-{date_str}" if date_str else ''
+
+        # Determine product type (PMP or RAW)
+        product_type = 'RAW' if inspection.commodity and 'RAW' in inspection.commodity.upper() else 'PMP'
+
+        # Get client location (city) - extract from client_name if available
+        city = ''
+        if inspection.client_name:
+            # Try to extract city from client name (simple heuristic)
+            parts = inspection.client_name.split()
+            city = parts[-1] if len(parts) > 1 else ''
+
+        # Lab used
+        lab_name = 'Food Safety Laboratory' if inspection.lab else ''
+
+        # Generate line items for this inspection
+        items = generate_invoice_line_items(
+            inspection_id=inspection_id,
+            inspection=inspection,
+            invoice_ref=invoice_ref,
+            rfi_ref=rfi_ref,
+            product_type=product_type,
+            city=city,
+            lab_name=lab_name
+        )
+
+        invoice_items.extend(items)
+
+    # Calculate unique inspectors
+    unique_inspectors = set(item['inspector_name'] for item in invoice_items if item.get('inspector_name'))
+
+    context = {
+        'invoice_items': invoice_items,
+        'total_items': len(invoice_items),
+        'inspections_processed': inspections_processed,
+        'unique_inspectors': len(unique_inspectors),
+    }
+
+    return render(request, 'main/export_sheet.html', context)
+
+
+def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref, product_type, city, lab_name):
+    """Generate up to 13 invoice line items for a single inspection"""
+    items = []
+
+    # Pricing constants
+    INSPECTION_HOUR_RATE = 481.5
+    TRAVEL_RATE_PER_KM = 6.5
+    FAT_TEST_RATE = 779.81
+    PROTEIN_TEST_RATE = 474.52
+    CALCIUM_TEST_RATE_PMP = 269.72
+    CALCIUM_TEST_RATE_RAW = 357.6
+    DNA_TEST_RATE = 2458.2
+
+    # Get inspector initials + last name
+    inspector_display = ''
+    if inspection.inspector_name:
+        name_parts = inspection.inspector_name.split()
+        if len(name_parts) >= 2:
+            inspector_display = f"{name_parts[0][0]} {name_parts[-1]}"
+        else:
+            inspector_display = inspection.inspector_name
+
+    # Format date for descriptions
+    date_formatted = inspection.date_of_inspection.strftime('%d/%m/%Y') if inspection.date_of_inspection else ''
+
+    if product_type == 'PMP':
+        # PMP Line Items (rows 1-6)
+
+        # Row 1: Inspection Hours
+        if inspection.hours:
+            items.append({
+                'row_number': 1,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 060',
+                'description': f"Inspection on Regulated Animal Products (Processed Meat Products): Inspection (hours) - {date_formatted} - {inspector_display} - {inspection.client_name}",
+                'quantity': float(inspection.hours),
+                'unit_amount': INSPECTION_HOUR_RATE,
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 2: Travel Cost
+        if inspection.km_traveled:
+            items.append({
+                'row_number': 2,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 061',
+                'description': f"Inspection on Regulated Animal Products (Processed Meat Products): Travel Cost (Km's) - {date_formatted}",
+                'quantity': float(inspection.km_traveled),
+                'unit_amount': TRAVEL_RATE_PER_KM,
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 3: Fat Test
+        if inspection.fat:
+            items.append({
+                'row_number': 3,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 062',
+                'description': 'Sample Taking: Fat Content (Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': FAT_TEST_RATE,
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 4: Protein Test
+        if inspection.protein:
+            items.append({
+                'row_number': 4,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 064',
+                'description': 'Sample Taking: Protein Content (Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': PROTEIN_TEST_RATE,
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 5: Calcium Test
+        if inspection.calcium:
+            items.append({
+                'row_number': 5,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 066',
+                'description': 'Sample Taking: Calcium Determination (MRM only)',
+                'quantity': 1,
+                'unit_amount': CALCIUM_TEST_RATE_PMP,
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 6: Samples Bought
+        if inspection.bought_sample:
+            items.append({
+                'row_number': 6,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'PMP 067',
+                'description': 'Samples Bought',
+                'quantity': 1,
+                'unit_amount': float(inspection.bought_sample),
+                'account_code': '1000/060',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+    else:  # RAW products
+        # RAW Line Items (rows 7-13)
+
+        # Row 7: Inspection Hours
+        if inspection.hours:
+            items.append({
+                'row_number': 7,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 050',
+                'description': f"Inspection on Regulated Animal Products (Certain Raw Processed Meat Products): Inspection (Hours) - {date_formatted} - {inspector_display} - {inspection.client_name}",
+                'quantity': float(inspection.hours),
+                'unit_amount': INSPECTION_HOUR_RATE,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 8: Travel Cost
+        if inspection.km_traveled:
+            items.append({
+                'row_number': 8,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 051',
+                'description': f"Inspection on Regulated Animal Products (Certain Raw Processed Meat Products): Travel Cost (Km's) - {date_formatted}",
+                'quantity': float(inspection.km_traveled),
+                'unit_amount': TRAVEL_RATE_PER_KM,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 9: Fat Test
+        if inspection.fat:
+            items.append({
+                'row_number': 9,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 052',
+                'description': 'Sample Taking: Category A - Fat Content (Certain Raw Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': FAT_TEST_RATE,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 10: Protein Test
+        if inspection.protein:
+            items.append({
+                'row_number': 10,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 053',
+                'description': 'Sample Taking: Category A - Protein (Meat) Content (Certain Raw Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': PROTEIN_TEST_RATE,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 11: DNA Test
+        if inspection.dna:
+            items.append({
+                'row_number': 11,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 056',
+                'description': 'Sample Taking: Category C - Meat Specie ID (DNA) (Certain Raw Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': DNA_TEST_RATE,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 12: Calcium Test
+        if inspection.calcium:
+            items.append({
+                'row_number': 12,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 057',
+                'description': 'Sample Taking: Calcium Determination (MRM Only) (Certain Raw Processed Meat Products)',
+                'quantity': 1,
+                'unit_amount': CALCIUM_TEST_RATE_RAW,
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+        # Row 13: Samples Bought
+        if inspection.bought_sample:
+            items.append({
+                'row_number': 13,
+                'inspection_id': inspection_id,
+                'invoice_ref': invoice_ref,
+                'rfi_ref': rfi_ref,
+                'inspector_name': inspection.inspector_name,
+                'invoice_date': date_formatted,
+                'client_name': inspection.client_name,
+                'city': city,
+                'product_type': product_type,
+                'product_name': inspection.product_name,
+                'product_class': inspection.product_class,
+                'item_code': 'RAW 058',
+                'description': 'Samples Bought',
+                'quantity': 1,
+                'unit_amount': float(inspection.bought_sample),
+                'account_code': '1000/050',
+                'tax_rate': 'Standard Rate Sales (15%)',
+                'country': 'South Africa',
+                'lab': lab_name,
+            })
+
+    # Calculate total for each item
+    for item in items:
+        item['total'] = item['quantity'] * item['unit_amount']
+
+    return items
 
 @login_required(login_url='login')
 def export_to_google_sheets(request):
