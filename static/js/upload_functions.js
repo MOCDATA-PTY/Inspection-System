@@ -1692,11 +1692,21 @@ async function deleteFile(filePath, fileName) {
             
             // Refresh the files list with a delay to ensure server-side cleanup is complete
             if (groupId && clientName && inspectionDate) {
-                console.log('INFO Scheduling fresh file list reload...');
-                setTimeout(() => {
-                    loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
-                }, 500); // Give server time to complete cleanup
-                
+                console.log('INFO Scheduling fresh file list reload and Files button update...');
+
+                // Step 1: Wait 500ms for server to process deletion
+                setTimeout(async () => {
+                    // Step 2: Rescan files
+                    console.log('INFO Rescanning files after deletion...');
+                    await loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
+
+                    // Step 3: Wait additional 500ms for scan to complete, then update Files button
+                    setTimeout(() => {
+                        console.log('COLOR Updating View Files button color after file rescan...');
+                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    }, 500);
+                }, 500);
+
                 // For RFI and Invoice deletions, ensure button stays reset and prevent reversion
                 if (documentType === 'rfi' || documentType === 'invoice') {
                     // Mark this button as permanently reset to prevent UI updates from overriding it
@@ -1705,12 +1715,12 @@ async function deleteFile(filePath, fileName) {
                     if (button) {
                         // Set a data attribute to mark this button as reset after deletion
                         button.setAttribute('data-file-deleted', 'true');
-                        
+
                         // Clear any localStorage entries that might cause the button to show as uploaded
                         const uploadStatus = JSON.parse(localStorage.getItem('uploadStatus') || '{}');
                         delete uploadStatus[buttonId];
                         localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
-                        
+
                         // Force the button to stay in uploadable state - GREY
                         button.disabled = false;
                         button.className = 'btn btn-secondary btn-sm';
@@ -1732,15 +1742,9 @@ async function deleteFile(filePath, fileName) {
                         } else if (documentType === 'composition') {
                             button.onclick = function() { uploadComposition(groupId); };
                         }
-                        
+
                         console.log(`SUCCESS Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
                     }
-                    
-                    // Update View Files button colors after file deletion with delay to ensure server processed deletion
-                    console.log('COLOR Scheduling View Files button color update after file deletion...');
-                    setTimeout(() => {
-                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
-                    }, 600); // Wait slightly longer than the file list reload
                     
                     // IMMEDIATE TARGETED CHECK: Run appropriate targeted check based on file type
                     console.log(`DEBUG [DEBUG] Document type: ${documentType}, Group ID: ${groupId}`);
@@ -1765,12 +1769,6 @@ async function deleteFile(filePath, fileName) {
                     } else {
                         console.log(`⚠️ [DEBUG] Not running targeted check - document type is: ${documentType}`);
                     }
-                } else {
-                    // Update View Files button colors after file deletion with delay for other document types
-                    console.log('COLOR Scheduling View Files button color update after file deletion...');
-                    setTimeout(() => {
-                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
-                    }, 600); // Wait for server to process deletion
                 }
             }
         } else {
