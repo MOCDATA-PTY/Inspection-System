@@ -1736,9 +1736,11 @@ async function deleteFile(filePath, fileName) {
                         console.log(`SUCCESS Permanently reset ${documentType} button for ${clientName} - marked as file-deleted`);
                     }
                     
-                    // IMMEDIATELY update View Files button colors after file deletion
-                    console.log('COLOR Immediately updating View Files button colors after file deletion...');
-                    updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    // Update View Files button colors after file deletion with delay to ensure server processed deletion
+                    console.log('COLOR Scheduling View Files button color update after file deletion...');
+                    setTimeout(() => {
+                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    }, 600); // Wait slightly longer than the file list reload
                     
                     // IMMEDIATE TARGETED CHECK: Run appropriate targeted check based on file type
                     console.log(`DEBUG [DEBUG] Document type: ${documentType}, Group ID: ${groupId}`);
@@ -1764,9 +1766,11 @@ async function deleteFile(filePath, fileName) {
                         console.log(`⚠️ [DEBUG] Not running targeted check - document type is: ${documentType}`);
                     }
                 } else {
-                    // IMMEDIATELY update View Files button colors after file deletion for other document types
-                    console.log('COLOR Immediately updating View Files button colors after file deletion...');
-                    updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    // Update View Files button colors after file deletion with delay for other document types
+                    console.log('COLOR Scheduling View Files button color update after file deletion...');
+                    setTimeout(() => {
+                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    }, 600); // Wait for server to process deletion
                 }
             }
         } else {
