@@ -10697,6 +10697,13 @@
             const ext = filename.split('.').pop().toLowerCase();
             const filePath = file.relative_path || file.path;
 
+            // DEBUG LOGGING
+            console.log('[DEBUG] getViewButton called for file:', filename);
+            console.log('[DEBUG] File object:', file);
+            console.log('[DEBUG] file.relative_path:', file.relative_path);
+            console.log('[DEBUG] file.path:', file.path);
+            console.log('[DEBUG] Resolved filePath:', filePath);
+
             // For ZIP files, show extract/contents button instead of view
             if (ext === 'zip' || ext === 'rar') {
                 return `
@@ -10711,6 +10718,7 @@
             if (viewableTypes.includes(ext)) {
                 // Use OneDrive URL if available, otherwise use local URL with action=view
                 const viewUrl = file.url || '/inspections/download-file/?file=' + encodeURIComponent(filePath) + '&source=' + (file.source || 'local') + '&action=view';
+                console.log('[DEBUG] Generated viewUrl:', viewUrl);
                 return `
                     <a href="${viewUrl}" class="btn btn-file btn-primary" target="_blank" title="View File">
                         <i class="fas fa-eye"></i>
