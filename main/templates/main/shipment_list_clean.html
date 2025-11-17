@@ -10660,7 +10660,7 @@
                                 </div>
                                 <div class="file-actions">
                                     ${getViewButton(file)}
-                                    <a href="${file.url || '/download-inspection-file/?file=' + encodeURIComponent(file.path) + '&source=' + (file.source || 'local')}" class="btn btn-file btn-secondary" title="Download File">
+                                    <a href="${file.url || '/inspections/download-file/?file=' + encodeURIComponent(file.relative_path || file.path) + '&source=' + (file.source || 'local')}" class="btn btn-file btn-secondary" title="Download File">
                                         <i class="fas fa-download"></i>
                                     </a>
                                     ${category.key !== 'compliance' && !(file.relative_path && file.relative_path.toLowerCase().includes('compliance')) && !(file.path && file.path.toLowerCase().includes('compliance')) ? `
@@ -10693,13 +10693,14 @@
         }
 
         function getViewButton(file) {
-            const filename = file.filename || file.nam;e;
+            const filename = file.filename || file.name;
             const ext = filename.split('.').pop().toLowerCase();
+            const filePath = file.relative_path || file.path;
 
             // For ZIP files, show extract/contents button instead of view
             if (ext === 'zip' || ext === 'rar') {
                 return `
-                    <button class="btn btn-file btn-warning" onclick="showZipContents('${file.path}', '${file.source || 'local'}')" title="Show ZIP Contents">
+                    <button class="btn btn-file btn-warning" onclick="showZipContents('${filePath}', '${file.source || 'local'}')" title="Show ZIP Contents">
                         <i class="fas fa-eye"></i>
                     </button>
                 `;
@@ -10708,8 +10709,8 @@
             // For viewable files (PDF, images, etc.), show view button
             const viewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt'];
             if (viewableTypes.includes(ext)) {
-                // Use OneDrive URL if available, otherwise use local URL
-                const viewUrl = file.url || '/download-inspection-file/?file=' + encodeURIComponent(file.path) + '&source=' + (file.source || 'local');
+                // Use OneDrive URL if available, otherwise use local URL with action=view
+                const viewUrl = file.url || '/inspections/download-file/?file=' + encodeURIComponent(filePath) + '&source=' + (file.source || 'local') + '&action=view';
                 return `
                     <a href="${viewUrl}" class="btn btn-file btn-primary" target="_blank" title="View File">
                         <i class="fas fa-eye"></i>

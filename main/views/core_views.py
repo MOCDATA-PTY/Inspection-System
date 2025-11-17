@@ -10939,18 +10939,25 @@ def download_local_file(request, relative_path):
         }
         
         content_type = content_types.get(ext, content_type)
-        
-        # Create file response with proper download headers
+
+        # Check if action is view or download
+        action = request.GET.get('action', 'download')
+        is_download = action != 'view'
+
+        # Create file response
         response = FileResponse(
             open(file_path, 'rb'),
             content_type=content_type,
-            as_attachment=True,
+            as_attachment=is_download,
             filename=filename
         )
-        
-        # Set headers for download
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-        
+
+        # Set headers based on action
+        if is_download:
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        else:
+            response['Content-Disposition'] = f'inline; filename="{filename}"'
+
         return response
         
     except Exception as e:

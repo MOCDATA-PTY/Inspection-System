@@ -1,5 +1,5 @@
 """
-Find inspection with client name containing '-' on November 14, 2025
+Show inspections with client name '-' in clean table format
 """
 
 import os
@@ -14,50 +14,63 @@ django.setup()
 from main.models import FoodSafetyAgencyInspection
 
 
-def find_inspection():
-    """Find inspection on Nov 14, 2025 with client name containing '-'"""
+def show_inspections_table():
+    """Show inspections with '-' in clean table format"""
 
-    print("\n" + "="*100)
-    print("SEARCHING FOR INSPECTION ON NOVEMBER 14, 2025 WITH CLIENT NAME CONTAINING '-'")
-    print("="*100 + "\n")
-
-    # Search for inspections on Nov 14, 2025
+    # Get all inspections with client name '-' in November
     inspections = FoodSafetyAgencyInspection.objects.filter(
-        date_of_inspection="2025-11-14",
-        client_name__icontains="-"
-    )
+        client_name="-",
+        date_of_inspection__startswith="2025-11"
+    ).order_by('date_of_inspection', 'remote_id')
 
-    print(f"Found {inspections.count()} inspection(s)\n")
+    print("\n" + "="*140)
+    print(" INSPECTIONS WITH CLIENT NAME '-' - NOVEMBER 2025")
+    print("="*140)
+    print(f"\nTotal: {inspections.count()} inspections\n")
 
-    if not inspections.exists():
-        # Try broader search
-        all_nov_14 = FoodSafetyAgencyInspection.objects.filter(
-            date_of_inspection="2025-11-14"
-        )
-        print(f"Total inspections on Nov 14: {all_nov_14.count()}")
-        print("\nShowing all inspections on Nov 14:\n")
-        for idx, inspection in enumerate(all_nov_14[:20], 1):
-            print(f"{idx}. Client: '{inspection.client_name}' | Remote ID: {inspection.remote_id}")
-        return
+    # Table header
+    print("-"*140)
+    print(f"{'ID':<6} {'Date':<12} {'Commodity':<10} {'Inspector':<20} {'Account Code':<25} {'Sample':<8} {'Product':<35}")
+    print("-"*140)
 
-    for idx, inspection in enumerate(inspections, 1):
-        print(f"\n{'-'*100}")
-        print(f"INSPECTION #{idx}")
-        print(f"{'-'*100}")
-        print(f"Remote ID: {inspection.remote_id}")
-        print(f"Client Name: '{inspection.client_name}'")
-        print(f"Date: {inspection.date_of_inspection}")
-        print(f"Commodity: {inspection.commodity}")
-        print(f"Inspector: {inspection.inspector_name}")
-        print(f"Lab: {inspection.lab}")
-        print(f"Sample Taken: {inspection.is_sample_taken}")
+    # Table rows
+    for inspection in inspections:
+        remote_id = str(inspection.remote_id)[:5]
+        date = str(inspection.date_of_inspection)
+        commodity = str(inspection.commodity)[:9]
+        inspector = str(inspection.inspector_name)[:19]
+        account = str(inspection.internal_account_code if inspection.internal_account_code else 'NONE')[:24]
+        sample = str(inspection.is_sample_taken if inspection.is_sample_taken is not None else 'None')[:7]
+        product = str(inspection.product_name)[:34] if inspection.product_name else ''
 
-    print("\n" + "="*100 + "\n")
+        print(f"{remote_id:<6} {date:<12} {commodity:<10} {inspector:<20} {account:<25} {sample:<8} {product:<35}")
+
+    print("-"*140)
+
+    # Summary by account code
+    print("\n" + "="*140)
+    print(" SUMMARY BY ACCOUNT CODE")
+    print("="*140 + "\n")
+
+    no_account = inspections.filter(internal_account_code__in=[None, '', '-']).count()
+    has_account = inspections.exclude(internal_account_code__in=[None, '', '-']).count()
+
+    print(f"No Account Code (or '-'):  {no_account} inspections")
+    print(f"Has Account Code:          {has_account} inspections")
+
+    if has_account > 0:
+        print("\nAccount codes found:")
+        unique_codes = set(inspections.exclude(internal_account_code__in=[None, '', '-']).values_list('internal_account_code', flat=True))
+        for code in unique_codes:
+            count = inspections.filter(internal_account_code=code).count()
+            print(f"  - {code}: {count} inspection(s)")
+
+    print("\n" + "="*140 + "\n")
 
 
 if __name__ == "__main__":
     try:
-        find_inspection()
+        show_inspections_table()
     except Exception as e:
         print(f"\nERROR: {str(e)}")
         import traceback
