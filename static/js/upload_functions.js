@@ -5106,12 +5106,16 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
     // Clean the inspection date - handle both escaped and unescaped formats
     let cleanDate = inspectionDate;
     if (typeof cleanDate === 'string') {
-        // First try to parse as JSON string to handle escaped unicode
+        // Replace all common Unicode escapes
+        cleanDate = cleanDate.replace(/\\u002D/g, '-');
+        cleanDate = cleanDate.replace(/\\u002F/g, '/');
+        cleanDate = cleanDate.replace(/\\u0020/g, ' ');
+
+        // Try to decode any remaining Unicode escapes
         try {
             cleanDate = JSON.parse('"' + cleanDate + '"');
         } catch (e) {
-            // If that fails, just replace the escaped dashes
-            cleanDate = cleanDate.replace(/\\u002D/g, '-');
+            // If parsing fails, use the string as-is (already cleaned above)
         }
     }
     
@@ -5127,16 +5131,24 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         let buttonClientName = dataClientName;
         let buttonDate = dataInspectionDate;
 
-        try {
-            buttonClientName = JSON.parse('"' + buttonClientName + '"');
-        } catch (e) {
+        // Clean client name
+        if (typeof buttonClientName === 'string') {
             buttonClientName = buttonClientName.replace(/\\u002D/g, '-');
+            buttonClientName = buttonClientName.replace(/\\u002F/g, '/');
+            buttonClientName = buttonClientName.replace(/\\u0020/g, ' ');
+            try {
+                buttonClientName = JSON.parse('"' + buttonClientName + '"');
+            } catch (e) {}
         }
 
-        try {
-            buttonDate = JSON.parse('"' + buttonDate + '"');
-        } catch (e) {
+        // Clean date
+        if (typeof buttonDate === 'string') {
             buttonDate = buttonDate.replace(/\\u002D/g, '-');
+            buttonDate = buttonDate.replace(/\\u002F/g, '/');
+            buttonDate = buttonDate.replace(/\\u0020/g, ' ');
+            try {
+                buttonDate = JSON.parse('"' + buttonDate + '"');
+            } catch (e) {}
         }
 
         // Check if this button is for the correct client and date using data attributes
