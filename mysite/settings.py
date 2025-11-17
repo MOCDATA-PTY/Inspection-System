@@ -181,7 +181,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 
 # Local Media Storage
-MEDIA_ROOT = BASE_DIR / 'media'  # Local media storage
+MEDIA_ROOT = str(BASE_DIR / 'media')  # Local media storage
 
 
 # Default primary key field type

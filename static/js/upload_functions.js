@@ -1849,27 +1849,26 @@ async function deleteFile(filePath, fileName) {
 // View file function
 function viewFile(filePath, fileName) {
     console.log('Viewing file:', filePath, fileName);
-    
+
     if (filePath.startsWith('/test/')) {
         alert('This is a test file. In a real system, this would open a document viewer or download the file for viewing.');
         return;
     }
-    
+
     // Clean the file path - remove /media/ prefix if present
     let cleanFilePath = filePath;
     if (cleanFilePath.startsWith('/media/')) {
         cleanFilePath = cleanFilePath.substring(7); // Remove '/media/'
     }
-    
+
     console.log('View - Original path:', filePath);
     console.log('View - Clean path:', cleanFilePath);
-    
-    // For viewing, use the media URL directly (not the download endpoint)
-    // This bypasses the Content-Disposition: attachment header
-    const viewUrl = '/media/' + cleanFilePath;
-    
+
+    // Use the download endpoint with action=view for inline viewing
+    const viewUrl = '/inspections/download-file/?file=' + encodeURIComponent(cleanFilePath) + '&source=local&action=view';
+
     console.log('Opening for viewing:', viewUrl);
-    
+
     // Open file in new tab for inline viewing
     window.open(viewUrl, '_blank');
 }

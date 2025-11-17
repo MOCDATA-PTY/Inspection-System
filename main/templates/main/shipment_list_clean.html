@@ -10660,7 +10660,7 @@
                                 </div>
                                 <div class="file-actions">
                                     ${getViewButton(file)}
-                                    <a href="${file.url || '/inspections/download-file/?file=' + encodeURIComponent(file.relative_path || file.path) + '&source=' + (file.source || 'local')}" class="btn btn-file btn-secondary" title="Download File">
+                                    <a href="${'/inspections/download-file/?file=' + encodeURIComponent(file.relative_path || file.path) + '&source=' + (file.source || 'local')}" class="btn btn-file btn-secondary" title="Download File">
                                         <i class="fas fa-download"></i>
                                     </a>
                                     ${category.key !== 'compliance' && !(file.relative_path && file.relative_path.toLowerCase().includes('compliance')) && !(file.path && file.path.toLowerCase().includes('compliance')) ? `
@@ -10716,8 +10716,8 @@
             // For viewable files (PDF, images, etc.), show view button
             const viewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt'];
             if (viewableTypes.includes(ext)) {
-                // Use OneDrive URL if available, otherwise use local URL with action=view
-                const viewUrl = file.url || '/inspections/download-file/?file=' + encodeURIComponent(filePath) + '&source=' + (file.source || 'local') + '&action=view';
+                // Always use download endpoint with action=view (don't use file.url as /media/ doesn't work)
+                const viewUrl = '/inspections/download-file/?file=' + encodeURIComponent(filePath) + '&source=' + (file.source || 'local') + '&action=view';
                 console.log('[DEBUG] Generated viewUrl:', viewUrl);
                 return `
                     <a href="${viewUrl}" class="btn btn-file btn-primary" target="_blank" title="View File">
