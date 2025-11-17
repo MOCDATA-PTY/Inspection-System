@@ -5147,17 +5147,23 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
 
     console.log(`DEBUG [IMMEDIATE] Found ${matchingButtons.length} View Files buttons for ${clientName} on ${cleanDate}`);
     
-    // For now, we'll check the current file state by making a quick API call
-    // but we'll optimize this later to avoid the race condition
+    // Check the current file state by making a quick API call with cache-busting
+    const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     fetch('/inspections/files/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCSRFToken()
+            'X-CSRFToken': getCSRFToken(),
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Cache-Bust': cacheBuster
         },
         body: JSON.stringify({
             client_name: clientName,
-            inspection_date: cleanDate
+            inspection_date: cleanDate,
+            _force_refresh: true,
+            _cache_bust: cacheBuster
         })
     })
     .then(response => response.json())
