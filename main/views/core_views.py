@@ -9178,7 +9178,13 @@ def get_inspection_files(request):
         client_name = data.get('client_name', '')
         inspection_date = data.get('inspection_date', '')
         force_refresh = data.get('_force_refresh', False)
-        
+
+        # Clean Unicode escapes from inspection_date (fix for JavaScript JSON.stringify escaping)
+        if isinstance(inspection_date, str):
+            inspection_date = inspection_date.replace('\\u002D', '-')
+            inspection_date = inspection_date.replace('\\u002F', '/')
+            inspection_date = inspection_date.replace('\\u0020', ' ')
+
         # Create media folder structure for this inspection using correct format
         from datetime import datetime
         import re
