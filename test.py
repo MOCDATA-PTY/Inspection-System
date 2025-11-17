@@ -1,6 +1,5 @@
 """
-Test script to pull 100 oldest inspections from the database
-Shows Client Name, Account Code, and Inspection Date in a simple table format
+Find inspection with client name "-." and show what's in its directory
 """
 
 import os
@@ -12,70 +11,108 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
+from django.conf import settings
 from main.models import FoodSafetyAgencyInspection
 
 
-def main():
-    """Main function to pull and display 100 oldest inspections in table format"""
+def find_dash_inspection():
+    """Find inspection with client name '-.' and show its files"""
 
-    print("\n" + "="*120)
-    print("100 OLDEST INSPECTIONS")
-    print("="*120 + "\n")
+    print("\n" + "="*100)
+    print("SEARCHING FOR INSPECTION WITH CLIENT NAME '-.'")
+    print("="*100 + "\n")
 
-    # Query the 100 oldest inspections
-    inspections = FoodSafetyAgencyInspection.objects.all().order_by(
-        'date_of_inspection',
-        'created_at'
-    )[:100]
+    # Search for inspection with client name "-."
+    inspections = FoodSafetyAgencyInspection.objects.filter(client_name="-.")
 
-    total_count = FoodSafetyAgencyInspection.objects.count()
-    print(f"Total Inspections in Database: {total_count}")
-    print(f"Showing: 100 oldest inspections\n")
+    print(f"Found {inspections.count()} inspection(s) with client name '-.'")
 
-    # Print table header
-    print("-" * 120)
-    print(f"{'#':<5} {'Client Name':<50} {'Account Code':<30} {'Inspection Date':<20}")
-    print("-" * 120)
+    if inspections.count() == 0:
+        print("\nNo inspections found with that client name.")
+        return
 
-    # Display each inspection in table format
-    for index, inspection in enumerate(inspections, start=1):
-        client_name = (inspection.client_name or 'N/A')[:48]  # Truncate if too long
-        account_code = (inspection.internal_account_code or 'N/A')[:28]
-        date_str = str(inspection.date_of_inspection) if inspection.date_of_inspection else 'N/A'
+    # Show each inspection
+    for idx, inspection in enumerate(inspections, start=1):
+        print(f"\n{'-'*100}")
+        print(f"INSPECTION #{idx}")
+        print(f"{'-'*100}")
+        print(f"Remote ID: {inspection.remote_id}")
+        print(f"Client Name: '{inspection.client_name}'")
+        print(f"Internal Account Code: {inspection.internal_account_code or 'N/A'}")
+        print(f"Commodity: {inspection.commodity or 'N/A'}")
+        print(f"Date: {inspection.date_of_inspection or 'N/A'}")
+        print(f"Inspector: {inspection.inspector_name or 'N/A'}")
 
-        print(f"{index:<5} {client_name:<50} {account_code:<30} {date_str:<20}")
+        # Try to find files in media folder
+        media_root = settings.MEDIA_ROOT
 
-    print("-" * 120)
+        # Possible folder names
+        possible_folders = [
+            os.path.join(media_root, 'inspection', '2025', 'November', '-'),
+            os.path.join(media_root, 'inspection', '2025', 'November', '-.'),
+            os.path.join(media_root, 'inspection', '2025', 'October', '-'),
+            os.path.join(media_root, 'inspection', '2025', 'October', '-.'),
+        ]
 
-    # Summary
-    print(f"\n{'='*120}")
-    print("SUMMARY")
-    print("="*120)
+        print(f"\nSearching for files in media folder...")
+        found_files = False
 
-    # Date range
-    date_range = inspections.aggregate(
-        oldest=django.db.models.Min('date_of_inspection'),
-        newest=django.db.models.Max('date_of_inspection')
-    )
-    print(f"\nDate Range:")
-    print(f"  Oldest Inspection: {date_range['oldest']}")
-    print(f"  Newest in this list: {date_range['newest']}")
+        for folder in possible_folders:
+            if os.path.exists(folder):
+                print(f"\nFound folder: {folder}")
+                found_files = True
 
-    # Count by commodity
-    print(f"\nCommodity Breakdown:")
-    commodities = {}
-    for insp in inspections:
-        commodity = insp.commodity or 'Unknown'
-        commodities[commodity] = commodities.get(commodity, 0) + 1
-    for commodity, count in sorted(commodities.items(), key=lambda x: x[1], reverse=True):
-        print(f"  {commodity}: {count}")
+                # List all files recursively
+                for root, dirs, files in os.walk(folder):
+                    if files:
+                        relative_path = os.path.relpath(root, media_root)
+                        print(f"\n  Directory: {relative_path}")
+                        for file in files:
+                            file_path = os.path.join(root, file)
+                            file_size = os.path.getsize(file_path)
+                            size_kb = file_size / 1024
+                            print(f"    - {file} ({size_kb:.2f} KB)")
 
-    print(f"\n{'='*120}\n")
+        # Also search entire media folder for any "-" related folders
+        print(f"\nSearching entire media folder for any folders with '-' in name...")
+        inspection_base = os.path.join(media_root, 'inspection')
+
+        if os.path.exists(inspection_base):
+            for year_folder in os.listdir(inspection_base):
+                year_path = os.path.join(inspection_base, year_folder)
+                if os.path.isdir(year_path):
+                    for month_folder in os.listdir(year_path):
+                        month_path = os.path.join(year_path, month_folder)
+                        if os.path.isdir(month_path):
+                            for client_folder in os.listdir(month_path):
+                                # Check if folder name is just "-" or "-." or similar
+                                if client_folder in ['-', '-.', '-_']:
+                                    client_path = os.path.join(month_path, client_folder)
+                                    print(f"\n  Found suspicious folder: {os.path.relpath(client_path, media_root)}")
+                                    found_files = True
+
+                                    # List all files in this folder
+                                    for root, dirs, files in os.walk(client_path):
+                                        if files:
+                                            relative_path = os.path.relpath(root, media_root)
+                                            print(f"    Directory: {relative_path}")
+                                            for file in files:
+                                                file_path = os.path.join(root, file)
+                                                file_size = os.path.getsize(file_path)
+                                                size_kb = file_size / 1024
+                                                print(f"      - {file} ({size_kb:.2f} KB)")
+
+        if not found_files:
+            print("\n  No files found in media folder for this inspection.")
+
+    print(f"\n{'='*100}")
+    print("SEARCH COMPLETE")
+    print("="*100 + "\n")
 
 
 if __name__ == "__main__":
     try:
-        main()
+        find_dash_inspection()
     except Exception as e:
         print(f"\nERROR: {str(e)}")
         import traceback
