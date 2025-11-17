@@ -11,12 +11,12 @@ from google.oauth2.credentials import Credentials
 
 # Configuration
 SCOPES = [
-    'https://www.googleapis.com/auth/spreadsheets.readonly',
-    'https://www.googleapis.com/auth/drive.readonly'
+    'https://www.googleapis.com/auth/spreadsheets',  # Full read/write access
+    'https://www.googleapis.com/auth/drive'  # Full read/write access (needed for sharing)
 ]
 CREDENTIALS_FILE = 'credentials.json'
 TOKEN_FILE = 'token.pickle'
-REDIRECT_URI = 'http://127.0.0.1:8000/google-sheets/oauth2callback/'
+REDIRECT_URI = 'http://localhost:8000/oauth2callback'
 
 def main():
     """Authenticate with Google and save credentials."""
@@ -72,7 +72,7 @@ def main():
             print(auth_url)
             print("\n" + "="*80)
             print("[STEP 2] After authorizing, you'll be redirected to a URL like:")
-            print("         http://127.0.0.1:8000/google-sheets/oauth2callback/?code=...")
+            print("         http://localhost:8000/oauth2callback?code=...")
             print("[STEP 3] Copy the ENTIRE URL and paste it below")
             print("="*80 + "\n")
 

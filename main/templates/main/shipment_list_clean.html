@@ -10143,7 +10143,10 @@
             });
 
             // Also update RFI and Invoice button colors based on actual file existence
-            updateRFIAndInvoiceButtonColorsForClient(clientName);
+            // Skip NEW inspections - they should not have any file buttons colored
+            if (!clientName.toUpperCase().includes('NEW')) {
+                updateRFIAndInvoiceButtonColorsForClient(clientName);
+            }
         }
 
         function updateRFIAndInvoiceButtonColorsForClient(clientName) {
@@ -11561,7 +11564,8 @@
                                     const button = document.getElementById('rfi-' + groupId);
                                     if (button) {
                                         const clientName = button.getAttribute('data-client-name');
-                                        if (clientName) {
+                                        // Skip NEW inspections - they should not have any file buttons colored
+                                        if (clientName && !clientName.toUpperCase().includes('NEW')) {
                                             updateRFIAndInvoiceButtonColorsForClient(clientName);
                                         }
                                     }
@@ -11774,7 +11778,8 @@
                             const button = document.getElementById('invoice-' + groupId);
                             if (button) {
                                 const clientName = button.getAttribute('data-client-name');
-                                if (clientName) {
+                                // Skip NEW inspections - they should not have any file buttons colored
+                                if (clientName && !clientName.toUpperCase().includes('NEW')) {
                                     setTimeout(() => {
                                         updateRFIAndInvoiceButtonColorsForClient(clientName);
                                     }, 2000); // Delay to ensure server processing
@@ -13152,8 +13157,14 @@
 
                 if (clientName && !processedClients.has(clientName)) {
                     processedClients.add(clientName);
-                    console.log('[DEBUG] [INIT] ✅ Processing NEW client:', clientName);
-                    updateRFIAndInvoiceButtonColorsForClient(clientName);
+
+                    // Skip NEW inspections - they should not have any file buttons colored
+                    if (clientName.toUpperCase().includes('NEW')) {
+                        console.log('[DEBUG] [INIT] ⏭️ SKIPPING NEW inspection (disabled):', clientName);
+                    } else {
+                        console.log('[DEBUG] [INIT] ✅ Processing client:', clientName);
+                        updateRFIAndInvoiceButtonColorsForClient(clientName);
+                    }
                 } else if (clientName) {
                     console.log('[DEBUG] [INIT] ⏭️ SKIPPING already processed client:', clientName);
                 } else {

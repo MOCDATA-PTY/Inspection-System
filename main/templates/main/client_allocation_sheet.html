@@ -3,9 +3,9 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Client Allocation Sheet - Food Safety Agency</title>
-
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -17,41 +17,13 @@
                         secondary: '#EC343C',
                         danger: '#EC343C',
                         warning: '#f59e0b',
-                        background: '#f9fafb',
-                        'card-bg': '#ffffff',
-                        text: '#1f2937',
-                        'text-light': '#6b7280',
-                        border: '#e5e7eb',
+                        'sidebar-bg': '#1e293b',
+                        'sidebar-text': '#f1f5f9',
                     }
                 }
             }
         }
-
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            const mobileBtn = document.getElementById('mobile-menu-btn');
-
-            if (sidebar && overlay && mobileBtn) {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-
-                const icon = mobileBtn.querySelector('i');
-                if (sidebar.classList.contains('show')) {
-                    icon.className = 'fas fa-times';
-                } else {
-                    icon.className = 'fas fa-bars';
-                }
-            }
-        }
-
-        // Simple read-only table - minimal JavaScript needed
-        document.addEventListener('DOMContentLoaded', function() {
-            // No special functionality needed for read-only view
-            console.log('Client Allocation Sheet loaded successfully');
-        });
     </script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
             --primary: #007890;
@@ -59,13 +31,156 @@
             --secondary: #EC343C;
             --danger: #EC343C;
             --warning: #f59e0b;
+            --success: #10b981;
             --background: #f9fafb;
             --card-bg: #ffffff;
             --text: #1f2937;
             --text-light: #6b7280;
             --border: #e5e7eb;
-            --sidebar-bg: #0f172a;
-            --sidebar-text: #f1f5f9;
+            --radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --spacing: 5px;
+            --light-black: #333333;
+            --import-color: #446f1e;
+            --grey: #777777;
+            --analytics: #7c3aed;
+        }
+
+        /* Dark mode variables */
+        [data-theme="dark"] {
+            --background: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text: #ffffff;
+            --text-light: #b0b0b0;
+            --border: #404040;
+            --primary-light: #1a3a40;
+            --light-black: #ffffff;
+            --grey: #b0b0b0;
+        }
+
+        /* Dark mode specific overrides */
+        [data-theme="dark"] .table-container {
+            border: 1px solid #374151;
+            background-color: #1f2937;
+        }
+
+        [data-theme="dark"] table {
+            background-color: #1f2937;
+        }
+
+        [data-theme="dark"] th {
+            background-color: #111827;
+            color: #f9fafb;
+            border-bottom: 1px solid #374151;
+        }
+
+        [data-theme="dark"] th.row-number {
+            background-color: #111827;
+            color: #9ca3af;
+        }
+
+        [data-theme="dark"] tr:nth-child(even) {
+            background-color: #1a1f2e;
+        }
+
+        [data-theme="dark"] tr:nth-child(odd) {
+            background-color: #1f2937;
+        }
+
+        [data-theme="dark"] tr:hover {
+            background-color: rgba(77, 184, 209, 0.1);
+        }
+
+        [data-theme="dark"] td {
+            border-bottom: 1px solid #2d3748;
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] td.row-number {
+            color: #6b7280;
+        }
+
+        [data-theme="dark"] .account-code-cell {
+            color: #9ca3af;
+        }
+
+        [data-theme="dark"] tbody tr.selected {
+            background: rgba(77, 184, 209, 0.15) !important;
+            border-left-color: #6ec9dd;
+        }
+
+        [data-theme="dark"] .filter-section {
+            background-color: #2d2d2d !important;
+            border-color: #404040 !important;
+        }
+
+        [data-theme="dark"] .filter-section label {
+            color: #ffffff !important;
+        }
+
+        [data-theme="dark"] .filter-section input,
+        [data-theme="dark"] .filter-section select {
+            background-color: #3a3a3a !important;
+            color: #ffffff !important;
+            border-color: #404040 !important;
+        }
+
+        [data-theme="dark"] .filter-section input::placeholder {
+            color: #b0b0b0 !important;
+        }
+
+        /* Dark mode sidebar styles */
+        [data-theme="dark"] #sidebar {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .sidebar-header {
+            border-bottom: 1px solid #404040;
+        }
+
+        [data-theme="dark"] .company-name {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .nav-link {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        [data-theme="dark"] .nav-link:active {
+            background-color: rgba(255, 255, 255, 0.12);
+        }
+
+        [data-theme="dark"] .nav-link.active {
+            background-color: rgba(77, 184, 209, 0.2);
+            border-color: rgba(77, 184, 209, 0.4);
+            color: #6ec9dd;
+        }
+
+        [data-theme="dark"] .logout-section {
+            border-top: 1px solid #404040;
+        }
+
+        [data-theme="dark"] .mobile-menu-btn {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
@@ -74,9 +189,11 @@
             background-position: center;
             background-attachment: fixed;
             color: var(--text);
-            margin: 0;
+            line-height: 1.5;
             padding: 0;
+            margin: 0;
             position: relative;
+            overflow-x: hidden;
         }
 
         body::before {
@@ -89,70 +206,132 @@
             z-index: -1;
         }
 
+        /* Page Container */
         .page-container {
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
+        /* Flex container for layout */
+        .flex {
+            display: flex;
+        }
+
+        .min-h-screen {
+            min-height: 100vh;
+        }
+
+        /* Mobile menu button */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 9999;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            width: 48px;
+            height: 48px;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Sidebar */
         #sidebar {
             position: fixed;
             top: 0;
             left: 0;
-            width: 250px;
             height: 100vh;
-            background: var(--sidebar-bg);
-            color: var(--sidebar-text);
-            overflow-y: auto;
+            width: 256px;
+            background-color: #1e293b;
+            color: #f1f5f9;
             z-index: 1000;
+            overflow-y: auto;
             transition: transform 0.3s ease;
         }
 
         .sidebar-header {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #334155;
             text-align: center;
         }
 
-        .sidebar-header img {
-            max-height: 60px;
-            margin: 0 auto;
+        .logo-container {
+            margin-bottom: 1rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .logo-accent {
+            color: var(--primary);
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+            opacity: 0.9;
         }
 
         .company-name {
-            color: var(--sidebar-text);
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #94a3b8;
+            letter-spacing: 0.3px;
         }
 
         .nav-menu {
             list-style: none;
-            padding: 0.5rem;
+            padding: 0;
             margin: 0;
         }
 
         .nav-item {
-            margin: 0.25rem 0;
+            margin: 0;
         }
 
         .nav-link {
             display: flex;
             align-items: center;
             padding: 0.75rem 1rem;
-            color: var(--sidebar-text);
+            color: #f1f5f9;
             text-decoration: none;
-            border-radius: 0.375rem;
-            transition: all 0.2s;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            margin: 0.25rem 0.5rem;
         }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .nav-link:active {
+            background-color: rgba(255, 255, 255, 0.12);
+            transform: scale(0.98);
         }
 
         .nav-link.active {
-            background: var(--primary);
-            color: white;
+            background-color: rgba(77, 184, 209, 0.15);
+            border-color: rgba(77, 184, 209, 0.3);
+            color: #4db8d1;
         }
 
         .nav-link i {
@@ -162,49 +341,64 @@
         }
 
         .logout-section {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
             padding: 1rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: auto;
+            border-top: 1px solid #334155;
         }
 
         .logout-btn {
             width: 100%;
-            padding: 0.75rem;
-            background: var(--danger);
-            color: white;
-            border: none;
-            border-radius: 0.375rem;
+            background: #ef4444;
+            color: #ffffff;
+            border: 1px solid #dc2626;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
             cursor: pointer;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
-            transition: all 0.2s;
+            gap: 0.625rem;
+            font-weight: 500;
+            font-size: 0.875rem;
         }
 
         .logout-btn:hover {
-            background: #c72a32;
+            background: #dc2626;
+            border-color: #b91c1c;
+            color: #ffffff;
         }
 
-        .logout-btn i {
-            margin-right: 0.5rem;
+        .logout-btn:active {
+            background: #b91c1c;
+            transform: scale(0.98);
         }
 
-        /* Main Content */
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* Main content */
         .main-content {
-            margin-left: 250px;
             flex: 1;
-            padding: 2rem;
-            width: calc(100% - 250px);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .logo img {
-            max-height: 80px;
+            margin-left: 256px;
+            padding: var(--spacing);
+            transition: margin-left 0.3s ease;
         }
 
         .header {
@@ -256,116 +450,309 @@
         .btn-primary {
             background: var(--primary);
             color: white;
+            border: 1px solid var(--primary);
         }
 
         .btn-primary:hover {
             background: #005a6b;
+            border-color: #004a57;
+        }
+
+        .btn-primary:active {
+            background: #004450;
+            transform: scale(0.98);
         }
 
         .btn-secondary {
             background: #6b7280;
             color: white;
+            border: 1px solid #6b7280;
         }
 
         .btn-secondary:hover {
             background: #4b5563;
+            border-color: #374151;
+        }
+
+        .btn-secondary:active {
+            background: #374151;
+            transform: scale(0.98);
+        }
+
+        [data-theme="dark"] .btn-primary {
+            background: #4db8d1;
+            color: #ffffff;
+            border-color: #4db8d1;
+        }
+
+        [data-theme="dark"] .btn-primary:hover {
+            background: #6ec9dd;
+            border-color: #6ec9dd;
+        }
+
+        [data-theme="dark"] .btn-primary:active {
+            background: #3da7bd;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #4b5563;
+            color: #f3f4f6;
+            border-color: #4b5563;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #6b7280;
+            border-color: #6b7280;
+        }
+
+        [data-theme="dark"] .btn-secondary:active {
+            background: #374151;
         }
 
         /* Table Container */
         .table-container {
-            background: white;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             overflow-x: auto;
-            overflow-y: visible;
-            /* Performance optimizations */
-            will-change: scroll-position;
-            contain: layout style paint;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
+            background: white;
         }
 
         table {
             width: 100%;
-            min-width: 800px;
             border-collapse: collapse;
-            /* Performance: GPU acceleration for large tables */
-            transform: translateZ(0);
-            backface-visibility: hidden;
+            font-size: 0.7rem;
+            min-width: 800px;
+            background: white;
         }
 
-        thead {
-            background: #f9fafb;
+        /* Mobile card layout */
+        .mobile-cards {
+            display: none;
         }
 
-        th {
-            padding: 0.75rem 0.5rem;
-            text-align: left;
+        .client-card {
+            background-color: var(--card-bg) !important;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.875rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: none;
+            cursor: pointer;
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+            -webkit-touch-callout: none;
+            tap-highlight-color: rgba(0, 0, 0, 0) !important;
+            opacity: 1 !important;
+        }
+
+        .client-card *,
+        .client-card * {
+            -webkit-tap-highlight-color: rgba(0, 0, 0, 0) !important;
+            tap-highlight-color: rgba(0, 0, 0, 0) !important;
+        }
+
+        .client-card:active,
+        .client-card:focus,
+        .client-card:hover {
+            background-color: var(--card-bg) !important;
+            opacity: 1 !important;
+        }
+
+        .client-card.selected {
+            background-color: var(--card-bg) !important;
+            border-left: 3px solid #4db8d1;
+            opacity: 1 !important;
+        }
+
+        .client-card.selected:active,
+        .client-card.selected:focus {
+            background-color: var(--card-bg) !important;
+            opacity: 1 !important;
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title-text {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+            line-height: 1.3;
+            flex: 1;
+            margin-right: 0.5rem;
+        }
+
+        .card-id-badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.625rem;
+            border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 600;
-            color: #1f2937;
-            background: #007890;
-            color: white;
-            border: 1px solid #005a6b;
             white-space: nowrap;
         }
 
+        .card-body-content {
+            display: grid;
+            gap: 0.625rem;
+        }
+
+        .card-field-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .card-label-text {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            font-weight: 500;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+
+        .card-value-text {
+            font-size: 0.875rem;
+            color: var(--text);
+            text-align: right;
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .card-value-text.allocated-yes {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .card-value-text.allocated-no {
+            color: #6b7280;
+        }
+
+        .card-value-text.account-code {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+            font-size: 0.8125rem;
+        }
+
+        [data-theme="dark"] .client-card {
+            background-color: var(--card-bg) !important;
+            border-color: var(--border);
+        }
+
+        [data-theme="dark"] .client-card.selected {
+            background-color: var(--card-bg) !important;
+            border-left-color: #6ec9dd;
+        }
+
+        thead {
+            background: transparent;
+        }
+
+        th {
+            background-color: #111827;
+            color: #f9fafb;
+            text-align: left;
+            padding: 10px 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 1px solid #374151;
+            font-size: 0.75rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
         th.row-number {
-            background: #005a6b;
-            color: white;
+            background-color: #111827;
+            color: #9ca3af;
             font-weight: 600;
             min-width: 50px;
             width: 50px;
             text-align: center;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        tr:nth-child(odd) {
+            background-color: white;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 115, 135, 0.04);
         }
 
         tbody tr {
-            border: none;
-            /* Performance: Lazy render rows not in viewport */
-            content-visibility: auto;
-            contain-intrinsic-size: auto 40px;
-            /* Always have border to prevent layout shift */
-            border-left: 3px solid transparent;
             cursor: pointer;
-        }
-
-        tbody tr:hover {
-            background: #f0f9ff;
+            transition: background-color 0.15s ease;
         }
 
         td {
-            padding: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--text);
-            border: 1px solid #e5e7eb;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #374151;
         }
 
         td.row-number {
-            background: #f9fafb;
-            color: #6b7280;
-            font-weight: 600;
+            background: transparent;
+            color: #9ca3af;
+            font-weight: 500;
             text-align: center;
-            padding: 0.5rem;
+            padding: 10px 12px;
             min-width: 50px;
             width: 50px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
         }
 
-        /* Zebra striping for better readability */
-        tbody tr:nth-child(even) {
-            background: #f9fafb;
-        }
-
-        tbody tr:nth-child(even):hover {
-            background: #f0f9ff;
-        }
-
-        /* Selected row styles */
         tbody tr.selected {
-            background: #bfdbfe !important;
-            border-left-color: #007890 !important;
+            background: rgba(77, 184, 209, 0.08) !important;
+            border-left: 2px solid #4db8d1;
         }
 
         tbody tr.selected td {
-            background: #bfdbfe !important;
+            background: transparent !important;
+        }
+
+        .account-code-cell {
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+
+        .business-name-cell {
+        }
+
+        .email-cell {
+        }
+
+        th.business-name-header,
+        th.account-code-header,
+        th.email-header {
+            background-color: #111827 !important;
+            color: #f9fafb;
+        }
+
+        .filter-section {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         /* Modal Styles */
@@ -462,7 +849,6 @@
             box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.1);
         }
 
-        /* Custom dropdown styles */
         .custom-dropdown {
             position: relative;
             width: 100%;
@@ -520,7 +906,6 @@
             font-weight: 500;
         }
 
-        /* Context menu styles */
         .context-menu {
             position: fixed;
             background: white;
@@ -575,56 +960,9 @@
             gap: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .modal-content {
-                width: 95%;
-                margin: 5% auto;
-            }
-        }
-
-        /* Mobile Styles */
-        .mobile-menu-btn {
-            display: none;
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            z-index: 1100;
-            background: var(--sidebar-bg);
-            color: white;
-            padding: 0.75rem;
-            border-radius: 0.5rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-        }
-
-        .sidebar-overlay.show {
-            display: block;
-        }
-
-        .sidebar-close-btn {
-            display: none;
-        }
-
         @media (max-width: 1024px) {
             .mobile-menu-btn {
-                display: block;
+                display: flex !important;
             }
 
             #sidebar {
@@ -636,141 +974,348 @@
             }
 
             .main-content {
-                margin-left: 0;
-                width: 100%;
+                margin-left: 0 !important;
+                padding: 1rem !important;
+                width: 100% !important;
             }
 
-            .sidebar-close-btn {
-                display: block;
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
-                background: transparent;
-                border: none;
-                color: white;
-                font-size: 1.5rem;
-                cursor: pointer;
+            .header {
+                padding-top: 4rem !important;
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+
+            .filter-section {
+                padding: 1rem !important;
+            }
+
+            .flex.min-h-screen {
+                flex-direction: row;
             }
         }
 
         @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr !important;
+                gap: 1rem !important;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+
+            .modal-header h3 {
+                font-size: 1.25rem;
+            }
+
+            .modal-body {
+                padding: 1.5rem;
+            }
+
+            .main-content {
+                padding: 0.5rem !important;
+            }
+
+            .header {
+                padding: 1rem 0.75rem !important;
+                padding-top: 4rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .header h1 {
+                font-size: 1.35rem !important;
+                margin-bottom: 0.25rem !important;
+            }
+
+            .header h2 {
+                font-size: 1.05rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            .header p {
+                font-size: 0.8rem !important;
+            }
+
+            .action-bar {
+                flex-direction: column !important;
+                gap: 0.625rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .btn {
+                width: 100% !important;
+                justify-content: center !important;
+                padding: 0.75rem 1rem !important;
+                font-size: 0.9rem !important;
+                min-height: 48px !important;
+            }
+
+            .filter-section {
+                padding: 1rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            /* Override inline styles for filter grid */
+            .filter-section form > div[style*="display: grid"] {
+                display: grid !important;
+                grid-template-columns: 1fr !important;
+                gap: 0.875rem !important;
+                margin-bottom: 1rem !important;
+            }
+
+            .filter-section label {
+                font-size: 0.8125rem !important;
+                margin-bottom: 0.375rem !important;
+            }
+
+            .filter-section input,
+            .filter-section select {
+                padding: 0.625rem !important;
+                font-size: 0.875rem !important;
+                min-height: 44px !important;
+                width: 100% !important;
+            }
+
+            /* Override inline styles for filter buttons */
+            .filter-section form > div[style*="display: flex"] {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.625rem !important;
+            }
+
+            .filter-section .btn {
+                width: 100% !important;
+            }
+
+            /* Hide table, show cards on mobile */
+            .table-container {
+                display: none !important;
+            }
+
+            .mobile-cards {
+                display: block !important;
+            }
+
+            .client-card {
+                margin-bottom: 0.75rem;
+                padding: 0.875rem;
+            }
+
+            .card-title-text {
+                font-size: 0.9375rem;
+            }
+
+            .card-label-text {
+                font-size: 0.7rem;
+                min-width: 90px;
+            }
+
+            .card-value-text {
+                font-size: 0.8125rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main-content {
+                padding: 0.375rem !important;
+            }
+
+            .header {
+                padding: 0.875rem 0.5rem !important;
+                padding-top: 3.5rem !important;
+                margin-bottom: 0.75rem !important;
+            }
+
+            .header h1 {
+                font-size: 1.15rem !important;
+                line-height: 1.3 !important;
+            }
+
+            .header h2 {
+                font-size: 0.95rem !important;
+                margin-bottom: 0.375rem !important;
+            }
+
+            .header p {
+                font-size: 0.75rem !important;
+            }
+
+            .action-bar {
+                gap: 0.5rem !important;
+                margin-bottom: 0.875rem !important;
+            }
+
+            .btn {
+                padding: 0.65rem 0.875rem !important;
+                font-size: 0.85rem !important;
+                min-height: 44px !important;
+            }
+
+            .filter-section {
+                padding: 0.875rem !important;
+                margin-bottom: 0.875rem !important;
+            }
+
+            .filter-section label {
+                font-size: 0.75rem !important;
+            }
+
+            .filter-section input,
+            .filter-section select {
+                padding: 0.5rem !important;
+                font-size: 0.8125rem !important;
+            }
+
+            /* Smaller cards on very small screens */
+            .client-card {
+                padding: 0.75rem;
+                margin-bottom: 0.625rem;
+            }
+
+            .card-title-text {
+                font-size: 0.875rem;
+            }
+
+            .card-id-badge {
+                font-size: 0.6875rem;
+                padding: 0.1875rem 0.5rem;
+            }
+
+            .card-label-text {
+                font-size: 0.6875rem;
+                min-width: 85px;
+            }
+
+            .card-value-text {
+                font-size: 0.75rem;
+            }
+
+            .modal-content {
+                width: 98%;
+                margin: 2% auto;
+                max-height: 95vh;
+            }
+
+            .modal-header {
+                padding: 1rem;
+            }
+
+            .modal-header h3 {
+                font-size: 1.125rem;
+            }
+
+            .modal-body {
+                padding: 1rem;
+            }
+
+            .modal-footer {
+                padding: 1rem;
+                flex-direction: column-reverse;
+                gap: 0.5rem;
+            }
+
+            .modal-footer .btn {
+                width: 100%;
+            }
+
+            table {
+                min-width: 900px;
+            }
+
+            th {
+                padding: 0.5rem 0.375rem;
+                font-size: 0.65rem;
+            }
+
+            td {
+                font-size: 0.65rem;
+                padding: 0.4rem 0.3rem;
+            }
+
+            td.row-number, th.row-number {
+                min-width: 40px;
+                width: 40px;
+                font-size: 0.6rem;
+            }
+
+            .context-menu {
+                min-width: 160px;
+            }
+
+            .context-menu-item {
+                padding: 0.65rem 0.875rem;
+                font-size: 0.8125rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .header h1 {
+                font-size: 1rem !important;
+            }
+
+            .header h2 {
+                font-size: 0.875rem !important;
+            }
+
+            .btn {
+                font-size: 0.8rem !important;
+                padding: 0.6rem 0.75rem !important;
+            }
+
+            .filter-section {
+                padding: 0.75rem !important;
+            }
+
+            .filter-section input,
+            .filter-section select {
+                font-size: 0.75rem !important;
+            }
+
+            .modal-header h3 {
+                font-size: 1rem !important;
+            }
+
+            table {
+                min-width: 1000px !important;
+            }
+        }
+
+        @media (max-width: 768px) and (orientation: landscape) {
+            .header {
+                padding-top: 3rem;
+                margin-bottom: 0.75rem;
+            }
+
             .main-content {
                 padding: 0.5rem;
             }
 
-            /* Header adjustments for mobile */
-            .header {
-                padding: 1rem;
-            }
-
-            .header h1 {
-                font-size: 1.25rem;
-            }
-
-            .header h2 {
-                font-size: 1rem;
-            }
-
-            /* Action bar optimizations */
-            .action-bar {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-                padding: 0.75rem 1rem;
-                font-size: 0.875rem;
-                min-height: 44px; /* Touch-friendly minimum */
-            }
-
-            /* Table container mobile optimization */
-            .table-container {
-                border-radius: 0.25rem;
-                margin: 0;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            }
-
-            /* Table adjustments for mobile */
-            table {
-                min-width: 700px; /* Allow horizontal scroll */
-                font-size: 0.75rem;
-            }
-
-            td {
-                font-size: 0.75rem;
-                padding: 0.4rem;
-            }
-
-            /* Row numbers */
-            td.row-number, th.row-number {
-                min-width: 40px;
-                width: 40px;
-                font-size: 0.7rem;
-            }
-
-            /* Optimize scrollbars on mobile */
-            .table-container::-webkit-scrollbar {
-                height: 8px;
-            }
-
-            .table-container::-webkit-scrollbar-track {
-                background: #f1f1f1;
-            }
-
-            .table-container::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 4px;
-            }
-
-            .table-container::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
-        }
-
-        /* Extra small devices (phones in portrait) */
-        @media (max-width: 480px) {
-            .main-content {
-                padding: 0.25rem;
-            }
-
-            .header {
-                padding: 0.75rem;
-            }
-
-            .header h1 {
-                font-size: 1.1rem;
-            }
-
-            .header h2 {
-                font-size: 0.9rem;
-            }
-
-            .btn {
-                padding: 0.625rem 0.875rem;
-                font-size: 0.8125rem;
-            }
-
-            table {
-                min-width: 1000px;
-            }
-
-            th, td {
-                font-size: 0.7rem;
-            }
-        }
-
-        /* Landscape mobile optimization */
-        @media (max-width: 768px) and (orientation: landscape) {
             .table-container {
                 max-height: calc(100vh - 200px);
                 overflow-y: auto;
             }
         }
 
-        /* Performance: Reduce animations on low-end devices */
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .nav-link,
+            .context-menu-item {
+                min-height: 44px;
+            }
+
+            .filter-section input,
+            .filter-section select {
+                min-height: 44px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            tbody tr {
+                cursor: default;
+            }
+        }
+
         @media (prefers-reduced-motion: reduce) {
             * {
                 animation-duration: 0.01ms !important;
@@ -778,22 +1323,31 @@
                 transition-duration: 0.01ms !important;
             }
         }
+
+        /* Prevent text selection on mobile during scrolling */
+        @media (max-width: 768px) {
+            tbody tr {
+                -webkit-user-select: none;
+                user-select: none;
+                -webkit-tap-highlight-color: rgba(0, 115, 135, 0.1);
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Mobile Menu Button -->
-    <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="toggleSidebar()">
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
         <i class="fas fa-bars text-xl"></i>
     </button>
 
     <!-- Sidebar Overlay -->
-    <div id="sidebar-overlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
-    <div class="page-container">
+    <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <div id="sidebar" class="w-64 h-screen bg-sidebar-bg text-sidebar-text flex flex-col fixed left-0 top-0 z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-            <div class="flex-shrink-0 p-4 border-b border-slate-600">
-                <div class="mb-2">
+        <div id="sidebar" class="w-64 h-screen bg-sidebar-bg text-sidebar-text flex flex-col">
+            <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
+                <div class="text-center mb-2">
                     <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
                 </div>
                 <div class="text-sidebar-text text-sm font-semibold text-center">
@@ -803,6 +1357,12 @@
 
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
+                    <li>
+                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            <i class="fas fa-home mr-2 w-4 text-center"></i>
+                            Home Center
+                        </a>
+                    </li>
                     {% if request.user.role == 'inspector' %}
                     <li>
                         <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
@@ -818,30 +1378,29 @@
                     </li>
                     {% else %}
 
-
                     <li>
                   <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-    <i class="fas fa-users mr-2 w-4 text-center"></i>
+    <i class="fas fa-address-book mr-2 w-4 text-center"></i>
     Client Directory
 </a>
 
                     </li>
                     <li>
                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-    <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+    <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
     Inspection Records
 </a>
 
                     </li>
                     <li>
-                        <a href="{% url 'client_allocation_sheet' %}" class="flex items-center px-3 py-2 bg-white bg-opacity-10 text-sidebar-text rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-table mr-2 w-4 text-center text-green-500"></i>
+                        <a href="{% url 'client_allocation_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] active">
+                            <i class="fas fa-th-list mr-2 w-4 text-center text-green-500"></i>
                             Client Allocation Sheet
                         </a>
                     </li>
                   <a href="{% url 'user_management' %}" title="Manage system users and permissions"
    class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-    <i class="fas fa-users-cog mr-2 w-4 text-center text-blue-500"></i>
+    <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
     User Management
 </a>
 
@@ -849,7 +1408,7 @@
                   <li>
     <a href="{% url 'system_logs' %}"
        class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-        <i class="fas fa-clipboard-list mr-2 w-4 text-center text-yellow-500"></i>
+        <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
         System Logs
     </a>
 </li>
@@ -857,7 +1416,7 @@
                 {% if request.user.role == 'developer' %}
 <li>
     <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-        <i class="fas fa-cloud-upload-alt mr-2 w-4 text-center text-blue-400"></i>
+        <i class="fab fa-microsoft mr-2 w-4 text-center text-blue-400"></i>
         OneDrive View
     </a>
 </li>
@@ -867,7 +1426,7 @@
 <li>
   <a href="{% url 'server_view' %}"
      class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-      <i class="fas fa-server mr-2 w-4 text-center text-orange-400"></i>
+      <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
       Server View
   </a>
 </li>
@@ -877,7 +1436,7 @@
 <li>
   <a href="{% url 'export_sheet' %}"
      class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-      <i class="fas fa-file-export mr-2 w-4 text-center text-emerald-400"></i>
+      <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
       Export Sheet
   </a>
 </li>
@@ -887,7 +1446,7 @@
                     <li>
                         <a href="{% url 'analytics_dashboard' %}"
    class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-    <i class="fas fa-chart-line mr-2 w-4 text-center text-blue-400"></i>
+    <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
     Inspector Analytics
 </a>
 
@@ -895,7 +1454,7 @@
                     {% endif %}
                     <li>
                         <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-cog mr-2 w-4 text-center"></i>
+                            <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
                     </li>
@@ -906,8 +1465,8 @@
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
                         Logout
                     </button>
                 </form>
@@ -916,10 +1475,6 @@
 
         <!-- Main Content -->
         <div class="main-content">
-            <div class="logo">
-                <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo">
-            </div>
-
             <div class="header">
                 <h1>Food Safety Agency (Pty) Ltd</h1>
                 <h2>Client Allocation Sheet</h2>
@@ -952,7 +1507,7 @@
             {% endif %}
 
             <!-- Filter Section -->
-            <div style="background: white; padding: 1.5rem; margin-bottom: 1.5rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div class="filter-section">
                 <form method="GET" action="{% url 'client_allocation_sheet' %}">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                         <div>
@@ -1018,13 +1573,13 @@
                         <tr>
                             <th class="row-number">#</th>
                             <th>Client ID</th>
-                            <th>Business Name</th>
+                            <th class="business-name-header">Business Name</th>
                             <th>Facility Type</th>
                             <th>Province</th>
                             <th>Corporate Group</th>
-                            <th>Account Code</th>
+                            <th class="account-code-header">Account Code</th>
                             <th>Allocated</th>
-                            <th>Email</th>
+                            <th class="email-header">Email</th>
                             <th>Phone Number</th>
                         </tr>
                     </thead>
@@ -1046,11 +1601,11 @@
                             data-active-status="{{ allocation.active_status }}">
                             <td class="row-number">{{ forloop.counter }}</td>
                             <td style="text-align: center; padding: 0.5rem; font-weight: 500;">{{ allocation.client_id }}</td>
-                            <td style="padding: 0.5rem;">{{ allocation.eclick_name|default:'-' }}</td>
+                            <td class="business-name-cell" style="padding: 0.5rem;">{{ allocation.eclick_name|default:'-' }}</td>
                             <td style="padding: 0.5rem;">{{ allocation.facility_type|default:'-' }}</td>
                             <td style="padding: 0.5rem;">{{ allocation.province|default:'-' }}</td>
                             <td style="padding: 0.5rem;">{{ allocation.corporate_group|default:'-' }}</td>
-                            <td style="padding: 0.5rem; font-family: monospace; font-size: 0.65rem; background-color: #f9fafb;">{{ allocation.internal_account_code|default:'-' }}</td>
+                            <td class="account-code-cell">{{ allocation.internal_account_code|default:'-' }}</td>
                             <td style="text-align: center; padding: 0.5rem;">
                                 {% if allocation.allocated %}
                                     <span style="color: #10b981; font-weight: 600;">✓ Yes</span>
@@ -1058,12 +1613,89 @@
                                     <span style="color: #6b7280;">-</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 0.5rem; font-size: 0.75rem;">{{ allocation.representative_email|default:'-' }}</td>
+                            <td class="email-cell" style="padding: 0.5rem; font-size: 0.75rem;">{{ allocation.representative_email|default:'-' }}</td>
                             <td style="padding: 0.5rem;">{{ allocation.phone_number|default:'-' }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Cards View -->
+            <div class="mobile-cards">
+                {% for allocation in allocations %}
+                <div class="client-card" onclick="selectCard(this)" oncontextmenu="showContextMenuCard(event, this)"
+                    data-client-id="{{ allocation.client_id }}"
+                    data-business-name="{{ allocation.eclick_name }}"
+                    data-facility-type="{{ allocation.facility_type }}"
+                    data-group-type="{{ allocation.group_type }}"
+                    data-commodity="{{ allocation.commodity }}"
+                    data-province="{{ allocation.province }}"
+                    data-corporate-group="{{ allocation.corporate_group }}"
+                    data-allocated="{{ allocation.allocated|yesno:'yes,no' }}"
+                    data-email="{{ allocation.representative_email }}"
+                    data-phone="{{ allocation.phone_number }}"
+                    data-active-status="{{ allocation.active_status }}">
+
+                    <div class="card-header-row">
+                        <div class="card-title-text">{{ allocation.eclick_name|default:'Unnamed Client' }}</div>
+                        <div class="card-id-badge">ID: {{ allocation.client_id }}</div>
+                    </div>
+
+                    <div class="card-body-content">
+                        {% if allocation.facility_type %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Facility Type:</span>
+                            <span class="card-value-text">{{ allocation.facility_type }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if allocation.province %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Province:</span>
+                            <span class="card-value-text">{{ allocation.province }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if allocation.corporate_group %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Corporate Group:</span>
+                            <span class="card-value-text">{{ allocation.corporate_group }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if allocation.internal_account_code %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Account Code:</span>
+                            <span class="card-value-text account-code">{{ allocation.internal_account_code }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-field-row">
+                            <span class="card-label-text">Allocated:</span>
+                            {% if allocation.allocated %}
+                                <span class="card-value-text allocated-yes">✓ Yes</span>
+                            {% else %}
+                                <span class="card-value-text allocated-no">No</span>
+                            {% endif %}
+                        </div>
+
+                        {% if allocation.representative_email %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Email:</span>
+                            <span class="card-value-text">{{ allocation.representative_email }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if allocation.phone_number %}
+                        <div class="card-field-row">
+                            <span class="card-label-text">Phone:</span>
+                            <span class="card-value-text">{{ allocation.phone_number }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -1422,17 +2054,97 @@
     </div>
 
     <script>
+        // Theme management - compatible with settings page
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
+
+            let activeTheme = 'light';
+            if (savedTheme) {
+                activeTheme = savedTheme;
+            } else if (serverTheme) {
+                activeTheme = serverTheme;
+            }
+
+            document.documentElement.setAttribute('data-theme', activeTheme);
+        }
+
+        // Mobile Menu Toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const mobileBtn = document.getElementById('mobile-menu-btn');
+
+                sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+
+            const icon = mobileBtn.querySelector('i');
+                if (sidebar.classList.contains('show')) {
+                icon.className = 'fas fa-times';
+                } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+
+        // Apply theme on load
+        document.addEventListener('DOMContentLoaded', function() {
+            initTheme();
+
+            // Mobile menu functionality
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', toggleSidebar);
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', toggleSidebar);
+            }
+
+            // Close sidebar when clicking on nav links on mobile
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 1024) {
+                        toggleSidebar();
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 1024) {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    const mobileBtn = document.getElementById('mobile-menu-btn');
+
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+
+                    if (mobileBtn) {
+                        const icon = mobileBtn.querySelector('i');
+                        icon.className = 'fas fa-bars';
+                    }
+                }
+            });
+        });
+
+        // Listen for theme changes from settings page
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'theme') {
+                document.documentElement.setAttribute('data-theme', e.newValue || 'light');
+            }
+        });
+
         // Selected row tracking
         let selectedRow = null;
         let contextMenuRow = null;
 
         function selectRow(row) {
-            // Remove previous selection
             if (selectedRow) {
                 selectedRow.classList.remove('selected');
             }
-
-            // Select new row
             row.classList.add('selected');
             selectedRow = row;
         }
@@ -1442,33 +2154,71 @@
             contextMenuRow = row;
 
             const contextMenu = document.getElementById('contextMenu');
-
-            // Show the menu first to get its dimensions
             contextMenu.style.display = 'block';
 
-            // Get menu dimensions
             const menuWidth = contextMenu.offsetWidth;
             const menuHeight = contextMenu.offsetHeight;
-
-            // Get viewport dimensions
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
 
-            // Calculate position (use clientX/Y for position relative to viewport)
             let left = event.clientX;
             let top = event.clientY;
 
-            // Adjust if menu would go off-screen to the right
             if (left + menuWidth > viewportWidth) {
                 left = viewportWidth - menuWidth - 5;
             }
 
-            // Adjust if menu would go off-screen at the bottom
             if (top + menuHeight > viewportHeight) {
                 top = viewportHeight - menuHeight - 5;
             }
 
-            // Apply position
+            contextMenu.style.left = left + 'px';
+            contextMenu.style.top = top + 'px';
+
+            return false;
+        }
+
+        // Mobile card selection and context menu
+        function selectCard(card) {
+            // Remove selection from all cards and rows
+            document.querySelectorAll('.client-card.selected').forEach(c => {
+                c.classList.remove('selected');
+            });
+            if (selectedRow) {
+                selectedRow.classList.remove('selected');
+            }
+
+            // Select the clicked card
+            card.classList.add('selected');
+            selectedRow = card; // Use the same variable for consistency
+        }
+
+        function showContextMenuCard(event, card) {
+            event.preventDefault();
+
+            // Select the card
+            selectCard(card);
+            contextMenuRow = card;
+
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.display = 'block';
+
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            let left = event.clientX;
+            let top = event.clientY;
+
+            if (left + menuWidth > viewportWidth) {
+                left = viewportWidth - menuWidth - 5;
+            }
+
+            if (top + menuHeight > viewportHeight) {
+                top = viewportHeight - menuHeight - 5;
+            }
+
             contextMenu.style.left = left + 'px';
             contextMenu.style.top = top + 'px';
 
@@ -1497,7 +2247,6 @@
             const clientId = contextMenuRow.dataset.clientId;
             const businessName = contextMenuRow.dataset.businessName;
 
-            // Create a temporary link to trigger the export with client_id filter
             const exportUrl = '{% url "export_client_allocations" %}' + '?client_id=' + encodeURIComponent(clientId);
             window.location.href = exportUrl;
 
@@ -1531,14 +2280,12 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Remove the row from the table with a fade effect
                     contextMenuRow.style.transition = 'opacity 0.3s';
                     contextMenuRow.style.opacity = '0';
 
                     setTimeout(() => {
                         contextMenuRow.remove();
 
-                        // Update row numbers
                         const rows = document.querySelectorAll('tbody tr');
                         rows.forEach((row, index) => {
                             const rowNumberCell = row.querySelector('.row-number');
@@ -1547,7 +2294,6 @@
                             }
                         });
 
-                        // Clear selection
                         selectedRow = null;
                         contextMenuRow = null;
                     }, 300);
@@ -1563,7 +2309,6 @@
             hideContextMenu();
         }
 
-        // Hide context menu when clicking anywhere
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.context-menu')) {
                 hideContextMenu();
@@ -1586,7 +2331,6 @@
                 return;
             }
 
-            // Populate form with selected row data
             document.getElementById('edit_client_id').value = selectedRow.dataset.clientId;
             document.getElementById('edit_business_name').value = selectedRow.dataset.businessName || '';
             document.getElementById('edit_facility_type').value = selectedRow.dataset.facilityType || '';
@@ -1621,21 +2365,18 @@
             fetch('{% url "get_dropdown_options" %}')
                 .then(response => response.json())
                 .then(data => {
-                    // Load facility types
                     const facilityTypesList = document.getElementById('facilityTypesList');
                     facilityTypesList.innerHTML = '';
                     data.facility_types.forEach(item => {
                         facilityTypesList.innerHTML += createOptionItem('facility_type', item.value, item.count);
                     });
 
-                    // Load commodities
                     const commoditiesList = document.getElementById('commoditiesList');
                     commoditiesList.innerHTML = '';
                     data.commodities.forEach(item => {
                         commoditiesList.innerHTML += createOptionItem('commodity', item.value, item.count);
                     });
 
-                    // Load corporate groups
                     const corporateGroupsList = document.getElementById('corporateGroupsList');
                     corporateGroupsList.innerHTML = '';
                     data.corporate_groups.forEach(item => {
@@ -1690,7 +2431,6 @@
                 if (data.success) {
                     loadDropdownOptions();
                     alert('Option deleted successfully');
-                    // Reload the page to refresh the main table
                     location.reload();
                 } else {
                     alert('Error: ' + data.error);
@@ -1706,15 +2446,12 @@
             fetch('{% url "get_dropdown_options" %}')
                 .then(response => response.json())
                 .then(data => {
-                    // Update facility type dropdowns
                     updateCustomDropdown('facility_type_dropdown', data.facility_types);
                     updateCustomDropdown('edit_facility_type_dropdown', data.facility_types);
 
-                    // Update commodity dropdowns
                     updateCustomDropdown('commodity_dropdown', data.commodities);
                     updateCustomDropdown('edit_commodity_dropdown', data.commodities);
 
-                    // Update corporate group dropdowns
                     updateCustomDropdown('corporate_group_dropdown', data.corporate_groups);
                     updateCustomDropdown('edit_corporate_group_dropdown', data.corporate_groups);
                 })
@@ -1727,16 +2464,13 @@
             const dropdown = document.getElementById(dropdownId);
             if (!dropdown) return;
 
-            // Clear existing options
             dropdown.innerHTML = '';
 
-            // Add options from database
             options.forEach(option => {
                 const div = document.createElement('div');
                 div.className = 'custom-dropdown-item';
                 div.textContent = option.value;
 
-                // Determine which input this dropdown belongs to
                 const inputId = dropdownId.replace('_dropdown', '');
                 div.onclick = function() {
                     selectDropdownItem(inputId, option.value, dropdownId);
@@ -1746,15 +2480,12 @@
             });
         }
 
-        // Custom dropdown functions
         function showDropdown(dropdownId) {
-            // Hide all other dropdowns first
             document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
                 if (menu.id !== dropdownId) {
                     menu.classList.remove('show');
                 }
             });
-            // Show this dropdown
             document.getElementById(dropdownId).classList.add('show');
         }
 
@@ -1783,7 +2514,6 @@
             }
         }
 
-        // Close dropdowns when clicking outside
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.custom-dropdown')) {
                 document.querySelectorAll('.custom-dropdown-menu').forEach(menu => {
@@ -1792,7 +2522,6 @@
             }
         });
 
-        // Close modal when clicking outside of it
         window.onclick = function(event) {
             const addModal = document.getElementById('addClientModal');
             const editModal = document.getElementById('editClientModal');
