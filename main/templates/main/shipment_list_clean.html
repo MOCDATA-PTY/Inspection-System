@@ -10166,6 +10166,11 @@
         };
 
         function updateRFIAndInvoiceButtonColors(clientName, inspectionDate) {
+            // CRITICAL: Strip "mobile-" prefix if present (handles mobile button client names)
+            if (clientName && clientName.startsWith('mobile-')) {
+                clientName = clientName.replace('mobile-', '');
+            }
+
             console.log('[DEBUG] [API] ===== CALLING API FOR BUTTON COLORS =====');
             console.log('[DEBUG] [API] Client:', clientName);
             console.log('[DEBUG] [API] Date:', inspectionDate);
