@@ -331,8 +331,8 @@
             background-color: var(--primary-light);
             border-bottom: 2px solid var(--border);
             white-space: nowrap;
-            padding: 12px 16px;
-            font-size: 0.75rem;
+            padding: 8px 12px;
+            font-size: 0.65rem;
             font-weight: 600;
         }
 
@@ -345,13 +345,55 @@
             background-color: var(--primary-light);
         }
 
+        #exportTable tbody tr.invoiced {
+            background-color: #d1fae5;
+        }
+
+        #exportTable tbody tr.invoiced:hover {
+            background-color: #a7f3d0;
+        }
+
         #exportTable tbody td {
             border-bottom: 1px solid var(--border);
-            font-size: 0.75rem;
-            line-height: 1.5;
+            font-size: 0.65rem;
+            line-height: 1.4;
             vertical-align: middle;
-            padding: 12px 16px;
+            padding: 8px 12px;
             white-space: nowrap;
+        }
+
+        .invoice-input {
+            width: 140px;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            background: white;
+        }
+
+        .invoice-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 144, 0.1);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-invoiced {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #f59e0b;
+            color: white;
         }
 
         #exportTable tbody tr:last-child td {
@@ -488,6 +530,21 @@
             background: var(--border);
             margin: 4px 0;
         }
+
+        /* Export dropdown styling */
+        #exportDropdown > div:not([style*="height"]):hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #059669;
+        }
     </style>
 </head>
 <body>
@@ -565,8 +622,13 @@
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="invoiceDateFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date:</label>
-                        <input type="date" id="invoiceDateFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                        <label for="invoiceDateFromFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date From:</label>
+                        <input type="date" id="invoiceDateFromFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="invoiceDateToFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date To:</label>
+                        <input type="date" id="invoiceDateToFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
                     </div>
 
                     <div style="display: flex; flex-direction: column; gap: 4px;">
@@ -608,9 +670,26 @@
                         <i class="fas fa-times"></i> Clear All
                     </button>
 
-                    <button onclick="exportToExcel()" class="btn btn-success" style="align-self: flex-end; margin-left: auto;">
-                        <i class="fas fa-file-excel"></i> Export to Excel
-                    </button>
+                    <div style="position: relative; align-self: flex-end; margin-left: auto;">
+                        <button id="exportDropdownBtn" onclick="toggleExportDropdown()" class="btn btn-success" style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-file-export"></i> Export <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                        </button>
+                        <div id="exportDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 200px; z-index: 1000;">
+                            <div onclick="handleExport('excel')" style="padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text); transition: background 0.15s ease;">
+                                <i class="fas fa-file-excel" style="color: #107c41; width: 16px;"></i>
+                                <span>Excel (.xlsx)</span>
+                            </div>
+                            <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
+                            <div onclick="handleExport('csv')" style="padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text); transition: background 0.15s ease;">
+                                <i class="fas fa-file-csv" style="color: var(--primary); width: 16px;"></i>
+                                <span>CSV (Standard)</span>
+                            </div>
+                            <div onclick="handleExport('csv-excel')" style="padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text); transition: background 0.15s ease;">
+                                <i class="fas fa-file-csv" style="color: #107c41; width: 16px;"></i>
+                                <span>CSV (Excel Compatible)</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="table-responsive" style="overflow-x: auto;">
@@ -632,13 +711,15 @@
                                 <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">*UnitAmount</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*AccountCode</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*TaxType</th>
+                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Invoice Number</th>
+                                <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody id="exportTableBody" class="bg-white divide-y divide-gray-200">
                             {% for item in invoice_items %}
-                            <tr class="hover:bg-gray-50 transition-colors"
+                            <tr class="hover:bg-gray-50 transition-colors {% if item.invoice_number %}invoiced{% endif %}"
                                 data-contact="{{ item.client_name }}"
-                                data-reference="{{ item.invoice_ref }}"
+                                data-reference="{{ item.invoice_number|default:item.invoice_ref }}"
                                 data-rfi="{{ item.rfi_ref }}"
                                 data-city="{{ item.city }}"
                                 data-date="{{ item.invoice_date }}"
@@ -650,13 +731,22 @@
                                 data-unitamount="{{ item.unit_amount }}"
                                 data-total="{{ item.total }}"
                                 data-accountcode="{{ item.account_code }}"
-                                data-taxtype="{{ item.tax_rate }}">
+                                data-taxtype="{{ item.tax_rate }}"
+                                data-item-id="{{ item.id }}">
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.client_name|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.inspector_name|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-center text-gray-900">{{ item.invoice_date }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.city|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.country|default:'' }}</td>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ item.invoice_ref }}</td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                    <input type="text"
+                                           class="invoice-input"
+                                           placeholder="Enter invoice #"
+                                           value="{{ item.invoice_number|default:'' }}"
+                                           onchange="updateInvoiceNumber(this, '{{ item.id }}')"
+                                           onblur="updateInvoiceNumber(this, '{{ item.id }}')"
+                                           data-invoice-input>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.rfi_ref|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-center text-gray-900">{{ item.invoice_date }}</td>
                                 <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.total|floatformat:2 }}</td>
@@ -666,10 +756,15 @@
                                 <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.unit_amount|floatformat:2 }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.account_code }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.tax_rate }}</td>
+                                <td class="px-4 py-3 text-sm text-center text-gray-900">
+                                    <span class="status-badge {% if item.invoice_number %}status-invoiced{% else %}status-pending{% endif %}" data-status-badge>
+                                        {% if item.invoice_number %}Invoiced{% else %}Pending{% endif %}
+                                    </span>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="15" class="px-4 py-8 text-center text-gray-500">
+                                <td colspan="16" class="px-4 py-8 text-center text-gray-500">
                                     <i class="fas fa-inbox text-4xl mb-2"></i>
                                     <p>No invoice items found. Complete inspections with hours, travel, and test data to generate invoice line items.</p>
                                 </td>
@@ -835,12 +930,13 @@
             const contactName = document.getElementById('contactNameFilter').value.toLowerCase().trim();
             const reference = document.getElementById('referenceFilter').value.toLowerCase().trim();
             const city = document.getElementById('cityFilter').value.toLowerCase().trim();
-            const invoiceDate = document.getElementById('invoiceDateFilter').value;
+            const invoiceDateFrom = document.getElementById('invoiceDateFromFilter').value;
+            const invoiceDateTo = document.getElementById('invoiceDateToFilter').value;
             const inspector = document.getElementById('inspectorFilter').value.toLowerCase().trim();
             const month = document.getElementById('monthFilter').value;
             const year = document.getElementById('yearFilter').value;
 
-            console.log('Applying filters:', { contactName, reference, city, invoiceDate, inspector, month, year });
+            console.log('Applying filters:', { contactName, reference, city, invoiceDateFrom, invoiceDateTo, inspector, month, year });
 
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
             let visibleCount = 0;
@@ -872,14 +968,21 @@
                     if (!rowInspector.includes(inspector)) show = false;
                 }
 
-                // Invoice Date filter (exact match)
-                if (invoiceDate) {
+                // Invoice Date range filter
+                if (invoiceDateFrom || invoiceDateTo) {
                     const rowDate = row.getAttribute('data-date') || '';
                     // Convert DD/MM/YYYY to YYYY-MM-DD
                     const parts = rowDate.split('/');
                     if (parts.length === 3) {
                         const rowDateFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                        if (rowDateFormatted !== invoiceDate) show = false;
+
+                        // Check if date is within range
+                        if (invoiceDateFrom && rowDateFormatted < invoiceDateFrom) {
+                            show = false;
+                        }
+                        if (invoiceDateTo && rowDateFormatted > invoiceDateTo) {
+                            show = false;
+                        }
                     } else {
                         show = false;
                     }
@@ -915,7 +1018,8 @@
             document.getElementById('contactNameFilter').value = '';
             document.getElementById('referenceFilter').value = '';
             document.getElementById('cityFilter').value = '';
-            document.getElementById('invoiceDateFilter').value = '';
+            document.getElementById('invoiceDateFromFilter').value = '';
+            document.getElementById('invoiceDateToFilter').value = '';
             document.getElementById('inspectorFilter').value = '';
             document.getElementById('monthFilter').value = '';
             document.getElementById('yearFilter').value = '';
@@ -1163,10 +1267,160 @@
             URL.revokeObjectURL(url);
         }
 
-        // Keep the button export for backward compatibility
+        // Export to Excel using SheetJS
         function exportToExcel() {
-            exportAsGoogleSheets();
+            const exportData = getExportData();
+
+            if (exportData.length <= 1) {
+                alert('No data to export');
+                return;
+            }
+
+            // Create a new workbook
+            const wb = XLSX.utils.book_new();
+
+            // Convert the data array to a worksheet
+            const ws = XLSX.utils.aoa_to_sheet(exportData);
+
+            // Set column widths for better readability
+            const colWidths = [
+                { wch: 25 }, // ContactName
+                { wch: 20 }, // EmailAddress
+                { wch: 20 }, // POAddressLine1
+                { wch: 20 }, // POAddressLine2
+                { wch: 20 }, // POAddressLine3
+                { wch: 20 }, // POAddressLine4
+                { wch: 15 }, // POCity
+                { wch: 15 }, // PORegion
+                { wch: 12 }, // POPostalCode
+                { wch: 15 }, // POCountry
+                { wch: 20 }, // InvoiceNumber
+                { wch: 20 }, // Reference
+                { wch: 12 }, // InvoiceDate
+                { wch: 12 }, // DueDate
+                { wch: 12 }, // Total
+                { wch: 15 }, // InventoryItemCode
+                { wch: 50 }, // Description
+                { wch: 10 }, // Quantity
+                { wch: 12 }, // UnitAmount
+                { wch: 10 }, // Discount
+                { wch: 15 }, // AccountCode
+                { wch: 25 }, // TaxType
+                { wch: 12 }, // TaxAmount
+                { wch: 15 }, // TrackingName1
+                { wch: 15 }, // TrackingOption1
+                { wch: 15 }, // TrackingName2
+                { wch: 15 }, // TrackingOption2
+                { wch: 10 }, // Currency
+                { wch: 15 }  // BrandingTheme
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add the worksheet to the workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Invoice Data');
+
+            // Generate filename with current date
+            const today = new Date();
+            const dateStr = today.toISOString().split('T')[0];
+            const filename = `Invoice_Export_${dateStr}.xlsx`;
+
+            // Write the workbook and trigger download
+            XLSX.writeFile(wb, filename);
+
+            console.log('Excel file exported successfully');
         }
+
+        // Update invoice number
+        function updateInvoiceNumber(input, itemId) {
+            const invoiceNumber = input.value.trim();
+            const row = input.closest('tr');
+            const statusBadge = row.querySelector('[data-status-badge]');
+
+            // Update UI immediately
+            if (invoiceNumber) {
+                row.classList.add('invoiced');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-invoiced';
+                    statusBadge.textContent = 'Invoiced';
+                }
+                row.setAttribute('data-reference', invoiceNumber);
+            } else {
+                row.classList.remove('invoiced');
+                if (statusBadge) {
+                    statusBadge.className = 'status-badge status-pending';
+                    statusBadge.textContent = 'Pending';
+                }
+                row.setAttribute('data-reference', '');
+            }
+
+            // Save to backend
+            fetch('{% url "update_invoice_number" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    item_id: itemId,
+                    invoice_number: invoiceNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Invoice number updated successfully');
+                    // Show a brief success indicator
+                    input.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        input.style.borderColor = '';
+                    }, 1000);
+                } else {
+                    console.error('Error updating invoice number:', data.error);
+                    alert('Error saving invoice number: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error saving invoice number. Please try again.');
+            });
+        }
+
+        // Toggle export dropdown
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Handle export selection
+        function handleExport(format) {
+            // Hide dropdown
+            document.getElementById('exportDropdown').style.display = 'none';
+
+            // Call appropriate export function
+            switch(format) {
+                case 'excel':
+                    exportToExcel();
+                    break;
+                case 'csv':
+                    exportAsCSV();
+                    break;
+                case 'csv-excel':
+                    exportAsExcelCSV();
+                    break;
+                default:
+                    console.error('Unknown export format:', format);
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('exportDropdown');
+            const button = document.getElementById('exportDropdownBtn');
+
+            if (dropdown && button && !dropdown.contains(e.target) && !button.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
 
         // Calculate unique stats
         function calculateUniqueStats() {
@@ -1214,7 +1468,6 @@
                 'contactNameFilter',
                 'referenceFilter',
                 'cityFilter',
-                'invoiceDateFilter',
                 'inspectorFilter'
             ];
 
@@ -1226,13 +1479,18 @@
                             applyFilters();
                         }
                     });
-
-                    // For date input, apply filter on change
-                    if (inputId === 'invoiceDateFilter') {
-                        input.addEventListener('change', applyFilters);
-                    }
                 }
             });
+
+            // Add change listeners for date inputs
+            const dateFromInput = document.getElementById('invoiceDateFromFilter');
+            const dateToInput = document.getElementById('invoiceDateToFilter');
+            if (dateFromInput) {
+                dateFromInput.addEventListener('change', applyFilters);
+            }
+            if (dateToInput) {
+                dateToInput.addEventListener('change', applyFilters);
+            }
 
             // Add change listeners for month and year filters
             document.getElementById('monthFilter').addEventListener('change', applyFilters);

@@ -415,6 +415,9 @@ class FoodSafetyAgencyInspection(models.Model):
     composition_uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='composition_uploads', help_text="User who uploaded Composition document")
     composition_uploaded_date = models.DateTimeField(blank=True, null=True, help_text="Date when Composition document was uploaded")
 
+    # Invoice number (editable field for tracking invoiced items)
+    invoice_number = models.CharField(max_length=100, blank=True, null=True, help_text="Invoice number assigned to this inspection")
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

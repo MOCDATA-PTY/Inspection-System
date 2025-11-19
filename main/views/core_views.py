@@ -4828,9 +4828,14 @@ def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref,
                 'lab': lab_name,
             })
 
-    # Calculate total for each item
+    # Calculate total for each item and add inspection ID and invoice number
     for item in items:
         item['total'] = item['quantity'] * item['unit_amount']
+        item['id'] = inspection.id
+        item['invoice_number'] = inspection.invoice_number
+        # Use custom invoice number if set, otherwise use auto-generated one
+        if inspection.invoice_number:
+            item['invoice_ref'] = inspection.invoice_number
 
     return items
 
@@ -4955,6 +4960,41 @@ def export_to_google_sheets(request):
             'success': False,
             'error': str(e)
         })
+
+@login_required(login_url='login')
+def update_invoice_number(request):
+    """Update invoice number for an inspection"""
+    import json
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Only POST requests allowed'})
+
+    try:
+        data = json.loads(request.body)
+        item_id = data.get('item_id')
+        invoice_number = data.get('invoice_number', '').strip()
+
+        if not item_id:
+            return JsonResponse({'success': False, 'error': 'Missing item_id'})
+
+        # Get the inspection
+        inspection = FoodSafetyAgencyInspection.objects.get(id=item_id)
+
+        # Update the invoice number
+        inspection.invoice_number = invoice_number if invoice_number else None
+        inspection.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Invoice number updated successfully',
+            'invoice_number': invoice_number
+        })
+
+    except FoodSafetyAgencyInspection.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Inspection not found'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
 
 @login_required(login_url='login')
 @inspector_only_inspections

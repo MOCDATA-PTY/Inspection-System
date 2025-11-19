@@ -1,111 +1,152 @@
-#!/usr/bin/env python3
 """
-Test script to show exactly how compliance documents will be pulled from Google Drive
+Test compliance document pull functionality
 """
 
-from datetime import datetime, timedelta
+import os
+import sys
+import django
 
-def get_target_months():
-    """Get list of months from October 1, 2025 onwards"""
+# Setup Django environment
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
+django.setup()
 
-    # START DATE: October 1, 2025
-    start_month = datetime(2025, 10, 1)
-    current_date = datetime.now()
+from main.models import FoodSafetyAgencyInspection, Client
+from main.views.core_views import load_drive_files_real, find_document_link_apps_script_replica
+from datetime import date
 
-    # Generate list of month names from October 2025 to current month + ~2 months ahead
-    target_months = []
-    temp_date = start_month
-    while temp_date <= current_date.replace(day=1) + timedelta(days=62):
-        month_name = temp_date.strftime('%B %Y')  # e.g., "October 2025"
-        target_months.append(month_name)
-        # Move to next month
-        if temp_date.month == 12:
-            temp_date = datetime(temp_date.year + 1, 1, 1)
-        else:
-            temp_date = datetime(temp_date.year, temp_date.month + 1, 1)
+def normalize_client_name(name):
+    """Normalize client name for matching"""
+    if not name:
+        return ''
+    return name.strip().lower().replace(' ', '').replace('-', '').replace('_', '')
 
-    return target_months
-
-if __name__ == '__main__':
-    print("=" * 80)
-    print("COMPLIANCE DOCUMENTS PULL CONFIGURATION")
-    print("=" * 80)
+def test_compliance_pull():
+    print("="*70)
+    print("TESTING COMPLIANCE DOCUMENT PULL")
+    print("="*70)
     print()
 
-    current_date = datetime.now()
-    print(f"Today's Date: {current_date.strftime('%B %d, %Y')}")
-    print()
+    # Get recent inspections from October-November 2025
+    start_date = date(2025, 10, 1)
+    end_date = date(2025, 11, 19)
 
-    print("=" * 80)
-    print("GOOGLE DRIVE FOLDER STRUCTURE")
-    print("=" * 80)
-    print()
-    print("Parent Folder: Organized Files/2025")
-    print("Folder ID: 1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP")
-    print()
+    inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lte=end_date
+    ).exclude(client_name__isnull=True).order_by('-date_of_inspection')[:20]
 
-    target_months = get_target_months()
+    print(f"Found {inspections.count()} inspections to test\n")
 
-    print("=" * 80)
-    print("MONTHS TO PULL FROM (DYNAMIC)")
-    print("=" * 80)
-    print()
-    print(f"Start: October 1, 2025")
-    print(f"End: Current month + ~2 months ahead")
-    print()
-    print(f"Total Month Folders: {len(target_months)}")
-    print()
+    # Build client mapping
+    print("Loading client account codes...")
+    client_map = {}
+    for client in Client.objects.exclude(internal_account_code__isnull=True).exclude(internal_account_code=''):
+        key = normalize_client_name(client.name or '')
+        if key:
+            client_map[key] = client.internal_account_code
 
-    for i, month in enumerate(target_months, 1):
-        print(f"  {i}. {month} folder")
-        print(f"     >> Files in this folder will be pulled for {month} inspections")
+    print(f"Loaded {len(client_map)} client mappings\n")
+
+    # Load Drive files
+    print("Loading Google Drive files from 2025 folder...")
+    print("This should scan October 2025 and November 2025 folders\n")
+
+    class MockRequest:
+        def __init__(self):
+            self.session = {}
+
+    mock_request = MockRequest()
+
+    try:
+        file_lookup = load_drive_files_real(mock_request, use_cache=False)
+        print(f"\nLoaded {len(file_lookup)} files from Drive\n")
+
+        if len(file_lookup) == 0:
+            print("ERROR: No files loaded from Drive!")
+            print("Check Google Drive authentication and folder structure\n")
+            return
+
+        # Show sample files
+        print("Sample files loaded:")
+        for i, (key, file_info) in enumerate(list(file_lookup.items())[:5]):
+            print(f"  {i+1}. {file_info['name']}")
+            print(f"     Account: {file_info['accountCode']}, Date: {file_info['zipDateStr']}")
         print()
 
-    print("=" * 80)
-    print("HOW IT WORKS")
-    print("=" * 80)
-    print()
-    print("1. System looks in: Organized Files/2025/")
-    print()
-    print("2. Finds folders named:")
-    for month in target_months:
-        print(f"   - '{month}'")
-    print()
-    print("3. Pulls ALL files from these month folders")
-    print()
-    print("4. Matches files to inspections based on:")
-    print("   - Account code")
-    print("   - Commodity")
-    print("   - Date (within 15 days)")
-    print()
-    print("5. Downloads files to local 'Compliance' folders")
+    except Exception as e:
+        print(f"ERROR loading Drive files: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+
+    # Test finding documents
+    print("="*70)
+    print("TESTING DOCUMENT MATCHING")
+    print("="*70)
     print()
 
-    print("=" * 80)
-    print("EXAMPLE")
-    print("=" * 80)
-    print()
-    print("If you have an inspection on October 15, 2025:")
-    print("  >> System pulls files from 'October 2025' folder")
-    print()
-    print("If you have an inspection on November 20, 2025:")
-    print("  >> System pulls files from 'November 2025' folder")
-    print()
-    print("If you have an inspection on December 5, 2025:")
-    print("  >> System pulls files from 'December 2025' folder")
+    found_count = 0
+    not_found_count = 0
+    no_account_count = 0
+
+    for i, inspection in enumerate(inspections[:10], 1):
+        print(f"[{i}] Inspection {inspection.remote_id}")
+        print(f"    Client: {inspection.client_name}")
+        print(f"    Date: {inspection.date_of_inspection}")
+        print(f"    Commodity: {inspection.commodity}")
+
+        # Get account code
+        client_key = normalize_client_name(inspection.client_name or '')
+        account_code = client_map.get(client_key, '')
+
+        if not account_code:
+            print(f"    Result: NO ACCOUNT CODE")
+            no_account_count += 1
+            print()
+            continue
+
+        print(f"    Account: {account_code}")
+
+        # Try to find document
+        try:
+            doc_link = find_document_link_apps_script_replica(
+                account_code,
+                str(inspection.commodity).lower().strip(),
+                inspection.date_of_inspection,
+                file_lookup
+            )
+
+            if doc_link and doc_link != "Document Not Found":
+                print(f"    Result: FOUND!")
+                found_count += 1
+            else:
+                print(f"    Result: NOT FOUND")
+                not_found_count += 1
+
+        except Exception as e:
+            print(f"    Result: ERROR - {e}")
+            not_found_count += 1
+
+        print()
+
+    print("="*70)
+    print("RESULTS")
+    print("="*70)
+    print(f"Total Tested: {min(10, inspections.count())}")
+    print(f"Found: {found_count}")
+    print(f"Not Found: {not_found_count}")
+    print(f"No Account Code: {no_account_count}")
     print()
 
-    print("=" * 80)
-    print("AUTO-UPDATE FEATURE")
-    print("=" * 80)
-    print()
-    print("[OK] NO MANUAL UPDATES NEEDED!")
-    print()
-    print("When you create new month folders (January 2026, February 2026, etc.)")
-    print("the system will AUTOMATICALLY include them.")
-    print()
-    print("Example timeline:")
-    print(f"  - Today ({current_date.strftime('%B %d, %Y')}): Pulls from {len(target_months)} months")
-    print(f"  - December 2025: Will pull from October 2025 through February 2026")
-    print(f"  - January 2026: Will pull from October 2025 through March 2026")
-    print()
+    if found_count > 0:
+        print("SUCCESS: Compliance pull is working!")
+    else:
+        print("ISSUE: No documents found. Check:")
+        print("  1. Google Drive authentication")
+        print("  2. Folder structure (October/November 2025)")
+        print("  3. File naming patterns")
+        print("  4. Account code matching")
+
+if __name__ == "__main__":
+    test_compliance_pull()

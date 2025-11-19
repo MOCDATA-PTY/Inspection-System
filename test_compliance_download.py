@@ -1,179 +1,150 @@
 """
-Simple test script to download a few compliance documents
+Test compliance document download after datetime fix
 """
 
 import os
+import sys
 import django
 
+# Setup Django environment
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
 from main.models import FoodSafetyAgencyInspection, Client
-from main.views.core_views import find_document_link_apps_script_replica, download_compliance_document
-from main.services.google_drive_service import GoogleDriveService
-from datetime import date, datetime
-import re
+from main.views.core_views import load_drive_files_real, find_document_link_apps_script_replica
+from datetime import date
 
-def test_download():
-    print("=" * 80)
-    print("TEST: Download Compliance Documents from October 2025")
-    print("=" * 80)
-    print()
+def normalize_client_name(name):
+    """Normalize client name for matching"""
+    if not name:
+        return ''
+    return name.strip().lower().replace(' ', '').replace('-', '').replace('_', '')
 
-    # Load Drive files focusing on October 2025
-    print("[Loading] Fetching Google Drive files for October 2025...")
-    drive_service = GoogleDriveService()
-    folder_id = "18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4"
+def test_compliance_download():
+    print("="*70)
+    print("TESTING COMPLIANCE DOCUMENT DOWNLOAD (DATETIME FIX)")
+    print("="*70 + "\n")
 
-    print("[Drive] Fetching files...")
-    all_files = drive_service.list_files_in_folder(folder_id, request=None, max_items=5000)
-    print(f"[Drive] Retrieved {len(all_files)} files total")
+    # Get recent November inspections
+    start_date = date(2025, 11, 1)
+    end_date = date(2025, 11, 30)
 
-    # Filter for October 2025 files only
-    october_files = []
-    for file in all_files:
-        file_name = file.get('name', '')
-        if '2025-10-' in file_name:  # October 2025 files
-            october_files.append(file)
+    recent_inspections = FoodSafetyAgencyInspection.objects.filter(
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lte=end_date
+    ).exclude(
+        client_name__isnull=True
+    ).order_by('-date_of_inspection')[:10]
 
-    print(f"[Filter] Found {len(october_files)} files from October 2025")
+    total = recent_inspections.count()
+    print(f"Testing with {total} November inspections\n")
 
-    # Build file lookup for October files
-    file_lookup = {}
-    for file in october_files:
-        file_name = file.get('name', '')
-        file_id = file.get('id', '')
-        web_view_link = file.get('webViewLink', '')
-
-        full_pattern = re.match(r'^([A-Za-z]+)-([A-Z]{2}-[A-Z]{3}-[A-Z]{3}-[A-Z]{2,3}-\d+)-(\d{4}-\d{2}-\d{2})', file_name)
-
-        if full_pattern and file_id:
-            commodity_prefix = full_pattern.group(1)
-            account_code = full_pattern.group(2)
-            zip_date_str = full_pattern.group(3)
-
-            try:
-                zip_date = datetime.strptime(zip_date_str, '%Y-%m-%d')
-            except:
-                continue
-
-            compound_key = f"{commodity_prefix.lower()}|{account_code}|{zip_date_str}"
-
-            file_lookup[compound_key] = {
-                'url': web_view_link or f"https://drive.google.com/file/d/{file_id}/view",
-                'name': file_name,
-                'commodity': commodity_prefix,
-                'accountCode': account_code,
-                'zipDate': zip_date,
-                'zipDateStr': zip_date_str,
-                'file_id': file_id
-            }
-
-    print(f"[OK] Built lookup with {len(file_lookup)} October files")
-
-    if len(file_lookup) == 0:
-        print("[ERROR] No October 2025 files found in Drive")
+    if total == 0:
+        print("No November inspections found!")
         return
 
-    # Show sample
-    print("\n[Sample] First 5 October files:")
-    for i, (key, info) in enumerate(list(file_lookup.items())[:5]):
-        print(f"  {i+1}. {info['name']}")
-        print(f"      Account: {info['accountCode']} | Date: {info['zipDateStr']}")
-    print()
+    # Build client mapping
+    client_map = {}
+    for client in Client.objects.exclude(internal_account_code__isnull=True).exclude(internal_account_code=''):
+        key = normalize_client_name(client.name or '')
+        if key:
+            client_map[key] = client.internal_account_code
 
-    # Get account codes from October files
-    account_codes = list(set([info['accountCode'] for info in file_lookup.values()]))
-    print(f"[Matching] Looking for inspections with {len(account_codes)} account codes...")
+    print(f"Loaded {len(client_map)} client mappings\n")
 
-    # Find clients with these account codes
-    clients = Client.objects.filter(internal_account_code__in=account_codes)
-    print(f"[Found] {len(clients)} clients")
+    # Load Drive files (this will use the NEW folder structure)
+    print("Loading Drive files from 2025 folder...")
+    print("Using NEW folder ID: 1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP\n")
 
-    # Get inspections from October 2025 for these clients
-    start_date = date(2025, 10, 1)
-    end_date = date(2025, 11, 1)
+    # Create a mock request object for authentication
+    class MockRequest:
+        def __init__(self):
+            self.session = {}
 
-    inspections = FoodSafetyAgencyInspection.objects.filter(
-        client_name__in=[c.name for c in clients],
-        date_of_inspection__gte=start_date,
-        date_of_inspection__lt=end_date
-    ).order_by('-date_of_inspection')[:5]
+    mock_request = MockRequest()
+    file_lookup = load_drive_files_real(mock_request, use_cache=False)
 
-    print(f"[Testing] {inspections.count()} inspections from October 2025")
-    print()
+    print(f"Found {len(file_lookup)} files in Drive\n")
+    print("="*70)
+    print("TESTING DATETIME FIX")
+    print("="*70 + "\n")
 
-    downloaded_count = 0
+    found_count = 0
+    no_account_count = 0
     not_found_count = 0
+    error_count = 0
 
-    for inspection in inspections:
-        print(f"\n{'='*60}")
-        print(f"ID: {inspection.id} | Client: {inspection.client_name}")
-        print(f"Commodity: {inspection.commodity} | Date: {inspection.date_of_inspection}")
-        print(f"{'='*60}")
+    for i, inspection in enumerate(recent_inspections, 1):
+        print(f"\n[{i}/{total}] Inspection ID: {inspection.remote_id}")
+        print(f"  Client: {inspection.client_name}")
+        print(f"  Date: {inspection.date_of_inspection} (type: {type(inspection.date_of_inspection).__name__})")
+        print(f"  Commodity: {inspection.commodity}")
 
         # Get account code
-        client = Client.objects.filter(name=inspection.client_name).first()
-        if not client or not client.internal_account_code:
-            print(f"[SKIP] No account code for client")
+        client_key = normalize_client_name(inspection.client_name or '')
+        account_code = client_map.get(client_key, '')
+
+        if not account_code:
+            print(f"  [SKIP] No account code found")
+            no_account_count += 1
             continue
 
-        account_code = client.internal_account_code
-        print(f"Account: {account_code}")
+        print(f"  Account Code: {account_code}")
 
-        # Find document
-        commodity_prefix = str(inspection.commodity).lower().strip()
-        if commodity_prefix == 'eggs':
-            commodity_prefix = 'egg'
-
-        best_match = None
-        best_days_diff = 999
-
-        for file_key, file_info in file_lookup.items():
-            if (file_info.get('commodity', '').lower() == commodity_prefix and
-                file_info.get('accountCode') == account_code):
-
-                days_diff = abs((file_info['zipDate'].date() - inspection.date_of_inspection).days)
-
-                if days_diff <= 15 and days_diff < best_days_diff:
-                    best_match = file_info
-                    best_days_diff = days_diff
-
-        if best_match:
-            print(f"[FOUND] {best_match['name']} (within {best_days_diff} days)")
-            print(f"[Download] Starting download...")
-
-            # Download
-            downloaded_path = download_compliance_document(
-                best_match['file_id'],
+        # Try to find document - this is where the datetime error would occur
+        try:
+            doc_link = find_document_link_apps_script_replica(
                 account_code,
-                inspection.commodity,
+                str(inspection.commodity).lower().strip(),
                 inspection.date_of_inspection,
-                best_match['name'],
-                inspection.client_name,
-                None
+                file_lookup
             )
 
-            if downloaded_path:
-                print(f"[SUCCESS] Downloaded to:")
-                print(f"  {downloaded_path}")
-                downloaded_count += 1
+            if doc_link and doc_link != "Document Not Found":
+                print(f"  [SUCCESS] Found document!")
+                print(f"  Link: {doc_link[:80]}...")
+                found_count += 1
             else:
-                print(f"[ERROR] Download failed")
-        else:
-            print(f"[NOT FOUND] No matching file")
-            not_found_count += 1
+                print(f"  [NOT FOUND] No matching document")
+                not_found_count += 1
 
-    print()
-    print("=" * 80)
-    print("TEST COMPLETE")
-    print("=" * 80)
-    print(f"Downloaded: {downloaded_count} | Not found: {not_found_count}")
-    print()
-    print("Check folder structure at: media/inspection/2025/October/ClientName/")
-    print("  - Inspection-XXX/Compliance/COMMODITY/ (individual docs)")
-    print("  - Compliance/COMMODITY/ (general docs)")
-    print("=" * 80)
+        except TypeError as e:
+            if "unsupported operand type" in str(e):
+                print(f"  [DATETIME ERROR] {str(e)}")
+                print(f"  THIS SHOULD NOT HAPPEN - FIX FAILED!")
+                error_count += 1
+            else:
+                print(f"  [ERROR] {str(e)}")
+                error_count += 1
+        except Exception as e:
+            print(f"  [ERROR] {str(e)}")
+            error_count += 1
+
+    print("\n" + "="*70)
+    print("TEST RESULTS")
+    print("="*70)
+    print(f"Total Tested: {total}")
+    print(f"Documents Found: {found_count}")
+    print(f"Not Found: {not_found_count}")
+    print(f"No Account Code: {no_account_count}")
+    print(f"Errors (including datetime): {error_count}")
+
+    if error_count == 0:
+        print("\n[SUCCESS] No datetime errors! The fix is working correctly.")
+        if found_count > 0:
+            print(f"[SUCCESS] Found {found_count} documents successfully.")
+        print("\nThe compliance pull should now work without datetime errors.")
+    else:
+        print("\n[WARNING] Errors occurred during testing.")
+        print("Check the output above for details.")
+
+    print("\n" + "="*70)
 
 if __name__ == "__main__":
-    test_download()
+    try:
+        test_compliance_download()
+    except Exception as e:
+        print(f"\n[FATAL ERROR] Test crashed: {e}")
+        import traceback
+        traceback.print_exc()
