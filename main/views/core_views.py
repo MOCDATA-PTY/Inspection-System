@@ -7721,18 +7721,19 @@ def load_drive_files_real(request, use_cache=True):
                 return cached_lookup
         
         drive_service = GoogleDriveService()
-        folder_id = "18CbrhqSsZO53TM3D8hRxkVmZyRBF-Zi4"  # From Apps Script
-        
-        print("Loading Google Drive files...")
+        # Updated to scan 2025 folder with month subfolders (November 2025, October 2025, etc.)
+        parent_folder_id = "1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP"  # 2025 folder in Shared Drive
+
+        print("Loading Google Drive files from 2025 folder...")
         start_time = datetime.now()
-        
+
         # Get ALL files from Drive folder (not limited to 1000)
         # Suppress verbose output from Google Drive service
         import logging
         original_level = logging.getLogger().level
         logging.getLogger().setLevel(logging.ERROR)
-        
-        files = drive_service.list_files_in_folder(folder_id, request=request, max_items=None)
+
+        files = drive_service.list_files_in_folder(parent_folder_id, request=request, max_items=None, recursive=True)
         
         # Restore logging level
         logging.getLogger().setLevel(original_level)

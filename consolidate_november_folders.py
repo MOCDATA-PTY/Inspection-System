@@ -36,23 +36,26 @@ class DriveOrganizer:
         print("[OK] Authentication successful!\n")
 
     def get_folder_info(self, folder_id):
-        """Get information about a folder"""
+        """Get information about a folder or Shared Drive"""
         try:
             folder = self.drive.files().get(
                 fileId=folder_id,
-                fields='id, name, mimeType, owners, shared, capabilities',
+                fields='id, name, mimeType, owners, shared, capabilities, driveId',
                 supportsAllDrives=True
             ).execute()
 
             print(f"Folder Info:")
             print(f"  Name: {folder.get('name')}")
             print(f"  ID: {folder.get('id')}")
-            print(f"  Shared: {folder.get('shared')}")
-            print(f"  Owners: {[o.get('emailAddress', o.get('displayName')) for o in folder.get('owners', [])]}")
+            print(f"  Type: Shared Drive Folder" if folder.get('driveId') else "Regular Folder")
+            if folder.get('driveId'):
+                print(f"  Drive ID: {folder.get('driveId')}")
             print()
             return folder
+
         except Exception as e:
-            print(f"Error getting folder info: {e}\n")
+            print(f"Error getting folder info: {e}")
+            print(f"Make sure you have access to this folder/Shared Drive.\n")
             return None
 
     def list_folder_contents(self, folder_id):
@@ -181,13 +184,9 @@ class DriveOrganizer:
             print("No 'November 2025' folders found!")
             return
 
-        if len(november_folders) == 1:
-            print("Only one November 2025 folder exists. Nothing to consolidate!")
-            return
-
-        # Create or use the first November 2025 folder as the target
-        target_folder = november_folders[0]
-        print(f"Using '{target_folder['name']}' as the consolidated folder\n")
+        # Create a new folder for consolidated files
+        target_folder = self.create_folder(parent_folder_id, "November 2025 Moved files")
+        print(f"All zip files will be moved to: '{target_folder['name']}'\n")
 
         # Collect all zip files from all November folders
         all_zip_files = []
@@ -216,11 +215,6 @@ class DriveOrganizer:
             zip_file = item['file']
             source_folder_id = item['source_folder_id']
 
-            # Skip if already in target folder
-            if source_folder_id == target_folder['id']:
-                print(f"Skipping {zip_file['name']} (already in target folder)")
-                continue
-
             try:
                 self.move_file(
                     zip_file['id'],
@@ -235,24 +229,6 @@ class DriveOrganizer:
         print(f"\n{'='*70}")
         print(f"MOVED {moved_count} ZIP FILES")
         print(f"{'='*70}\n")
-
-        # Delete empty duplicate folders
-        print("Cleaning up empty folders...\n")
-        for folder in november_folders:
-            # Skip the target folder
-            if folder['id'] == target_folder['id']:
-                continue
-
-            # Check if folder is empty
-            remaining_items = self.list_folder_contents(folder['id'])
-
-            if len(remaining_items) == 0:
-                try:
-                    self.delete_folder(folder['id'], folder['name'])
-                except Exception as e:
-                    print(f"ERROR deleting {folder['name']}: {e}\n")
-            else:
-                print(f"Skipping {folder['name']} - still contains {len(remaining_items)} items\n")
 
         print("="*70)
         print("CONSOLIDATION COMPLETE!")
