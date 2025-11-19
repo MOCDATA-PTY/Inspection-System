@@ -2961,8 +2961,9 @@ def list_client_folder_files(request):
 
         # Use sanitized client name to match upload folder structure
         parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
-        # Check multiple variations: sanitized, with slashes replaced, with apostrophes replaced
-        client_folder_variations = [sanitized_client_name, sanitized_with_slash, sanitized_with_apostrophe]
+        # Check multiple variations: ORIGINAL NAME FIRST (with spaces), then sanitized variations
+        # CRITICAL: Try original name first to handle folders created with spaces (mobile/web upload inconsistency)
+        client_folder_variations = [client_name, sanitized_client_name, sanitized_with_slash, sanitized_with_apostrophe]
 
         # List files in document type folders (checking multiple folder variations)
         files_list = {}
