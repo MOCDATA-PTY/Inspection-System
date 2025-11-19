@@ -158,10 +158,20 @@ def debug_compliance_detection():
 
         if compliance_folder_to_use:
             print(f"Contents of compliance folder:")
+
+            # Count total files
+            total_files = 0
+            for root, dirs, files in os.walk(compliance_folder_to_use):
+                total_files += len(files)
+
+            print(f"Total files in Compliance folder: {total_files}")
+            print()
+
             for root, dirs, files in os.walk(compliance_folder_to_use):
                 level = root.replace(compliance_folder_to_use, '').count(os.sep)
                 indent = '  ' * level
-                print(f"{indent}{os.path.basename(root)}/")
+                folder_name = os.path.basename(root) if root != compliance_folder_to_use else 'Compliance'
+                print(f"{indent}{folder_name}/ ({len(files)} files)")
                 subindent = '  ' * (level + 1)
                 for file in files:
                     file_path = os.path.join(root, file)

@@ -8925,11 +8925,19 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         for structure in folder_structures:
             for category_key, folder_name in structure.items():
                 if category_key == 'compliance':
-                    # Check main Compliance folder
-                    main_compliance = os.path.join(actual_client_path, 'Compliance')
-                    files_by_category[category_key].extend(
-                        scan_compliance_files(main_compliance, 'Compliance')
-                    )
+                    # Check main Compliance folder (try both capitalized and lowercase)
+                    compliance_caps = os.path.join(actual_client_path, 'Compliance')
+                    compliance_lower = os.path.join(actual_client_path, 'compliance')
+
+                    # Use whichever exists (prefer capitalized)
+                    if os.path.exists(compliance_caps):
+                        files_by_category[category_key].extend(
+                            scan_compliance_files(compliance_caps, 'Compliance')
+                        )
+                    elif os.path.exists(compliance_lower):
+                        files_by_category[category_key].extend(
+                            scan_compliance_files(compliance_lower, 'compliance')
+                        )
                     
                     # Also check top-level compliance files (some systems store them directly)
                     direct_files = []
