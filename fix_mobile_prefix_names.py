@@ -28,7 +28,7 @@ def find_and_fix_mobile_prefix_names():
     print()
 
     if mobile_inspections.count() == 0:
-        print("✓ No inspections found with 'mobile-' prefix in database")
+        print("OK - No inspections found with 'mobile-' prefix in database")
         print()
         print("The issue might be in the JavaScript/frontend code, not the database.")
         print("Checking media folders for any 'mobile-' prefixed folders...")
@@ -56,7 +56,7 @@ def find_and_fix_mobile_prefix_names():
                 print()
                 print("These folders should be renamed to remove the 'mobile-' prefix")
             else:
-                print("✓ No folders found with 'mobile-' prefix")
+                print("OK - No folders found with 'mobile-' prefix")
 
         return
 
@@ -93,7 +93,7 @@ def find_and_fix_mobile_prefix_names():
         inspection.save()
 
         fixed_count += 1
-        print(f"✓ Fixed: '{old_name}' → '{new_name}' (Inspection ID: {inspection.id})")
+        print(f"OK - Fixed: '{old_name}' -> '{new_name}' (Inspection ID: {inspection.id})")
 
     print()
     print("=" * 100)
