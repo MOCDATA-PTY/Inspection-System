@@ -5,17 +5,25 @@ Run this on the server to see exactly what's happening
 import os
 import django
 from pathlib import Path
+import re
+from datetime import datetime
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
 from django.conf import settings
+from django.utils import dateparse
 from main.models import FoodSafetyAgencyInspection
 
-# Import the create_folder_name function
-import sys
-sys.path.append('/root/Inspection-System/main/views')
-from core_views import create_folder_name
+# Replicate the create_folder_name function locally to avoid import issues
+def create_folder_name(client_name):
+    """Convert client name to folder-friendly format"""
+    if not client_name:
+        return ""
+    # Convert to lowercase and replace spaces/special chars with underscores
+    folder_name = re.sub(r'[^\w\s-]', '', client_name.lower())
+    folder_name = re.sub(r'[-\s]+', '_', folder_name)
+    return folder_name.strip('_')
 
 def debug_compliance_detection():
     """Debug why compliance documents aren't showing for specific inspection"""
@@ -37,7 +45,7 @@ def debug_compliance_detection():
     print("STEP 1: What the code looks for")
     print("-" * 100)
 
-    date_obj = django.utils.dateparse.parse_date(inspection_date)
+    date_obj = dateparse.parse_date(inspection_date)
     year_folder = date_obj.strftime('%Y')
     month_folder = date_obj.strftime('%B')
     converted_client_folder = create_folder_name(client_name)
