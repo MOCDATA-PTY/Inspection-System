@@ -8,7 +8,6 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-from main.models import ComplianceDocument
 from django.conf import settings
 from pathlib import Path
 
@@ -20,19 +19,14 @@ def locate_compliance_documents():
     print("=" * 80)
     print()
 
-    # Get all compliance documents from database
-    docs = ComplianceDocument.objects.all().order_by('-upload_date')
-
-    print(f"Total compliance documents in database: {docs.count()}")
-    print()
-
     # Media root
-    media_root = settings.MEDIA_ROOT
+    media_root = Path(settings.MEDIA_ROOT)
     print(f"Media Root: {media_root}")
+    print(f"Exists: {media_root.exists()}")
     print()
 
-    # Check if compliance folder exists
-    compliance_folder = Path(media_root) / 'compliance'
+    # Check for compliance folder
+    compliance_folder = media_root / 'compliance'
     print(f"Compliance Folder: {compliance_folder}")
     print(f"Exists: {compliance_folder.exists()}")
     print()
@@ -40,85 +34,90 @@ def locate_compliance_documents():
     if compliance_folder.exists():
         # List all files in compliance folder
         all_files = list(compliance_folder.rglob('*'))
-        pdf_files = [f for f in all_files if f.is_file() and f.suffix.lower() == '.pdf']
+        files_only = [f for f in all_files if f.is_file()]
+        pdf_files = [f for f in files_only if f.suffix.lower() == '.pdf']
 
-        print(f"Total files in compliance folder: {len(all_files)}")
+        print(f"Total items (files + folders): {len(all_files)}")
+        print(f"Total files: {len(files_only)}")
         print(f"Total PDF files: {len(pdf_files)}")
         print()
 
         # Show directory structure
         print("Directory Structure:")
         print("-" * 80)
-        for root, dirs, files in os.walk(compliance_folder):
-            level = root.replace(str(compliance_folder), '').count(os.sep)
-            indent = ' ' * 2 * level
-            print(f"{indent}{os.path.basename(root)}/")
-            subindent = ' ' * 2 * (level + 1)
-            for file in files[:5]:  # Show first 5 files per directory
-                print(f"{subindent}{file}")
-            if len(files) > 5:
-                print(f"{subindent}... and {len(files) - 5} more files")
+
+        # Get all subdirectories
+        subdirs = sorted([d for d in compliance_folder.rglob('*') if d.is_dir()])
+
+        for subdir in subdirs[:20]:  # Show first 20 directories
+            rel_path = subdir.relative_to(compliance_folder)
+            level = len(rel_path.parts)
+            indent = '  ' * level
+
+            # Count files in this directory
+            files_in_dir = [f for f in subdir.iterdir() if f.is_file()]
+
+            print(f"{indent}{subdir.name}/ ({len(files_in_dir)} files)")
+
+        if len(subdirs) > 20:
+            print(f"... and {len(subdirs) - 20} more directories")
         print()
 
-    # List some sample documents from database
-    print("Sample Documents from Database:")
+        # Show sample files by commodity type
+        print("Sample Files by Commodity:")
+        print("-" * 80)
+
+        commodities = ['POULTRY', 'PMP', 'RAW', 'EGGS']
+        for commodity in commodities:
+            commodity_path = compliance_folder / commodity
+            if commodity_path.exists():
+                files = [f for f in commodity_path.rglob('*.pdf') if f.is_file()]
+                print(f"\n{commodity}: {len(files)} PDF files")
+                for f in files[:3]:  # Show first 3 files
+                    rel_path = f.relative_to(compliance_folder)
+                    file_size = f.stat().st_size / 1024  # KB
+                    print(f"  - {rel_path} ({file_size:.1f} KB)")
+                if len(files) > 3:
+                    print(f"  ... and {len(files) - 3} more files")
+        print()
+
+    else:
+        print("WARNING: Compliance folder does not exist!")
+        print()
+        print("Checking other possible locations:")
+
+        # Check inspection folder
+        inspection_folder = media_root / 'inspection'
+        print(f"\nInspection Folder: {inspection_folder}")
+        print(f"Exists: {inspection_folder.exists()}")
+
+        if inspection_folder.exists():
+            subfolders = [d for d in inspection_folder.iterdir() if d.is_dir()]
+            print(f"Subfolders: {len(subfolders)}")
+            for folder in subfolders[:5]:
+                print(f"  - {folder.name}")
+            if len(subfolders) > 5:
+                print(f"  ... and {len(subfolders) - 5} more")
+
+    # Check media root contents
+    print("\nMedia Root Contents:")
     print("-" * 80)
-    for i, doc in enumerate(docs[:10], 1):
-        file_path = Path(media_root) / str(doc.file) if doc.file else None
-        file_exists = file_path.exists() if file_path else False
+    if media_root.exists():
+        items = sorted([item for item in media_root.iterdir()])
+        for item in items[:15]:
+            item_type = "DIR" if item.is_dir() else "FILE"
+            if item.is_dir():
+                file_count = len([f for f in item.rglob('*') if f.is_file()])
+                print(f"  [{item_type}] {item.name}/ ({file_count} files)")
+            else:
+                size_kb = item.stat().st_size / 1024
+                print(f"  [{item_type}] {item.name} ({size_kb:.1f} KB)")
+        if len(items) > 15:
+            print(f"  ... and {len(items) - 15} more items")
+    else:
+        print("WARNING: Media root does not exist!")
 
-        print(f"{i}. {doc.folder_name}")
-        print(f"   File: {doc.file}")
-        print(f"   Full Path: {file_path}")
-        print(f"   Exists: {file_exists}")
-        print(f"   Upload Date: {doc.upload_date}")
-        print(f"   Source: {doc.source}")
-        print()
-
-    if docs.count() > 10:
-        print(f"... and {docs.count() - 10} more documents")
-        print()
-
-    # Check for orphaned files (files not in database)
-    print("Checking for orphaned files...")
-    print("-" * 80)
-
-    if compliance_folder.exists():
-        db_files = set(str(doc.file) for doc in docs if doc.file)
-        all_pdf_files = [str(f.relative_to(media_root)) for f in pdf_files]
-
-        orphaned = [f for f in all_pdf_files if f not in db_files]
-
-        print(f"Files in database: {len(db_files)}")
-        print(f"PDF files on disk: {len(all_pdf_files)}")
-        print(f"Orphaned files (on disk but not in DB): {len(orphaned)}")
-        print()
-
-        if orphaned:
-            print("Sample orphaned files:")
-            for f in orphaned[:10]:
-                print(f"  - {f}")
-            if len(orphaned) > 10:
-                print(f"  ... and {len(orphaned) - 10} more")
-            print()
-
-    # Check for missing files (in database but not on disk)
-    missing = []
-    for doc in docs:
-        if doc.file:
-            file_path = Path(media_root) / str(doc.file)
-            if not file_path.exists():
-                missing.append(doc)
-
-    print(f"Missing files (in DB but not on disk): {len(missing)}")
-    if missing:
-        print("Sample missing files:")
-        for doc in missing[:10]:
-            print(f"  - {doc.file} (Folder: {doc.folder_name})")
-        if len(missing) > 10:
-            print(f"  ... and {len(missing) - 10} more")
-        print()
-
+    print()
     print("=" * 80)
     print("DONE")
     print("=" * 80)
