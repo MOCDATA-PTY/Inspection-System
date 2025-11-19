@@ -346,11 +346,11 @@
         }
 
         #exportTable tbody tr.invoiced {
-            background-color: #d1fae5;
+            background-color: #4ade80;
         }
 
         #exportTable tbody tr.invoiced:hover {
-            background-color: #a7f3d0;
+            background-color: #22c55e;
         }
 
         #exportTable tbody td {
@@ -389,6 +389,13 @@
         .status-invoiced {
             background-color: #10b981;
             color: white;
+        }
+
+        /* Better contrast for status badge on invoiced (green) rows */
+        #exportTable tbody tr.invoiced .status-invoiced {
+            background-color: white;
+            color: #166534;
+            border: 1px solid #166534;
         }
 
         .status-pending {
@@ -600,80 +607,85 @@
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    <i class="fas fa-file-export"></i> Invoice Line Items Dashboard
+                    Invoice Line Items Dashboard
                 </div>
             </div>
             <div class="card-body">
                 <!-- Filter and Export Controls -->
-                <div class="filter-controls" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px;">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="contactNameFilter" style="font-size: 0.875rem; font-weight: 500;">Contact Name:</label>
-                        <input type="text" id="contactNameFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
+                <div class="filter-controls" style="margin-bottom: 20px;">
+                    <!-- First row: Text filters -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="contactNameFilter" style="font-size: 0.75rem; font-weight: 500;">Contact Name:</label>
+                            <input type="text" id="contactNameFilter" placeholder="Search..." style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="referenceFilter" style="font-size: 0.75rem; font-weight: 500;">Reference:</label>
+                            <input type="text" id="referenceFilter" placeholder="Search..." style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="cityFilter" style="font-size: 0.75rem; font-weight: 500;">City:</label>
+                            <input type="text" id="cityFilter" placeholder="Search..." style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="inspectorFilter" style="font-size: 0.75rem; font-weight: 500;">Inspector:</label>
+                            <input type="text" id="inspectorFilter" placeholder="Search..." style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="invoiceDateFromFilter" style="font-size: 0.75rem; font-weight: 500;">Date From:</label>
+                            <input type="date" id="invoiceDateFromFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="invoiceDateToFilter" style="font-size: 0.75rem; font-weight: 500;">Date To:</label>
+                            <input type="date" id="invoiceDateToFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="monthFilter" style="font-size: 0.75rem; font-weight: 500;">Month:</label>
+                            <select id="monthFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                                <option value="">All</option>
+                                <option value="01">January</option>
+                                <option value="02">February</option>
+                                <option value="03">March</option>
+                                <option value="04">April</option>
+                                <option value="05">May</option>
+                                <option value="06">June</option>
+                                <option value="07">July</option>
+                                <option value="08">August</option>
+                                <option value="09">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                            <label for="yearFilter" style="font-size: 0.75rem; font-weight: 500;">Year:</label>
+                            <select id="yearFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
+                                <option value="">All</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="referenceFilter" style="font-size: 0.875rem; font-weight: 500;">Reference Number:</label>
-                        <input type="text" id="referenceFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="cityFilter" style="font-size: 0.875rem; font-weight: 500;">City:</label>
-                        <input type="text" id="cityFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="invoiceDateFromFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date From:</label>
-                        <input type="date" id="invoiceDateFromFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="invoiceDateToFilter" style="font-size: 0.875rem; font-weight: 500;">Invoice Date To:</label>
-                        <input type="date" id="invoiceDateToFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="inspectorFilter" style="font-size: 0.875rem; font-weight: 500;">Inspector:</label>
-                        <input type="text" id="inspectorFilter" placeholder="Search..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="monthFilter" style="font-size: 0.875rem; font-weight: 500;">Month:</label>
-                        <select id="monthFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                            <option value="">All Months</option>
-                            <option value="01">January</option>
-                            <option value="02">February</option>
-                            <option value="03">March</option>
-                            <option value="04">April</option>
-                            <option value="05">May</option>
-                            <option value="06">June</option>
-                            <option value="07">July</option>
-                            <option value="08">August</option>
-                            <option value="09">September</option>
-                            <option value="10">October</option>
-                            <option value="11">November</option>
-                            <option value="12">December</option>
-                        </select>
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <label for="yearFilter" style="font-size: 0.875rem; font-weight: 500;">Year:</label>
-                        <select id="yearFilter" style="padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.875rem; min-width: 150px;">
-                            <option value="">All Years</option>
-                        </select>
-                    </div>
-
-                    <button onclick="applyFilters()" class="btn btn-primary" style="align-self: flex-end;">
-                        <i class="fas fa-filter"></i> Apply Filters
-                    </button>
-
-                    <button onclick="clearAllFilters()" class="btn btn-secondary" style="align-self: flex-end;">
-                        <i class="fas fa-times"></i> Clear All
-                    </button>
-
-                    <div style="position: relative; align-self: flex-end; margin-left: auto;">
-                        <button id="exportDropdownBtn" onclick="toggleExportDropdown()" class="btn btn-success" style="display: flex; align-items: center; gap: 8px;">
-                            <i class="fas fa-file-export"></i> Export <i class="fas fa-chevron-down" style="font-size: 0.75rem;"></i>
+                    <!-- Second row: Buttons -->
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button onclick="applyFilters()" class="btn btn-primary" style="padding: 8px 14px; font-size: 0.75rem;">
+                            <i class="fas fa-filter"></i> Apply
                         </button>
+
+                        <button onclick="clearAllFilters()" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.75rem;">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+
+                        <div style="position: relative; margin-left: auto;">
+                            <button id="exportDropdownBtn" onclick="toggleExportDropdown()" class="btn btn-success" style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 0.75rem;">
+                                Export <i class="fas fa-chevron-down" style="font-size: 0.65rem;"></i>
+                            </button>
                         <div id="exportDropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 200px; z-index: 1000;">
                             <div onclick="handleExport('excel')" style="padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--text); transition: background 0.15s ease;">
                                 <i class="fas fa-file-excel" style="color: #107c41; width: 16px;"></i>
@@ -701,7 +713,6 @@
                                 <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Inspection Date</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCity</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">POCountry</th>
-                                <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceNumber</th>
                                 <th class="px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Reference</th>
                                 <th class="px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">*InvoiceDate</th>
                                 <th class="px-4 py-3 text-right text-xs font-normal text-gray-700 uppercase tracking-wider">Total</th>
@@ -738,15 +749,6 @@
                                 <td class="px-4 py-3 text-sm text-center text-gray-900">{{ item.invoice_date }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.city|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.country|default:'' }}</td>
-                                <td class="px-4 py-3 text-sm font-medium text-gray-900">
-                                    <input type="text"
-                                           class="invoice-input"
-                                           placeholder="Enter invoice #"
-                                           value="{{ item.invoice_number|default:'' }}"
-                                           onchange="updateInvoiceNumber(this, '{{ item.id }}')"
-                                           onblur="updateInvoiceNumber(this, '{{ item.id }}')"
-                                           data-invoice-input>
-                                </td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.rfi_ref|default:'' }}</td>
                                 <td class="px-4 py-3 text-sm text-center text-gray-900">{{ item.invoice_date }}</td>
                                 <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.total|floatformat:2 }}</td>
@@ -756,6 +758,15 @@
                                 <td class="px-4 py-3 text-sm text-right text-gray-900">{{ item.unit_amount|floatformat:2 }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.account_code }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-900">{{ item.tax_rate }}</td>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                                    <input type="text"
+                                           class="invoice-input"
+                                           placeholder="Enter invoice #"
+                                           value="{{ item.invoice_number|default:'' }}"
+                                           onchange="updateInvoiceNumber(this, '{{ item.id }}')"
+                                           onblur="updateInvoiceNumber(this, '{{ item.id }}')"
+                                           data-invoice-input>
+                                </td>
                                 <td class="px-4 py-3 text-sm text-center text-gray-900">
                                     <span class="status-badge {% if item.invoice_number %}status-invoiced{% else %}status-pending{% endif %}" data-status-badge>
                                         {% if item.invoice_number %}Invoiced{% else %}Pending{% endif %}
@@ -1125,17 +1136,17 @@
                     city,                     // POCity
                     '',                       // PORegion
                     '',                       // POPostalCode
-                    country,                  // POCountry
+                    '',                       // POCountry (blank for export)
                     invoiceRef,               // *InvoiceNumber
-                    rfiRef,                   // Reference
+                    '',                       // Reference (blank for export)
                     invoiceDate,              // *InvoiceDate
                     '',                       // *DueDate
-                    total,                    // Total
+                    '',                       // Total (blank for export)
                     itemCode,                 // InventoryItemCode
                     description,              // *Description
                     quantity,                 // *Quantity
                     unitAmount,               // *UnitAmount
-                    '0',                      // Discount
+                    '',                       // Discount (blank for export)
                     accountCode,              // *AccountCode
                     taxType,                  // *TaxType
                     taxAmount,                // TaxAmount
@@ -1143,7 +1154,7 @@
                     '',                       // TrackingOption1
                     '',                       // TrackingName2
                     '',                       // TrackingOption2
-                    'ZAR',                    // Currency
+                    '',                       // Currency (blank for export)
                     ''                        // BrandingTheme
                 ]);
             });
@@ -1330,30 +1341,59 @@
             console.log('Excel file exported successfully');
         }
 
-        // Update invoice number
+        // Update invoice number for all rows in the same contact+date group
         function updateInvoiceNumber(input, itemId) {
             const invoiceNumber = input.value.trim();
             const row = input.closest('tr');
-            const statusBadge = row.querySelector('[data-status-badge]');
+            const contactName = row.getAttribute('data-contact');
+            const invoiceDate = row.getAttribute('data-date');
+            const groupKey = `${contactName}|${invoiceDate}`;
 
-            // Update UI immediately
-            if (invoiceNumber) {
-                row.classList.add('invoiced');
-                if (statusBadge) {
-                    statusBadge.className = 'status-badge status-invoiced';
-                    statusBadge.textContent = 'Invoiced';
-                }
-                row.setAttribute('data-reference', invoiceNumber);
-            } else {
-                row.classList.remove('invoiced');
-                if (statusBadge) {
-                    statusBadge.className = 'status-badge status-pending';
-                    statusBadge.textContent = 'Pending';
-                }
-                row.setAttribute('data-reference', '');
-            }
+            // Find all rows in the same group
+            const allRows = document.querySelectorAll('#exportTableBody tr[data-contact]');
+            const groupRows = [];
+            const groupItemIds = [];
 
-            // Save to backend
+            allRows.forEach(r => {
+                const rContact = r.getAttribute('data-contact');
+                const rDate = r.getAttribute('data-date');
+                const rKey = `${rContact}|${rDate}`;
+                if (rKey === groupKey) {
+                    groupRows.push(r);
+                    groupItemIds.push(r.getAttribute('data-item-id'));
+                }
+            });
+
+            // Update UI for all rows in the group
+            groupRows.forEach(r => {
+                const statusBadge = r.querySelector('[data-status-badge]');
+                const invoiceDisplay = r.querySelector('[data-invoice-display]');
+
+                if (invoiceNumber) {
+                    r.classList.add('invoiced');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge status-invoiced';
+                        statusBadge.textContent = 'Invoiced';
+                    }
+                    r.setAttribute('data-reference', invoiceNumber);
+                    // Update display text for non-input rows
+                    if (invoiceDisplay) {
+                        invoiceDisplay.textContent = invoiceNumber;
+                    }
+                } else {
+                    r.classList.remove('invoiced');
+                    if (statusBadge) {
+                        statusBadge.className = 'status-badge status-pending';
+                        statusBadge.textContent = 'Pending';
+                    }
+                    r.setAttribute('data-reference', '');
+                    if (invoiceDisplay) {
+                        invoiceDisplay.textContent = '';
+                    }
+                }
+            });
+
+            // Save to backend for all items in the group
             fetch('{% url "update_invoice_number" %}', {
                 method: 'POST',
                 headers: {
@@ -1362,14 +1402,14 @@
                 },
                 body: JSON.stringify({
                     item_id: itemId,
-                    invoice_number: invoiceNumber
+                    invoice_number: invoiceNumber,
+                    group_item_ids: groupItemIds
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    console.log('Invoice number updated successfully');
-                    // Show a brief success indicator
+                    console.log('Invoice number updated for group');
                     input.style.borderColor = '#10b981';
                     setTimeout(() => {
                         input.style.borderColor = '';
@@ -1441,9 +1481,49 @@
 
         // Add event listeners for filters (Enter key to apply)
         document.addEventListener('DOMContentLoaded', function() {
+            // Group rows by contact name + invoice date and show only one input per group
+            const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
+            const groups = {};
+
+            // First pass: group rows
+            rows.forEach(row => {
+                const contactName = row.getAttribute('data-contact');
+                const invoiceDate = row.getAttribute('data-date');
+                const groupKey = `${contactName}|${invoiceDate}`;
+
+                if (!groups[groupKey]) {
+                    groups[groupKey] = [];
+                }
+                groups[groupKey].push(row);
+            });
+
+            // Second pass: show input only on first row of each group
+            Object.values(groups).forEach(groupRows => {
+                groupRows.forEach((row, index) => {
+                    const inputCell = row.querySelector('td:nth-last-child(2)'); // Invoice Number cell
+                    const input = inputCell.querySelector('input[data-invoice-input]');
+
+                    if (input) {
+                        const currentValue = input.value;
+
+                        if (index === 0) {
+                            // First row keeps the input
+                            // Already has input, no change needed
+                        } else {
+                            // Subsequent rows: replace input with text display
+                            const textSpan = document.createElement('span');
+                            textSpan.setAttribute('data-invoice-display', '');
+                            textSpan.textContent = currentValue;
+                            textSpan.style.cssText = 'display: inline-block; width: 140px; padding: 4px 8px; font-size: 0.65rem;';
+
+                            input.replaceWith(textSpan);
+                        }
+                    }
+                });
+            });
+
             // Populate year dropdown with available years from data
             const years = new Set();
-            const rows = document.querySelectorAll('#exportTableBody tr[data-date]');
 
             rows.forEach(row => {
                 const dateStr = row.getAttribute('data-date');

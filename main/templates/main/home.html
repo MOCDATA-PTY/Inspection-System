@@ -664,7 +664,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li>
                         <a href="{% url 'export_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
