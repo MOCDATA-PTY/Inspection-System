@@ -10,7 +10,7 @@ User = get_user_model()
 
 # Fix developer user
 user = User.objects.get(username='developer')
-user.role = 'administrator'
+user.role = 'developer'
 user.is_superuser = True
 user.is_staff = True
 user.save()
