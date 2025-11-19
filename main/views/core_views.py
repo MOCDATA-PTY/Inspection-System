@@ -8818,10 +8818,10 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
         client_folder = create_folder_name(client_name)
-        
+
         # Create cache key for this specific client/date combination
         cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
-        
+
         # Enhanced caching logic with compliance status awareness
         use_cache = not force_refresh
 
@@ -8843,15 +8843,22 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                     has_compliance_files = len(cached_files.get('compliance', [])) > 0
                     if not (compliance_status in ['partial', 'complete'] and not has_compliance_files):
                         return cached_files
-        
-        # Base client path - use correct structure: media/inspection/YYYY/Month/ClientName/
-        client_base_path = os.path.join(
-                settings.MEDIA_ROOT,
-                'inspection',
-                year_folder,
-                month_folder,
-                client_folder
-            )
+
+        # Base client path - Try both original name (with spaces) and converted name (with underscores)
+        # This handles cases where folders were created with original client names
+        base_inspection_path = os.path.join(
+            settings.MEDIA_ROOT,
+            'inspection',
+            year_folder,
+            month_folder
+        )
+
+        # Try original client name first (as stored in database with spaces)
+        client_base_path = os.path.join(base_inspection_path, client_name)
+
+        # If original name doesn't exist, try converted name (with underscores/lowercase)
+        if not os.path.exists(client_base_path):
+            client_base_path = os.path.join(base_inspection_path, client_folder)
         
         # Define file categories with simple, Linux-friendly folder names
         categories = {
