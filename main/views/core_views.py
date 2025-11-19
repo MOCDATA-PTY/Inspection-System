@@ -637,14 +637,9 @@ def check_compliance_documents_status(inspections, client_name, date_of_inspecti
         return cached_status
     
     try:
-        # First try to check OneDrive (since files are now uploaded there)
-        onedrive_status = check_compliance_documents_status_onedrive(inspections, client_name, date_of_inspection)
-        if onedrive_status and onedrive_status.get('has_any_compliance', False):
-            # Cache the result for 10 minutes
-            cache.set(cache_key, onedrive_status, 600)
-            return onedrive_status
-        
-        # Fallback to local media folder check (for backward compatibility)
+        # Check local media folder for compliance documents
+        # Compliance documents are downloaded from Google Drive and stored locally
+        # OneDrive is NOT used for compliance document checking
         local_status = check_compliance_documents_status_local(inspections, client_name, date_of_inspection)
         # Cache the result for 10 minutes
         cache.set(cache_key, local_status, 600)
