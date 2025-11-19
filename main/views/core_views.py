@@ -7733,11 +7733,42 @@ def load_drive_files_real(request, use_cache=True):
         original_level = logging.getLogger().level
         logging.getLogger().setLevel(logging.ERROR)
 
-        files = drive_service.list_files_in_folder(parent_folder_id, request=request, max_items=None, recursive=True)
-        
+        # Scan specific month folders only (October and November 2025)
+        all_files = []
+        target_months = ['October 2025', 'November 2025']
+
+        print(f"Scanning for month folders: {', '.join(target_months)}")
+
+        # Get folders in parent directory
+        parent_items = drive_service.list_files_in_folder(parent_folder_id, request=request, max_items=None)
+
+        month_folders = []
+        for item in parent_items:
+            mime_type = item.get('mimeType', '')
+            folder_name = item.get('name', '')
+
+            if mime_type == 'application/vnd.google-apps.folder' and folder_name in target_months:
+                month_folders.append({'id': item.get('id'), 'name': folder_name})
+                print(f"Found target folder: {folder_name}")
+
+        # Scan each target month folder for zip files
+        for folder in month_folders:
+            print(f"Scanning {folder['name']}...")
+            month_files = drive_service.list_files_in_folder(folder['id'], request=request, max_items=None)
+
+            # Only add actual files (not subfolders)
+            for item in month_files:
+                if item.get('mimeType', '') != 'application/vnd.google-apps.folder':
+                    all_files.append(item)
+
+            print(f"  Found {len(month_files)} files in {folder['name']}")
+
+        print(f"Total files from October and November: {len(all_files)}")
+        files = all_files
+
         # Restore logging level
         logging.getLogger().setLevel(original_level)
-        
+
         file_lookup = {}
         file_count = 0
         
