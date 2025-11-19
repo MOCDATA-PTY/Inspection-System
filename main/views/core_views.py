@@ -8916,10 +8916,25 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                 inspection_path = os.path.join(actual_client_path, item)
                 if os.path.isdir(inspection_path):
                     for category_key in categories:
-                        category_path = os.path.join(inspection_path, categories[category_key])
-                        if os.path.exists(category_path):
-                            category_files = scan_compliance_files(category_path, f"{item}/{categories[category_key]}")
-                            files_by_category[category_key].extend(category_files)
+                        folder_name = categories[category_key]
+
+                        # For compliance folder, try both capitalized and lowercase (case sensitivity fix)
+                        if category_key == 'compliance':
+                            category_path_caps = os.path.join(inspection_path, 'Compliance')
+                            category_path_lower = os.path.join(inspection_path, 'compliance')
+
+                            if os.path.exists(category_path_caps):
+                                category_files = scan_compliance_files(category_path_caps, f"{item}/Compliance")
+                                files_by_category[category_key].extend(category_files)
+                            elif os.path.exists(category_path_lower):
+                                category_files = scan_compliance_files(category_path_lower, f"{item}/compliance")
+                                files_by_category[category_key].extend(category_files)
+                        else:
+                            # For other categories, use standard lookup
+                            category_path = os.path.join(inspection_path, folder_name)
+                            if os.path.exists(category_path):
+                                category_files = scan_compliance_files(category_path, f"{item}/{folder_name}")
+                                files_by_category[category_key].extend(category_files)
 
         # Then check top-level folders
         for structure in folder_structures:
