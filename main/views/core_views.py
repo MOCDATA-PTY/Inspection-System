@@ -2693,15 +2693,29 @@ def scan_inspection_folders(base_path, seen_files, inspection_id=None):
     files_list = {}
     # Case-insensitive check for inspection folders (handles both Inspection-XXX and inspection-XXX)
     inspection_folders = [d for d in os.listdir(base_path) if d.lower().startswith('inspection-') and os.path.isdir(os.path.join(base_path, d))]
-    
+
     for inspection_folder in sorted(inspection_folders):
         inspection_path = os.path.join(base_path, inspection_folder)
         print(f" [DEBUG] Checking inspection folder: {inspection_folder}")
-        
+
         # Check each document type in the inspection folder
         doc_types = ['Request For Invoice', 'invoice', 'lab results', 'retest', 'Compliance', 'occurrence', 'composition']
         for doc_type in doc_types:
-            doc_path = os.path.join(inspection_path, doc_type)
+            # CRITICAL: For Compliance folder, check both capitalized and lowercase versions (case sensitivity fix)
+            if doc_type == 'Compliance':
+                doc_path_caps = os.path.join(inspection_path, 'Compliance')
+                doc_path_lower = os.path.join(inspection_path, 'compliance')
+                if os.path.exists(doc_path_caps):
+                    doc_path = doc_path_caps
+                elif os.path.exists(doc_path_lower):
+                    doc_path = doc_path_lower
+                else:
+                    continue  # Neither exists, skip
+            else:
+                doc_path = os.path.join(inspection_path, doc_type)
+                if not os.path.exists(doc_path):
+                    continue  # Path doesn't exist, skip
+
             if os.path.exists(doc_path):
                 print(f" [DEBUG] Found {doc_type} in {inspection_folder}")
                 files = []
