@@ -1030,7 +1030,7 @@ def shipment_list(request):
         'client_name', 'date_of_inspection', 'inspector_name', 'inspector_id',
         'commodity', 'remote_id', 'is_sample_taken', 'needs_retest',
         'product_name', 'product_class', 'fat', 'protein', 'calcium',
-        'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'comment', 'is_sent', 'sent_date', 'sent_by',
+        'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'comment', 'approved_status', 'is_sent', 'sent_date', 'sent_by',
         'is_direction_present_for_this_inspection', 'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date', 'composition_uploaded_by', 'composition_uploaded_date',
         'rfi_uploaded_by__username', 'rfi_uploaded_by__first_name', 'rfi_uploaded_by__last_name',
         'invoice_uploaded_by__username', 'invoice_uploaded_by__first_name', 'invoice_uploaded_by__last_name',
@@ -1429,6 +1429,7 @@ def shipment_list(request):
         group_hours = None
         group_additional_email = None
         group_comment = None
+        group_approved_status = None
         group_is_sent = False
         
         # IGNORE DATABASE - CHECK ACTUAL FILES ON DISK ONLY
@@ -1449,6 +1450,7 @@ def shipment_list(request):
             group_hours = sample_inspection.hours
             group_additional_email = sample_inspection.additional_email
             group_comment = sample_inspection.comment
+            group_approved_status = sample_inspection.approved_status
             # Check if ANY inspection in the group is marked as sent
             group_is_sent = any(inspection.is_sent for inspection in group_inspections)
         
@@ -1476,6 +1478,12 @@ def shipment_list(request):
             for inspection in group_inspections:
                 if inspection.comment is not None:
                     group_comment = inspection.comment
+                    break
+
+        if group_approved_status is None and group_inspections:
+            for inspection in group_inspections:
+                if inspection.approved_status is not None:
+                    group_approved_status = inspection.approved_status
                     break
         
         # If group_inspections is empty but we expected products, try a direct query as fallback
@@ -1608,6 +1616,7 @@ def shipment_list(request):
             'hours': group_hours,  # From actual inspection data
             'additional_email': group_additional_email,  # From actual inspection data
             'comment': group_comment,  # From actual inspection data
+            'approved_status': group_approved_status,  # From actual inspection data
             'is_sent': group_is_sent,  # From actual inspection data
             'sent_by': next((inspection.sent_by for inspection in group_inspections if inspection.is_sent), None),  # Who marked as sent
             'sent_date': next((inspection.sent_date for inspection in group_inspections if inspection.is_sent), None),  # When marked as sent
