@@ -11891,7 +11891,11 @@ def download_first_10_compliance_by_commodity(request):
                     fdate = _dt.datetime.strptime(date_str, '%Y-%m-%d').date()
                 except Exception:
                     continue
-                days = abs((fdate - (ins.date_of_inspection or _dt.date.min)).days) if ins.date_of_inspection else 10**9
+                # Ensure date_of_inspection is a date object, not datetime
+                inspection_date = ins.date_of_inspection
+                if inspection_date and hasattr(inspection_date, 'date'):
+                    inspection_date = inspection_date.date()
+                days = abs((fdate - (inspection_date or _dt.date.min)).days) if inspection_date else 10**9
                 if days <= 15 and days < best_days:
                     best_days = days
                     best = {'id': fc.get('id'), 'name': name}
