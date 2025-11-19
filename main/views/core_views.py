@@ -9358,7 +9358,14 @@ def get_inspection_files(request):
         os.makedirs(inspection_folder, exist_ok=True)
 
         # Get files from local storage
+        print(f"DEBUG get_inspection_files: Calling get_inspection_files_local with client_name='{client_name}', inspection_date='{inspection_date}', force_refresh={force_refresh}")
         local_files = get_inspection_files_local(client_name, inspection_date, force_refresh)
+        print(f"DEBUG get_inspection_files: local_files returned with keys: {local_files.keys() if local_files else 'None'}")
+        if local_files:
+            for category, files in local_files.items():
+                print(f"DEBUG get_inspection_files: {category} has {len(files)} files")
+                if category == 'compliance' and files:
+                    print(f"DEBUG get_inspection_files: First compliance file: {files[0] if files else 'N/A'}")
 
         # Check if there are actually any files (not just empty arrays)
         has_files = local_files and any(file_list for file_list in local_files.values() if file_list)
