@@ -96,7 +96,7 @@ class DailyComplianceSyncService:
         
         # If media folder was recreated, also clear cache
         if not previous_media_state and media_exists:
-            print("🗂️ DETECTED: Media folder was recreated! Clearing processed documents cache...")
+            print("DETECTED: Media folder was recreated! Clearing processed documents cache...")
             cache.delete(cache_key)
             cache.set(media_check_key, True, 60 * 60 * 24)  # Remember for 24 hours
             return set()  # Return empty set to force reprocessing
@@ -133,7 +133,7 @@ class DailyComplianceSyncService:
         try:
             # Check if force stop was requested
             if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
-                print("🛑 Force stop requested - aborting file loading")
+                print("STOP: Force stop requested - aborting file loading")
                 return None
 
             from ..services.google_drive_service import GoogleDriveService
@@ -326,13 +326,13 @@ class DailyComplianceSyncService:
             for inspection in inspections:
                 # Check stop flag and force stop before processing each inspection
                 if not self.is_running or (hasattr(self, '_force_stop_processing') and self._force_stop_processing):
-                    print("🛑 Stop requested during processing - aborting sync")
+                    print("STOP: Stop requested during processing - aborting sync")
                     break
-                
+
                 # Check global stop flag
                 import threading
                 if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                    print("🛑 Global stop flag detected during processing - aborting sync")
+                    print("STOP: Global stop flag detected during processing - aborting sync")
                     break
                     
                 document_id = self.generate_document_id(inspection)
@@ -382,8 +382,17 @@ class DailyComplianceSyncService:
                                 if (file_info.get('commodity', '').lower() == commodity_prefix and
                                     file_info.get('accountCode') == account_code):
 
-                                    # Calculate days difference
-                                    days_diff = abs((file_info['zipDate'] - inspection.date_of_inspection).days)
+                                    # Calculate days difference - ensure both are date objects
+                                    file_date = file_info['zipDate']
+                                    inspection_date = inspection.date_of_inspection
+
+                                    # Convert datetime to date if needed
+                                    if hasattr(file_date, 'date'):
+                                        file_date = file_date.date()
+                                    if hasattr(inspection_date, 'date'):
+                                        inspection_date = inspection_date.date()
+
+                                    days_diff = abs((file_date - inspection_date).days)
 
                                     if days_diff <= 15 and days_diff < best_days_diff:
                                         best_match = file_info
@@ -449,7 +458,7 @@ class DailyComplianceSyncService:
             if was_running:
                 # Don't print on every page load - only on actual restart
                 if not self.sync_thread or not self.sync_thread.is_alive():
-                    print("🔄 Auto-restarting daily compliance sync (was running before)...")
+                    print("Auto-restarting daily compliance sync (was running before)...")
                     self.is_running = True
 
                     # Reset global stop flag
@@ -460,19 +469,19 @@ class DailyComplianceSyncService:
 
                     self.sync_thread = threading.Thread(target=self._run_daily_sync_loop, daemon=True)
                     self.sync_thread.start()
-                    print("✅ Daily compliance sync auto-restarted successfully")
+                    print("Daily compliance sync auto-restarted successfully")
         except Exception as e:
-            print(f"⚠️ Failed to auto-restart daily compliance sync: {e}")
+            print(f"WARNING: Failed to auto-restart daily compliance sync: {e}")
 
     def start_daily_sync(self, manual_start=False):
         """Start the daily sync service."""
         # Check if already running via cache (persistent across page refreshes)
         if cache.get('daily_compliance_sync:running'):
             if self.sync_thread and self.sync_thread.is_alive():
-                print("⚠️  Daily compliance sync is already running.")
+                print("WARNING: Daily compliance sync is already running.")
                 return
             # Thread died but cache says running - restart it
-            print("⚠️ Service was marked running but thread died. Restarting...")
+            print("WARNING: Service was marked running but thread died. Restarting...")
 
         self.is_running = True
         self.manual_start = manual_start  # Store manual start flag
@@ -513,16 +522,16 @@ class DailyComplianceSyncService:
         threading._global_stop_flag.set()
         
         if self.sync_thread and self.sync_thread.is_alive():
-            print("🛑 Waiting for sync thread to finish...")
+            print("Waiting for sync thread to finish...")
             self.sync_thread.join(timeout=1)  # Very short timeout
-            
+
             if self.sync_thread.is_alive():
-                print("⚠️  Sync thread did not stop gracefully, forcing stop...")
+                print("WARNING: Sync thread did not stop gracefully, forcing stop...")
                 # Force stop all processing
                 self._force_stop_processing = True
-                print("🛑 Service marked as stopped - thread will exit on next check")
-        
-        print("🛑 Daily compliance sync service stopped.")
+                print("Service marked as stopped - thread will exit on next check")
+
+        print("Daily compliance sync service stopped.")
     
     def _run_daily_sync_loop(self):
         """Main loop for daily sync service."""
@@ -530,9 +539,9 @@ class DailyComplianceSyncService:
             # Check global stop flag
             import threading
             if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                print("🛑 Global stop flag detected in main loop - stopping")
+                print("Global stop flag detected in main loop - stopping")
                 break
-                
+
             try:
                 # Check if we should run daily sync (use manual_start flag if available)
                 manual_start = getattr(self, 'manual_start', False)
@@ -562,7 +571,7 @@ class DailyComplianceSyncService:
                     # Check global stop flag
                     import threading
                     if hasattr(threading, '_global_stop_flag') and threading._global_stop_flag.is_set():
-                        print("🛑 Global stop flag detected during error recovery - stopping")
+                        print("STOP: Global stop flag detected during error recovery - stopping")
                         break
                     time.sleep(30)  # Check every 30 seconds
                     wait_time += 30

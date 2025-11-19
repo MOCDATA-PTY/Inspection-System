@@ -41,79 +41,14 @@ class OneDriveDirectUploadService:
             'last_run_time': None
         }
 
-        # Auto-restart service if it was running before (persists across Django reloads/page refreshes)
-        self._auto_restart_if_needed()
+        # DISABLED: Auto-restart OneDrive service
+        # OneDrive is not needed for compliance documents (they use Google Drive only)
+        # self._auto_restart_if_needed()
     
     def authenticate_onedrive(self):
         """Authenticate with OneDrive using saved tokens."""
-        try:
-            if not getattr(settings, 'ONEDRIVE_ENABLED', False):
-                print("❌ OneDrive integration is not enabled")
-                return False
-            
-            # Try to load saved tokens
-            token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
-            
-            if not os.path.exists(token_file):
-                print("❌ No OneDrive tokens found")
-                print("📋 Please run: python setup_onedrive_auth.py")
-                return False
-            
-            with open(token_file, 'r') as f:
-                token_data = json.load(f)
-            
-            access_token = token_data.get('access_token')
-            expires_at = token_data.get('expires_at', 0)
-            
-            if not access_token:
-                print("❌ No access token found in token file")
-                return False
-            
-            # Check if token is expired or will expire soon (within 10 minutes)
-            current_time = datetime.now().timestamp()
-            # Keep tokens valid long-term by proactively refreshing well before expiry
-            # Aim for at least 30 days validity cushion
-            min_cushion_seconds = 30 * 24 * 3600
-            time_left = expires_at - current_time
-            if time_left <= 0:
-                # Already expired – refresh immediately
-                return self._refresh_token(token_data)
-            elif time_left < min_cushion_seconds:
-                # Proactive refresh to avoid user re-auth; rotate refresh token if returned
-                refreshed = self._refresh_token(token_data)
-                if not refreshed and time_left < 600:
-                    # As a last resort when within 10 minutes, attempt one more refresh
-                    return self._refresh_token(token_data)
-                # If refresh failed but still have time, proceed with existing token
-                # to avoid blocking operations; monitor thread will retry
-                # Continue using current token
-            
-            # Test the token
-            test_url = "https://graph.microsoft.com/v1.0/me/drive"
-            headers = {
-                'Authorization': f'Bearer {access_token}',
-                'Content-Type': 'application/json'
-            }
-            
-            response = requests.get(test_url, headers=headers)
-            
-            if response.status_code == 200:
-                self.access_token = access_token
-                self.authenticated = True
-                print("✅ OneDrive authentication successful!")
-                return True
-            elif response.status_code == 401:
-                print("⚠️ Access token is invalid, attempting refresh...")
-                return self._refresh_token(token_data)
-            else:
-                print(f"❌ OneDrive API error: {response.status_code}")
-                print(f"Response: {response.text[:200]}...")
-                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
-                return False
-                
-        except Exception as e:
-            print(f"🔑 OneDrive authentication required - please re-authenticate in Settings")
-            return False
+        # DISABLED: OneDrive not needed for compliance documents (Google Drive only)
+        return False
 
     def ensure_token_valid(self, min_validity_seconds: int = 30 * 24 * 3600) -> bool:
         """Ensure access token is valid for at least min_validity_seconds by refreshing if needed.
