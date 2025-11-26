@@ -1158,6 +1158,7 @@
                             Client Allocation Sheet
                         </a>
                     </li>
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'user_management' %}" title="Manage system users and permissions" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
@@ -1165,12 +1166,15 @@
                         </a>
                     </li>
                     {% endif %}
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
                         </a>
                     </li>
+                    {% endif %}
                     {% if request.user.role == 'developer' %}
                     <li>
                         <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
@@ -1187,7 +1191,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li>
                         <a href="{% url 'export_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
@@ -3219,12 +3223,23 @@
                 .then(data => {
                     const statusElement = document.getElementById('syncServiceStatus');
                     if (data.is_running) {
-                        statusElement.innerHTML = `
-                            <div style="color: #10b981;">
-                                <i class="fas fa-circle" style="color: #10b981;"></i>
-                                Service Running
-                            </div>
-                        `;
+                        // Check if service is truly alive via heartbeat
+                        if (data.service_alive) {
+                            statusElement.innerHTML = `
+                                <div style="color: #10b981;">
+                                    <i class="fas fa-circle" style="color: #10b981;"></i>
+                                    Service Running (Active)
+                                </div>
+                            `;
+                        } else {
+                            // Service marked running but no heartbeat - might be stuck
+                            statusElement.innerHTML = `
+                                <div style="color: #f59e0b;">
+                                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                                    Service Running (No Heartbeat - May Be Stuck)
+                                </div>
+                            `;
+                        }
                     } else {
                         statusElement.innerHTML = `
                             <div style="color: #ef4444;">
