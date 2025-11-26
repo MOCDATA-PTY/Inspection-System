@@ -8929,8 +8929,11 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         # Use deduplication to avoid duplicates from multiple folder structures
         added_files = set()  # Track added files by name to avoid duplicates
         
-        # Simplified - use only one folder structure (consistent naming)
+        # Support multiple folder naming conventions (old and new structures)
         folder_structures = [
+            # New structure with full names
+            {'rfi': 'Request For Invoice', 'invoice': 'invoice', 'lab': 'lab results', 'retest': 'retest', 'compliance': 'Compliance', 'occurrence': 'occurrence', 'composition': 'composition'},
+            # Old structure with short names
             {'rfi': 'rfi', 'invoice': 'invoice', 'lab': 'lab', 'retest': 'retest', 'compliance': 'compliance', 'occurrence': 'occurrence', 'composition': 'composition'}
         ]
         
