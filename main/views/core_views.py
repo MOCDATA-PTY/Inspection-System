@@ -8952,25 +8952,33 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
             return found_files
 
         # Check for Inspection-XXXX folders that might contain files (case insensitive)
-        # Handle both old structure (CLIENT/Inspection-XXX) and new structure (CLIENT/DATE/Inspection-XXX)
+        # Handle multiple structures:
+        # 1. CLIENT/Inspection-XXX (old direct structure)
+        # 2. CLIENT/DATE/Inspection-XXX (new structure with date folder)
+        # 3. CLIENT/SUBFOLDER/DATE/Inspection-XXX (when client name has "/" like "t/a")
         inspection_folders_to_scan = []
 
-        for item in os.listdir(actual_client_path):
-            item_path = os.path.join(actual_client_path, item)
+        def find_inspection_folders(base_path, prefix="", max_depth=3, current_depth=0):
+            """Recursively find Inspection folders up to max_depth levels."""
+            if current_depth >= max_depth:
+                return
 
-            # Check if this is an Inspection folder directly
-            if item.lower().startswith('inspection-') and os.path.isdir(item_path):
-                inspection_folders_to_scan.append((item_path, item))
-            # Check if this is a date folder that might contain Inspection folders
-            elif os.path.isdir(item_path):
-                try:
-                    for subitem in os.listdir(item_path):
-                        if subitem.lower().startswith('inspection-'):
-                            subitem_path = os.path.join(item_path, subitem)
-                            if os.path.isdir(subitem_path):
-                                inspection_folders_to_scan.append((subitem_path, f"{item}/{subitem}"))
-                except (OSError, PermissionError):
-                    pass
+            try:
+                for item in os.listdir(base_path):
+                    item_path = os.path.join(base_path, item)
+
+                    if item.lower().startswith('inspection-') and os.path.isdir(item_path):
+                        label = f"{prefix}/{item}" if prefix else item
+                        inspection_folders_to_scan.append((item_path, label))
+                    elif os.path.isdir(item_path):
+                        # Recurse into subdirectories
+                        new_prefix = f"{prefix}/{item}" if prefix else item
+                        find_inspection_folders(item_path, new_prefix, max_depth, current_depth + 1)
+            except (OSError, PermissionError):
+                pass
+
+        # Start searching from the client base path
+        find_inspection_folders(actual_client_path)
 
         # Now scan all found inspection folders
         for inspection_path, inspection_label in inspection_folders_to_scan:
