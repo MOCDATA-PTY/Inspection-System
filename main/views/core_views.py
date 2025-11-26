@@ -4978,7 +4978,7 @@ def export_to_google_sheets(request):
 
 @login_required(login_url='login')
 def update_invoice_number(request):
-    """Update invoice number for an inspection"""
+    """Update invoice number for an inspection and all items in the same group"""
     import json
     from django.http import JsonResponse
 
@@ -4989,21 +4989,37 @@ def update_invoice_number(request):
         data = json.loads(request.body)
         item_id = data.get('item_id')
         invoice_number = data.get('invoice_number', '').strip()
+        group_item_ids = data.get('group_item_ids', [])
 
         if not item_id:
             return JsonResponse({'success': False, 'error': 'Missing item_id'})
 
-        # Get the inspection
-        inspection = FoodSafetyAgencyInspection.objects.get(id=item_id)
+        # Determine which IDs to update
+        ids_to_update = list(set(group_item_ids)) if group_item_ids else [item_id]
 
-        # Update the invoice number
-        inspection.invoice_number = invoice_number if invoice_number else None
-        inspection.save()
+        # Convert to integers and filter out invalid values
+        valid_ids = []
+        for id_val in ids_to_update:
+            try:
+                valid_ids.append(int(id_val))
+            except (ValueError, TypeError):
+                continue
+
+        if not valid_ids:
+            return JsonResponse({'success': False, 'error': 'No valid item IDs provided'})
+
+        # Update all inspections in the group
+        updated_count = FoodSafetyAgencyInspection.objects.filter(
+            id__in=valid_ids
+        ).update(
+            invoice_number=invoice_number if invoice_number else None
+        )
 
         return JsonResponse({
             'success': True,
-            'message': 'Invoice number updated successfully',
-            'invoice_number': invoice_number
+            'message': f'Invoice number updated for {updated_count} item(s)',
+            'invoice_number': invoice_number,
+            'updated_count': updated_count
         })
 
     except FoodSafetyAgencyInspection.DoesNotExist:
@@ -8861,12 +8877,22 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
 
         # Base client path - Try both original name (with spaces) and converted name (with underscores)
         # This handles cases where folders were created with original client names
-        base_inspection_path = os.path.join(
+        # Try both old structure (with 'inspection' folder) and new structure (without it)
+        base_inspection_path_old = os.path.join(
             settings.MEDIA_ROOT,
             'inspection',
             year_folder,
             month_folder
         )
+
+        base_inspection_path_new = os.path.join(
+            settings.MEDIA_ROOT,
+            year_folder,
+            month_folder
+        )
+
+        # Check which structure exists
+        base_inspection_path = base_inspection_path_new if os.path.exists(base_inspection_path_new) else base_inspection_path_old
 
         # Try original client name first (as stored in database with spaces)
         client_base_path = os.path.join(base_inspection_path, client_name)
@@ -8926,30 +8952,48 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
             return found_files
 
         # Check for Inspection-XXXX folders that might contain files (case insensitive)
+        # Handle both old structure (CLIENT/Inspection-XXX) and new structure (CLIENT/DATE/Inspection-XXX)
+        inspection_folders_to_scan = []
+
         for item in os.listdir(actual_client_path):
-            if item.lower().startswith('inspection-'):
-                inspection_path = os.path.join(actual_client_path, item)
-                if os.path.isdir(inspection_path):
-                    for category_key in categories:
-                        folder_name = categories[category_key]
+            item_path = os.path.join(actual_client_path, item)
 
-                        # For compliance folder, try both capitalized and lowercase (case sensitivity fix)
-                        if category_key == 'compliance':
-                            category_path_caps = os.path.join(inspection_path, 'Compliance')
-                            category_path_lower = os.path.join(inspection_path, 'compliance')
+            # Check if this is an Inspection folder directly
+            if item.lower().startswith('inspection-') and os.path.isdir(item_path):
+                inspection_folders_to_scan.append((item_path, item))
+            # Check if this is a date folder that might contain Inspection folders
+            elif os.path.isdir(item_path):
+                try:
+                    for subitem in os.listdir(item_path):
+                        if subitem.lower().startswith('inspection-'):
+                            subitem_path = os.path.join(item_path, subitem)
+                            if os.path.isdir(subitem_path):
+                                inspection_folders_to_scan.append((subitem_path, f"{item}/{subitem}"))
+                except (OSError, PermissionError):
+                    pass
 
-                            if os.path.exists(category_path_caps):
-                                category_files = scan_compliance_files(category_path_caps, f"{item}/Compliance")
-                                files_by_category[category_key].extend(category_files)
-                            elif os.path.exists(category_path_lower):
-                                category_files = scan_compliance_files(category_path_lower, f"{item}/compliance")
-                                files_by_category[category_key].extend(category_files)
-                        else:
-                            # For other categories, use standard lookup
-                            category_path = os.path.join(inspection_path, folder_name)
-                            if os.path.exists(category_path):
-                                category_files = scan_compliance_files(category_path, f"{item}/{folder_name}")
-                                files_by_category[category_key].extend(category_files)
+        # Now scan all found inspection folders
+        for inspection_path, inspection_label in inspection_folders_to_scan:
+            for category_key in categories:
+                folder_name = categories[category_key]
+
+                # For compliance folder, try both capitalized and lowercase (case sensitivity fix)
+                if category_key == 'compliance':
+                    category_path_caps = os.path.join(inspection_path, 'Compliance')
+                    category_path_lower = os.path.join(inspection_path, 'compliance')
+
+                    if os.path.exists(category_path_caps):
+                        category_files = scan_compliance_files(category_path_caps, f"{inspection_label}/Compliance")
+                        files_by_category[category_key].extend(category_files)
+                    elif os.path.exists(category_path_lower):
+                        category_files = scan_compliance_files(category_path_lower, f"{inspection_label}/compliance")
+                        files_by_category[category_key].extend(category_files)
+                else:
+                    # For other categories, use standard lookup
+                    category_path = os.path.join(inspection_path, folder_name)
+                    if os.path.exists(category_path):
+                        category_files = scan_compliance_files(category_path, f"{inspection_label}/{folder_name}")
+                        files_by_category[category_key].extend(category_files)
 
         # Then check top-level folders
         for structure in folder_structures:
