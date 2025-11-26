@@ -2960,7 +2960,13 @@ def list_client_folder_files(request):
             print(f"✅ [CACHE] Cleared cache for sanitized: {cache_key_sanitized}")
 
         # Use sanitized client name to match upload folder structure
-        parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
+        # Try both new structure (without 'inspection' folder) and old structure (with 'inspection' folder)
+        parent_path_new = os.path.join(settings.MEDIA_ROOT, year_folder, month_folder)
+        parent_path_old = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
+
+        # Use new path if it exists, otherwise fall back to old path
+        parent_path = parent_path_new if os.path.exists(parent_path_new) else parent_path_old
+
         # Check multiple variations: ORIGINAL NAME FIRST (with spaces), then sanitized variations
         # CRITICAL: Try original name first to handle folders created with spaces (mobile/web upload inconsistency)
         client_folder_variations = [client_name, sanitized_client_name, sanitized_with_slash, sanitized_with_apostrophe]
@@ -9417,13 +9423,28 @@ def get_inspection_files(request):
         
         client_folder = create_folder_name(client_name)
 
-        inspection_folder = os.path.join(
+        # Try both new structure (without 'inspection' folder) and old structure (with 'inspection' folder)
+        inspection_folder_new = os.path.join(
+            settings.MEDIA_ROOT,
+            year_folder,
+            month_folder,
+            client_folder
+        )
+
+        inspection_folder_old = os.path.join(
             settings.MEDIA_ROOT,
             'inspection',
             year_folder,
             month_folder,
             client_folder
         )
+
+        # Use new path if parent exists, otherwise use old path
+        base_month_path_new = os.path.join(settings.MEDIA_ROOT, year_folder, month_folder)
+        if os.path.exists(base_month_path_new):
+            inspection_folder = inspection_folder_new
+        else:
+            inspection_folder = inspection_folder_old
 
         os.makedirs(inspection_folder, exist_ok=True)
 
