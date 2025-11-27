@@ -997,45 +997,63 @@ def shipment_list(request):
         messages.info(request, sync_info_2)
         cache.delete('sync_info_message_2')
     
-    # Use caching to improve performance, but skip cache if filters are applied
+    # OPTIMIZED SMART CACHING: 60-second cache timeout for performance + freshness
+    # Automatically shows new inspections within 1 minute without manual refresh
     from django.core.cache import cache
-    has_filters = any(request.GET.get(param) for param in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'rfi_status', 'compliance_status', 'lab_form_status', 'page'])
-    
-    cache_key = f"shipment_list_{request.user.id}_{request.user.role}"
+    import time
 
-    # Only clear cache if user explicitly requests refresh (via query param)
+    # PERFORMANCE FIX: Include page number and filters in cache key so each page/filter combo is cached separately
+    page_number = request.GET.get('page', 1)
+    filter_params = '_'.join(f"{k}_{v}" for k, v in sorted(request.GET.items()) if k in ['claim_no', 'client', 'branch', 'inspection_date_from', 'inspection_date_to', 'sent_status', 'compliance_status'])
+    cache_key = f"shipment_list_{request.user.id}_{getattr(request.user, 'role', 'unknown')}_page_{page_number}_{filter_params}"
+    cache_timestamp_key = f"{cache_key}_timestamp"
+
+    # Manual refresh option (clears all cache)
     if request.GET.get('refresh') == 'true':
-        safe_print("CLEARING CACHE on explicit refresh request...")
+        safe_print("MANUAL CACHE REFRESH requested...")
         cache.delete(cache_key)
+        cache.delete(cache_timestamp_key)
         cache.delete('drive_files_lookup_v2')
         cache.delete('page_clients_status_cache')
-        safe_print("Cache cleared - fresh data will be loaded")
 
-    # Check if we have cached data
+    # Check cached data with automatic expiration
     cached_data = cache.get(cache_key)
+    cache_timestamp = cache.get(cache_timestamp_key)
+
+    if cached_data and cache_timestamp:
+        age_seconds = time.time() - cache_timestamp
+        if age_seconds > 60:  # Auto-expire after 60 seconds
+            safe_print(f"Cache expired ({age_seconds:.0f}s old), reloading...")
+            cached_data = None
+        else:
+            safe_print(f"Using cached data ({age_seconds:.0f}s old, {60-age_seconds:.0f}s until refresh)")
+
+    # PERFORMANCE FIX: Cache includes filters in key, so no need to bypass cache when filters are applied
+    # Each filter combination gets its own cache entry for maximum performance
     
     # Get Food Safety Agency inspections from local database with MASSIVE OPTIMIZATION
     from ..models import FoodSafetyAgencyInspection, InspectorMapping
     from django.db.models import Prefetch, Q
     
-    # Start with base queryset - only select needed fields to reduce memory usage
-    from datetime import datetime as dt
+    # OPTIMIZED FOR MAXIMUM SPEED: Only load last 60 days
+    from datetime import datetime as dt, timedelta
 
-    inspections = FoodSafetyAgencyInspection.objects.select_related('rfi_uploaded_by', 'invoice_uploaded_by', 'composition_uploaded_by', 'sent_by').only(
-        'client_name', 'date_of_inspection', 'inspector_name', 'inspector_id',
-        'commodity', 'remote_id', 'is_sample_taken', 'needs_retest',
-        'product_name', 'product_class', 'fat', 'protein', 'calcium',
-        'dna', 'bought_sample', 'km_traveled', 'hours', 'lab', 'comment', 'approved_status', 'is_sent', 'sent_date', 'sent_by',
-        'is_direction_present_for_this_inspection', 'rfi_uploaded_by', 'rfi_uploaded_date', 'invoice_uploaded_by', 'invoice_uploaded_date', 'composition_uploaded_by', 'composition_uploaded_date',
-        'rfi_uploaded_by__username', 'rfi_uploaded_by__first_name', 'rfi_uploaded_by__last_name',
-        'invoice_uploaded_by__username', 'invoice_uploaded_by__first_name', 'invoice_uploaded_by__last_name',
-        'composition_uploaded_by__username', 'composition_uploaded_by__first_name', 'composition_uploaded_by__last_name',
-        'sent_by__username', 'sent_by__first_name', 'sent_by__last_name'
+    # Calculate date 60 days ago for speed
+    sixty_days_ago = (dt.now() - timedelta(days=60)).date()
+
+    # MINIMAL QUERY - Only essential fields for MAXIMUM SPEED
+    inspections = FoodSafetyAgencyInspection.objects.select_related(
+        'rfi_uploaded_by', 'invoice_uploaded_by', 'sent_by'
+    ).only(
+        # Only critical fields to reduce data transfer
+        'id', 'client_name', 'date_of_inspection', 'inspector_name',
+        'commodity', 'remote_id', 'product_name', 'product_class',
+        'hours', 'km_traveled', 'comment', 'is_sent', 'sent_date',
+        'rfi_uploaded_by_id', 'invoice_uploaded_by_id', 'sent_by_id'
+    ).filter(
+        # SPEED: Only last 60 days (uses database index)
+        date_of_inspection__gte=sixty_days_ago
     )
-
-    # Filter inspections to only show from October 1, 2025 onwards
-    october_2025_start = dt(2025, 10, 1).date()
-    inspections = inspections.filter(date_of_inspection__gte=october_2025_start)
     
     # No automatic background fetching - only manual via settings button
     
@@ -1132,13 +1150,15 @@ def shipment_list(request):
     
     # Filter inspections based on user role and inspector ID
     if request.user.role == 'inspector':
-        # Get the inspector ID for the current user
+        # Get the inspector ID and name for the current user
         inspector_id = None
+        inspector_name = None
         try:
             inspector_mapping = InspectorMapping.objects.get(
                 inspector_name=request.user.get_full_name() or request.user.username
             )
             inspector_id = inspector_mapping.inspector_id
+            inspector_name = inspector_mapping.inspector_name
         except InspectorMapping.DoesNotExist:
             # If no mapping found, try to find by username
             try:
@@ -1146,13 +1166,18 @@ def shipment_list(request):
                     inspector_name=request.user.username
                 )
                 inspector_id = inspector_mapping.inspector_id
+                inspector_name = inspector_mapping.inspector_name
             except InspectorMapping.DoesNotExist:
                 # If still no mapping, show no inspections
                 inspector_id = None
-        
-        if inspector_id:
-            # Filter inspections to only show those done by this inspector
-            inspections = inspections.filter(inspector_id=inspector_id)
+                inspector_name = None
+
+        if inspector_id and inspector_name:
+            # Filter inspections to show those done by this inspector
+            # Include BOTH inspector_id matches (for data with IDs) AND inspector_name matches (for data without IDs)
+            inspections = inspections.filter(
+                Q(inspector_id=inspector_id) | Q(inspector_name=inspector_name)
+            )
         else:
             # If no inspector ID found, show no inspections
             inspections = inspections.none()
@@ -1246,20 +1271,32 @@ def shipment_list(request):
     
     # Get only the groups for the current page
     client_date_groups = list(page_obj.object_list)
-    
-    # PERFORMANCE OPTIMIZATION: Simplified client data loading
-    client_cache_key = "client_maps_simple"
+
+    # PERFORMANCE FIX: Only load clients that appear in the current page (25 groups max)
+    # Extract unique client names from the 25 groups on this page
+    client_names_on_page = set(group['client_name'] for group in client_date_groups if group.get('client_name'))
+
+    # Build cache key specific to these clients
+    client_cache_key = f"client_maps_page_{','.join(sorted(list(client_names_on_page)[:5]))}"  # Use first 5 for cache key
     client_data = cache.get(client_cache_key)
-    
+
     if not client_data:
         try:
             from ..models import Client as _Client, ClientEmail
             _client_map = {}
             _client_id_map = {}
             _client_email_map = {}
-            
+
+            # PERFORMANCE FIX: Only load clients that appear on THIS PAGE (not all 4,916 clients!)
+            # This reduces loading from 4,916 clients to ~25 clients maximum
+            clients_queryset = _Client.objects.filter(
+                Q(client_id__in=client_names_on_page) | Q(name__in=client_names_on_page)
+            ).select_related().prefetch_related('additional_emails')
+
+            print(f"[PERFORMANCE] Loading only {clients_queryset.count()} clients for {len(client_names_on_page)} groups (not all 4916!)")
+
             # Load client data including emails
-            for _c in _Client.objects.select_related().prefetch_related('additional_emails'):
+            for _c in clients_queryset:
                 key_id = _norm(_c.client_id)
                 key_name = _norm(_c.name)
                 
@@ -1301,8 +1338,8 @@ def shipment_list(request):
                 'client_id_map': _client_id_map,
                 'client_email_map': _client_email_map
             }
-            # Cache for 30 minutes (longer cache for better performance)
-            cache.set(client_cache_key, client_data, 1800)
+            # Cache for 5 minutes (page-specific data, shorter cache)
+            cache.set(client_cache_key, client_data, 300)
             
         except Exception:
             client_data = {
@@ -1318,50 +1355,30 @@ def shipment_list(request):
     # Helper to fetch internal account code exactly like client-allocation page
     from ..models import Client as _Client
     def _get_internal_account_code(raw_name):
+        """Get internal account code from cache ONLY - NO database queries for performance"""
         try:
-            # Prefer fast map by normalized key
+            # Use normalized key for lookup in pre-built cache
             code = _client_map.get(_norm(raw_name))
             if code:
                 return code
-            # Exact DB lookups (case-insensitive) by client_id then name
-            client = _Client.objects.filter(client_id__iexact=raw_name).only('internal_account_code').first()
-            if client and client.internal_account_code:
-                return client.internal_account_code
-            client = _Client.objects.filter(name__iexact=raw_name).only('internal_account_code').first()
-            if client and client.internal_account_code:
-                return client.internal_account_code
+            # PERFORMANCE FIX: Removed database fallback queries that were causing N+1 problem
+            # If client isn't in cache, return None instead of querying database
+            # This prevents 25+ database queries per page load
         except Exception:
             pass
         return None
 
     # Helper to fetch client emails
     def _get_client_emails(raw_name):
+        """Get client emails from cache ONLY - NO database queries for performance"""
         try:
-            # Prefer fast map by normalized key
+            # Use normalized key for lookup in pre-built cache
             emails = _client_email_map.get(_norm(raw_name))
             if emails:
                 return emails
-            # Fallback: direct DB lookup
-            client = _Client.objects.filter(client_id__iexact=raw_name).prefetch_related('additional_emails').first()
-            if not client:
-                client = _Client.objects.filter(name__iexact=raw_name).prefetch_related('additional_emails').first()
-            
-            if client:
-                emails = []
-                if client.email:
-                    emails.append({'email': client.email, 'type': 'primary', 'removable': True})
-                if client.manual_email:
-                    emails.append({'email': client.manual_email, 'type': 'manual', 'removable': True})
-                
-                # Add additional emails
-                for additional_email in client.additional_emails.all():
-                    emails.append({
-                        'email': additional_email.email, 
-                        'type': 'additional', 
-                        'removable': True,
-                        'label': additional_email.label
-                    })
-                return emails
+            # PERFORMANCE FIX: Removed database fallback queries that were causing N+1 problem
+            # If client isn't in cache, return empty list instead of querying database
+            # This prevents 25+ database queries per page load
         except Exception:
             pass
         return []
@@ -1718,9 +1735,11 @@ def shipment_list(request):
     print(f"    Context keys: {list(context.keys())}")
     print(" PRODUCTS SHOULD NOW BE VISIBLE IN TEMPLATE!")
     
-    # Cache the entire context for 5 minutes only if no filters applied
-    if not has_filters:
-        cache.set(cache_key, context, 300)
+    # Cache for 60 seconds (OPTIMIZED: Fast performance + fresh data)
+    # PERFORMANCE FIX: Always cache since cache key includes filters - each filter combo gets its own cache
+    cache.set(cache_key, context, 60)
+    cache.set(cache_timestamp_key, time.time(), 60)
+    safe_print("Context cached for 60 seconds")
     
     # PERFORMANCE LOGGING: Track loading improvements
     import time
@@ -8894,30 +8913,21 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         month_folder = date_obj.strftime('%B')
         client_folder = create_folder_name(client_name)
 
-        # Create cache key for this specific client/date combination
+        # OPTIMIZED FILE CACHING: 30-second timeout for performance
+        # Files refresh automatically every 30 seconds to catch new uploads
         cache_key = f"local_files:{client_folder}:{year_folder}:{month_folder}"
+        cache_timestamp_key = f"{cache_key}_timestamp"
 
-        # Enhanced caching logic with compliance status awareness
-        use_cache = not force_refresh
+        # Check cache with automatic expiration
+        if not force_refresh:
+            cached_files = cache.get(cache_key)
+            cache_timestamp = cache.get(cache_timestamp_key)
 
-        if use_cache:
-            current_time = time.time()
-            # Check if cache was recently cleared
-            for key in [f"cache_cleared:{client_name}:{year_folder}:{month_folder}",
-                       f"cache_cleared:{client_folder}:{year_folder}:{month_folder}",
-                       f"compliance_status_{client_name}_{inspection_date}"]:
-                clear_time = cache.get(key)
-                if clear_time and (current_time - clear_time) < 30:
-                    use_cache = False
-                    break
-
-            if use_cache:
-                cached_files = cache.get(cache_key)
-                if cached_files:
-                    compliance_status = cache.get(f"compliance_status_{client_name}_{inspection_date}")
-                    has_compliance_files = len(cached_files.get('compliance', [])) > 0
-                    if not (compliance_status in ['partial', 'complete'] and not has_compliance_files):
-                        return cached_files
+            if cached_files and cache_timestamp:
+                age_seconds = time.time() - cache_timestamp
+                if age_seconds < 30:  # Use cache if less than 30 seconds old
+                    return cached_files
+                # Cache expired, reload files
 
         # Base client path - Try both original name (with spaces) and converted name (with underscores)
         # This handles cases where folders were created with original client names
@@ -9037,7 +9047,7 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         # Check if the client path exists (simplified - no fuzzy matching needed)
         if not os.path.exists(client_base_path):
             print(f"[DEBUG get_inspection_files_local] Client path not found: {client_base_path}")
-            cache.set(cache_key, files_by_category, 300)
+            # NO CACHING - return fresh data always
             return files_by_category
 
         print(f"[DEBUG get_inspection_files_local] Using client path: {client_base_path}")
@@ -9226,9 +9236,10 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                                         continue
         except (OSError, PermissionError):
             pass
-        
-        # Cache the results for 10 minutes to improve performance
-        cache.set(cache_key, files_by_category, 600)
+
+        # Cache files for 30 seconds (OPTIMIZED: Performance + freshness)
+        cache.set(cache_key, files_by_category, 30)
+        cache.set(cache_timestamp_key, time.time(), 30)
         return files_by_category
 
     except Exception:

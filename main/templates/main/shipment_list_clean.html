@@ -13153,20 +13153,26 @@
                 updateButtonStates(inspectionId, needsRetest);
             });
 
-            // Initialize RFI and Invoice button colors based on actual file existence
-            setTimeout(() => {
-                initializeRFIAndInvoiceButtonColors();
-            }, 2000); // Delay to ensure page is fully loaded
+            // PERFORMANCE FIX: Wait for COMPLETE page load (including all images/resources)
+            // then wait additional 5 seconds before starting background file checks
+            window.addEventListener('load', () => {
+                console.log('[PERFORMANCE] Page fully loaded - waiting 5 more seconds before checking files...');
+                setTimeout(() => {
+                    initializeRFIAndInvoiceButtonColors();
+                }, 5000); // 5 second delay after full page load
+            });
         }
 
         function initializeRFIAndInvoiceButtonColors() {
             console.log('[DEBUG] [INIT] ===== STARTING RFI/INVOICE BUTTON INITIALIZATION =====');
+            console.log('[PERFORMANCE] Starting background file checks now...');
 
             // Get all unique client names from the page
             const groupRows = document.querySelectorAll('tr.group-row[data-client-name]');
             console.log('[DEBUG] [INIT] Found', groupRows.length, 'group rows with data-client-name');
 
             const processedClients = new Set();
+            let delayMs = 0; // Start immediately, but stagger each request
 
             groupRows.forEach((row, index) => {
                 const clientName = row.getAttribute('data-client-name');
@@ -13180,8 +13186,12 @@
                     if (clientName.toUpperCase().includes('NEW')) {
                         console.log('[DEBUG] [INIT] ⏭️ SKIPPING NEW inspection (disabled):', clientName);
                     } else {
-                        console.log('[DEBUG] [INIT] ✅ Processing client:', clientName);
-                        updateRFIAndInvoiceButtonColorsForClient(clientName);
+                        // PERFORMANCE FIX: Stagger requests with 300ms delay between each
+                        setTimeout(() => {
+                            console.log('[DEBUG] [INIT] ✅ Processing client:', clientName);
+                            updateRFIAndInvoiceButtonColorsForClient(clientName);
+                        }, delayMs);
+                        delayMs += 300; // 300ms between each request (slower, smoother)
                     }
                 } else if (clientName) {
                     console.log('[DEBUG] [INIT] ⏭️ SKIPPING already processed client:', clientName);
@@ -13190,7 +13200,7 @@
                 }
             });
 
-            console.log('[DEBUG] [INIT] ===== FINISHED PROCESSING', processedClients.size, 'UNIQUE CLIENTS =====');
+            console.log('[DEBUG] [INIT] ===== FINISHED SCHEDULING', processedClients.size, 'UNIQUE CLIENTS =====');
             console.log('[DEBUG] [INIT] Processed clients:', Array.from(processedClients));
         }
     </script>
