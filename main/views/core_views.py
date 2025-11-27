@@ -1359,6 +1359,13 @@ def shipment_list(request):
     _client_id_map = client_data['client_id_map']
     _client_email_map = client_data['client_email_map']
 
+    # DEBUG: Show what account codes we have
+    print(f"[ACCOUNT CODE DEBUG] Client map has {len(_client_map)} entries with account codes")
+    if len(_client_map) > 0:
+        print(f"[ACCOUNT CODE DEBUG] Sample entries:")
+        for key, code in list(_client_map.items())[:5]:
+            print(f"  '{key}' -> '{code}'")
+
     # Helper to fetch internal account code exactly like client-allocation page
     from ..models import Client as _Client
     def _get_internal_account_code(raw_name):
@@ -1525,6 +1532,14 @@ def shipment_list(request):
         # PERFORMANCE OPTIMIZATION: Get internal account code ONCE per group instead of for each product
         # This eliminates redundant database queries since all products in a group share the same client
         group_internal_account_code = _get_internal_account_code(client_name) if client_name else None
+        # DEBUG: Log account code retrieval
+        if client_name:
+            norm_name = _norm(client_name)
+            if group_internal_account_code:
+                print(f"[ACCOUNT CODE] ✓ Found for '{client_name}': {group_internal_account_code}")
+            else:
+                print(f"[ACCOUNT CODE] ✗ MISSING for '{client_name}' (normalized: '{norm_name}')")
+                print(f"[ACCOUNT CODE]   Keys in map: {list(_client_map.keys())[:10]}")
 
         # PERFORMANCE OPTIMIZATION: Use list comprehension for faster product building (2-3x faster than loop+append)
         # Product names are fetched by background sync service - just use what's in database
