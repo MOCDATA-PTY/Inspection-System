@@ -6151,12 +6151,14 @@
                         </button>
                     </li>
 
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li class="nav-item">
                         <a href="{% url 'export_sheet' %}" class="nav-link" style="width: 100%; text-align: left; background: none; border: none; padding: 0.75rem 1rem; color: #f1f5f9; cursor: pointer; text-decoration: none;">
                             <i class="fas fa-file-export"></i>
                             Export Sheet
                         </a>
                     </li>
+                    {% endif %}
                     {% endif %}
 
                     <li class="nav-item">
@@ -6226,7 +6228,7 @@
             {% endif %}
 
             <!-- Export Sheet Button -->
-            {% if request.user.role != 'inspector' and request.user.role != 'scientist' %}
+            {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
             <a href="{% url 'export_sheet' %}" class="btn btn-secondary">
                 <i class="fas fa-file-export"></i> Export Sheet
             </a>
@@ -6338,14 +6340,15 @@
                                 <option value="NO" {% if request.GET.sent_status == 'NO' %}selected{% endif %}>Not Sent Only</option>
                             </select>
                         </div>
-                        <div class="filter-field">
+                        <!-- RFI Status filter removed - show all inspections regardless of files -->
+                        <!-- <div class="filter-field">
                             <label class="form-label">RFI Status</label>
                             <select class="form-control" name="rfi_status">
                                 <option value="">All Inspections</option>
                                 <option value="HAS_RFI" {% if request.GET.rfi_status == 'HAS_RFI' %}selected{% endif %}>Has RFI</option>
                                 <option value="NO_RFI" {% if request.GET.rfi_status == 'NO_RFI' %}selected{% endif %}>No RFI</option>
                             </select>
-                        </div>
+                        </div> -->
                         <div class="filter-field">
                             <label class="form-label">Compliance Status</label>
                             <select class="form-control" name="compliance_status">
@@ -6354,14 +6357,15 @@
                                 <option value="NON_COMPLIANT" {% if request.GET.compliance_status == 'NON_COMPLIANT' %}selected{% endif %}>Non-Compliant Only</option>
                             </select>
                         </div>
-                        <div class="filter-field">
+                        <!-- Lab Form Status filter removed - show all inspections regardless of lab forms -->
+                        <!-- <div class="filter-field">
                             <label class="form-label">Lab Form Status</label>
                             <select class="form-control" name="lab_form_status">
                                 <option value="">All Inspections</option>
                                 <option value="HAS_LAB_FORM" {% if request.GET.lab_form_status == 'HAS_LAB_FORM' %}selected{% endif %}>Has Lab Form</option>
                                 <option value="NO_LAB_FORM" {% if request.GET.lab_form_status == 'NO_LAB_FORM' %}selected{% endif %}>No Lab Form</option>
                             </select>
-                        </div>
+                        </div> -->
                     </div>
 
                     <!-- Action Buttons Row -->

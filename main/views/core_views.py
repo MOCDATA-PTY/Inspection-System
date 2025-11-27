@@ -1219,25 +1219,26 @@ def shipment_list(request):
             # Only show groups that have at least one unsent inspection
             groups_queryset = groups_queryset.filter(has_unsent_inspections__gt=0)
     
-    # FILTER GROUPS BY RFI STATUS: Apply RFI status filter to groups, not individual inspections
-    rfi_status = request.GET.get('rfi_status')
-    if rfi_status:
-        if rfi_status == 'HAS_RFI':
-            # Only show groups that have at least one inspection with RFI uploaded
-            groups_queryset = groups_queryset.filter(has_rfi_inspections__gt=0)
-        elif rfi_status == 'NO_RFI':
-            # Only show groups that have at least one inspection without RFI uploaded
-            groups_queryset = groups_queryset.filter(has_no_rfi_inspections__gt=0)
+    # FILTER GROUPS BY RFI STATUS: DISABLED - Show all inspections regardless of RFI status
+    # User requested to remove filtering so all inspections show up, even without files
+    # rfi_status = request.GET.get('rfi_status')
+    # if rfi_status:
+    #     if rfi_status == 'HAS_RFI':
+    #         # Only show groups that have at least one inspection with RFI uploaded
+    #         groups_queryset = groups_queryset.filter(has_rfi_inspections__gt=0)
+    #     elif rfi_status == 'NO_RFI':
+    #         # Only show groups that have at least one inspection without RFI uploaded
+    #         groups_queryset = groups_queryset.filter(has_no_rfi_inspections__gt=0)
 
-    # FILTER GROUPS BY LAB FORM STATUS: Apply Lab Form status filter to groups, not individual inspections
-    lab_form_status = request.GET.get('lab_form_status')
-    if lab_form_status:
-        if lab_form_status == 'HAS_LAB_FORM':
-            # Only show groups that have at least one inspection with Lab Form uploaded
-            groups_queryset = groups_queryset.filter(has_lab_form_inspections__gt=0)
-        elif lab_form_status == 'NO_LAB_FORM':
-            # Only show groups that have at least one inspection without Lab Form uploaded
-            groups_queryset = groups_queryset.filter(has_no_lab_form_inspections__gt=0)
+    # FILTER GROUPS BY LAB FORM STATUS: DISABLED - Show all inspections regardless of lab form status
+    # lab_form_status = request.GET.get('lab_form_status')
+    # if lab_form_status:
+    #     if lab_form_status == 'HAS_LAB_FORM':
+    #         # Only show groups that have at least one inspection with Lab Form uploaded
+    #         groups_queryset = groups_queryset.filter(has_lab_form_inspections__gt=0)
+    #     elif lab_form_status == 'NO_LAB_FORM':
+    #         # Only show groups that have at least one inspection without Lab Form uploaded
+    #         groups_queryset = groups_queryset.filter(has_no_lab_form_inspections__gt=0)
 
     # Apply database-level pagination
     paginator = Paginator(groups_queryset, 25)  # 25 groups per page
@@ -2975,12 +2976,49 @@ def list_client_folder_files(request):
         files_list = {}
         seen_files = set()  # Track files to avoid duplicates
 
-        # Check all folder variations for files
+        # Find all matching folders (exact and partial matches for nested "/" structures)
+        matched_folders = []
+
+        # First try exact matches
         for folder_variation in client_folder_variations:
             test_path = os.path.join(parent_path, folder_variation)
-            if not os.path.exists(test_path):
-                continue
+            if os.path.exists(test_path):
+                matched_folders.append((test_path, folder_variation))
+                print(f"[DEBUG] Found exact match: {folder_variation}")
 
+        # If no exact match found, try partial matching (for client names with "/" that create nested dirs)
+        if not matched_folders and os.path.exists(parent_path):
+            try:
+                print(f"[DEBUG] No exact match found, trying partial matching in: {parent_path}")
+                # List all folders in parent_path
+                available_folders = [f for f in os.listdir(parent_path) if os.path.isdir(os.path.join(parent_path, f))]
+                print(f"[DEBUG] Available folders: {available_folders[:10]}")  # Show first 10
+
+                # Try to find folders that partially match the client name
+                for available_folder in available_folders:
+                    # Check if this folder is a partial match (for names split by "/" like "t/a")
+                    for folder_variation in client_folder_variations:
+                        # Get the part before any "/" or special char
+                        variation_prefix = folder_variation.split('/')[0].strip()
+
+                        # Normalize for comparison (case insensitive, ignore underscores)
+                        normalized_available = available_folder.lower().replace('_', ' ').strip()
+                        normalized_prefix = variation_prefix.lower().replace('_', ' ').strip()
+
+                        # Check if the available folder starts with the variation prefix
+                        # This handles cases like "Marang Layers Farming Enterprises t/" matching "Marang Layers Farming Enterprises t/a..."
+                        if normalized_available.startswith(normalized_prefix) and len(normalized_prefix) > 10:
+                            potential_path = os.path.join(parent_path, available_folder)
+                            matched_folders.append((potential_path, available_folder))
+                            print(f"[DEBUG] Found partial match: {available_folder} for {folder_variation}")
+                            break  # Found a match for this available folder, move to next
+            except Exception as e:
+                print(f"[DEBUG] Error during partial matching: {e}")
+
+        print(f"[DEBUG] Total matched folders: {len(matched_folders)}")
+
+        # Process all matched folders (both exact and partial matches)
+        for test_path, folder_name in matched_folders:
             print(f"[DEBUG] Checking folder: {test_path}")
 
             # First, use the scan_inspection_folders function to check Inspection-XXXX folders
@@ -8900,13 +8938,85 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
         # Check which structure exists
         base_inspection_path = base_inspection_path_new if os.path.exists(base_inspection_path_new) else base_inspection_path_old
 
-        # Try original client name first (as stored in database with spaces)
-        client_base_path = os.path.join(base_inspection_path, client_name)
+        # Try to find client folder - check both exact and partial matches
+        # Problem: sanitized folders may exist but be empty, while the actual files
+        # are in folders with "/" that created nested directories
+        candidate_folders = []
 
-        # If original name doesn't exist, try converted name (with underscores/lowercase)
-        if not os.path.exists(client_base_path):
-            client_base_path = os.path.join(base_inspection_path, client_folder)
-        
+        # Try exact matches first
+        for variation in [client_name, client_folder]:
+            test_path = os.path.join(base_inspection_path, variation)
+            if os.path.exists(test_path):
+                candidate_folders.append(test_path)
+                print(f"[DEBUG get_inspection_files_local] Found exact match candidate: {variation}")
+
+        # Also try partial matching (for client names with "/" that create nested dirs)
+        if os.path.exists(base_inspection_path):
+            try:
+                available_folders = [f for f in os.listdir(base_inspection_path) if os.path.isdir(os.path.join(base_inspection_path, f))]
+                print(f"[DEBUG get_inspection_files_local] Searching in {len(available_folders)} available folders")
+
+                for available_folder in available_folders:
+                    for variation in [client_name, client_folder]:
+                        # Get the part before any "/" or special char
+                        variation_prefix = variation.split('/')[0].strip()
+
+                        # Normalize for comparison
+                        normalized_available = available_folder.lower().replace('_', ' ').strip()
+                        normalized_prefix = variation_prefix.lower().replace('_', ' ').strip()
+
+                        # Check if the available folder starts with the variation prefix
+                        if normalized_available.startswith(normalized_prefix) and len(normalized_prefix) > 10:
+                            candidate_path = os.path.join(base_inspection_path, available_folder)
+                            if candidate_path not in candidate_folders:
+                                candidate_folders.append(candidate_path)
+                                print(f"[DEBUG get_inspection_files_local] Found partial match candidate: {available_folder}")
+                            break
+            except Exception as e:
+                print(f"[DEBUG get_inspection_files_local] Error finding partial matches: {e}")
+
+        # Now check which candidate has actual Inspection folders
+        client_base_path = None
+        for candidate in candidate_folders:
+            # Quick check: does this folder have any Inspection-XXX subfolders?
+            has_inspection_folders = False
+            try:
+                for item in os.listdir(candidate):
+                    item_path = os.path.join(candidate, item)
+                    # Check direct Inspection folders
+                    if item.lower().startswith('inspection-') and os.path.isdir(item_path):
+                        has_inspection_folders = True
+                        print(f"[DEBUG get_inspection_files_local] Found Inspection folder: {item}")
+                        break
+                    # Also check DATE subfolders (new structure)
+                    if os.path.isdir(item_path) and not item.lower().startswith('inspection-'):
+                        try:
+                            for subitem in os.listdir(item_path):
+                                if subitem.lower().startswith('inspection-'):
+                                    has_inspection_folders = True
+                                    print(f"[DEBUG get_inspection_files_local] Found Inspection folder in {item}: {subitem}")
+                                    break
+                        except:
+                            pass
+                    if has_inspection_folders:
+                        break
+            except Exception as e:
+                print(f"[DEBUG get_inspection_files_local] Error checking {candidate}: {e}")
+
+            if has_inspection_folders:
+                client_base_path = candidate
+                print(f"[DEBUG get_inspection_files_local] Selected folder with Inspection folders: {client_base_path}")
+                break
+
+        # If no folder with files found, use the first candidate (or None)
+        if not client_base_path:
+            if candidate_folders:
+                client_base_path = candidate_folders[0]
+                print(f"[DEBUG get_inspection_files_local] No Inspection folders found, using first candidate: {client_base_path}")
+            else:
+                client_base_path = os.path.join(base_inspection_path, client_name)
+                print(f"[DEBUG get_inspection_files_local] No candidates found, using default: {client_base_path}")
+
         # Define file categories with simple, Linux-friendly folder names
         categories = {
             'rfi': 'rfi',
@@ -8917,17 +9027,20 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
             'occurrence': 'occurrence',
             'composition': 'composition'
         }
-        
+
         files_by_category = {}
-        
+
         # Initialize categories
         for category_key in categories.keys():
             files_by_category[category_key] = []
-        
+
         # Check if the client path exists (simplified - no fuzzy matching needed)
         if not os.path.exists(client_base_path):
+            print(f"[DEBUG get_inspection_files_local] Client path not found: {client_base_path}")
             cache.set(cache_key, files_by_category, 300)
             return files_by_category
+
+        print(f"[DEBUG get_inspection_files_local] Using client path: {client_base_path}")
 
         actual_client_path = client_base_path
         
