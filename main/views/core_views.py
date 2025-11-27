@@ -1010,11 +1010,8 @@ def shipment_list(request):
 
     # Manual refresh option (clears all cache)
     if request.GET.get('refresh') == 'true':
-        safe_print("MANUAL CACHE REFRESH requested...")
-        cache.delete(cache_key)
-        cache.delete(cache_timestamp_key)
-        cache.delete('drive_files_lookup_v2')
-        cache.delete('page_clients_status_cache')
+        safe_print("MANUAL CACHE REFRESH requested - clearing ALL cache...")
+        cache.clear()  # Clear ALL cache to ensure fresh data
 
     # Check cached data with automatic expiration
     cached_data = cache.get(cache_key)
