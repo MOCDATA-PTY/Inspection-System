@@ -13722,6 +13722,41 @@
     </script>
 
     <script>
+        // DEBUG: Log account codes on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('='.repeat(80));
+            console.log('ACCOUNT CODE DEBUG - Checking rendered values');
+            console.log('='.repeat(80));
+
+            // Find all account code cells
+            const accountCodeCells = document.querySelectorAll('.col-account-code span');
+            console.log(`Found ${accountCodeCells.length} account code cells`);
+
+            let missingCount = 0;
+            let foundCount = 0;
+
+            accountCodeCells.forEach((cell, index) => {
+                const code = cell.textContent.trim();
+                const row = cell.closest('tr');
+                const clientCell = row ? row.querySelector('.col-client-name') : null;
+                const clientName = clientCell ? clientCell.textContent.trim() : 'Unknown';
+
+                if (code === '-' || code === '') {
+                    missingCount++;
+                    console.log(`${index + 1}. MISSING: ${clientName} -> "${code}"`);
+                } else {
+                    foundCount++;
+                    console.log(`${index + 1}. OK: ${clientName} -> "${code}"`);
+                }
+            });
+
+            console.log('='.repeat(80));
+            console.log(`SUMMARY: ${foundCount} found, ${missingCount} missing`);
+            console.log('='.repeat(80));
+        });
+    </script>
+
+    <script>
         // Date picker functionality with DD/MM/YYYY format
         let currentCalendar = null;
         let currentInput = null;
