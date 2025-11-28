@@ -3085,19 +3085,12 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     });
                     break;
                 case 'no_files':
-                    button.classList.add('btn-danger');
-                    button.style.backgroundColor = '#dc3545';
-                    button.style.color = 'white';
+                    button.classList.add('btn-files-none');  // Changed from btn-danger to match template
                     button.title = 'No files available';
                     const ts4 = new Date().toLocaleTimeString();
-                    console.log(`   🔴 [${ts4}] CHANGED TO RED - Applied RED color to button`);
+                    console.log(`   🔴 [${ts4}] CHANGED TO RED - Applied RED color to button (btn-files-none)`);
                     console.log(`   🎨 AFTER UPDATE - Button ${index + 1} classes:`, button.className);
-                    console.log(`   🎨 AFTER UPDATE - Button ${index + 1} styles:`, {
-                        backgroundColor: button.style.backgroundColor,
-                        color: button.style.color,
-                        borderColor: button.style.borderColor
-                    });
-                    
+
                     // When View Files button goes red (no files), reset RFI and Invoice buttons to grey
                     console.log('   INFO View Files is red - resetting RFI and Invoice buttons to grey...');
                     resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate);
