@@ -1046,7 +1046,10 @@ def shipment_list(request):
         'id', 'client_name', 'date_of_inspection', 'inspector_name',
         'commodity', 'remote_id', 'product_name', 'product_class',
         'hours', 'km_traveled', 'comment', 'is_sent', 'sent_date',
-        'rfi_uploaded_by_id', 'invoice_uploaded_by_id', 'sent_by_id'
+        'rfi_uploaded_by_id', 'invoice_uploaded_by_id', 'sent_by_id',
+        # Testing parameters (user-editable)
+        'fat', 'protein', 'calcium', 'dna', 'is_sample_taken', 'bought_sample', 'lab', 'needs_retest',
+        'is_direction_present_for_this_inspection'
     ).filter(
         # SPEED: Only last 60 days (uses database index)
         date_of_inspection__gte=sixty_days_ago
@@ -1284,6 +1287,15 @@ def shipment_list(request):
             _client_id_map = {}
             _client_email_map = {}
 
+            # Helper: normalize names for matching (case-insensitive, collapse spaces, remove punctuation)
+            def _norm(text):
+                try:
+                    cleaned = re.sub(r"[\(\)\[\]{}\\/._,-]", " ", (text or ""))
+                    cleaned = re.sub(r"\s+", " ", cleaned).strip().lower()
+                    return cleaned
+                except Exception:
+                    return (text or "").strip().lower()
+
             # PERFORMANCE FIX: Only load clients that appear on THIS PAGE (not all 4,916 clients!)
             # This reduces loading from 4,916 clients to ~25 clients maximum
             clients_queryset = _Client.objects.filter(
@@ -1338,7 +1350,10 @@ def shipment_list(request):
             # Cache for 5 minutes (page-specific data, shorter cache)
             cache.set(client_cache_key, client_data, 300)
             
-        except Exception:
+        except Exception as e:
+            print(f"[ERROR] Exception while building client maps: {e}")
+            import traceback
+            traceback.print_exc()
             client_data = {
                 'client_map': {},
                 'client_id_map': {},
@@ -1419,6 +1434,105 @@ def shipment_list(request):
         key = (inspection.client_name, inspection.date_of_inspection)
         grouped_inspections_dict[key].append(inspection)
     
+    # Helper function to check files for a single group (fast version for page load)
+    def check_group_files(client_name, inspection_date):
+        """Check if files exist for this group - optimized for speed"""
+        import re
+        from django.conf import settings
+
+        try:
+            # Get inspection base path
+            inspection_base = getattr(settings, 'INSPECTION_FILES_ROOT', 'inspection_files')
+
+            # Sanitize client name to match folder structure
+            def create_folder_name(name):
+                if not name:
+                    return "unknown_client"
+                clean_name = re.sub(r'[^a-zA-Z0-9\s\-_]', '', name)
+                clean_name = clean_name.replace(' ', '_').replace('-', '_')
+                clean_name = re.sub(r'_+', '_', clean_name)
+                clean_name = clean_name.strip('_').lower()
+                return clean_name or "unknown_client"
+
+            sanitized_client_name = create_folder_name(client_name)
+            name_with_spaces_for_apostrophe = client_name.replace("'", ' ')
+            sanitized_with_apostrophe = create_folder_name(name_with_spaces_for_apostrophe)
+            client_folder_variations = [sanitized_client_name, sanitized_with_apostrophe, client_name]
+
+            # Get year and month from inspection date
+            year = inspection_date.strftime('%Y')
+            month = inspection_date.strftime('%B')
+            parent_path = os.path.join(inspection_base, year, month)
+
+            has_rfi = has_invoice = has_lab = has_compliance = False
+
+            if os.path.exists(parent_path):
+                for folder_variation in client_folder_variations:
+                    test_path = os.path.join(parent_path, folder_variation)
+                    if os.path.exists(test_path):
+                        # Quick check for RFI (check main variations only)
+                        if not has_rfi:
+                            for rfi_var in ['RFI', 'rfi']:
+                                rfi_path = os.path.join(test_path, rfi_var)
+                                if os.path.exists(rfi_path) and os.listdir(rfi_path):
+                                    has_rfi = True
+                                    break
+
+                        # Quick check for Invoice
+                        if not has_invoice:
+                            for inv_var in ['Invoice', 'invoice']:
+                                invoice_path = os.path.join(test_path, inv_var)
+                                if os.path.exists(invoice_path) and os.listdir(invoice_path):
+                                    has_invoice = True
+                                    break
+
+                        # Quick check for Lab
+                        if not has_lab:
+                            for lab_var in ['Lab', 'lab', 'Lab Results', 'lab results']:
+                                lab_path = os.path.join(test_path, lab_var)
+                                if os.path.exists(lab_path) and os.listdir(lab_path):
+                                    has_lab = True
+                                    break
+
+                        # Quick check for Compliance
+                        if not has_compliance:
+                            for comp_var in ['Compliance', 'compliance']:
+                                comp_path = os.path.join(test_path, comp_var)
+                                if os.path.exists(comp_path) and os.listdir(comp_path):
+                                    has_compliance = True
+                                    break
+
+                        # If we found all files, no need to check other variations
+                        if has_rfi and has_invoice and has_lab and has_compliance:
+                            break
+
+            # Determine file status
+            if has_rfi and has_invoice and has_lab and has_compliance:
+                file_status = 'all_files'  # Green
+            elif has_compliance:
+                file_status = 'compliance_only'  # Orange
+            elif has_rfi or has_invoice or has_lab:
+                file_status = 'partial_files'  # Orange
+            else:
+                file_status = 'no_files'  # Red
+
+            return {
+                'has_rfi': has_rfi,
+                'has_invoice': has_invoice,
+                'has_lab': has_lab,
+                'has_compliance': has_compliance,
+                'file_status': file_status
+            }
+        except Exception as e:
+            print(f"[FILE CHECK ERROR] {client_name} on {inspection_date}: {e}")
+            return {
+                'has_rfi': False,
+                'has_invoice': False,
+                'has_lab': False,
+                'has_compliance': False,
+                'file_status': 'no_files'
+            }
+
     # Process grouped inspections efficiently - ONLY CREATE REPRESENTATIVE OBJECTS
     grouped_inspections = []
     print(f"[PROCESSING] Processing {len(client_date_groups)} groups...")
@@ -1448,18 +1562,22 @@ def shipment_list(request):
         group_comment = None
         group_approved_status = None
         group_is_sent = False
-        
-        # IGNORE DATABASE - CHECK ACTUAL FILES ON DISK ONLY
-        rfi_uploader = None
-        invoice_uploader = None
+
+        # CHECK FILES ON BACKEND FOR INSTANT BUTTON COLORS
+        file_check_result = check_group_files(client_name, date_of_inspection)
+        has_rfi = file_check_result['has_rfi']
+        has_invoice = file_check_result['has_invoice']
+        has_lab = file_check_result['has_lab']
+        has_compliance = file_check_result['has_compliance']
+        file_status = file_check_result['file_status']
+
+        # For backward compatibility (some code checks uploader fields)
+        rfi_uploader = 'System' if has_rfi else None
+        invoice_uploader = 'System' if has_invoice else None
         rfi_upload_date = None
         invoice_upload_date = None
         composition_uploader = None
         composition_upload_date = None
-        
-        # SKIP FILE CHECKING ON PAGE LOAD FOR SPEED - Files will be checked via AJAX after page loads
-        # File checking moved to background to prevent 504 timeout
-        pass
         
         
         if sample_inspection:
@@ -1568,20 +1686,12 @@ def shipment_list(request):
         
         has_compliance_documents = False
 
-        # PERFORMANCE FIX: Don't check OneDrive/files on page load
-        # OneDrive should only be used for uploading when inspection is marked "sent" (after configured delay)
-        # Not for checking file existence on every page load
+        # Compliance status result for template (simplified - file checking done above)
         compliance_status_result = {
-            'has_any_compliance': False,
-            'all_commodities_have_compliance': False,
+            'has_any_compliance': has_compliance,
+            'all_commodities_have_compliance': False,  # Not checking per-commodity
             'commodity_status': {}
         }
-        
-        # File status is now based on actual files on disk
-        has_rfi = rfi_uploader is not None
-        has_invoice = invoice_uploader is not None
-        has_composition = composition_uploader is not None
-        has_compliance = compliance_status_result.get('has_any_compliance', False)
 
         # Determine INSPECTION compliance status (for display in header)
         # Check if ALL individual inspections in the group are compliant
@@ -1604,15 +1714,7 @@ def shipment_list(request):
         else:
             compliance_status = 'no_compliance'  # No files uploaded
 
-        # Determine file status for View Files button (separate from compliance status)
-        if has_rfi and has_invoice and has_compliance:
-            file_status = 'complete'  # Green - all required files present
-        elif has_compliance:
-            file_status = 'compliance_only'  # Orange - compliance exists (with or without other docs)
-        elif has_rfi or has_invoice or has_composition:
-            file_status = 'partial'  # Blue/Orange - has some files but no compliance
-        else:
-            file_status = 'no_compliance'  # Red - no files at all
+        # file_status already set by check_group_files() above
 
         # PERFORMANCE OPTIMIZATION: Removed massive per-group compliance debug logging
         # This was printing 10+ lines for EVERY group, causing significant slowdown
@@ -1657,6 +1759,10 @@ def shipment_list(request):
             'inspection_compliance_status': inspection_compliance_status,  # For header compliance display (based on individual inspections)
             'compliance_status': compliance_status,  # For sent dropdown control (based on file uploads)
             'file_status': file_status,  # For View Files button color coding (based on actual files)
+            'has_rfi': has_rfi,  # Individual file flags for button colors
+            'has_invoice': has_invoice,
+            'has_lab': has_lab,
+            'has_compliance': has_compliance,
             'compliance_documents_status': {
                 'all_commodities_have_compliance': bool(compliance_status_result.get('all_commodities_have_compliance', False)) if compliance_status_result else False,
                 'has_any_compliance': bool(compliance_status_result.get('has_any_compliance', False)) if compliance_status_result else False

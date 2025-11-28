@@ -7035,14 +7035,12 @@
                                 <td class="col-inspector px-6 py-4 text-xs text-gray-500 text-center" data-label="Inspector" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ shipment.inspector_name|display_inspector:shipment.inspector_id }}</td>
                                 <td class="col-view-files px-6 py-4 whitespace-nowrap text-sm text-center" data-label="View Files">
                                     <button class="btn btn-sm btn-view-files
-                                           {% if shipment.file_status == 'complete' %}
+                                           {% if shipment.file_status == 'complete' or shipment.file_status == 'all_files' %}
                                                btn-files-complete
-                                           {% elif shipment.file_status == 'compliance_only' or shipment.file_status == 'partial' %}
+                                           {% elif shipment.file_status == 'compliance_only' or shipment.file_status == 'partial' or shipment.file_status == 'partial_files' %}
                                                btn-files-partial
-                                           {% elif shipment.file_status == 'no_compliance' %}
-                                               btn-files-none
                                            {% else %}
-                                               btn-files-checking
+                                               btn-files-none
                                            {% endif %}"
                                            data-group-id="{{ fallback_group_id|escapejs }}"
                                            data-client-name="{{ shipment.client_name|escapejs }}"
@@ -11262,6 +11260,31 @@
         };
 
 
+        // INSTANT UPDATE: After file upload, immediately update button color without checking files
+        function instantUpdateViewFilesButton(clientName, inspectionDate, fileType) {
+            console.log(`⚡ INSTANT UPDATE: ${fileType} uploaded for ${clientName} on ${inspectionDate}`);
+
+            // Find the View Files button for this client/date
+            const buttons = document.querySelectorAll('button.btn-view-files, button[class*="btn-view-files"]');
+
+            buttons.forEach(button => {
+                const btnClient = button.getAttribute('data-client-name');
+                const btnDate = button.getAttribute('data-inspection-date');
+
+                if (btnClient === clientName && btnDate === inspectionDate) {
+                    console.log('✅ Found matching button, updating to partial/complete status');
+
+                    // Remove old status classes
+                    button.classList.remove('btn-files-none', 'btn-files-checking', 'btn-danger');
+
+                    // Add partial status (orange) - we know at least one file exists
+                    button.classList.add('btn-files-partial');
+
+                    console.log(`🎨 Button updated instantly - no file checking needed!`);
+                }
+            });
+        }
+
         // Function to automatically update all View Files button colors on page load
         async function updateAllViewFilesButtonColors() {
             console.log('🎨 Starting automatic color update for all View Files buttons');
@@ -11570,24 +11593,15 @@
                                 console.log('✅ RFI uploaded successfully!');
                                 markAsUploaded('rfi-' + groupId);
 
-                                // Update View Files button colors after upload with delay to ensure server processing
-                                console.log('🎨 Updating button colors after RFI upload...');
-                                console.log('[TIMER] Setting 3-second timer for delayed color update...');
-                                setTimeout(() => {
-                                    console.log('[TIMER] Timer fired! Starting delayed color update...');
-                                    console.log('🔄 Delayed file status check after RFI upload...');
-                                    updateAllViewFilesButtonColors();
-
-                                    // Also update RFI/Invoice button colors
-                                    const button = document.getElementById('rfi-' + groupId);
-                                    if (button) {
-                                        const clientName = button.getAttribute('data-client-name');
-                                        // Skip NEW inspections - they should not have any file buttons colored
-                                        if (clientName && !clientName.toUpperCase().includes('NEW')) {
-                                            updateRFIAndInvoiceButtonColorsForClient(clientName);
-                                        }
+                                // INSTANT UPDATE: Update View Files button immediately without checking files
+                                const button = document.getElementById('rfi-' + groupId);
+                                if (button) {
+                                    const clientName = button.getAttribute('data-client-name');
+                                    const inspectionDate = button.getAttribute('data-inspection-date');
+                                    if (clientName && inspectionDate) {
+                                        instantUpdateViewFilesButton(clientName, inspectionDate, 'RFI');
                                     }
-                                }, 3000); // 3 second delay to ensure server processing is complete
+                                }
 
                                 // Auto-open files popup after successful upload
                                 const button = document.getElementById('rfi-' + groupId);
@@ -11697,14 +11711,15 @@
                                     console.log(`✅ Updated ${buttonsToUpdate.length} Occurrence button(s) to green`);
                                 }
 
-                                // Update View Files button colors after upload with delay to ensure server processing
-                                console.log('🎨 Updating button colors after Occurrence upload...');
-                                console.log('[TIMER] Setting 3-second timer for delayed color update...');
-                                setTimeout(() => {
-                                    console.log('[TIMER] Timer fired! Starting delayed color update...');
-                                    console.log('🔄 Delayed file status check after Occurrence upload...');
-                                    updateAllViewFilesButtonColors();
-                                }, 3000); // 3 second delay to ensure server processing is complete
+                                // INSTANT UPDATE: Update View Files button immediately without checking files
+                                const buttonWithData = desktopButton || mobileButton;
+                                if (buttonWithData) {
+                                    const clientName = buttonWithData.getAttribute('data-client-name');
+                                    const inspectionDate = buttonWithData.getAttribute('data-inspection-date');
+                                    if (clientName && inspectionDate) {
+                                        instantUpdateViewFilesButton(clientName, inspectionDate, 'Occurrence');
+                                    }
+                                }
 
                                 // Auto-open files popup after successful upload
                                 const buttonWithData = desktopButton || mobileButton;
@@ -11788,19 +11803,13 @@
                             markAsUploaded('invoice-' + groupId);
                             console.log('[DEBUG] markAsUploaded called for invoice-' + groupId);
 
-                            // Update View Files button colors after upload
-                            console.log('🎨 Updating button colors after Invoice upload...');
-                            updateAllViewFilesButtonColors();
-
-                            // Also update RFI/Invoice button colors
+                            // INSTANT UPDATE: Update View Files button immediately without checking files
                             const button = document.getElementById('invoice-' + groupId);
                             if (button) {
                                 const clientName = button.getAttribute('data-client-name');
-                                // Skip NEW inspections - they should not have any file buttons colored
-                                if (clientName && !clientName.toUpperCase().includes('NEW')) {
-                                    setTimeout(() => {
-                                        updateRFIAndInvoiceButtonColorsForClient(clientName);
-                                    }, 2000); // Delay to ensure server processing
+                                const inspectionDate = button.getAttribute('data-inspection-date');
+                                if (clientName && inspectionDate) {
+                                    instantUpdateViewFilesButton(clientName, inspectionDate, 'Invoice');
                                 }
                             }
 
@@ -13153,14 +13162,10 @@
                 updateButtonStates(inspectionId, needsRetest);
             });
 
-            // PERFORMANCE FIX: Wait for COMPLETE page load (including all images/resources)
-            // then wait additional 5 seconds before starting background file checks
-            window.addEventListener('load', () => {
-                console.log('[PERFORMANCE] Page fully loaded - waiting 5 more seconds before checking files...');
-                setTimeout(() => {
-                    initializeRFIAndInvoiceButtonColors();
-                }, 5000); // 5 second delay after full page load
-            });
+            // BACKEND FILE CHECKING: File colors are now set on backend for instant display
+            // No need to check files via JavaScript after page load
+            // File colors are already correct from Django template rendering
+            console.log('[PERFORMANCE] File button colors set by backend - no JavaScript file checking needed');
         }
 
         function initializeRFIAndInvoiceButtonColors() {
