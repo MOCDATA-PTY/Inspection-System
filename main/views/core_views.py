@@ -9029,7 +9029,11 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
 
         year_folder = date_obj.strftime('%Y')
         month_folder = date_obj.strftime('%B')
+
+        # Handle apostrophe variations in client names
         client_folder = create_folder_name(client_name)
+        name_with_apostrophe_removed = client_name.replace("'", ' ')
+        client_folder_apostrophe_variation = create_folder_name(name_with_apostrophe_removed)
 
         # OPTIMIZED FILE CACHING: 30-second timeout for performance
         # Files refresh automatically every 30 seconds to catch new uploads
@@ -9047,32 +9051,22 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                     return cached_files
                 # Cache expired, reload files
 
-        # Base client path - Try both original name (with spaces) and converted name (with underscores)
-        # This handles cases where folders were created with original client names
-        # Try both old structure (with 'inspection' folder) and new structure (without it)
-        base_inspection_path_old = os.path.join(
+        # Base client path - Use unified inspection/ structure
+        # All files should be in: MEDIA_ROOT/inspection/YEAR/MONTH/CLIENT/
+        base_inspection_path = os.path.join(
             settings.MEDIA_ROOT,
             'inspection',
             year_folder,
             month_folder
         )
 
-        base_inspection_path_new = os.path.join(
-            settings.MEDIA_ROOT,
-            year_folder,
-            month_folder
-        )
-
-        # Check which structure exists
-        base_inspection_path = base_inspection_path_new if os.path.exists(base_inspection_path_new) else base_inspection_path_old
-
         # Try to find client folder - check both exact and partial matches
         # Problem: sanitized folders may exist but be empty, while the actual files
         # are in folders with "/" that created nested directories
         candidate_folders = []
 
-        # Try exact matches first
-        for variation in [client_name, client_folder]:
+        # Try exact matches first - check all variations including apostrophe handling
+        for variation in [client_name, client_folder, client_folder_apostrophe_variation]:
             test_path = os.path.join(base_inspection_path, variation)
             if os.path.exists(test_path):
                 candidate_folders.append(test_path)
@@ -9085,7 +9079,7 @@ def get_inspection_files_local(client_name, inspection_date, force_refresh=False
                 print(f"[DEBUG get_inspection_files_local] Searching in {len(available_folders)} available folders")
 
                 for available_folder in available_folders:
-                    for variation in [client_name, client_folder]:
+                    for variation in [client_name, client_folder, client_folder_apostrophe_variation]:
                         # Get the part before any "/" or special char
                         variation_prefix = variation.split('/')[0].strip()
 
