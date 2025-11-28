@@ -9665,28 +9665,14 @@ def get_inspection_files(request):
         
         client_folder = create_folder_name(client_name)
 
-        # Try both new structure (without 'inspection' folder) and old structure (with 'inspection' folder)
-        inspection_folder_new = os.path.join(
-            settings.MEDIA_ROOT,
-            year_folder,
-            month_folder,
-            client_folder
-        )
-
-        inspection_folder_old = os.path.join(
+        # Use unified inspection/ folder structure
+        inspection_folder = os.path.join(
             settings.MEDIA_ROOT,
             'inspection',
             year_folder,
             month_folder,
             client_folder
         )
-
-        # Use new path if parent exists, otherwise use old path
-        base_month_path_new = os.path.join(settings.MEDIA_ROOT, year_folder, month_folder)
-        if os.path.exists(base_month_path_new):
-            inspection_folder = inspection_folder_new
-        else:
-            inspection_folder = inspection_folder_old
 
         os.makedirs(inspection_folder, exist_ok=True)
 
