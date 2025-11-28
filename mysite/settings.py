@@ -169,7 +169,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']  # Static files in development
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # Static files collected for production
 
 # Performance and timeout settings to prevent broken pipes
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB max upload size
+# Note: DATA_UPLOAD_MAX_MEMORY_SIZE is set above to 50MB (line 144)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Allow more form fields
 DATA_UPLOAD_MAX_NUMBER_FILES = 100  # Allow more files
 
