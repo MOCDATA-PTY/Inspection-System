@@ -5235,51 +5235,42 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             matchingButtons.forEach(button => {
                 console.log(`COLOR [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
 
-                // Remove existing color classes including the problematic btn-files-none
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
+                // Remove existing color classes - use TEMPLATE classes (btn-files-*)
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
-                
+
                 // Apply appropriate color class and icon based on status
+                // CRITICAL: Use TEMPLATE classes (btn-files-*) that match shipment_list_clean.html lines 7038-7044
                 switch(fileStatus) {
                     case 'all_files':
-                        button.classList.add('btn-view-files-green');
+                        button.classList.add('btn-files-complete');  // Changed from btn-view-files-green
                         button.title = 'All files available (RFI, Invoice, Lab Results, Compliance)';
                         if (statusIcon) {
                             statusIcon.className = 'fas fa-check-circle';
                             statusIcon.style.color = '#059669';
                         }
-                        console.log('   SUCCESS Applied GREEN color to button');
+                        console.log('   SUCCESS Applied GREEN color to button (btn-files-complete)');
                         break;
                     case 'compliance_only':
-                        button.classList.add('btn-view-files-orange');
-                        button.title = 'Only compliance documents available';
-                        if (statusIcon) {
-                            statusIcon.className = 'fas fa-shield-alt';
-                            statusIcon.style.color = '#f59e0b';
-                        }
-                        console.log('   🟡 Applied ORANGE color to button');
-                        break;
                     case 'partial_files':
-                        button.classList.add('btn-warning');
-                        button.style.backgroundColor = '#ff8c00';
-                        button.style.color = 'white';
-                        button.title = 'Files uploaded';
+                        button.classList.add('btn-files-partial');  // Changed from btn-view-files-orange / btn-warning
+                        button.title = fileStatus === 'compliance_only' ? 'Only compliance documents available' : 'Files uploaded';
                         if (statusIcon) {
                             statusIcon.className = 'fas fa-file-alt';
-                            statusIcon.style.color = 'white';
+                            statusIcon.style.color = '#f59e0b';
                         }
-                        console.log('   ORANGE Applied ORANGE color to button');
+                        console.log('   🟡 Applied ORANGE color to button (btn-files-partial)');
                         break;
                     case 'no_files':
-                        button.classList.add('btn-view-files-red');
+                        button.classList.add('btn-files-none');  // Changed from btn-view-files-red
                         button.title = 'No files found';
                         if (statusIcon) {
                             statusIcon.className = 'fas fa-times-circle';
                             statusIcon.style.color = '#dc2626';
                         }
-                        console.log('   🔴 Applied RED color to button');
+                        console.log('   🔴 Applied RED color to button (btn-files-none)');
                         break;
                     default:
                         console.log('   ⚠️ Unknown file status:', fileStatus);
@@ -5291,20 +5282,20 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             matchingButtons.forEach(button => {
                 console.log(`COLOR [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
 
-                // Remove existing color classes including the problematic btn-files-none
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
+                // Remove existing color classes - use TEMPLATE classes (btn-files-*)
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
-                
-                // Apply red color for no files
-                button.classList.add('btn-view-files-red');
+
+                // Apply red color for no files - use TEMPLATE class
+                button.classList.add('btn-files-none');  // Changed from btn-view-files-red
                 button.title = 'No files found';
                 if (statusIcon) {
                     statusIcon.className = 'fas fa-times-circle';
                     statusIcon.style.color = '#dc2626';
                 }
-                console.log('   🔴 Applied RED color to button (no files)');
+                console.log('   🔴 Applied RED color to button (btn-files-none)');
             });
         }
     })
@@ -5313,15 +5304,15 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         // Fallback to no_files status
         matchingButtons.forEach(button => {
             console.log(`COLOR [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
-            
-            // Remove existing color classes including the problematic btn-files-none
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
-            
+
+            // Remove existing color classes - use TEMPLATE classes (btn-files-*)
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
+
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');
-            
-            // Apply red color for no files
-            button.classList.add('btn-view-files-red');
+
+            // Apply red color for no files - use TEMPLATE class
+            button.classList.add('btn-files-none');  // Changed from btn-view-files-red
             button.title = 'No files found';
             if (statusIcon) {
                 statusIcon.className = 'fas fa-times-circle';
