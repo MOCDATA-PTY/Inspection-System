@@ -1696,6 +1696,29 @@ async function deleteFile(filePath, fileName) {
 
                 // Step 1: Wait 500ms for server to process deletion
                 setTimeout(async () => {
+                    // CRITICAL: Force backend to refresh file status cache for this group
+                    console.log('🔄 [BACKEND] Forcing backend file status refresh for:', clientName, inspectionDate);
+                    try {
+                        const cacheBuster = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        const backendResponse = await fetch('/list-client-folder-files/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCSRFToken(),
+                            },
+                            body: JSON.stringify({
+                                client_name: clientName,
+                                inspection_date: inspectionDate,
+                                _cache_bust: cacheBuster,
+                                _force_refresh: true  // Force server to clear cache and recheck files
+                            })
+                        });
+                        const backendResult = await backendResponse.json();
+                        console.log('✅ [BACKEND] Backend cache refreshed, new file status:', backendResult);
+                    } catch (error) {
+                        console.error('⚠️ [BACKEND] Failed to refresh backend cache:', error);
+                    }
+
                     // Step 2: Rescan files
                     console.log('INFO Rescanning files after deletion...');
                     await loadInspectionFilesWithFallback(groupId, clientName, inspectionDate);
