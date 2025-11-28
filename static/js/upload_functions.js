@@ -1725,8 +1725,8 @@ async function deleteFile(filePath, fileName) {
 
                     // Step 3: Wait additional 500ms for scan to complete, then update Files button
                     setTimeout(() => {
-                        console.log('COLOR Updating View Files button color after file rescan...');
-                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                        console.log('COLOR Updating View Files button color based on individual button states...');
+                        updateFilesButtonBasedOnIndividualButtons(groupId, clientName, inspectionDate);
                     }, 500);
                 }, 500);
 
@@ -5119,6 +5119,98 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
         
     } catch (error) {
         console.error(`Error checking ${documentType} files for ${clientName}:`, error);
+    }
+}
+
+// Update Files button color based on individual file button states (RFI, Invoice, Lab, etc.)
+function updateFilesButtonBasedOnIndividualButtons(groupId, clientName, inspectionDate) {
+    console.log(`🔍 [FILES BUTTON] Checking individual button states for group ${groupId}`);
+
+    // Find all file buttons for this group
+    const rfiButton = document.getElementById(`rfi-${groupId}`);
+    const invoiceButton = document.getElementById(`invoice-${groupId}`);
+    const labButton = document.getElementById(`lab-${groupId}`);
+    const retestButton = document.getElementById(`retest-${groupId}`);
+    const occurrenceButton = document.getElementById(`occurrence-${groupId}`);
+    const compositionButton = document.getElementById(`composition-${groupId}`);
+
+    // Check if buttons exist and their states
+    let hasGreenButtons = false;
+    let hasAnyFiles = false;
+
+    // Helper function to check if button shows a file is uploaded
+    function buttonHasFile(button) {
+        if (!button) return false;
+
+        // Check for green/success styling
+        const hasSuccessClass = button.classList.contains('btn-success');
+        const hasGreenBackground = button.style.backgroundColor === 'rgb(40, 167, 69)' ||
+                                   button.style.backgroundColor === '#28a745';
+        const isDisabled = button.disabled;
+        const hasCheckmark = button.textContent.includes('✓');
+
+        return hasSuccessClass || hasGreenBackground || (isDisabled && hasCheckmark);
+    }
+
+    // Check each button
+    if (buttonHasFile(rfiButton)) {
+        console.log(`   ✅ RFI button has file`);
+        hasAnyFiles = true;
+    }
+    if (buttonHasFile(invoiceButton)) {
+        console.log(`   ✅ Invoice button has file`);
+        hasAnyFiles = true;
+    }
+    if (buttonHasFile(labButton)) {
+        console.log(`   ✅ Lab button has file`);
+        hasAnyFiles = true;
+    }
+    if (buttonHasFile(retestButton)) {
+        console.log(`   ✅ Retest button has file`);
+        hasAnyFiles = true;
+    }
+    if (buttonHasFile(occurrenceButton)) {
+        console.log(`   ✅ Occurrence button has file`);
+        hasAnyFiles = true;
+    }
+    if (buttonHasFile(compositionButton)) {
+        console.log(`   ✅ Composition button has file`);
+        hasAnyFiles = true;
+    }
+
+    // Find the Files button for this group
+    const filesButtons = document.querySelectorAll('button.btn-view-files');
+    let matchingFilesButton = null;
+
+    filesButtons.forEach(button => {
+        const btnGroupId = button.getAttribute('data-group-id');
+        const btnClientName = button.getAttribute('data-client-name');
+        const btnInspectionDate = button.getAttribute('data-inspection-date');
+
+        if (btnGroupId === groupId || (btnClientName === clientName && btnInspectionDate === inspectionDate)) {
+            matchingFilesButton = button;
+        }
+    });
+
+    if (!matchingFilesButton) {
+        console.log(`   ⚠️ Files button not found for group ${groupId}`);
+        return;
+    }
+
+    // Update Files button color based on individual button states
+    // Remove all status classes
+    matchingFilesButton.classList.remove('btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-view-files-green', 'btn-view-files-red', 'btn-view-files-orange', 'btn-warning', 'btn-danger', 'btn-files-checking');
+
+    if (!hasAnyFiles) {
+        // All buttons are grey (no files) - set Files button to RED
+        matchingFilesButton.classList.add('btn-files-none');
+        matchingFilesButton.title = 'No files found';
+        console.log(`   🔴 Set Files button to RED (no files)`);
+    } else {
+        // At least one file exists - set to ORANGE (partial)
+        matchingFilesButton.classList.add('btn-files-partial');
+        matchingFilesButton.title = 'Files uploaded';
+        console.log(`   🟡 Set Files button to ORANGE (partial files)`);
     }
 }
 
