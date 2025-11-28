@@ -3097,13 +3097,9 @@ def list_client_folder_files(request):
             print(f"✅ [CACHE] Cleared cache for original: {cache_key_original}")
             print(f"✅ [CACHE] Cleared cache for sanitized: {cache_key_sanitized}")
 
-        # Use sanitized client name to match upload folder structure
-        # Try both new structure (without 'inspection' folder) and old structure (with 'inspection' folder)
-        parent_path_new = os.path.join(settings.MEDIA_ROOT, year_folder, month_folder)
-        parent_path_old = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
-
-        # Use new path if it exists, otherwise fall back to old path
-        parent_path = parent_path_new if os.path.exists(parent_path_new) else parent_path_old
+        # Use unified inspection/ folder structure
+        # All files should be in: MEDIA_ROOT/inspection/YEAR/MONTH/CLIENT/
+        parent_path = os.path.join(settings.MEDIA_ROOT, 'inspection', year_folder, month_folder)
 
         # Check multiple variations: ORIGINAL NAME FIRST (with spaces), then sanitized variations
         # CRITICAL: Try original name first to handle folders created with spaces (mobile/web upload inconsistency)
