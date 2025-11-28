@@ -1441,8 +1441,8 @@ def shipment_list(request):
         from django.conf import settings
 
         try:
-            # Get inspection base path
-            inspection_base = getattr(settings, 'INSPECTION_FILES_ROOT', 'inspection_files')
+            # Get inspection base path - use MEDIA_ROOT/inspection where files are actually uploaded
+            inspection_base = os.path.join(settings.MEDIA_ROOT, 'inspection')
 
             # Sanitize client name to match folder structure
             def create_folder_name(name):
