@@ -1797,6 +1797,12 @@ async function deleteFile(filePath, fileName) {
                     console.log(`🔄 [RESCAN] Starting file rescan after deletion for: ${clientName} on ${inspectionDate}`);
                     console.log(`🔄 [RESCAN] Group ID: ${groupId}`);
 
+                    // Mark this group as HIGH PRIORITY for individual rescan
+                    const groupKey = `${clientName}_${inspectionDate}`;
+                    priorityRescanGroups.add(groupKey);
+                    console.log(`🔒 [PRIORITY] Locked group for individual rescan: ${groupKey}`);
+                    console.log(`🔒 [PRIORITY] Current locked groups:`, Array.from(priorityRescanGroups));
+
                     // Add a delay to ensure server-side deletion is complete
                     setTimeout(() => {
                         console.log(`🔄 [RESCAN] Fetching fresh file status from server...`);
@@ -1855,12 +1861,25 @@ async function deleteFile(filePath, fileName) {
 
                                     console.log(`✅ [RESCAN] File rescan and color update complete!`);
                                     console.log(`✅ [RESCAN] Final status: ${fileStatus} = ${newColor} button`);
+
+                                    // UNLOCK the group after individual rescan is complete
+                                    priorityRescanGroups.delete(groupKey);
+                                    console.log(`🔓 [PRIORITY] Unlocked group after rescan: ${groupKey}`);
+                                    console.log(`🔓 [PRIORITY] Remaining locked groups:`, Array.from(priorityRescanGroups));
                                 } else {
                                     console.error(`❌ [RESCAN] Failed to fetch file status:`, data.error);
+
+                                    // UNLOCK even on failure
+                                    priorityRescanGroups.delete(groupKey);
+                                    console.log(`🔓 [PRIORITY] Unlocked group after error: ${groupKey}`);
                                 }
                             })
                             .catch(error => {
                                 console.error(`❌ [RESCAN] Error fetching file status:`, error);
+
+                                // UNLOCK even on error
+                                priorityRescanGroups.delete(groupKey);
+                                console.log(`🔓 [PRIORITY] Unlocked group after catch error: ${groupKey}`);
                             });
                     }, 500); // 500ms delay to ensure server deletion is complete
                 }
@@ -3186,6 +3205,10 @@ if (typeof statusCheckInProgress === 'undefined') {
 // Global variable to track if we're in the middle of an upload process
 let uploadInProgress = false;
 
+// Global Set to track groups currently being individually rescanned (HIGH PRIORITY)
+// This prevents bulk scans from overwriting individual rescan results
+const priorityRescanGroups = new Set();
+
 // Function to update RFI button color with delayed check
 function updateRFIButtonColorDelayed(groupId) {
     console.log('INFO [DELAYED] Updating RFI button color for group:', groupId);
@@ -3775,6 +3798,13 @@ async function updateAllViewFilesButtonColors() {
             
             // Update button colors for each client+date combination
             Object.entries(result.combination_statuses).forEach(([uniqueKey, statusData]) => {
+                // SKIP if this group is currently being individually rescanned (HIGH PRIORITY)
+                const groupKey = `${statusData.client_name}_${statusData.inspection_date}`;
+                if (priorityRescanGroups.has(groupKey)) {
+                    console.log(`⏭️ [BULK SCAN] Skipping ${groupKey} - individual rescan in progress (HIGH PRIORITY)`);
+                    return; // Skip this group
+                }
+
                 console.log('COLOR Updating colors for ' + uniqueKey + ': ' + statusData.file_status);
                 updateViewFilesButtonColorSpecific(statusData.client_name, statusData.inspection_date, statusData.file_status);
             });
