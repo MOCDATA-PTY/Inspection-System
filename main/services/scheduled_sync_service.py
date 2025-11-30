@@ -157,20 +157,41 @@ class ScheduledSyncService:
             sheets_service = GoogleSheetsService()
 
             # Refresh clients table
-            success = sheets_service.refresh_clients_table()
+            result = sheets_service.refresh_clients_table()
 
-            if success:
+            # Check if result is a dictionary (error response) or boolean (success/failure)
+            if isinstance(result, dict):
+                if result.get('success'):
+                    print(f"✅ Google Sheets sync completed successfully")
+                    print(f"   - Clients created: {result.get('clients_created', 0)}")
+                    print(f"   - Clients updated: {result.get('clients_updated', 0)}")
+                    print(f"   - Total processed: {result.get('total_processed', 0)}")
+                    self.last_sync_times['google_sheets'] = datetime.now()
+                    return True
+                else:
+                    error_msg = result.get('error', 'Unknown error')
+                    print(f"❌ Google Sheets sync failed: {error_msg}")
+                    # Store error in cache for frontend
+                    cache.set('google_sheets_sync_error', error_msg, 300)
+                    return False
+            elif result:
+                # Boolean True - success
                 print("✅ Google Sheets sync completed successfully")
                 self.last_sync_times['google_sheets'] = datetime.now()
                 return True
             else:
+                # Boolean False - failure
                 print("❌ Google Sheets sync failed")
+                cache.set('google_sheets_sync_error', 'Unknown error - sync returned False', 300)
                 return False
 
         except Exception as e:
-            print(f"❌ Error in Google Sheets sync: {e}")
+            error_msg = str(e)
+            print(f"❌ Error in Google Sheets sync: {error_msg}")
             import traceback
             traceback.print_exc()
+            # Store error in cache for frontend
+            cache.set('google_sheets_sync_error', f'Exception: {error_msg}', 300)
             return False
         finally:
             # Clean up connections after sync

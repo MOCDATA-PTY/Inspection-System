@@ -395,19 +395,67 @@ class GoogleSheetsService:
         """Sync clients while preserving existing relationships"""
         from ..models import Client
         import uuid
-        
+
         print("   🔄 Step 2.1: Starting preservation sync...")
         initial_count = Client.objects.count()
         print(f"      📊 Initial client count: {initial_count:,}")
-        
-        print("\n   📥 Step 2.2: Fetching fresh data from Google Sheets...")
-        sheet_data = self.get_specific_sheet_data(request)
-        
-        if not sheet_data:
-            print("      ❌ No data received from Google Sheets")
+
+        # IMPORTANT: Authenticate BEFORE fetching data
+        print("\n   🔐 Step 2.1.1: Authenticating with Google Sheets...")
+        try:
+            self.authenticate(request)
+            print("      ✅ Google Sheets authentication successful!")
+        except ConnectionError as e:
+            print(f"      ❌ Network/Connection error: {e}")
             return {
                 'success': False,
-                'error': 'No data fetched from Google Sheets',
+                'error': f'Network error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+        except FileNotFoundError as e:
+            print(f"      ❌ Credentials file error: {e}")
+            return {
+                'success': False,
+                'error': f'Credentials error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+        except Exception as e:
+            print(f"      ❌ Authentication error: {e}")
+            return {
+                'success': False,
+                'error': f'Authentication error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+
+        print("\n   📥 Step 2.2: Fetching fresh data from Google Sheets...")
+        try:
+            sheet_data = self.get_specific_sheet_data(request)
+        except Exception as e:
+            print(f"      ❌ Error fetching data from Google Sheets: {e}")
+            return {
+                'success': False,
+                'error': f'Failed to fetch Google Sheets data: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+
+        if not sheet_data:
+            print("      ❌ No data received from Google Sheets")
+            print("      ⚠️  Possible causes:")
+            print("         - Spreadsheet is empty")
+            print("         - Wrong spreadsheet ID")
+            print("         - Sheet name doesn't match")
+            print("         - Network/API error")
+            return {
+                'success': False,
+                'error': 'No data fetched from Google Sheets (empty response)',
                 'deleted_count': 0,
                 'clients_created': 0,
                 'total_processed': 0
@@ -505,28 +553,76 @@ class GoogleSheetsService:
         from django.db import transaction
         from django.core.cache import cache
         import uuid
-        
+
         # Always run sync - no blocking checks
-        
+
+        # IMPORTANT: Authenticate BEFORE doing anything
+        print("   🔐 Step 2.0: Authenticating with Google Sheets...")
+        try:
+            self.authenticate(request)
+            print("      ✅ Google Sheets authentication successful!")
+        except ConnectionError as e:
+            print(f"      ❌ Network/Connection error: {e}")
+            return {
+                'success': False,
+                'error': f'Network error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+        except FileNotFoundError as e:
+            print(f"      ❌ Credentials file error: {e}")
+            return {
+                'success': False,
+                'error': f'Credentials error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+        except Exception as e:
+            print(f"      ❌ Authentication error: {e}")
+            return {
+                'success': False,
+                'error': f'Authentication error: {e}',
+                'deleted_count': 0,
+                'clients_created': 0,
+                'total_processed': 0
+            }
+
         try:
             # Wrap the entire operation in a transaction to ensure atomicity
             with transaction.atomic():
-                print("   🗑️  Step 2.1: Clearing existing clients from database...")
+                print("\n   🗑️  Step 2.1: Clearing existing clients from database...")
                 # Clear all existing Food Safety Agency clients
                 deleted_count = Client.objects.count()
                 print(f"      📊 Found {deleted_count} existing clients to delete")
                 Client.objects.all().delete()
                 print(f"      ✅ Successfully deleted {deleted_count} existing clients")
-            
+
             print("\n   📥 Step 2.2: Fetching fresh data from Google Sheets...")
             # Fetch fresh data from Google Sheets including emails
-            sheet_data = self.get_specific_sheet_data(request)
-            
-            if not sheet_data:
-                print("      ❌ No data received from Google Sheets")
+            try:
+                sheet_data = self.get_specific_sheet_data(request)
+            except Exception as e:
+                print(f"      ❌ Error fetching data from Google Sheets: {e}")
                 return {
                     'success': False,
-                    'error': 'No data fetched from Google Sheets',
+                    'error': f'Failed to fetch Google Sheets data: {e}',
+                    'deleted_count': deleted_count,
+                    'clients_created': 0,
+                    'total_processed': 0
+                }
+
+            if not sheet_data:
+                print("      ❌ No data received from Google Sheets")
+                print("      ⚠️  Possible causes:")
+                print("         - Spreadsheet is empty")
+                print("         - Wrong spreadsheet ID")
+                print("         - Sheet name doesn't match")
+                print("         - Network/API error")
+                return {
+                    'success': False,
+                    'error': 'No data fetched from Google Sheets (empty response)',
                     'deleted_count': deleted_count,
                     'clients_created': 0,
                     'total_processed': 0
