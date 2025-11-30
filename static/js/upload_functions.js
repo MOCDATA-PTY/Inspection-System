@@ -1793,9 +1793,8 @@ async function deleteFile(filePath, fileName) {
                         console.log(`⚠️ [DEBUG] Not running targeted check - document type is: ${documentType}`);
                     }
 
-                    // RESCAN FILES AND UPDATE VIEW FILES BUTTON COLOR AFTER DELETION
-                    console.log(`🔄 [RESCAN] Starting file rescan after deletion for: ${clientName} on ${inspectionDate}`);
-                    console.log(`🔄 [RESCAN] Group ID: ${groupId}`);
+                    // UPDATE VIEW FILES BUTTON AFTER DELETION - Use existing function that works like RFI/Invoice buttons
+                    console.log(`🔄 [VIEW FILES] Updating View Files button after deletion for: ${clientName} on ${inspectionDate}`);
 
                     // Mark this group as HIGH PRIORITY for individual rescan
                     const groupKey = `${clientName}_${inspectionDate}`;
@@ -1803,84 +1802,17 @@ async function deleteFile(filePath, fileName) {
                     console.log(`🔒 [PRIORITY] Locked group for individual rescan: ${groupKey}`);
                     console.log(`🔒 [PRIORITY] Current locked groups:`, Array.from(priorityRescanGroups));
 
-                    // Add a delay to ensure server-side deletion is complete
+                    // Wait for deletion to complete, then update button using the same logic as individual buttons
                     setTimeout(() => {
-                        console.log(`🔄 [RESCAN] Fetching fresh file status from server...`);
+                        console.log(`🔄 [VIEW FILES] Calling updateViewFilesButtonAfterFileDeletion...`);
+                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
 
-                        // Fetch fresh file status from server
-                        fetch(`/get-inspection-files/?client_name=${encodeURIComponent(clientName)}&inspection_date=${encodeURIComponent(inspectionDate)}`)
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    const files = data.files || {};
-
-                                    // Count total files across all categories
-                                    let totalFiles = 0;
-                                    let expectedFiles = 0; // RFI, Invoice, Lab (if sampled)
-
-                                    // Count actual files
-                                    if (files.rfi && files.rfi.length > 0) totalFiles += files.rfi.length;
-                                    if (files.invoice && files.invoice.length > 0) totalFiles += files.invoice.length;
-                                    if (files.lab && files.lab.length > 0) totalFiles += files.lab.length;
-                                    if (files.lab_form && files.lab_form.length > 0) totalFiles += files.lab_form.length;
-                                    if (files.retest && files.retest.length > 0) totalFiles += files.retest.length;
-                                    if (files.occurrence && files.occurrence.length > 0) totalFiles += files.occurrence.length;
-                                    if (files.composition && files.composition.length > 0) totalFiles += files.composition.length;
-
-                                    // Determine expected files (at minimum RFI and Invoice)
-                                    expectedFiles = 2; // RFI + Invoice
-
-                                    // Determine file status
-                                    let fileStatus;
-                                    if (totalFiles === 0) {
-                                        fileStatus = 'no_files';
-                                    } else if (totalFiles >= expectedFiles) {
-                                        fileStatus = 'all_files';
-                                    } else {
-                                        fileStatus = 'partial_files';
-                                    }
-
-                                    console.log(`🔄 [RESCAN] File count: ${totalFiles} / ${expectedFiles} expected`);
-                                    console.log(`🔄 [RESCAN] Determined file status: ${fileStatus}`);
-
-                                    // Determine what color the button should be
-                                    let newColor;
-                                    if (fileStatus === 'no_files') {
-                                        newColor = 'RED';
-                                    } else if (fileStatus === 'partial_files') {
-                                        newColor = 'ORANGE';
-                                    } else {
-                                        newColor = 'GREEN';
-                                    }
-
-                                    console.log(`🎨 [RESCAN] Button should be: ${newColor}`);
-
-                                    // Update the View Files button color
-                                    console.log(`🎨 [RESCAN] Calling updateViewFilesButtonColorSpecific...`);
-                                    updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStatus);
-
-                                    console.log(`✅ [RESCAN] File rescan and color update complete!`);
-                                    console.log(`✅ [RESCAN] Final status: ${fileStatus} = ${newColor} button`);
-
-                                    // UNLOCK the group after individual rescan is complete
-                                    priorityRescanGroups.delete(groupKey);
-                                    console.log(`🔓 [PRIORITY] Unlocked group after rescan: ${groupKey}`);
-                                    console.log(`🔓 [PRIORITY] Remaining locked groups:`, Array.from(priorityRescanGroups));
-                                } else {
-                                    console.error(`❌ [RESCAN] Failed to fetch file status:`, data.error);
-
-                                    // UNLOCK even on failure
-                                    priorityRescanGroups.delete(groupKey);
-                                    console.log(`🔓 [PRIORITY] Unlocked group after error: ${groupKey}`);
-                                }
-                            })
-                            .catch(error => {
-                                console.error(`❌ [RESCAN] Error fetching file status:`, error);
-
-                                // UNLOCK even on error
-                                priorityRescanGroups.delete(groupKey);
-                                console.log(`🔓 [PRIORITY] Unlocked group after catch error: ${groupKey}`);
-                            });
+                        // UNLOCK after update completes
+                        setTimeout(() => {
+                            priorityRescanGroups.delete(groupKey);
+                            console.log(`🔓 [PRIORITY] Unlocked group after View Files update: ${groupKey}`);
+                            console.log(`🔓 [PRIORITY] Remaining locked groups:`, Array.from(priorityRescanGroups));
+                        }, 1000); // Allow time for updateViewFilesButtonAfterFileDeletion to complete
                     }, 500); // 500ms delay to ensure server deletion is complete
                 }
             }
