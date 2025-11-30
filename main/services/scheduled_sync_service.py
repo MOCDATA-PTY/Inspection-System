@@ -426,30 +426,50 @@ class ScheduledSyncService:
                 'message': 'Phase 3/3: Updating inspections with product names...'
             }, 300)
 
-            # PHASE 3: UPDATE INSPECTIONS WITH PRODUCT NAMES
+            # PHASE 3: CREATE SEPARATE INSPECTIONS FOR EACH PRODUCT
             print(f"\n" + "="*80)
-            print(f"🔄 PHASE 3/3: UPDATE INSPECTIONS WITH PRODUCT NAMES")
-            print(f"   Updating {len(sql_inspections)} inspections...")
+            print(f"🔄 PHASE 3/3: SPLIT INSPECTIONS BY PRODUCT")
+            print(f"   Creating individual inspection records for each product...")
+            print(f"   (Each product gets its own inspection entry)")
             print("="*80)
 
-            # Batch update inspections with product names
+            # Track total products created
+            total_products_split = 0
+
+            # Split multi-product inspections into individual records
             for idx, sql_insp in enumerate(sql_inspections, 1):
                 try:
                     inspection_id = sql_insp.get('Id')
 
                     if inspection_id in product_map:
                         product_names = product_map[inspection_id]
-                        if product_names:
-                            product_name_str = ', '.join(product_names)
-
-                            # Update the inspection with product names
-                            FoodSafetyAgencyInspection.objects.filter(
+                        if product_names and len(product_names) > 0:
+                            # Get the base inspection to copy its data
+                            base_inspection = FoodSafetyAgencyInspection.objects.filter(
                                 remote_id=inspection_id
-                            ).update(
-                                product_name=product_name_str
-                            )
+                            ).first()
 
-                            product_names_updated += 1
+                            if base_inspection:
+                                # Delete the base inspection (will recreate for each product)
+                                base_inspection.delete()
+
+                                # Create separate inspection for each product
+                                for product_idx, product_name in enumerate(product_names):
+                                    # Create unique remote_id for each product
+                                    unique_remote_id = f"{inspection_id}_{product_idx + 1}"
+
+                                    FoodSafetyAgencyInspection.objects.create(
+                                        remote_id=unique_remote_id,
+                                        client_name=base_inspection.client_name,
+                                        internal_account_code=base_inspection.internal_account_code,
+                                        date_of_inspection=base_inspection.date_of_inspection,
+                                        inspector_name=base_inspection.inspector_name,
+                                        commodity=base_inspection.commodity,
+                                        product_name=product_name.strip()  # ONE product per inspection
+                                    )
+
+                                    total_products_split += 1
+                                    product_names_updated += 1
 
                     # Progress every 200 inspections
                     if idx % 200 == 0:
@@ -467,8 +487,10 @@ class ScheduledSyncService:
                     print(f"   ⚠️  Error updating products for inspection {inspection_id}: {e}")
                     continue
 
-            print(f"\n✅ PHASE 3 COMPLETE: Product names updated!")
-            print(f"   - Inspections with products: {product_names_updated}/{len(sql_inspections)}")
+            print(f"\n✅ PHASE 3 COMPLETE: Product splitting done!")
+            print(f"   - Original inspections: {len(sql_inspections)}")
+            print(f"   - Total individual products created: {total_products_split}")
+            print(f"   - Average products per inspection: {total_products_split/len(sql_inspections):.1f}")
 
             cursor.close()
             connection.close()
@@ -480,20 +502,21 @@ class ScheduledSyncService:
             print(f"✅ SQL SERVER SYNC COMPLETED")
             print("="*80)
             print(f"\n📊 Sync Statistics:")
-            print(f"   - Total inspections processed: {len(sql_inspections)}")
-            print(f"   - New inspections created: {synced_count}")
-            print(f"   - Existing inspections updated: {updated_count}")
-            print(f"   - Product names synced: {product_names_updated}")
+            print(f"   - SQL Server inspections fetched: {len(sql_inspections)}")
+            print(f"   - Individual products created: {total_products_split}")
+            print(f"   - Each inspection now has ONE product only")
             print(f"\n📋 Account Code & Name Matching Statistics:")
             print(f"   - Inspections with account codes: {account_codes_found} ({(account_codes_found/len(sql_inspections)*100) if len(sql_inspections) > 0 else 0:.1f}%)")
             print(f"   - Google Sheets matches found: {google_sheets_matched} ({(google_sheets_matched/account_codes_found*100) if account_codes_found > 0 else 0:.1f}% of those with codes)")
             print(f"   - Using Google Sheets names: {google_sheets_used}")
             print(f"   - Using placeholders (no match): {sql_server_fallback}")
             print(f"\n💾 Database Status:")
-            print(f"   - Total inspections in database: {total_inspections}")
+            print(f"   - Total inspection records in database: {total_inspections}")
+            print(f"   - (Each record = 1 product)")
             print(f"\n⭐ Google Sheets is the SOLE source for client names!")
-            print(f"   - SQL Server provides: inspection data + account codes")
+            print(f"   - SQL Server provides: inspection data + account codes + products")
             print(f"   - Google Sheets provides: client names (via account code lookup)")
+            print(f"   - Each product is now a separate inspection record!")
             print(f"   - Update client names in Google Sheets and resync to see changes instantly!")
             print("="*80 + "\n")
 
