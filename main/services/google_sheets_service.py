@@ -151,15 +151,18 @@ class GoogleSheetsService:
     def check_connection_status(self):
         """Check if Google Sheets connection is working without user interaction"""
         try:
-            # Check network connectivity first
+            # Force fresh network check (don't use cached value)
+            self.network_available = None  # Reset cache
             if not self.check_network_connectivity():
                 return False, "Network connectivity issue"
-            
+
             # Load existing credentials
-            if os.path.exists(self.token_path):
-                with open(self.token_path, 'rb') as token:
-                    self.creds = pickle.load(token)
-            
+            if not os.path.exists(self.token_path):
+                return False, "Token file not found - authentication required"
+
+            with open(self.token_path, 'rb') as token:
+                self.creds = pickle.load(token)
+
             # If credentials are expired but have refresh token, try to refresh
             if self.creds and not self.creds.valid and self.creds.expired and self.creds.refresh_token:
                 try:
