@@ -1793,7 +1793,7 @@ async function deleteFile(filePath, fileName) {
                         console.log(`⚠️ [DEBUG] Not running targeted check - document type is: ${documentType}`);
                     }
 
-                    // UPDATE VIEW FILES BUTTON AFTER DELETION - Use existing function that works like RFI/Invoice buttons
+                    // UPDATE VIEW FILES BUTTON AFTER DELETION - IMMEDIATE like RFI/Invoice buttons
                     console.log(`🔄 [VIEW FILES] Updating View Files button after deletion for: ${clientName} on ${inspectionDate}`);
 
                     // Mark this group as HIGH PRIORITY for individual rescan
@@ -1802,18 +1802,72 @@ async function deleteFile(filePath, fileName) {
                     console.log(`🔒 [PRIORITY] Locked group for individual rescan: ${groupKey}`);
                     console.log(`🔒 [PRIORITY] Current locked groups:`, Array.from(priorityRescanGroups));
 
-                    // Wait for deletion to complete, then update button using the same logic as individual buttons
-                    setTimeout(() => {
-                        console.log(`🔄 [VIEW FILES] Calling updateViewFilesButtonAfterFileDeletion...`);
-                        updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate);
+                    // IMMEDIATE: Check remaining files and update View Files button directly (like RFI/Invoice buttons)
+                    fetch(`/get-inspection-files/?client_name=${encodeURIComponent(clientName)}&inspection_date=${encodeURIComponent(inspectionDate)}&_t=${Date.now()}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const files = data.files || {};
 
-                        // UNLOCK after update completes
-                        setTimeout(() => {
+                                // Count remaining files
+                                let totalFiles = 0;
+                                if (files.rfi && files.rfi.length > 0) totalFiles += files.rfi.length;
+                                if (files.invoice && files.invoice.length > 0) totalFiles += files.invoice.length;
+                                if (files.lab && files.lab.length > 0) totalFiles += files.lab.length;
+                                if (files.lab_form && files.lab_form.length > 0) totalFiles += files.lab_form.length;
+                                if (files.retest && files.retest.length > 0) totalFiles += files.retest.length;
+                                if (files.occurrence && files.occurrence.length > 0) totalFiles += files.occurrence.length;
+                                if (files.composition && files.composition.length > 0) totalFiles += files.composition.length;
+                                if (files.compliance && files.compliance.length > 0) totalFiles += files.compliance.length;
+
+                                console.log(`🔄 [VIEW FILES] Total files remaining: ${totalFiles}`);
+
+                                // Find all View Files buttons for this client/date
+                                const allButtons = document.querySelectorAll('button');
+                                const viewFilesButtons = Array.from(allButtons).filter(btn => {
+                                    const btnClientName = btn.getAttribute('data-client-name');
+                                    const btnDate = btn.getAttribute('data-inspection-date');
+                                    const btnText = btn.textContent.trim();
+                                    return (btnText.includes('Files') || btn.getAttribute('onclick')?.includes('openFilesPopup')) &&
+                                           btnClientName === clientName &&
+                                           btnDate === inspectionDate;
+                                });
+
+                                console.log(`🔄 [VIEW FILES] Found ${viewFilesButtons.length} View Files buttons to update`);
+
+                                // IMMEDIATE COLOR UPDATE - Set inline styles like RFI/Invoice buttons
+                                viewFilesButtons.forEach(button => {
+                                    if (totalFiles === 0) {
+                                        // NO FILES - Set to RED immediately
+                                        button.className = 'btn btn-sm btn-view-files btn-danger';
+                                        button.style.backgroundColor = '#dc3545';
+                                        button.style.borderColor = '#dc3545';
+                                        button.style.color = 'white';
+                                        button.setAttribute('data-file-status', 'no_files');
+                                        console.log(`🔴 [VIEW FILES] IMMEDIATE: Set button to RED (no files)`);
+                                    } else {
+                                        // SOME FILES - Set to ORANGE immediately
+                                        button.className = 'btn btn-sm btn-view-files btn-view-files-orange';
+                                        button.style.backgroundColor = '#ff8c00';
+                                        button.style.borderColor = '#ff8c00';
+                                        button.style.color = 'white';
+                                        button.setAttribute('data-file-status', 'partial_files');
+                                        console.log(`🟠 [VIEW FILES] IMMEDIATE: Set button to ORANGE (${totalFiles} files)`);
+                                    }
+                                });
+
+                                // UNLOCK after immediate update completes
+                                setTimeout(() => {
+                                    priorityRescanGroups.delete(groupKey);
+                                    console.log(`🔓 [PRIORITY] Unlocked group after immediate View Files update: ${groupKey}`);
+                                }, 500);
+                            }
+                        })
+                        .catch(error => {
+                            console.error(`❌ [VIEW FILES] Error during immediate update:`, error);
+                            // UNLOCK even on error
                             priorityRescanGroups.delete(groupKey);
-                            console.log(`🔓 [PRIORITY] Unlocked group after View Files update: ${groupKey}`);
-                            console.log(`🔓 [PRIORITY] Remaining locked groups:`, Array.from(priorityRescanGroups));
-                        }, 1000); // Allow time for updateViewFilesButtonAfterFileDeletion to complete
-                    }, 500); // 500ms delay to ensure server deletion is complete
+                        });
                 }
             }
         } else {
