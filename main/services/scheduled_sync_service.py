@@ -201,10 +201,10 @@ class ScheduledSyncService:
                 pass
     
     def sync_sql_server(self):
-        """Sync inspection data with SQL Server - fetch inspections and product names."""
+        """Sync inspection data with SQL Server - DELETE ALL then fetch fresh data."""
         try:
             print("\n" + "="*80)
-            print("🗄️  STARTING SQL SERVER SYNC")
+            print("🗄️  STARTING SQL SERVER SYNC (FULL REFRESH)")
             print("="*80)
 
             from ..models import FoodSafetyAgencyInspection, Inspection
@@ -213,10 +213,22 @@ class ScheduledSyncService:
             import pymssql
             from datetime import datetime, timedelta
 
+            # DELETE ALL EXISTING INSPECTIONS FIRST (prevents duplicates)
+            print(f"\n🗑️  STEP 1: CLEARING EXISTING INSPECTION DATA...")
+            existing_count = FoodSafetyAgencyInspection.objects.count()
+            print(f"   Found {existing_count:,} existing inspection records")
+            print(f"   Deleting all records to ensure fresh sync...")
+
+            FoodSafetyAgencyInspection.objects.all().delete()
+
+            final_count = FoodSafetyAgencyInspection.objects.count()
+            print(f"✅ Database cleared: {final_count:,} inspections remaining (should be 0)")
+            print(f"   This prevents duplicates and ensures fresh data!\n")
+
             # Connect to SQL Server using pymssql
             sql_server_config = settings.DATABASES.get('sql_server', {})
 
-            print(f"\n📡 Connecting to SQL Server...")
+            print(f"📡 STEP 2: CONNECTING TO SQL SERVER...")
             print(f"   Server: {sql_server_config.get('HOST')}:{sql_server_config.get('PORT', 1433)}")
             print(f"   Database: {sql_server_config.get('NAME')}")
 
@@ -347,23 +359,19 @@ class ScheduledSyncService:
                             print(f"      ⚠️  Cannot look up in Google Sheets without account code")
                             print(f"      ⚠️  Client name set to: -")
 
-                    # PHASE 1: Save inspection WITHOUT product names (products will be added in bulk in Phase 2)
-                    inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
+                    # PHASE 1: Create inspection WITHOUT product names (products will be added in bulk in Phase 2)
+                    # Using create() since we deleted all records - no need for update_or_create
+                    inspection = FoodSafetyAgencyInspection.objects.create(
                         remote_id=inspection_id,
-                        defaults={
-                            'client_name': client_name,  # Use Google Sheets name if matched
-                            'internal_account_code': internal_account_code,  # Store account code for future matches
-                            'date_of_inspection': inspection_date,
-                            'inspector_name': inspector_name,
-                            'commodity': commodity
-                            # Note: product_name will be added in Phase 2 bulk fetch
-                        }
+                        client_name=client_name,  # Use Google Sheets name if matched
+                        internal_account_code=internal_account_code,  # Store account code for future matches
+                        date_of_inspection=inspection_date,
+                        inspector_name=inspector_name,
+                        commodity=commodity
+                        # Note: product_name will be added in Phase 2 bulk fetch
                     )
 
-                    if created:
-                        synced_count += 1
-                    else:
-                        updated_count += 1
+                    synced_count += 1
 
                     # Progress indicator every 250 inspections (was 50 - reduced console spam)
                     if idx % 250 == 0:
@@ -389,9 +397,8 @@ class ScheduledSyncService:
 
             # PHASE 1 COMPLETE
             print(f"\n" + "="*80)
-            print(f"✅ PHASE 1 COMPLETE: Inspections synced with client names!")
-            print(f"   - New inspections: {synced_count}")
-            print(f"   - Updated inspections: {updated_count}")
+            print(f"✅ PHASE 1 COMPLETE: Inspections created with client names!")
+            print(f"   - New inspections created: {synced_count}")
             print(f"   - Google Sheets matches: {google_sheets_matched}/{account_codes_found}")
             print("="*80)
 
@@ -450,21 +457,32 @@ class ScheduledSyncService:
                             ).first()
 
                             if base_inspection:
+                                # Store base inspection data before deleting
+                                base_data = {
+                                    'client_name': base_inspection.client_name,
+                                    'internal_account_code': base_inspection.internal_account_code,
+                                    'date_of_inspection': base_inspection.date_of_inspection,
+                                    'inspector_name': base_inspection.inspector_name,
+                                    'commodity': base_inspection.commodity,
+                                }
+
                                 # Delete the base inspection (will recreate for each product)
                                 base_inspection.delete()
 
                                 # Create separate inspection for each product
+                                # Using create() since we cleared all data - no duplicates possible
                                 for product_idx, product_name in enumerate(product_names):
                                     # Create unique remote_id for each product
                                     unique_remote_id = f"{inspection_id}_{product_idx + 1}"
 
-                                    FoodSafetyAgencyInspection.objects.create(
+                                    # Create new inspection record for this product
+                                    inspection = FoodSafetyAgencyInspection.objects.create(
                                         remote_id=unique_remote_id,
-                                        client_name=base_inspection.client_name,
-                                        internal_account_code=base_inspection.internal_account_code,
-                                        date_of_inspection=base_inspection.date_of_inspection,
-                                        inspector_name=base_inspection.inspector_name,
-                                        commodity=base_inspection.commodity,
+                                        client_name=base_data['client_name'],
+                                        internal_account_code=base_data['internal_account_code'],
+                                        date_of_inspection=base_data['date_of_inspection'],
+                                        inspector_name=base_data['inspector_name'],
+                                        commodity=base_data['commodity'],
                                         product_name=product_name.strip()  # ONE product per inspection
                                     )
 
@@ -499,9 +517,10 @@ class ScheduledSyncService:
             total_inspections = FoodSafetyAgencyInspection.objects.count()
 
             print(f"\n" + "="*80)
-            print(f"✅ SQL SERVER SYNC COMPLETED")
+            print(f"✅ SQL SERVER SYNC COMPLETED (FULL REFRESH)")
             print("="*80)
             print(f"\n📊 Sync Statistics:")
+            print(f"   - Old inspections deleted: {existing_count:,}")
             print(f"   - SQL Server inspections fetched: {len(sql_inspections)}")
             print(f"   - Individual products created: {total_products_split}")
             print(f"   - Each inspection now has ONE product only")
