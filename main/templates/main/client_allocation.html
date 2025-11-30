@@ -6,7 +6,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Client Management</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+
+    <!-- Preconnect hints for faster CDN connections -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+
+    <!-- Async Font Awesome loading -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -240,12 +250,9 @@
             box-sizing: border-box;
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
-        
+
         body {
-            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: var(--background);  /* Fallback color */
             color: var(--text);
             line-height: 1.5;
             padding: 0;
@@ -253,14 +260,19 @@
             position: relative;
             overflow-x: hidden;
         }
-        
-        body::before {
+
+        /* Lazy load background image */
+        body.bg-loaded::before {
             content: "";
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             z-index: -1;
         }
         
@@ -580,6 +592,165 @@
 
         [data-theme="dark"] .btn-secondary:active {
             background: #374151;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+            border: 1px solid #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            border-color: #047857;
+            transform: scale(1.02);
+        }
+
+        .btn-success:active {
+            background: #047857;
+            transform: scale(0.98);
+        }
+
+        /* Modal styles */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .modal-close:hover {
+            background-color: var(--border);
+            color: var(--text);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* Context Menu Styles */
+        .context-menu {
+            position: fixed;
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 10000;
+            padding: 4px 0;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
+            color: var(--text);
+            transition: background-color 0.15s ease;
+        }
+
+        .context-menu-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        .context-menu-item i {
+            width: 16px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+
+        .context-menu-item.danger {
+            color: var(--danger);
+        }
+
+        .context-menu-item.danger:hover {
+            background-color: rgba(236, 52, 60, 0.1);
+        }
+
+        .context-menu-divider {
+            height: 1px;
+            background-color: var(--border);
+            margin: 4px 0;
+        }
+
+        [data-theme="dark"] .context-menu {
+            background: #2d2d2d;
+            border-color: #404040;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="dark"] .context-menu-item:hover {
+            background-color: #3a3a3a;
+        }
+
+        [data-theme="dark"] .context-menu-item.danger:hover {
+            background-color: rgba(239, 68, 68, 0.2);
+        }
+
+        tbody tr {
+            cursor: pointer;
         }
 
         /* Logout button styling */
@@ -1248,21 +1419,15 @@
 
 
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] active">
+                        <a href="{% url 'client_allocation' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] active">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
-                            Client Directory
+                            Client Allocation
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'client_allocation_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-th-list mr-2 w-4 text-center text-green-500"></i>
-                            Client Allocation Sheet
                         </a>
                     </li>
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
@@ -1285,7 +1450,7 @@
                     {% if request.user.role == 'developer' %}
                     <li>
                         <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fab fa-microsoft mr-2 w-4 text-center text-blue-400"></i>
+                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
                             OneDrive View
                         </a>
                     </li>
@@ -1355,6 +1520,11 @@
         {% endif %}
         
         <div class="action-bar">
+            <!-- Add Client Button -->
+            <button type="button" class="btn btn-success" onclick="showAddClientModal()">
+                <i class="fas fa-plus"></i> <span class="btn-text">Add Client</span>
+            </button>
+
             <!-- Refresh Button -->
             <button type="button" class="btn btn-refresh" onclick="syncClients()">
                 <i class="fas fa-sync-alt"></i> <span class="btn-text">Refresh Clients</span>
@@ -1453,21 +1623,31 @@
                             <table>
                                 <thead>
                                     <tr>
-                                        <th class="col-client-id">Client Name</th>
-                                        <th class="col-account-code">Internal Account Code</th>
-                                        <th class="col-email">Email Address</th>
+                                        <th>Client ID</th>
+                                        <th>Facility Type</th>
+                                        <th>Group Type</th>
+                                        <th>Commodity</th>
+                                        <th>Province</th>
+                                        <th>Corporate Group</th>
+                                        <th>Internal Account Code</th>
+                                        <th>Client Name</th>
+                                        <th>Representative Email</th>
+                                        <th>Phone Number</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for client in clients %}
-                                    <tr>
-                                        <td class="col-client-id">
-                                            <strong>{{ client.name }}</strong>
-                                            <br>
-                                            <small class="text-muted">ID: {{ client.client_id }}</small>
-                                        </td>
-                                        <td class="col-account-code">{{ client.internal_account_code }}</td>
-                                        <td class="col-email">{{ client.email|default:"-" }}</td>
+                                    <tr data-client-id="{{ client.id }}">
+                                        <td>{{ client.client_id }}</td>
+                                        <td>{{ client.facility_type|default:"-" }}</td>
+                                        <td>{{ client.group_type|default:"-" }}</td>
+                                        <td>{{ client.commodity|default:"-" }}</td>
+                                        <td>{{ client.province|default:"-" }}</td>
+                                        <td>{{ client.corporate_group|default:"-" }}</td>
+                                        <td>{{ client.internal_account_code }}</td>
+                                        <td>{{ client.eclick_name|default:"-" }}</td>
+                                        <td>{{ client.representative_email|default:"-" }}</td>
+                                        <td>{{ client.phone_number|default:"-" }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -1477,19 +1657,43 @@
                         <!-- Mobile Card View -->
                         <div class="mobile-view">
                             {% for client in clients %}
-                            <div class="client-card">
+                            <div class="client-card" data-client-id="{{ client.id }}">
                                 <div class="client-card-header">
-                                    <h3 class="client-name">{{ client.name }}</h3>
-                                    <span class="client-id">ID: {{ client.client_id }}</span>
+                                    <h3 class="client-name">{{ client.client_id }}</h3>
+                                    <span class="client-id">{{ client.facility_type|default:"-" }}</span>
                                 </div>
                                 <div class="client-card-body">
+                                    <div class="client-field">
+                                        <label>Group Type:</label>
+                                        <span>{{ client.group_type|default:"-" }}</span>
+                                    </div>
+                                    <div class="client-field">
+                                        <label>Commodity:</label>
+                                        <span>{{ client.commodity|default:"-" }}</span>
+                                    </div>
+                                    <div class="client-field">
+                                        <label>Province:</label>
+                                        <span>{{ client.province|default:"-" }}</span>
+                                    </div>
+                                    <div class="client-field">
+                                        <label>Corporate Group:</label>
+                                        <span>{{ client.corporate_group|default:"-" }}</span>
+                                    </div>
                                     <div class="client-field">
                                         <label>Account Code:</label>
                                         <span>{{ client.internal_account_code }}</span>
                                     </div>
                                     <div class="client-field">
+                                        <label>Client Name:</label>
+                                        <span>{{ client.eclick_name|default:"-" }}</span>
+                                    </div>
+                                    <div class="client-field">
                                         <label>Email:</label>
-                                        <span>{{ client.email|default:"Not provided" }}</span>
+                                        <span>{{ client.representative_email|default:"-" }}</span>
+                                    </div>
+                                    <div class="client-field">
+                                        <label>Phone Number:</label>
+                                        <span>{{ client.phone_number|default:"-" }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -1526,11 +1730,327 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Add Client Modal -->
+    <div id="addClientModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Client</h3>
+                <button type="button" class="modal-close" onclick="closeAddClientModal()">&times;</button>
+            </div>
+
+            <form id="addClientForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="add_client">
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Client ID *</label>
+                    <input type="text" name="client_id" class="form-control" required placeholder="Enter Client ID">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Facility Type *</label>
+                    <input type="text" name="facility_type" class="form-control" required placeholder="Enter Facility Type">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Group Type *</label>
+                    <input type="text" name="group_type" class="form-control" required placeholder="Enter Group Type">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Commodity *</label>
+                    <input type="text" name="commodity" class="form-control" required placeholder="Enter Commodity">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Province *</label>
+                    <input type="text" name="province" class="form-control" required placeholder="Enter Province">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Corporate Group</label>
+                    <input type="text" name="corporate_group" class="form-control" placeholder="Enter Corporate Group">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Internal Account Code *</label>
+                    <input type="text" name="account_code" class="form-control" required placeholder="Enter Account Code">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Client Name</label>
+                    <input type="text" name="eclick_name" class="form-control" placeholder="Enter Client Name">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Representative Email Address</label>
+                    <input type="email" name="representative_email" class="form-control" placeholder="Enter Email Address">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" name="phone_number" class="form-control" placeholder="Enter Phone Number">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeAddClientModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add Client</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Client Modal -->
+    <div id="editClientModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Client</h3>
+                <button type="button" class="modal-close" onclick="closeEditClientModal()">&times;</button>
+            </div>
+
+            <form id="editClientForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="edit_client">
+                <input type="hidden" name="client_id" id="edit_client_id">
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Client ID *</label>
+                    <input type="text" name="client_id" id="edit_client_id_display" class="form-control" required placeholder="Enter Client ID">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Facility Type *</label>
+                    <input type="text" name="facility_type" id="edit_facility_type" class="form-control" required placeholder="Enter Facility Type">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Group Type *</label>
+                    <input type="text" name="group_type" id="edit_group_type" class="form-control" required placeholder="Enter Group Type">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Commodity *</label>
+                    <input type="text" name="commodity" id="edit_commodity" class="form-control" required placeholder="Enter Commodity">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Province *</label>
+                    <input type="text" name="province" id="edit_province" class="form-control" required placeholder="Enter Province">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Corporate Group</label>
+                    <input type="text" name="corporate_group" id="edit_corporate_group" class="form-control" placeholder="Enter Corporate Group">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Internal Account Code *</label>
+                    <input type="text" name="account_code" id="edit_account_code" class="form-control" required placeholder="Enter Account Code">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Client Name</label>
+                    <input type="text" name="eclick_name" id="edit_eclick_name" class="form-control" placeholder="Enter Client Name">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Representative Email Address</label>
+                    <input type="email" name="representative_email" id="edit_email" class="form-control" placeholder="Enter Email Address">
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" name="phone_number" id="edit_phone_number" class="form-control" placeholder="Enter Phone Number">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" onclick="closeEditClientModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="contextMenu" class="context-menu">
+        <div class="context-menu-item" id="contextEdit">
+            <i class="fas fa-edit"></i>
+            <span>Edit Client</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" id="contextDelete">
+            <i class="fas fa-trash"></i>
+            <span>Delete Client</span>
+        </div>
+    </div>
+
     <script>
         function getCsrfToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]').value;
         }
+
+        // Add Client Modal Functions
+        function showAddClientModal() {
+            document.getElementById('addClientModal').classList.add('show');
+        }
+
+        function closeAddClientModal() {
+            document.getElementById('addClientModal').classList.remove('show');
+            document.getElementById('addClientForm').reset();
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('addClientModal');
+            if (e.target === modal) {
+                closeAddClientModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAddClientModal();
+                closeEditClientModal();
+            }
+        });
+
+        // Edit Client Modal Functions
+        function showEditClientModal(clientData) {
+            document.getElementById('edit_client_id').value = clientData.id;
+            document.getElementById('edit_client_id_display').value = clientData.client_id;
+            document.getElementById('edit_facility_type').value = clientData.facility_type || '';
+            document.getElementById('edit_group_type').value = clientData.group_type || '';
+            document.getElementById('edit_commodity').value = clientData.commodity || '';
+            document.getElementById('edit_province').value = clientData.province || '';
+            document.getElementById('edit_corporate_group').value = clientData.corporate_group || '';
+            document.getElementById('edit_account_code').value = clientData.account_code || '';
+            document.getElementById('edit_eclick_name').value = clientData.eclick_name || '';
+            document.getElementById('edit_email').value = clientData.representative_email || '';
+            document.getElementById('edit_phone_number').value = clientData.phone_number || '';
+
+            document.getElementById('editClientModal').classList.add('show');
+        }
+
+        function closeEditClientModal() {
+            document.getElementById('editClientModal').classList.remove('show');
+            document.getElementById('editClientForm').reset();
+        }
+
+        // Close edit modal when clicking outside
+        document.getElementById('editClientModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditClientModal();
+            }
+        });
+
+        // Context Menu functionality
+        const contextMenu = document.getElementById('contextMenu');
+        let currentClientRow = null;
+        let currentClientData = null;
+
+        // Show context menu on right-click
+        document.addEventListener('DOMContentLoaded', function() {
+            const tableRows = document.querySelectorAll('.desktop-view table tbody tr, .client-card');
+
+            tableRows.forEach(row => {
+                row.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    currentClientRow = this;
+
+                    // Extract client data from the row
+                    const cells = this.querySelectorAll('td');
+                    if (cells.length >= 10) {
+                        // Desktop table view
+                        currentClientData = {
+                            id: this.getAttribute('data-client-id'),
+                            client_id: cells[0].textContent.trim(),
+                            facility_type: cells[1].textContent.trim(),
+                            group_type: cells[2].textContent.trim(),
+                            commodity: cells[3].textContent.trim(),
+                            province: cells[4].textContent.trim(),
+                            corporate_group: cells[5].textContent.trim(),
+                            account_code: cells[6].textContent.trim(),
+                            eclick_name: cells[7].textContent.trim(),
+                            representative_email: cells[8].textContent.trim(),
+                            phone_number: cells[9].textContent.trim()
+                        };
+                    } else {
+                        // Mobile card view - extract from card fields
+                        const fields = this.querySelectorAll('.client-field');
+                        currentClientData = {
+                            id: this.getAttribute('data-client-id'),
+                            client_id: this.querySelector('.client-name')?.textContent.trim(),
+                            facility_type: this.querySelector('.client-id')?.textContent.trim(),
+                            group_type: fields[0]?.querySelector('span')?.textContent.trim(),
+                            commodity: fields[1]?.querySelector('span')?.textContent.trim(),
+                            province: fields[2]?.querySelector('span')?.textContent.trim(),
+                            corporate_group: fields[3]?.querySelector('span')?.textContent.trim(),
+                            account_code: fields[4]?.querySelector('span')?.textContent.trim(),
+                            eclick_name: fields[5]?.querySelector('span')?.textContent.trim(),
+                            representative_email: fields[6]?.querySelector('span')?.textContent.trim(),
+                            phone_number: fields[7]?.querySelector('span')?.textContent.trim()
+                        };
+                    }
+
+                    // Position and show context menu
+                    contextMenu.classList.add('show');
+
+                    // Get menu dimensions
+                    const menuWidth = contextMenu.offsetWidth;
+                    const menuHeight = contextMenu.offsetHeight;
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+
+                    // Calculate position (prevent going off-screen)
+                    let left = e.clientX;
+                    let top = e.clientY;
+
+                    if (left + menuWidth > windowWidth) {
+                        left = windowWidth - menuWidth - 10;
+                    }
+
+                    if (top + menuHeight > windowHeight) {
+                        top = windowHeight - menuHeight - 10;
+                    }
+
+                    contextMenu.style.left = left + 'px';
+                    contextMenu.style.top = top + 'px';
+                });
+            });
+        });
+
+        // Hide context menu on click outside
+        document.addEventListener('click', function(e) {
+            if (!contextMenu.contains(e.target)) {
+                contextMenu.classList.remove('show');
+            }
+        });
+
+        // Handle context menu item clicks
+        document.getElementById('contextEdit').addEventListener('click', function() {
+            if (currentClientData) {
+                showEditClientModal(currentClientData);
+            }
+            contextMenu.classList.remove('show');
+        });
+
+        document.getElementById('contextDelete').addEventListener('click', function() {
+            if (currentClientData && confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
+                // Create and submit a delete form
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.innerHTML = `
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${getCsrfToken()}">
+                    <input type="hidden" name="action" value="delete_client">
+                    <input type="hidden" name="client_id" value="${currentClientData.id}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+            contextMenu.classList.remove('show');
+        });
 
         // Theme management - compatible with settings page
         function initTheme() {
@@ -1563,6 +2083,11 @@
                 icon.className = 'fas fa-bars';
             }
         }
+
+        // Lazy load background image
+        window.addEventListener('load', function() {
+            document.body.classList.add('bg-loaded');
+        });
 
         // Apply theme on load
         document.addEventListener('DOMContentLoaded', function() {

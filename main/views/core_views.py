@@ -3479,12 +3479,12 @@ def apply_client_filters(request, clients):
 def client_allocation(request):
     """Client allocation view with local database clients."""
     clear_messages(request)
-    
+
     try:
-        from ..models import Client
-        
+        from ..models import ClientAllocation
+
         # Get clients from local database
-        clients = Client.objects.all().order_by('name')
+        clients = ClientAllocation.objects.all().order_by('client_id')
         
         # Apply comprehensive filters
         clients = apply_client_filters(request, clients)
@@ -4681,9 +4681,9 @@ def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref,
     """Generate up to 13 invoice line items for a single inspection"""
     items = []
 
-    # Pricing constants
-    INSPECTION_HOUR_RATE = 481.5
-    TRAVEL_RATE_PER_KM = 6.5
+    # Pricing constants - 2025 rates (as per Notice 2996 of 2025)
+    INSPECTION_HOUR_RATE = 510.00  # Normal Time (08:00 - 16:00)
+    TRAVEL_RATE_PER_KM = 6.50
     FAT_TEST_RATE = 779.81
     PROTEIN_TEST_RATE = 474.52
     CALCIUM_TEST_RATE_PMP = 269.72

@@ -4,9 +4,23 @@
     {% load static %}
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Analytics Dashboard - Food Safety Agency</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Favicon - Food Safety Agency Logo -->
+    <link rel="icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/Food safetyagencylogo.png' %}">
+
+    <!-- Preconnect to CDNs for faster loading -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+
+    <!-- Async Font Awesome loading for better performance -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -220,14 +234,19 @@
         }
         
         body {
-            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: var(--background);  /* Fallback color while image loads */
             color: var(--text);
             line-height: 1.5;
             padding: var(--spacing);
             position: relative;
+        }
+
+        /* Load background image after page loads for better performance */
+        body.bg-loaded {
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
         }
         
         body::before {
@@ -630,21 +649,15 @@
                     </li>
                     {% else %}
                     <li>
-                        <a href="{% url 'client_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'client_allocation' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
-                            Client Directory
+                            Client Allocation
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'client_allocation_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fas fa-th-list mr-2 w-4 text-center text-green-500"></i>
-                            Client Allocation Sheet
                         </a>
                     </li>
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
@@ -667,7 +680,7 @@
                     {% if request.user.role == 'developer' %}
                     <li>
                         <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
-                            <i class="fab fa-microsoft mr-2 w-4 text-center text-blue-400"></i>
+                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
                             OneDrive View
                         </a>
                     </li>
@@ -716,278 +729,116 @@
         </div>
 
         <!-- Main Content -->
-        <div class="container">
-        <div class="header">
-            <h1>Food Safety Agency (Pty) Ltd</h1>
-            <h2>Analytics Dashboard</h2>
-        </div>
+        <div class="flex-1 w-full lg:ml-64 h-screen overflow-hidden">
+            <!-- Header -->
+            <div class="pt-12 pb-4 text-center px-4" style="background: transparent;">
+                <h1 class="text-xl lg:text-2xl font-semibold mb-1" style="color: #ffffff;">Food Safety Agency (Pty) Ltd</h1>
+                <h2 class="text-sm lg:text-base font-normal" style="color: #ffffff;">Inspector Analytics Dashboard</h2>
+            </div>
+
+        <div class="px-4 lg:px-6" style="height: calc(100vh - 140px); overflow-y: auto;">
 
         <!-- Messages Section -->
         {% if messages %}
-        <div class="messages">
+        <div class="mb-3">
             {% for message in messages %}
-            <div class="message {{ message.tags }}">
-                <i class="fas fa-info-circle"></i>
+            <div class="bg-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-100 border border-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-400 text-{% if message.tags == 'error' %}red{% elif message.tags == 'warning' %}yellow{% else %}green{% endif %}-700 px-3 py-2 rounded text-sm">
+                <i class="fas fa-info-circle mr-1"></i>
                 {{ message }}
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <!-- Overview Stats -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Overview</span>
+        <!-- Compact Dashboard Grid -->
+        <div style="display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 1400px; margin: 0 auto;">
+
+            <!-- Key Stats Row -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-users" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ total_clients }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Total Clients</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-clipboard-check" style="font-size: 1.25rem; color: #10b981; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ total_food_safety_inspections }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Total Inspections</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-calendar-week" style="font-size: 1.25rem; color: #3b82f6; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ this_week_inspections }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">This Week</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-calendar-day" style="font-size: 1.25rem; color: #f59e0b; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ this_month_inspections }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">This Month</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-calendar-alt" style="font-size: 1.25rem; color: #8b5cf6; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ recent_inspections }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Last 30 Days</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-check-circle" style="font-size: 1.25rem; color: #10b981; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="compliant-count">{{ compliant_inspections|default:"0" }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Compliant</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-times-circle" style="font-size: 1.25rem; color: #ef4444; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="non-compliant-count">{{ non_compliant_inspections|default:"0" }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Non-Compliant</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-shield-alt" style="font-size: 1.25rem; color: #7c3aed; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{% if compliance_rate %}{{ compliance_rate }}%{% else %}0%{% endif %}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Compliance Rate</div>
+                </div>
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem; color: #ef4444; margin-bottom: 6px;"></i>
+                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="high-risk-count">0</div>
+                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">High-Risk Clients</div>
                 </div>
             </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 20px;">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h3>{{ total_clients }}</h3>
-                        <p>Total Clients</p>
+
+            <!-- Charts and Table Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+
+                <!-- Inspection Trend Chart -->
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border);">
+                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-chart-line" style="color: var(--primary);"></i>
+                        Inspection Trends
+                    </h3>
+                    <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="inspectionsChart" width="400" height="180"></canvas>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <h3>{{ total_food_safety_inspections }}</h3>
-                        <p>Total Inspections</p>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <h3>{{ recent_inspections }}</h3>
-                        <p>Last 30 Days</p>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <h3>{{ this_week_inspections }}</h3>
-                        <p>This Week</p>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <h3>{{ this_month_inspections }}</h3>
-                        <p>This Month</p>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-trend">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>{% if compliance_rate %}{{ compliance_rate }}%{% else %}N/A{% endif %}</h3>
-                        <p>Compliance Rate</p>
+                </div>
+
+                <!-- Top 5 High-Risk Clients -->
+                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border);">
+                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>
+                        Top 5 High-Risk Clients
+                    </h3>
+                    <div style="max-height: 200px; overflow-y: auto;">
+                        <table style="width: 100%; font-size: 0.75rem;">
+                            <thead style="position: sticky; top: 0; background: var(--card-bg); border-bottom: 1px solid var(--border);">
+                                <tr style="text-align: left;">
+                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600;">Client</th>
+                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600; text-align: center;">Inspections</th>
+                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600; text-align: center;">Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody id="highRiskTableBody">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Key Metrics -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Key Metrics</span>
-                </div>
-            </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Inspections/Day</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
-                            {% if efficiency_metrics.inspections_per_day %}{{ efficiency_metrics.inspections_per_day|floatformat:1 }}{% else %}0.0{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Avg Duration</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
-                            {% if hours_analysis.avg_hours %}{{ hours_analysis.avg_hours|floatformat:1 }}h{% else %}0.0h{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Total Hours</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
-                            {% if hours_analysis.total_hours %}{{ hours_analysis.total_hours|floatformat:0 }}{% else %}0{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Avg Distance</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
-                            {% if geographic_analysis.avg_distance %}{{ geographic_analysis.avg_distance|floatformat:1 }}km{% else %}0.0km{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">High-Risk Clients</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: #ef4444;" id="high-risk-count">0</div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Non-Compliant</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: #ef4444;">
-                            {% if compliance_stats.non_compliant %}{{ compliance_stats.non_compliant }}{% else %}0{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">With RFI</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">
-                            {% if rfi_stats.with_rfi %}{{ rfi_stats.with_rfi }}{% else %}0{% endif %}
-                        </div>
-                    </div>
-                    <div style="text-align: center; padding: 16px; background: var(--background); border-radius: var(--radius); border: 1px solid var(--border);">
-                        <div style="font-size: 0.875rem; color: var(--text-light); margin-bottom: 8px;">Max Distance</div>
-                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--primary);">
-                            {% if geographic_analysis.max_distance %}{{ geographic_analysis.max_distance|floatformat:0 }}km{% else %}0km{% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Export Section -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-download"></i>
-                    <span>Export Reports</span>
-                </div>
-            </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 16px;">
-                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                    <select id="exportFormat" class="form-control" style="max-width: 200px;">
-                        <option value="excel">Excel (.xlsx)</option>
-                        <option value="csv">CSV (.csv)</option>
-                        <option value="pdf">PDF (.pdf)</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="exportData()">
-                        <i class="fas fa-download"></i>
-                        Export Report
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts Section -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-chart-area"></i>
-                    <span>Analytics Charts</span>
-                </div>
-            </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 20px;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 20px;">
-                    <!-- Inspections Over Time -->
-                    <div style="background: var(--background); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
-                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--card-bg);">
-                            <div style="font-size: 0.875rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-chart-line" style="color: var(--primary);"></i>
-                                <span>Inspections Over Time</span>
-                            </div>
-                            <select id="timeRange" class="form-control" style="width: 110px; padding: 4px 8px; font-size: 0.75rem;">
-                                <option value="daily">Daily</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="monthly" selected>Monthly</option>
-                            </select>
-                        </div>
-                        <div style="padding: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="inspectionsChart" width="400" height="250"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Compliance Analysis -->
-                    <div style="background: var(--background); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
-                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--card-bg);">
-                            <div style="font-size: 0.875rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
-                                <span>Compliance Analysis</span>
-                            </div>
-                        </div>
-                        <div style="padding: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="complianceChart" width="400" height="250"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Inspector Performance -->
-                    <div style="background: var(--background); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
-                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--card-bg);">
-                            <div style="font-size: 0.875rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-user-tie" style="color: var(--primary);"></i>
-                                <span>Inspector Performance</span>
-                            </div>
-                        </div>
-                        <div style="padding: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="inspectorsChart" width="400" height="250"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Commodity Analysis -->
-                    <div style="background: var(--background); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden;">
-                        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--card-bg);">
-                            <div style="font-size: 0.875rem; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-                                <i class="fas fa-seedling" style="color: var(--primary);"></i>
-                                <span>Commodity Analysis</span>
-                            </div>
-                        </div>
-                        <div style="padding: 16px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                            <canvas id="commodityChart" width="400" height="250"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Major Companies -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-building"></i>
-                    <span>Major Companies Performance</span>
-                </div>
-                <button class="btn btn-sm btn-secondary" onclick="toggleCompanyView()" style="padding: 6px 12px; font-size: 0.75rem;">
-                    <i class="fas fa-exchange-alt"></i> Toggle View
-                </button>
-            </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 20px;">
-                <div style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
-                    <canvas id="companiesChart" width="400" height="350"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- High-Risk Clients -->
-        <div class="card" style="margin-bottom: 20px;">
-            <div class="card-header">
-                <div class="card-title">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <span>High-Risk Clients</span>
-                </div>
-            </div>
-            <div class="card-body" style="background: var(--card-bg); padding: 0;">
-                <div class="table-responsive">
-                    <table class="table" id="highRiskTable">
-                        <thead>
-                            <tr>
-                                <th>Client Name</th>
-                                <th>Total Inspections</th>
-                                <th>Compliance Rate</th>
-                                <th>Risk Score</th>
-                                <th>Last Inspection</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="highRiskTableBody">
-                            <!-- Data will be populated by JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
         </div>
     </div>
@@ -1830,7 +1681,7 @@
             }
         }
 
-        // Populate High-Risk Clients Table
+        // Populate High-Risk Clients Table (Top 5 Only)
         function populateHighRiskTable() {
             const tbody = document.getElementById('highRiskTableBody');
             if (!tbody || !chartData.highRiskClients) return;
@@ -1838,27 +1689,26 @@
             const data = chartData.highRiskClients;
             document.getElementById('high-risk-count').textContent = data.length;
 
-            tbody.innerHTML = data.map(client => {
-                const riskClass = client.risk_score >= 70 ? 'risk-high' : 
-                                 client.risk_score >= 40 ? 'risk-medium' : 'risk-low';
-                const lastInspection = client.last_inspection ? 
-                    new Date(client.last_inspection).toLocaleDateString() : 'Never';
-                
+            // Show only top 5 clients
+            const top5 = data.slice(0, 5);
+
+            tbody.innerHTML = top5.map(client => {
+                const riskColor = client.risk_score >= 70 ? '#ef4444' :
+                                 client.risk_score >= 40 ? '#f59e0b' : '#10b981';
+
                 return `
-                    <tr>
-                        <td>${client.client_name}</td>
-                        <td>${client.total_inspections}</td>
-                        <td>${client.compliance_rate.toFixed(1)}%</td>
-                        <td><span class="${riskClass}">${client.risk_score.toFixed(1)}%</span></td>
-                        <td>${lastInspection}</td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="viewClientDetails('${client.client_name}')">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                        </td>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 8px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${client.client_name}">${client.client_name}</td>
+                        <td style="padding: 8px; text-align: center; color: var(--text);">${client.total_inspections}</td>
+                        <td style="padding: 8px; text-align: center; color: ${riskColor}; font-weight: 600;">${client.risk_score.toFixed(0)}%</td>
                     </tr>
                 `;
             }).join('');
+
+            // If no data, show message
+            if (top5.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 16px; text-align: center; color: var(--text-light);">No high-risk clients found</td></tr>';
+            }
         }
 
         // View Client Details (placeholder)
@@ -1916,6 +1766,11 @@
                 alert('Export failed. Please try again.');
             });
         }
+
+        // Load background image after page loads for better performance
+        window.addEventListener('load', function() {
+            document.body.classList.add('bg-loaded');
+        });
 
         // Initialize all charts and components
         document.addEventListener('DOMContentLoaded', function() {

@@ -3,9 +3,22 @@
 <head>
     {% load static %}
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Inspector Settings - Food Safety Agency</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Favicon - Food Safety Agency Logo -->
+    <link rel="icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/Food safetyagencylogo.png' %}">
+
+    <!-- Preconnect to CDNs for faster loading -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+
+    <!-- Async Font Awesome loading for better performance -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -157,10 +170,26 @@
         }
         
         body {
-            background: transparent;
+            background: var(--background);  /* Fallback color while image loads */
             color: var(--text);
         }
-        
+
+        /* Load background image after page loads for better performance */
+        body.bg-loaded::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 1.0;
+            z-index: -1;
+        }
+
         /* Settings card styles */
         .settings-card {
             background-color: var(--card-bg);
@@ -350,25 +379,141 @@
             color: rgba(255, 255, 255, 0.8);
         }
 
-        body::before {
-            content: '';
+        /* Mobile menu button - ABSOLUTE FIXED POSITIONING */
+        .mobile-menu-btn,
+        #mobile-menu-btn,
+        button#mobile-menu-btn {
+            display: none;
+        }
+
+        .mobile-menu-btn {
+            position: fixed !important;
+            top: 12px !important;
+            left: 12px !important;
+            z-index: 99999 !important;
+            background-color: var(--sidebar-bg) !important;
+            color: var(--sidebar-text) !important;
+            border: none !important;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+            border-radius: 8px !important;
+            width: 48px !important;
+            height: 48px !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            transform: translate3d(0, 0, 0);
+            will-change: transform;
+        }
+
+        .mobile-menu-btn:active {
+            transform: translate3d(0, 0, 0) scale(0.95);
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--sidebar-hover) !important;
+        }
+
+        /* Force fixed positioning on mobile */
+        @media (max-width: 1024px) {
+            .mobile-menu-btn,
+            #mobile-menu-btn,
+            button#mobile-menu-btn {
+                display: flex !important;
+                position: fixed !important;
+                top: 12px !important;
+                left: 12px !important;
+                z-index: 99999 !important;
+                transform: translate3d(0, 0, 0) !important;
+            }
+        }
+
+        /* Sidebar mobile positioning */
+        #sidebar {
             position: fixed;
             top: 0;
             left: 0;
+            height: 100vh;
+            z-index: 9998;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Logout button styling */
+        .logout-btn {
             width: 100%;
-            height: 100%;
-            background: url("{% static 'img/food_safety_background.png' %}") no-repeat center center;
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            opacity: 1.0;
-            z-index: -1;
+            background: #ef4444;
+            color: #ffffff;
+            border: 1px solid #dc2626;
+            padding: 0.75rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.625rem;
+            font-weight: 500;
+            font-size: 0.875rem;
         }
-        
-        .mobile-menu-btn {
-            display: none;
+
+        .logout-btn:hover {
+            background: #dc2626;
+            border-color: #b91c1c;
+            color: #ffffff;
         }
-        
+
+        .logout-btn:active {
+            background: #b91c1c;
+            transform: scale(0.98);
+        }
+
+        /* Touch-friendly adjustments */
+        @media (hover: none) and (pointer: coarse) {
+            /* Increase touch targets */
+            button, a {
+                min-height: 44px !important;
+            }
+
+            /* Remove hover effects on touch devices */
+            #sidebar a:hover {
+                background-color: transparent !important;
+            }
+
+            #sidebar a:active {
+                background-color: rgba(255, 255, 255, 0.1) !important;
+            }
+        }
+
+        @media (max-width: 640px) {
+            /* Small mobile */
+            .mobile-menu-btn {
+                top: 10px !important;
+                left: 10px !important;
+                width: 44px !important;
+                height: 44px !important;
+            }
+
+            #sidebar {
+                width: 90%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            /* Extra small devices */
+            #sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+
+            .mobile-menu-btn {
+                top: 8px !important;
+                left: 8px !important;
+                width: 40px !important;
+                height: 40px !important;
+            }
+        }
+
         /* Large screens (1024px and up) */
         @media (min-width: 1025px) {
             .settings-card {
@@ -983,60 +1128,54 @@
     </div>
     
     <!-- Mobile Menu Button -->
-    <button id="mobile-menu-btn" class="mobile-menu-btn fixed top-4 left-4 z-50 bg-sidebar-bg text-white p-3 rounded-lg shadow-lg lg:hidden">
-        <i class="fas fa-bars text-lg"></i>
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
+        <i class="fas fa-bars text-xl"></i>
     </button>
-    
+
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
-    
+
     <div class="flex min-h-screen">
-        
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed left-0 w-64 h-screen bg-sidebar-bg text-sidebar-text transition-all duration-300 z-50 shadow-2xl flex flex-col">
+        <div id="sidebar" class="w-64 h-screen bg-sidebar-bg text-sidebar-text flex flex-col">
             <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
                 <div class="text-center mb-2">
                     <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
                 </div>
-                <div class="text-sidebar-text text-sm font-semibold text-center" style="color: #f1f5f9 !important;">
+                <div class="text-sidebar-text text-sm font-semibold text-center">
                     Food Safety Agency (Pty) Ltd
                 </div>
             </div>
-            
-            <div class="flex-1 flex flex-col justify-between">
+
+            <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
-                    <!-- Inspections -->
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
-                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
-                            Inspections
-                        </a>
-                    </li>
-                    
-                    <!-- My Analytics -->
-                    <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
+                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
-                    
-                    <!-- Settings -->
                     <li>
-                        <a href="{% url 'inspector_settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px] bg-white bg-opacity-20">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
+                            Inspections
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'inspector_settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] bg-white bg-opacity-20">
                             <i class="fas fa-cog mr-2 w-4 text-center"></i>
                             Settings
                         </a>
                     </li>
                 </ul>
             </div>
-            
+
             <!-- Logout Button - Fixed at bottom -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center w-full px-3 py-2 bg-danger text-white hover:bg-red-700 transition-all duration-200 rounded-lg text-base font-medium min-h-[38px]">
-                        <i class="fas fa-sign-out-alt mr-2 w-4 text-center"></i>
+                    <button type="submit" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
                         Logout
                     </button>
                 </form>
@@ -1192,49 +1331,22 @@
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
-            
-            // Initialize sidebar state based on screen size
-            function initializeSidebar() {
-                if (window.innerWidth <= 1024) {
-                    // Mobile/tablet: hide sidebar by default
-                    sidebar.classList.remove('show');
-                    sidebarOverlay.classList.remove('show');
-                    if (mobileMenuBtn) {
-                        mobileMenuBtn.style.display = 'block';
-                    }
-                } else {
-                    // Desktop: show sidebar
-                    sidebar.classList.remove('show');
-                    sidebarOverlay.classList.remove('show');
-                    if (mobileMenuBtn) {
-                        mobileMenuBtn.style.display = 'none';
-                    }
-                }
-            }
-            
+
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 sidebarOverlay.classList.toggle('show');
-                
+
                 const icon = mobileMenuBtn.querySelector('i');
                 if (sidebar.classList.contains('show')) {
-                    icon.className = 'fas fa-times text-lg';
+                    icon.className = 'fas fa-times text-xl';
                 } else {
-                    icon.className = 'fas fa-bars text-lg';
+                    icon.className = 'fas fa-bars text-xl';
                 }
             }
-            
-            // Initialize on page load
-            initializeSidebar();
-            
-            if (mobileMenuBtn) {
-                mobileMenuBtn.addEventListener('click', toggleSidebar);
-            }
-            
-            if (sidebarOverlay) {
-                sidebarOverlay.addEventListener('click', toggleSidebar);
-            }
-            
+
+            mobileMenuBtn.addEventListener('click', toggleSidebar);
+            sidebarOverlay.addEventListener('click', toggleSidebar);
+
             const navLinks = sidebar.querySelectorAll('a');
             navLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -1243,15 +1355,17 @@
                     }
                 });
             });
-            
-            // Enhanced resize handler for better responsive behavior
-            let resizeTimeout;
+
             window.addEventListener('resize', function() {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(function() {
-                    initializeSidebar();
-                }, 100);
+                if (window.innerWidth > 1024) {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    const icon = mobileMenuBtn.querySelector('i');
+                    icon.className = 'fas fa-bars text-xl';
+                }
             });
+
+            initTheme();
         });
 
         // Theme management
@@ -1317,9 +1431,14 @@
             }
         }
         
+        // Load background image after page loads for better performance
+        window.addEventListener('load', function() {
+            document.body.classList.add('bg-loaded');
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
-            
+
             // Add loading screen functionality for navigation links
             try {
                 const inspectionsLink = document.querySelector('a[href*="shipment_list"]');
