@@ -832,6 +832,9 @@ class ScheduledSyncService:
                 else:
                     next_syncs[sync_type] = None
 
+            # Check for Google Sheets sync errors
+            google_sheets_error = cache.get('google_sheets_sync_error')
+
             return {
                 'is_running': is_running,
                 'service_alive': service_alive,
@@ -840,7 +843,8 @@ class ScheduledSyncService:
                 'last_sync_times': self.last_sync_times,
                 'next_sync_times': next_syncs,
                 'sync_stats': self.sync_stats,
-                'settings': settings
+                'settings': settings,
+                'google_sheets_error': google_sheets_error  # Include any Google Sheets sync errors
             }
 
         except Exception as e:
