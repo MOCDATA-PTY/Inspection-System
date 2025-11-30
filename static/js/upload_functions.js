@@ -1794,7 +1794,10 @@ async function deleteFile(filePath, fileName) {
                     }
 
                     // UPDATE VIEW FILES BUTTON AFTER DELETION - IMMEDIATE like RFI/Invoice buttons
-                    console.log(`🔄 [VIEW FILES] Updating View Files button after deletion for: ${clientName} on ${inspectionDate}`);
+                    console.log(`========================================`);
+                    console.log(`🚨 [VIEW FILES] STARTING IMMEDIATE UPDATE AFTER DELETION`);
+                    console.log(`🚨 [VIEW FILES] Client: ${clientName}, Date: ${inspectionDate}`);
+                    console.log(`========================================`);
 
                     // Mark this group as HIGH PRIORITY for individual rescan
                     const groupKey = `${clientName}_${inspectionDate}`;
@@ -1803,11 +1806,20 @@ async function deleteFile(filePath, fileName) {
                     console.log(`🔒 [PRIORITY] Current locked groups:`, Array.from(priorityRescanGroups));
 
                     // IMMEDIATE: Check remaining files and update View Files button directly (like RFI/Invoice buttons)
-                    fetch(`/get-inspection-files/?client_name=${encodeURIComponent(clientName)}&inspection_date=${encodeURIComponent(inspectionDate)}&_t=${Date.now()}`)
-                        .then(response => response.json())
+                    const fetchUrl = `/get-inspection-files/?client_name=${encodeURIComponent(clientName)}&inspection_date=${encodeURIComponent(inspectionDate)}&_t=${Date.now()}`;
+                    console.log(`🌐 [VIEW FILES] Fetching file status from: ${fetchUrl}`);
+
+                    fetch(fetchUrl)
+                        .then(response => {
+                            console.log(`✅ [VIEW FILES] Fetch response received, status: ${response.status}`);
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log(`📦 [VIEW FILES] Data received:`, data);
+
                             if (data.success) {
                                 const files = data.files || {};
+                                console.log(`📁 [VIEW FILES] Files object:`, files);
 
                                 // Count remaining files
                                 let totalFiles = 0;
@@ -1820,10 +1832,13 @@ async function deleteFile(filePath, fileName) {
                                 if (files.composition && files.composition.length > 0) totalFiles += files.composition.length;
                                 if (files.compliance && files.compliance.length > 0) totalFiles += files.compliance.length;
 
-                                console.log(`🔄 [VIEW FILES] Total files remaining: ${totalFiles}`);
+                                console.log(`📊 [VIEW FILES] Total files remaining: ${totalFiles}`);
+                                console.log(`📊 [VIEW FILES] Breakdown - RFI: ${files.rfi?.length || 0}, Invoice: ${files.invoice?.length || 0}, Lab: ${files.lab?.length || 0}, Occurrence: ${files.occurrence?.length || 0}`);
 
                                 // Find all View Files buttons for this client/date
                                 const allButtons = document.querySelectorAll('button');
+                                console.log(`🔍 [VIEW FILES] Total buttons on page: ${allButtons.length}`);
+
                                 const viewFilesButtons = Array.from(allButtons).filter(btn => {
                                     const btnClientName = btn.getAttribute('data-client-name');
                                     const btnDate = btn.getAttribute('data-inspection-date');
@@ -1833,38 +1848,56 @@ async function deleteFile(filePath, fileName) {
                                            btnDate === inspectionDate;
                                 });
 
-                                console.log(`🔄 [VIEW FILES] Found ${viewFilesButtons.length} View Files buttons to update`);
+                                console.log(`🎯 [VIEW FILES] Found ${viewFilesButtons.length} View Files buttons to update`);
 
                                 // IMMEDIATE COLOR UPDATE - Set inline styles with !important like RFI/Invoice buttons
-                                viewFilesButtons.forEach(button => {
+                                viewFilesButtons.forEach((button, index) => {
+                                    console.log(`🔧 [VIEW FILES] Processing button ${index + 1}/${viewFilesButtons.length}`);
+                                    console.log(`🔧 [VIEW FILES] Button text: "${button.textContent.trim()}"`);
+                                    console.log(`🔧 [VIEW FILES] Current class: ${button.className}`);
+                                    console.log(`🔧 [VIEW FILES] Current background-color: ${button.style.backgroundColor}`);
+
                                     if (totalFiles === 0) {
                                         // NO FILES - Set to RED immediately with !important
+                                        console.log(`🔴 [VIEW FILES] Setting button to RED (0 files)`);
                                         button.className = 'btn btn-sm btn-view-files btn-danger';
                                         button.style.setProperty('background-color', '#dc3545', 'important');
                                         button.style.setProperty('border-color', '#dc3545', 'important');
                                         button.style.setProperty('color', 'white', 'important');
                                         button.setAttribute('data-file-status', 'no_files');
-                                        console.log(`🔴 [VIEW FILES] IMMEDIATE: Set button to RED (no files) with !important`);
+                                        console.log(`✅ [VIEW FILES] Button ${index + 1} SET TO RED with !important`);
+                                        console.log(`✅ [VIEW FILES] New class: ${button.className}`);
+                                        console.log(`✅ [VIEW FILES] New background-color: ${button.style.backgroundColor}`);
                                     } else {
                                         // SOME FILES - Set to ORANGE immediately with !important
+                                        console.log(`🟠 [VIEW FILES] Setting button to ORANGE (${totalFiles} files)`);
                                         button.className = 'btn btn-sm btn-view-files btn-view-files-orange';
                                         button.style.setProperty('background-color', '#ff8c00', 'important');
                                         button.style.setProperty('border-color', '#ff8c00', 'important');
                                         button.style.setProperty('color', 'white', 'important');
                                         button.setAttribute('data-file-status', 'partial_files');
-                                        console.log(`🟠 [VIEW FILES] IMMEDIATE: Set button to ORANGE (${totalFiles} files) with !important`);
+                                        console.log(`✅ [VIEW FILES] Button ${index + 1} SET TO ORANGE with !important`);
+                                        console.log(`✅ [VIEW FILES] New class: ${button.className}`);
+                                        console.log(`✅ [VIEW FILES] New background-color: ${button.style.backgroundColor}`);
                                     }
                                 });
+
+                                console.log(`========================================`);
+                                console.log(`✅ [VIEW FILES] IMMEDIATE UPDATE COMPLETE`);
+                                console.log(`========================================`);
 
                                 // UNLOCK after immediate update completes
                                 setTimeout(() => {
                                     priorityRescanGroups.delete(groupKey);
                                     console.log(`🔓 [PRIORITY] Unlocked group after immediate View Files update: ${groupKey}`);
                                 }, 500);
+                            } else {
+                                console.error(`❌ [VIEW FILES] Data success is false:`, data);
                             }
                         })
                         .catch(error => {
                             console.error(`❌ [VIEW FILES] Error during immediate update:`, error);
+                            console.error(`❌ [VIEW FILES] Error stack:`, error.stack);
                             // UNLOCK even on error
                             priorityRescanGroups.delete(groupKey);
                         });
