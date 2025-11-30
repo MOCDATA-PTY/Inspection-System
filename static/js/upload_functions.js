@@ -1835,24 +1835,24 @@ async function deleteFile(filePath, fileName) {
 
                                 console.log(`🔄 [VIEW FILES] Found ${viewFilesButtons.length} View Files buttons to update`);
 
-                                // IMMEDIATE COLOR UPDATE - Set inline styles like RFI/Invoice buttons
+                                // IMMEDIATE COLOR UPDATE - Set inline styles with !important like RFI/Invoice buttons
                                 viewFilesButtons.forEach(button => {
                                     if (totalFiles === 0) {
-                                        // NO FILES - Set to RED immediately
+                                        // NO FILES - Set to RED immediately with !important
                                         button.className = 'btn btn-sm btn-view-files btn-danger';
-                                        button.style.backgroundColor = '#dc3545';
-                                        button.style.borderColor = '#dc3545';
-                                        button.style.color = 'white';
+                                        button.style.setProperty('background-color', '#dc3545', 'important');
+                                        button.style.setProperty('border-color', '#dc3545', 'important');
+                                        button.style.setProperty('color', 'white', 'important');
                                         button.setAttribute('data-file-status', 'no_files');
-                                        console.log(`🔴 [VIEW FILES] IMMEDIATE: Set button to RED (no files)`);
+                                        console.log(`🔴 [VIEW FILES] IMMEDIATE: Set button to RED (no files) with !important`);
                                     } else {
-                                        // SOME FILES - Set to ORANGE immediately
+                                        // SOME FILES - Set to ORANGE immediately with !important
                                         button.className = 'btn btn-sm btn-view-files btn-view-files-orange';
-                                        button.style.backgroundColor = '#ff8c00';
-                                        button.style.borderColor = '#ff8c00';
-                                        button.style.color = 'white';
+                                        button.style.setProperty('background-color', '#ff8c00', 'important');
+                                        button.style.setProperty('border-color', '#ff8c00', 'important');
+                                        button.style.setProperty('color', 'white', 'important');
                                         button.setAttribute('data-file-status', 'partial_files');
-                                        console.log(`🟠 [VIEW FILES] IMMEDIATE: Set button to ORANGE (${totalFiles} files)`);
+                                        console.log(`🟠 [VIEW FILES] IMMEDIATE: Set button to ORANGE (${totalFiles} files) with !important`);
                                     }
                                 });
 
