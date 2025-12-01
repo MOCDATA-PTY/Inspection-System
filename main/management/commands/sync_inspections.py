@@ -14,18 +14,31 @@ class Command(BaseCommand):
             # Create a mock request object
             class MockRequest:
                 def __init__(self):
-                    self.user = User.objects.get(username='lwandilemaqina')
+                    # Try to get any superuser, fallback to first user, or None
+                    superusers = User.objects.filter(is_superuser=True)
+                    if superusers.exists():
+                        self.user = superusers.first()
+                    elif User.objects.exists():
+                        self.user = User.objects.first()
+                    else:
+                        # Create a temporary admin user for sync
+                        self.user = User.objects.create_superuser(
+                            username='admin',
+                            email='admin@example.com',
+                            password='admin123'
+                        )
                     self.session = {}
                     self.method = 'POST'
                     self.headers = {}
-                
+
                 def session_set_expiry(self, timeout):
                     pass
-                
+
                 def session_save(self):
                     pass
-            
+
             request = MockRequest()
+            self.stdout.write(f"Using user: {request.user.username}")
             
             # Initialize Google Sheets Service
             sheets_service = GoogleSheetsService()
