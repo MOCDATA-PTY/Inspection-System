@@ -726,12 +726,12 @@ class GoogleSheetsService:
         """Populate the Food Safety Agency inspections table with data from remote SQL Server"""
         from django.contrib import messages
         from ..models import FoodSafetyAgencyInspection
-        
+        import pymssql
+        from django.conf import settings
+        from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
+
         try:
             print("   🔌 Step 2.1: Connecting to SQL Server...")
-            import pymssql
-            from django.conf import settings
-            from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
 
             # Get SQL Server configuration
             sql_server_config = settings.DATABASES.get('sql_server', {})
@@ -857,7 +857,8 @@ class GoogleSheetsService:
                     is_sample_taken=row_dict.get('IsSampleTaken', False),
                     remote_id=remote_id,
                     client_name=client_name,
-                    product_name=product_name_str
+                    product_name=product_name_str,
+                    internal_account_code=row_dict.get('InternalAccountNumber')
                 )
                 
                 # RESTORE LOCAL FIELDS: Apply preserved local data if it exists
