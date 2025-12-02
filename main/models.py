@@ -14,7 +14,8 @@ User.add_to_class('role', models.CharField(
         ('inspector', 'Inspector'),
         ('admin', 'HR/Admin Staff'),
         ('super_admin', 'Super Admin'),
-        ('financial', 'Financial'),
+        ('financial_admin', 'Financial Admin'),
+        ('lab_technician', 'Lab Technician'),
         ('scientist', 'Scientist'),
         ('developer', 'Developer'),
     ],
@@ -40,8 +41,12 @@ def is_super_admin(self):
     return getattr(self, 'role', 'inspector') == 'super_admin'
 
 @property
-def is_financial(self):
-    return getattr(self, 'role', 'inspector') == 'financial'
+def is_financial_admin(self):
+    return getattr(self, 'role', 'inspector') == 'financial_admin'
+
+@property
+def is_lab_technician(self):
+    return getattr(self, 'role', 'inspector') == 'lab_technician'
 
 @property
 def is_scientist(self):
@@ -52,21 +57,23 @@ def has_role_permission(self, required_role):
     role_hierarchy = {
         'inspector': 1,
         'admin': 2,
-        'financial': 3,
+        'financial_admin': 3,
+        'lab_technician': 3,
         'scientist': 3,
         'super_admin': 4,
         'developer': 5,
     }
-    
+
     user_level = role_hierarchy.get(getattr(self, 'role', 'inspector'), 0)
     required_level = role_hierarchy.get(required_role, 0)
-    
+
     return user_level >= required_level
 
 User.add_to_class('is_inspector', is_inspector)
 User.add_to_class('is_admin', is_admin)
 User.add_to_class('is_super_admin', is_super_admin)
-User.add_to_class('is_financial', is_financial)
+User.add_to_class('is_financial_admin', is_financial_admin)
+User.add_to_class('is_lab_technician', is_lab_technician)
 User.add_to_class('is_scientist', is_scientist)
 User.add_to_class('has_role_permission', has_role_permission)
 

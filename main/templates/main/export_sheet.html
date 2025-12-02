@@ -1356,7 +1356,6 @@
                 'PORegion',
                 'POPostalCode',
                 'POCountry',
-                '*InvoiceNumber',
                 'Reference',
                 '*InvoiceDate',
                 '*DueDate',
@@ -1368,7 +1367,6 @@
                 'Discount',
                 '*AccountCode',
                 '*TaxType',
-                'TaxAmount',
                 'TrackingName1',
                 'TrackingOption1',
                 'TrackingName2',
@@ -1396,9 +1394,6 @@
                 const accountCode = row.getAttribute('data-accountcode') || '';
                 const taxType = row.getAttribute('data-taxtype') || '';
 
-                // Calculate tax amount (15% of total)
-                const taxAmount = total ? (parseFloat(total) * 0.15).toFixed(2) : '';
-
                 data.push([
                     contactName,              // *ContactName
                     '',                       // EmailAddress
@@ -1410,7 +1405,6 @@
                     '',                       // PORegion
                     '',                       // POPostalCode
                     '',                       // POCountry (blank for export)
-                    invoiceRef,               // *InvoiceNumber
                     '',                       // Reference (blank for export)
                     invoiceDate,              // *InvoiceDate
                     '',                       // *DueDate
@@ -1422,7 +1416,6 @@
                     '',                       // Discount (blank for export)
                     accountCode,              // *AccountCode
                     taxType,                  // *TaxType
-                    taxAmount,                // TaxAmount
                     '',                       // TrackingName1
                     '',                       // TrackingOption1
                     '',                       // TrackingName2

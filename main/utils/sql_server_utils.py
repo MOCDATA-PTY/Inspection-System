@@ -98,6 +98,39 @@ class SQLServerConnection:
                 if row[0] and row[0].strip():  # Only NewProductItemDetails (actual product name)
                     product_names.append(row[0].strip())
 
+            # Query Egg Products (PoultryEggInspectionRecords)
+            # Eggs don't have a ProductName field - we generate it from SizeId + GradeId
+            SIZE_MAP = {
+                1: 'Jumbo',
+                2: 'Extra Large',
+                3: 'Large',
+                4: 'Medium',
+                5: 'Small',
+                6: 'Peewee'
+            }
+
+            GRADE_MAP = {
+                1: 'Grade A',
+                2: 'Grade B',
+                3: 'Grade C'
+            }
+
+            egg_query = """
+                SELECT SizeId, GradeId
+                FROM PoultryEggInspectionRecords
+                WHERE Id = %s AND SizeId IS NOT NULL AND GradeId IS NOT NULL
+            """
+            cursor.execute(egg_query, (inspection_id,))
+            egg_results = cursor.fetchall()
+
+            for row in egg_results:
+                size_id, grade_id = row
+                # Generate product name from Size + Grade
+                size_name = SIZE_MAP.get(size_id, f'Size {size_id}')
+                grade_name = GRADE_MAP.get(grade_id, f'Grade {grade_id}')
+                product_name = f'{size_name} {grade_name} Eggs'
+                product_names.append(product_name)
+
             # Remove duplicates and empty strings
             product_names = list(set([name.strip() for name in product_names if name and name.strip()]))
 
@@ -181,6 +214,45 @@ class SQLServerConnection:
             for row in raw_rmp_results:
                 if row[0] and row[0].strip():  # Only NewProductItemDetails (actual product name)
                     product_names.append(row[0].strip())
+
+            # Query Egg Products by client and date
+            # Eggs don't have a ProductName field - we generate it from SizeId + GradeId
+            SIZE_MAP = {
+                1: 'Jumbo',
+                2: 'Extra Large',
+                3: 'Large',
+                4: 'Medium',
+                5: 'Small',
+                6: 'Peewee'
+            }
+
+            GRADE_MAP = {
+                1: 'Grade A',
+                2: 'Grade B',
+                3: 'Grade C'
+            }
+
+            # Note: PoultryEggInspectionRecords may not have ClientName field
+            # We need to check the schema or use a different approach
+            try:
+                egg_query = """
+                    SELECT SizeId, GradeId
+                    FROM PoultryEggInspectionRecords
+                    WHERE CAST(DateOfInspection AS DATE) = %s
+                    AND SizeId IS NOT NULL AND GradeId IS NOT NULL
+                """
+                cursor.execute(egg_query, (inspection_date,))
+                egg_results = cursor.fetchall()
+
+                for row in egg_results:
+                    size_id, grade_id = row
+                    # Generate product name from Size + Grade
+                    size_name = SIZE_MAP.get(size_id, f'Size {size_id}')
+                    grade_name = GRADE_MAP.get(grade_id, f'Grade {grade_id}')
+                    product_name = f'{size_name} {grade_name} Eggs'
+                    product_names.append(product_name)
+            except Exception as e:
+                logger.debug(f"Egg query by date failed (may not match client): {e}")
 
             # Remove duplicates and empty strings
             product_names = list(set([name.strip() for name in product_names if name and name.strip()]))
@@ -322,6 +394,49 @@ def fetch_all_product_names_bulk(inspection_ids):
                 print(f"      ✅ Raw RMP table: {len(raw_rmp_results)} products found")
             except Exception as e:
                 logger.error(f"Raw RMP bulk query failed: {e}")
+
+            # Query 7: Egg Products (PoultryEggInspectionRecords)
+            # Eggs don't have a ProductName field - we generate it from SizeId + GradeId
+            try:
+                # Size and Grade mappings
+                SIZE_MAP = {
+                    1: 'Jumbo',
+                    2: 'Extra Large',
+                    3: 'Large',
+                    4: 'Medium',
+                    5: 'Small',
+                    6: 'Peewee'
+                }
+
+                GRADE_MAP = {
+                    1: 'Grade A',
+                    2: 'Grade B',
+                    3: 'Grade C'
+                }
+
+                egg_query = f"""
+                    SELECT Id, SizeId, GradeId
+                    FROM PoultryEggInspectionRecords
+                    WHERE Id IN ({ids_str})
+                    AND SizeId IS NOT NULL
+                    AND GradeId IS NOT NULL
+                """
+                cursor.execute(egg_query)
+                egg_results = cursor.fetchall()
+
+                for row in egg_results:
+                    inspection_id, size_id, grade_id = row
+                    # Generate product name from Size + Grade
+                    size_name = SIZE_MAP.get(size_id, f'Size {size_id}')
+                    grade_name = GRADE_MAP.get(grade_id, f'Grade {grade_id}')
+                    product_name = f'{size_name} {grade_name} Eggs'
+
+                    if inspection_id in product_map:
+                        product_map[inspection_id].append(product_name)
+
+                print(f"      ✅ Egg Products table: {len(egg_results)} products found")
+            except Exception as e:
+                logger.error(f"Egg Products bulk query failed: {e}")
 
         # Remove duplicates for each inspection
         for inspection_id in product_map:
