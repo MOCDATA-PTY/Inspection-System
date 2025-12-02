@@ -1614,6 +1614,10 @@
             <i class="fas fa-key"></i>
             <span>Reset Password</span>
         </div>
+        <div class="context-menu-item" id="contextSendResetEmail">
+            <i class="fas fa-envelope"></i>
+            <span>Send Reset Email</span>
+        </div>
         <div class="context-menu-divider"></div>
         <div class="context-menu-item" id="contextToggleStatus">
             <i class="fas fa-user-slash"></i>
@@ -2022,6 +2026,47 @@
             if (currentRow) {
                 const resetBtn = currentRow.querySelector('.reset-password-btn');
                 if (resetBtn) resetBtn.click();
+            }
+            contextMenu.classList.remove('show');
+        });
+
+        document.getElementById('contextSendResetEmail').addEventListener('click', function() {
+            if (currentRow) {
+                const userId = currentRow.querySelector('.edit-user-btn')?.getAttribute('data-user-id');
+                const username = currentRow.querySelector('.edit-user-btn')?.getAttribute('data-username');
+                const email = currentRow.querySelector('.edit-user-btn')?.getAttribute('data-email');
+
+                if (!email || email === '' || email === 'None') {
+                    alert('This user does not have an email address configured. Please add an email address first.');
+                    contextMenu.classList.remove('show');
+                    return;
+                }
+
+                if (confirm(`Send password reset email to ${email}?`)) {
+                    // Send AJAX request to backend
+                    fetch('{% url "send_password_reset_email" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({
+                            user_id: userId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(`Password reset email sent successfully to ${email}`);
+                        } else {
+                            alert(`Error: ${data.error || 'Failed to send email'}`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to send password reset email. Please try again.');
+                    });
+                }
             }
             contextMenu.classList.remove('show');
         });

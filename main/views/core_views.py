@@ -14049,4 +14049,131 @@ def get_onedrive_auth_url(request):
         })
         
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)}, status=500)  
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_password_reset_email(request):
+    """Send password reset email to a user"""
+    import json
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_encode
+    from django.utils.encoding import force_bytes
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.conf import settings
+
+    # Check if user has admin permissions
+    if not (request.user.has_role_permission('admin') or
+            request.user.has_role_permission('super_admin') or
+            request.user.has_role_permission('developer') or
+            request.user.is_staff):
+        return JsonResponse({
+            'success': False,
+            'error': 'You do not have permission to send password reset emails'
+        }, status=403)
+
+    try:
+        data = json.loads(request.body)
+        user_id = data.get('user_id')
+
+        if not user_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'User ID is required'
+            }, status=400)
+
+        # Get the user
+        target_user = User.objects.get(id=user_id)
+
+        # Check if user has an email
+        if not target_user.email:
+            return JsonResponse({
+                'success': False,
+                'error': 'User does not have an email address configured'
+            }, status=400)
+
+        # Generate password reset token
+        token = default_token_generator.make_token(target_user)
+        uid = urlsafe_base64_encode(force_bytes(target_user.pk))
+
+        # Build password reset URL
+        reset_url = request.build_absolute_uri(
+            f'/password-reset/{uid}/{token}/'
+        )
+
+        # Email content
+        subject = 'Password Reset Request - Food Safety Agency'
+        message = f'''Hello {target_user.first_name or target_user.username},
+
+You have received this email because a password reset was requested for your account at the Food Safety Agency Inspection System.
+
+Click the link below to reset your password:
+
+{reset_url}
+
+This link will expire in 24 hours.
+
+If you did not request a password reset, please ignore this email.
+
+Best regards,
+Food Safety Agency Team
+'''
+
+        # HTML email content (optional)
+        html_message = f'''
+        <html>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h2 style="color: #007890;">Password Reset Request</h2>
+                    <p>Hello {target_user.first_name or target_user.username},</p>
+                    <p>You have received this email because a password reset was requested for your account at the Food Safety Agency Inspection System.</p>
+                    <p>Click the button below to reset your password:</p>
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="{reset_url}" style="background-color: #007890; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Reset Password</a>
+                    </p>
+                    <p style="font-size: 0.9em; color: #666;">Or copy and paste this link into your browser:</p>
+                    <p style="font-size: 0.9em; color: #666; word-break: break-all;">{reset_url}</p>
+                    <p style="font-size: 0.9em; color: #999; margin-top: 30px;">This link will expire in 24 hours.</p>
+                    <p style="font-size: 0.9em; color: #999;">If you did not request a password reset, please ignore this email.</p>
+                    <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                    <p style="font-size: 0.85em; color: #999;">Best regards,<br>Food Safety Agency Team</p>
+                </div>
+            </body>
+        </html>
+        '''
+
+        # Send email
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@foodsafetyagency.com'),
+            recipient_list=[target_user.email],
+            fail_silently=False,
+            html_message=html_message
+        )
+
+        # Log the action
+        SystemLog.objects.create(
+            user=request.user,
+            action='SEND_PASSWORD_RESET_EMAIL',
+            page='User Management',
+            details=f'Sent password reset email to {target_user.username} ({target_user.email})'
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Password reset email sent to {target_user.email}'
+        })
+
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'User not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

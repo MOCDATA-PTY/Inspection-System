@@ -22,7 +22,7 @@ from .views.core_views import (
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
     reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets, update_invoice_number, export_client_allocations, add_client_allocation, edit_client_allocation,
-    get_dropdown_options, delete_dropdown_option, delete_client_allocation
+    get_dropdown_options, delete_dropdown_option, delete_client_allocation, send_password_reset_email
 )
 from .views.data_views import (
     export_shipments,
@@ -122,6 +122,7 @@ urlpatterns = [
     path('inspector-settings/', inspector_settings_view, name='inspector_settings'),
     path('session-status/', session_status, name='session_status'),
     path('user-management/', user_management, name='user_management'),
+    path('send-password-reset-email/', send_password_reset_email, name='send_password_reset_email'),
     path('system-logs/', system_logs, name='system_logs'),
     path('api/refresh-tokens/', refresh_tokens, name='refresh_tokens'),
     path('developer/compliance-documents/', compliance_documents, name='compliance_documents'),
