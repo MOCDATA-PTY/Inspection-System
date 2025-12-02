@@ -1347,9 +1347,36 @@
         document.getElementById('exportTable').addEventListener('contextmenu', function(e) {
             e.preventDefault();
             const contextMenu = DOM.contextMenu || document.getElementById('contextMenu');
+
+            // Show menu first to get dimensions
             contextMenu.style.display = 'block';
-            contextMenu.style.left = e.pageX + 'px';
-            contextMenu.style.top = e.pageY + 'px';
+
+            // Use clientX/clientY for fixed positioning (relative to viewport)
+            let x = e.clientX;
+            let y = e.clientY;
+
+            // Get menu dimensions
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+
+            // Get viewport dimensions
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Adjust position if menu would go off-screen
+            if (x + menuWidth > viewportWidth) {
+                x = viewportWidth - menuWidth - 10;
+            }
+            if (y + menuHeight > viewportHeight) {
+                y = viewportHeight - menuHeight - 10;
+            }
+
+            // Ensure menu doesn't go off the left or top edge
+            x = Math.max(10, x);
+            y = Math.max(10, y);
+
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
         });
 
         // Hide context menu on click outside
