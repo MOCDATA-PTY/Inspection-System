@@ -1,6 +1,7 @@
 import json
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from ..models import FoodSafetyAgencyInspection
 
 @login_required
@@ -59,6 +60,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.views.decorators.http import require_http_methods
 
 # Safe print wrapper to avoid UnicodeEncodeError on Windows consoles
 def safe_print(*args, **kwargs):
