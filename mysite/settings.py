@@ -106,11 +106,11 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'inspection_system',     # your database name
-        'USER': 'ethan',                  # superuser we just set
-        'PASSWORD': 'MagnumOpus123',     # superuser password
-        'HOST': '82.25.97.159',          # your server IP
-        'PORT': '5432',                   # default PostgreSQL port
+        'NAME': 'inspection_system',
+        'USER': 'ethan',
+        'PASSWORD': 'MagnumOpus123',
+        'HOST': '82.25.97.159',
+        'PORT': '5432',
     },
     'sql_server': {
         'ENGINE': 'mssql',
@@ -204,11 +204,12 @@ PREFER_ONEDRIVE = True
 # ZIP File Auto-Organization Settings
 AUTO_ORGANIZE_ZIP_FILES = True  # Automatically organize ZIP files by inspection number
 
-# Email Configuration - Using Microsoft Outlook/Office365
+# Email Configuration - Using Microsoft Outlook/Office365 (Same credentials as E-Click project)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-mail.outlook.com'  # Microsoft Outlook SMTP server
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'FoodSafetyAgency@outlook.com')  # Set in environment variables or change here
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Set in environment variables
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'FoodSafetyAgency@outlook.com')  # Use same email as E-Click
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # REQUIRED: Set the Outlook password
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'FoodSafetyAgency@outlook.com')
+EMAIL_TIMEOUT = 30  # Connection timeout in seconds
