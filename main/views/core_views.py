@@ -1177,8 +1177,9 @@ def shipment_list(request):
         if inspector_id and inspector_name:
             # Filter inspections to show those done by this inspector
             # Include BOTH inspector_id matches (for data with IDs) AND inspector_name matches (for data without IDs)
+            # Use case-insensitive match for inspector_name to handle 'Neo Noe' vs 'NEO NOE'
             inspections = inspections.filter(
-                Q(inspector_id=inspector_id) | Q(inspector_name=inspector_name)
+                Q(inspector_id=inspector_id) | Q(inspector_name__iexact=inspector_name)
             )
         else:
             # If no inspector ID found, show no inspections
