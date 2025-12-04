@@ -433,61 +433,31 @@ class ScheduledSyncService:
                 'message': 'Phase 3/3: Updating inspections with product names...'
             }, 300)
 
-            # PHASE 3: CREATE SEPARATE INSPECTIONS FOR EACH PRODUCT
+            # PHASE 3: UPDATE INSPECTIONS WITH PRODUCT NAMES (NO SPLITTING)
             print(f"\n" + "="*80)
-            print(f"🔄 PHASE 3/3: SPLIT INSPECTIONS BY PRODUCT")
-            print(f"   Creating individual inspection records for each product...")
-            print(f"   (Each product gets its own inspection entry)")
+            print(f"🔄 PHASE 3/3: UPDATE INSPECTIONS WITH PRODUCT NAMES")
+            print(f"   Adding product names to existing inspection records...")
+            print(f"   (Multiple products will be comma-separated in one record)")
             print("="*80)
 
-            # Track total products created
-            total_products_split = 0
-
-            # Split multi-product inspections into individual records
+            # Update inspections with product names (NO splitting - keep one record per inspection)
             for idx, sql_insp in enumerate(sql_inspections, 1):
                 try:
                     inspection_id = sql_insp.get('Id')
 
-                    if inspection_id in product_map:
+                    # Get the inspection record
+                    inspection = FoodSafetyAgencyInspection.objects.filter(
+                        remote_id=inspection_id
+                    ).first()
+
+                    if inspection and inspection_id in product_map:
                         product_names = product_map[inspection_id]
                         if product_names and len(product_names) > 0:
-                            # Get the base inspection to copy its data
-                            base_inspection = FoodSafetyAgencyInspection.objects.filter(
-                                remote_id=inspection_id
-                            ).first()
-
-                            if base_inspection:
-                                # Store base inspection data before deleting
-                                base_data = {
-                                    'client_name': base_inspection.client_name,
-                                    'internal_account_code': base_inspection.internal_account_code,
-                                    'date_of_inspection': base_inspection.date_of_inspection,
-                                    'inspector_name': base_inspection.inspector_name,
-                                    'commodity': base_inspection.commodity,
-                                }
-
-                                # Delete the base inspection (will recreate for each product)
-                                base_inspection.delete()
-
-                                # Create separate inspection for each product
-                                # Using create() since we cleared all data - no duplicates possible
-                                for product_idx, product_name in enumerate(product_names):
-                                    # Create unique remote_id for each product
-                                    unique_remote_id = f"{inspection_id}_{product_idx + 1}"
-
-                                    # Create new inspection record for this product
-                                    inspection = FoodSafetyAgencyInspection.objects.create(
-                                        remote_id=unique_remote_id,
-                                        client_name=base_data['client_name'],
-                                        internal_account_code=base_data['internal_account_code'],
-                                        date_of_inspection=base_data['date_of_inspection'],
-                                        inspector_name=base_data['inspector_name'],
-                                        commodity=base_data['commodity'],
-                                        product_name=product_name.strip()  # ONE product per inspection
-                                    )
-
-                                    total_products_split += 1
-                                    product_names_updated += 1
+                            # Join multiple products with comma separation
+                            combined_product_name = ", ".join(product_names)
+                            inspection.product_name = combined_product_name
+                            inspection.save()
+                            product_names_updated += 1
 
                     # Progress every 200 inspections
                     if idx % 200 == 0:
@@ -505,10 +475,10 @@ class ScheduledSyncService:
                     print(f"   ⚠️  Error updating products for inspection {inspection_id}: {e}")
                     continue
 
-            print(f"\n✅ PHASE 3 COMPLETE: Product splitting done!")
-            print(f"   - Original inspections: {len(sql_inspections)}")
-            print(f"   - Total individual products created: {total_products_split}")
-            print(f"   - Average products per inspection: {total_products_split/len(sql_inspections):.1f}")
+            print(f"\n✅ PHASE 3 COMPLETE: Product names updated!")
+            print(f"   - Inspections processed: {len(sql_inspections)}")
+            print(f"   - Inspections with products: {product_names_updated}")
+            print(f"   - Multiple products stored as comma-separated values")
 
             cursor.close()
             connection.close()
@@ -522,20 +492,19 @@ class ScheduledSyncService:
             print(f"\n📊 Sync Statistics:")
             print(f"   - Old inspections deleted: {existing_count:,}")
             print(f"   - SQL Server inspections fetched: {len(sql_inspections)}")
-            print(f"   - Individual products created: {total_products_split}")
-            print(f"   - Each inspection now has ONE product only")
+            print(f"   - New inspections created: {synced_count:,}")
+            print(f"   - Inspections with product names: {product_names_updated:,}")
             print(f"\n📋 Account Code & Name Matching Statistics:")
             print(f"   - Inspections with account codes: {account_codes_found} ({(account_codes_found/len(sql_inspections)*100) if len(sql_inspections) > 0 else 0:.1f}%)")
             print(f"   - Google Sheets matches found: {google_sheets_matched} ({(google_sheets_matched/account_codes_found*100) if account_codes_found > 0 else 0:.1f}% of those with codes)")
             print(f"   - Using Google Sheets names: {google_sheets_used}")
             print(f"   - Using placeholders (no match): {sql_server_fallback}")
             print(f"\n💾 Database Status:")
-            print(f"   - Total inspection records in database: {total_inspections}")
-            print(f"   - (Each record = 1 product)")
-            print(f"\n⭐ Google Sheets is the SOLE source for client names!")
+            print(f"   - Total inspection records in database: {total_inspections:,}")
+            print(f"   - (One record per inspection, multiple products comma-separated)")
+            print(f"\n⭐ Data Sources:")
             print(f"   - SQL Server provides: inspection data + account codes + products")
             print(f"   - Google Sheets provides: client names (via account code lookup)")
-            print(f"   - Each product is now a separate inspection record!")
             print(f"   - Update client names in Google Sheets and resync to see changes instantly!")
             print("="*80 + "\n")
 
