@@ -208,7 +208,6 @@ class ScheduledSyncService:
             print("="*80)
 
             from ..models import FoodSafetyAgencyInspection, Inspection
-            from ..utils.sql_server_utils import fetch_all_product_names_bulk
             from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
             import pymssql
             from datetime import datetime, timedelta
@@ -270,14 +269,13 @@ class ScheduledSyncService:
                 'current': 0,
                 'total': len(sql_inspections),
                 'percent': 0,
-                'message': 'Phase 1/3: Syncing inspections with Google Sheets...'
+                'message': 'Syncing inspections with Google Sheets...'
             }, 300)
 
             print(f"\n" + "="*80)
-            print(f"📋 PHASE 1/3: SYNC INSPECTIONS + MATCH CLIENT NAMES")
-            print(f"   SQL Server → Inspection Data + Account Codes")
+            print(f"📋 SYNCING INSPECTIONS WITH CLIENT NAMES AND PRODUCTS")
+            print(f"   SQL Server → Inspection Data + Account Codes + Products")
             print(f"   Google Sheets → Client Names (SOLE SOURCE)")
-            print(f"   (Product names will be fetched in bulk in Phase 2)")
             print("="*80)
 
             for idx, sql_insp in enumerate(sql_inspections, 1):
@@ -359,126 +357,51 @@ class ScheduledSyncService:
                             print(f"      ⚠️  Cannot look up in Google Sheets without account code")
                             print(f"      ⚠️  Client name set to: -")
 
-                    # PHASE 1: Create inspection WITHOUT product names (products will be added in bulk in Phase 2)
+                    # PHASE 1: Create inspection WITH product name from SQL query
                     # Using create() since we deleted all records - no need for update_or_create
+                    product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
+
                     inspection = FoodSafetyAgencyInspection.objects.create(
                         remote_id=inspection_id,
                         client_name=client_name,  # Use Google Sheets name if matched
                         internal_account_code=internal_account_code,  # Store account code for future matches
                         date_of_inspection=inspection_date,
                         inspector_name=inspector_name,
-                        commodity=commodity
-                        # Note: product_name will be added in Phase 2 bulk fetch
+                        commodity=commodity,
+                        product_name=product_name  # Use product name from SQL query (already correct!)
                     )
 
                     synced_count += 1
 
                     # Progress indicator every 250 inspections (was 50 - reduced console spam)
                     if idx % 250 == 0:
-                        print(f"\n   📈 Phase 1 Progress: {idx}/{len(sql_inspections)} inspections synced...")
+                        print(f"\n   📈 Progress: {idx}/{len(sql_inspections)} inspections synced...")
                         print(f"      - Account codes found: {account_codes_found}")
                         print(f"      - Google Sheets matches: {google_sheets_matched}")
                         print(f"      - Using Google Sheets names: {google_sheets_used}")
                         print(f"      - Using placeholder names: {sql_server_fallback}")
 
-                        # Update progress in cache for frontend (Phase 1 = 0-60% of total progress)
-                        progress_percent = int((idx / len(sql_inspections)) * 60)
+                        # Update progress in cache for frontend
+                        progress_percent = int((idx / len(sql_inspections)) * 100)
                         cache.set('sync_progress', {
                             'status': 'running',
                             'current': idx,
                             'total': len(sql_inspections),
                             'percent': progress_percent,
-                            'message': f'Phase 1/3: Syncing inspections {idx}/{len(sql_inspections)} ({progress_percent}%)'
+                            'message': f'Syncing inspections {idx}/{len(sql_inspections)} ({progress_percent}%)'
                         }, 300)
 
                 except Exception as e:
                     print(f"\n   ⚠️  Error syncing inspection {inspection_id}: {e}")
                     continue
 
-            # PHASE 1 COMPLETE
+            # SYNC COMPLETE
             print(f"\n" + "="*80)
-            print(f"✅ PHASE 1 COMPLETE: Inspections created with client names!")
+            print(f"✅ SYNC COMPLETE: Inspections created with product names!")
             print(f"   - New inspections created: {synced_count}")
             print(f"   - Google Sheets matches: {google_sheets_matched}/{account_codes_found}")
+            print(f"   - Product names from SQL query (no additional fetching needed)")
             print("="*80)
-
-            # Update progress: Phase 1 done (60%)
-            cache.set('sync_progress', {
-                'status': 'running',
-                'current': len(sql_inspections),
-                'total': len(sql_inspections),
-                'percent': 60,
-                'message': 'Phase 2/3: Fetching product names in bulk...'
-            }, 300)
-
-            # PHASE 2: BULK FETCH ALL PRODUCT NAMES
-            print(f"\n" + "="*80)
-            print(f"📦 PHASE 2/3: BULK FETCH PRODUCT NAMES")
-            print(f"   Fetching products for ALL {len(sql_inspections)} inspections at once...")
-            print(f"   (This is MUCH faster than fetching individually!)")
-            print("="*80)
-
-            # Get all inspection IDs
-            inspection_ids = [insp.get('Id') for insp in sql_inspections if insp.get('Id')]
-
-            # Bulk fetch all product names
-            product_map = fetch_all_product_names_bulk(inspection_ids)
-
-            # Update progress: Phase 2 done (80%)
-            cache.set('sync_progress', {
-                'status': 'running',
-                'current': len(sql_inspections),
-                'total': len(sql_inspections),
-                'percent': 80,
-                'message': 'Phase 3/3: Updating inspections with product names...'
-            }, 300)
-
-            # PHASE 3: UPDATE INSPECTIONS WITH PRODUCT NAMES (NO SPLITTING)
-            print(f"\n" + "="*80)
-            print(f"🔄 PHASE 3/3: UPDATE INSPECTIONS WITH PRODUCT NAMES")
-            print(f"   Adding product names to existing inspection records...")
-            print(f"   (Multiple products will be comma-separated in one record)")
-            print("="*80)
-
-            # Update inspections with product names (NO splitting - keep one record per inspection)
-            for idx, sql_insp in enumerate(sql_inspections, 1):
-                try:
-                    inspection_id = sql_insp.get('Id')
-
-                    # Get the inspection record
-                    inspection = FoodSafetyAgencyInspection.objects.filter(
-                        remote_id=inspection_id
-                    ).first()
-
-                    if inspection and inspection_id in product_map:
-                        product_names = product_map[inspection_id]
-                        if product_names and len(product_names) > 0:
-                            # Join multiple products with comma separation
-                            combined_product_name = ", ".join(product_names)
-                            inspection.product_name = combined_product_name
-                            inspection.save()
-                            product_names_updated += 1
-
-                    # Progress every 200 inspections
-                    if idx % 200 == 0:
-                        progress_percent = 80 + int((idx / len(sql_inspections)) * 20)  # 80-100%
-                        print(f"   📈 Phase 3 Progress: {idx}/{len(sql_inspections)} updated ({progress_percent}%)...")
-                        cache.set('sync_progress', {
-                            'status': 'running',
-                            'current': idx,
-                            'total': len(sql_inspections),
-                            'percent': progress_percent,
-                            'message': f'Phase 3/3: Updating products {idx}/{len(sql_inspections)} ({progress_percent}%)'
-                        }, 300)
-
-                except Exception as e:
-                    print(f"   ⚠️  Error updating products for inspection {inspection_id}: {e}")
-                    continue
-
-            print(f"\n✅ PHASE 3 COMPLETE: Product names updated!")
-            print(f"   - Inspections processed: {len(sql_inspections)}")
-            print(f"   - Inspections with products: {product_names_updated}")
-            print(f"   - Multiple products stored as comma-separated values")
 
             cursor.close()
             connection.close()
@@ -493,7 +416,6 @@ class ScheduledSyncService:
             print(f"   - Old inspections deleted: {existing_count:,}")
             print(f"   - SQL Server inspections fetched: {len(sql_inspections)}")
             print(f"   - New inspections created: {synced_count:,}")
-            print(f"   - Inspections with product names: {product_names_updated:,}")
             print(f"\n📋 Account Code & Name Matching Statistics:")
             print(f"   - Inspections with account codes: {account_codes_found} ({(account_codes_found/len(sql_inspections)*100) if len(sql_inspections) > 0 else 0:.1f}%)")
             print(f"   - Google Sheets matches found: {google_sheets_matched} ({(google_sheets_matched/account_codes_found*100) if account_codes_found > 0 else 0:.1f}% of those with codes)")
