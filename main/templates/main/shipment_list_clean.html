@@ -4559,6 +4559,27 @@
             line-height: 1.3;
         }
 
+        /* Sticky footer at bottom of viewport - matches thead styling */
+        #shipmentsTable tfoot {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background-color: var(--primary-light) !important;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+
+        #shipmentsTable tfoot th {
+            position: sticky;
+            bottom: 0;
+            z-index: 100;
+            background-color: var(--primary-light) !important;
+            box-sizing: border-box;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            white-space: nowrap !important;
+            line-height: 1.3;
+        }
+
         /* Ensure main table maintains its exact layout when detail rows are shown */
         #shipmentsTable {
             table-layout: auto;
@@ -5104,6 +5125,28 @@
             font-size: 0.75rem;
         }
 
+        /* Ensure table footer is visible and matches header */
+        #shipmentsTable tfoot {
+            display: table-footer-group !important;
+            visibility: visible !important;
+        }
+
+        #shipmentsTable tfoot th {
+            display: table-cell !important;
+            visibility: visible !important;
+            font-weight: bold;
+            border-top: 2px solid #dee2e6;
+            padding: 10px 16px;
+            text-align: left;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            vertical-align: middle;
+            position: relative;
+            line-height: 1.3;
+            font-size: 0.75rem;
+        }
+
         /* Force table to respect column widths */
         .table-responsive {
             overflow-x: auto;
@@ -5126,6 +5169,22 @@
         #shipmentsTable thead th {
             position: sticky;
             top: 0;
+            z-index: 10;
+            white-space: nowrap !important;
+            overflow: visible !important;
+            text-overflow: initial !important;
+            line-height: 1.3;
+        }
+
+        /* Fix main table footer positioning when expanded */
+        #shipmentsTable tfoot tr {
+            position: relative;
+            z-index: 10;
+        }
+
+        #shipmentsTable tfoot th {
+            position: sticky;
+            bottom: 0;
             z-index: 10;
             white-space: nowrap !important;
             overflow: visible !important;
@@ -7529,6 +7588,29 @@
                             </tr>
                             {% endfor %}
                         </tbody>
+                        <tfoot class="bg-gray-50">
+                            <tr>
+                                <th class="col-client-name px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Client Name</th>
+                                <th class="col-account-code px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Account Code</th>
+                                <th class="col-date px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Inspection Date</th>
+                                <th class="col-compliance px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Compliant/Non-Compliant</th>
+                                <th class="col-email px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Email</th>
+                                <th class="col-additional-email px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Additional Email</th>
+                                <th class="col-inspector px-4 py-3 text-left text-xs font-normal text-gray-700 uppercase tracking-wider">Inspector</th>
+                                <th class="col-view-files px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">View Files</th>
+                                <th class="col-rfi px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">RFI</th>
+                                {% if user.role != 'inspector' %}
+                                <th class="col-invoice px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Invoice</th>
+                                {% endif %}
+                                <th class="col-occurrence px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Occurrence</th>
+                                <th class="col-composition px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Composition</th>
+                                <th class="col-comment px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Comment</th>
+                                <th class="col-km px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Distance (Km)</th>
+                                <th class="col-hours px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Hours Worked</th>
+                                <th class="col-approved px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Approved</th>
+                                <th class="col-send px-4 py-3 text-center text-xs font-normal text-gray-700 uppercase tracking-wider">Sent Status</th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
