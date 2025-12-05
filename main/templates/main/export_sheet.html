@@ -1151,32 +1151,6 @@
                             <label for="invoiceDateToFilter" style="font-size: 0.75rem; font-weight: 500;">Date To:</label>
                             <input type="date" id="invoiceDateToFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
                         </div>
-
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label for="monthFilter" style="font-size: 0.75rem; font-weight: 500;">Month:</label>
-                            <select id="monthFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
-                                <option value="">All</option>
-                                <option value="01">January</option>
-                                <option value="02">February</option>
-                                <option value="03">March</option>
-                                <option value="04">April</option>
-                                <option value="05">May</option>
-                                <option value="06">June</option>
-                                <option value="07">July</option>
-                                <option value="08">August</option>
-                                <option value="09">September</option>
-                                <option value="10">October</option>
-                                <option value="11">November</option>
-                                <option value="12">December</option>
-                            </select>
-                        </div>
-
-                        <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label for="yearFilter" style="font-size: 0.75rem; font-weight: 500;">Year:</label>
-                            <select id="yearFilter" style="padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem;">
-                                <option value="">All</option>
-                            </select>
-                        </div>
                     </div>
 
                     <!-- Second row: Buttons -->
@@ -1315,9 +1289,7 @@
                     city: document.getElementById('cityFilter'),
                     inspector: document.getElementById('inspectorFilter'),
                     dateFrom: document.getElementById('invoiceDateFromFilter'),
-                    dateTo: document.getElementById('invoiceDateToFilter'),
-                    month: document.getElementById('monthFilter'),
-                    year: document.getElementById('yearFilter')
+                    dateTo: document.getElementById('invoiceDateToFilter')
                 };
             }
         };
@@ -1367,9 +1339,7 @@
                 city: document.getElementById('cityFilter'),
                 inspector: document.getElementById('inspectorFilter'),
                 dateFrom: document.getElementById('invoiceDateFromFilter'),
-                dateTo: document.getElementById('invoiceDateToFilter'),
-                month: document.getElementById('monthFilter'),
-                year: document.getElementById('yearFilter')
+                dateTo: document.getElementById('invoiceDateToFilter')
             };
 
             const contactName = filters.contactName.value.toLowerCase().trim();
@@ -1378,11 +1348,9 @@
             const inspector = filters.inspector.value.toLowerCase().trim();
             const invoiceDateFrom = filters.dateFrom.value;
             const invoiceDateTo = filters.dateTo.value;
-            const month = filters.month.value;
-            const year = filters.year.value;
 
             // Check if any filters are active
-            const hasFilters = contactName || reference || city || inspector || invoiceDateFrom || invoiceDateTo || month || year;
+            const hasFilters = contactName || reference || city || inspector || invoiceDateFrom || invoiceDateTo;
 
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
             const rowCount = rows.length;
@@ -1441,20 +1409,6 @@
                         }
                     }
 
-                    // Month filter
-                    if (show && month) {
-                        const rowDate = row.getAttribute('data-date') || '';
-                        const parts = rowDate.split('/');
-                        if (parts.length !== 3 || parts[1] !== month) show = false;
-                    }
-
-                    // Year filter
-                    if (show && year) {
-                        const rowDate = row.getAttribute('data-date') || '';
-                        const parts = rowDate.split('/');
-                        if (parts.length !== 3 || parts[2] !== year) show = false;
-                    }
-
                     row.style.display = show ? '' : 'none';
                 }
 
@@ -1477,9 +1431,7 @@
                 city: document.getElementById('cityFilter'),
                 inspector: document.getElementById('inspectorFilter'),
                 dateFrom: document.getElementById('invoiceDateFromFilter'),
-                dateTo: document.getElementById('invoiceDateToFilter'),
-                month: document.getElementById('monthFilter'),
-                year: document.getElementById('yearFilter')
+                dateTo: document.getElementById('invoiceDateToFilter')
             };
 
             // Clear all filter values
@@ -1489,8 +1441,6 @@
             filters.inspector.value = '';
             filters.dateFrom.value = '';
             filters.dateTo.value = '';
-            filters.month.value = '';
-            filters.year.value = '';
 
             // Show all rows
             const rows = document.querySelectorAll('#exportTableBody tr');
@@ -2031,29 +1981,11 @@
                         if (groupIndex < groupsArray.length) {
                             requestAnimationFrame(processGroupBatch);
                         } else {
-                            populateYearDropdown();
+                            setupEventListeners();
                         }
                     }
 
                     processGroupBatch();
-                }
-
-                function populateYearDropdown() {
-                    // Populate year dropdown
-                    const yearFilter = DOM.filters.year;
-                    const sortedYears = Array.from(years).sort((a, b) => b - a);
-                    const fragment = document.createDocumentFragment();
-
-                    sortedYears.forEach(year => {
-                        const option = document.createElement('option');
-                        option.value = year;
-                        option.textContent = year;
-                        fragment.appendChild(option);
-                    });
-                    yearFilter.appendChild(fragment);
-
-                    // Setup event listeners
-                    setupEventListeners();
                 }
 
                 function setupEventListeners() {
@@ -2079,12 +2011,6 @@
                     }
                     if (DOM.filters.dateTo) {
                         DOM.filters.dateTo.addEventListener('change', applyFilters);
-                    }
-                    if (DOM.filters.month) {
-                        DOM.filters.month.addEventListener('change', applyFilters);
-                    }
-                    if (DOM.filters.year) {
-                        DOM.filters.year.addEventListener('change', applyFilters);
                     }
 
                     // Apply initial filters with default date range
