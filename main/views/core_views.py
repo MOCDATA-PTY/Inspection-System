@@ -4889,6 +4889,10 @@ def export_sheet(request):
     inspection_counter = {}  # Track sequential inspection IDs per inspector
     inspections_processed = 0
 
+    # Debug: Log total inspections found
+    total_inspections = inspections.count()
+    print(f"[EXPORT_SHEET] Total inspections found: {total_inspections}")
+
     for inspection in inspections:
         inspections_processed += 1
         # Generate unique inspection ID
@@ -4938,10 +4942,17 @@ def export_sheet(request):
             lab_name=lab_name
         )
 
+        # Debug: Log if no items generated
+        if not items:
+            print(f"[EXPORT_SHEET] No line items for inspection: {inspection.client_name} on {inspection.date_of_inspection} (hours={inspection.hours}, km={inspection.km_traveled})")
+
         invoice_items.extend(items)
 
     # Calculate unique inspectors
     unique_inspectors = set(item['inspector_name'] for item in invoice_items if item.get('inspector_name'))
+
+    # Debug: Final summary
+    print(f"[EXPORT_SHEET] Processed {inspections_processed} inspections, generated {len(invoice_items)} line items")
 
     # Get system settings for theme
     from ..models import SystemSettings
