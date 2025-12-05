@@ -724,8 +724,8 @@
             <div class="welcome-section bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 mb-6 mx-4 lg:mx-8">
                 <h2 class="welcome-title text-xl font-semibold text-gray-800 mb-4">Getting Started</h2>
                 <p class="welcome-text text-gray-600 leading-relaxed mb-6">
-                    Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different sections of the platform. 
-                    You can manage clients, track inspections, handle inspections, and integrate with Google Sheets for data management.
+                    Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different sections of the platform.
+                    You can manage clients, track inspections, handle inspections, and integrate with SQL Server for data management.
                 </p>
                 
                 {% if request.user.role != 'admin' %}
@@ -1027,7 +1027,7 @@
                 <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
                     <p class="text-sm text-primary font-semibold">
                         <i class="fas fa-spinner fa-spin mr-2"></i>
-                        Step 1/2: Syncing Google Sheets (client names & account codes)...
+                        Step 1/2: Syncing SQL Server (client data)...
                     </p>
                 </div>
             `;
