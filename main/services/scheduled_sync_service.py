@@ -354,8 +354,8 @@ class ScheduledSyncService:
             ).exclude(Q(km_traveled=0) & Q(hours=0))
 
             for insp in inspections_with_data:
-                # Use (remote_id, date) as key since remote_id might not be unique alone
-                key = (insp.remote_id, insp.date_of_inspection)
+                # Use (commodity, remote_id, date) as key to match composite key design
+                key = (insp.commodity, insp.remote_id, insp.date_of_inspection)
                 km_hours_backup[key] = {
                     'km_traveled': insp.km_traveled,
                     'hours': insp.hours
@@ -559,10 +559,12 @@ class ScheduledSyncService:
             if km_hours_backup:
                 print(f"\n🔄 STEP 3: RESTORING KM AND HOURS DATA...")
                 restored_count = 0
-                for (remote_id, date_of_inspection), data in km_hours_backup.items():
+                not_found_count = 0
+                for (commodity, remote_id, date_of_inspection), data in km_hours_backup.items():
                     try:
-                        # Find inspections matching this remote_id and date
+                        # Find inspections matching commodity, remote_id and date (composite key)
                         inspections = FoodSafetyAgencyInspection.objects.filter(
+                            commodity=commodity,
                             remote_id=remote_id,
                             date_of_inspection=date_of_inspection
                         )
@@ -574,12 +576,16 @@ class ScheduledSyncService:
                                 hours=data['hours']
                             )
                             restored_count += inspections.count()
+                        else:
+                            not_found_count += 1
 
                     except Exception as e:
-                        print(f"   ⚠️  Error restoring km/hours for inspection {remote_id}: {e}")
+                        print(f"   ⚠️  Error restoring km/hours for inspection {commodity}-{remote_id}: {e}")
                         continue
 
                 print(f"✅ Restored km/hours data to {restored_count:,} inspections!")
+                if not_found_count > 0:
+                    print(f"⚠️  Could not find {not_found_count} inspections to restore (they may have been removed from SQL Server)")
             else:
                 print(f"\n   ℹ️  No km/hours data to restore (this is normal for first sync)")
 
