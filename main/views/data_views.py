@@ -861,3 +861,48 @@ def process_excel_data(worksheet):
     return skipped_entries, created_entries, error_entries
 
 
+@login_required
+def get_inspection_fees(request):
+    """Get all inspection fees"""
+    from ..models import InspectionFee
+
+    fees = InspectionFee.objects.all().values('id', 'fee_code', 'fee_name', 'rate', 'description', 'last_updated')
+    return JsonResponse({'fees': list(fees)})
+
+
+@login_required
+@require_POST
+def update_inspection_fees(request):
+    """Update inspection fees"""
+    import json
+    from ..models import InspectionFee
+
+    try:
+        data = json.loads(request.body)
+        fees_data = data.get('fees', [])
+
+        updated_count = 0
+        for fee_data in fees_data:
+            fee_id = fee_data.get('id')
+            new_rate = fee_data.get('rate')
+
+            if fee_id and new_rate is not None:
+                fee = InspectionFee.objects.get(id=fee_id)
+                fee.rate = new_rate
+                fee.updated_by = request.user
+                fee.save()
+                updated_count += 1
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Updated {updated_count} fees successfully',
+            'updated_count': updated_count
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=400)
+
+

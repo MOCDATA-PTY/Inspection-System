@@ -1525,6 +1525,16 @@
                 <i class="fas fa-plus"></i> <span class="btn-text">Add Client</span>
             </button>
 
+            <!-- Manage Dropdowns Button -->
+            <button type="button" class="btn btn-primary" onclick="showManageDropdownsModal()">
+                <i class="fas fa-cog"></i> <span class="btn-text">Manage Dropdowns</span>
+            </button>
+
+            <!-- Manage Fees Button -->
+            <button type="button" class="btn btn-warning" onclick="showManageFeesModal()">
+                <i class="fas fa-dollar-sign"></i> <span class="btn-text">Manage Fees</span>
+            </button>
+
             <!-- Refresh Button -->
             <button type="button" class="btn btn-refresh" onclick="syncClients()">
                 <i class="fas fa-sync-alt"></i> <span class="btn-text">Refresh Clients</span>
@@ -1536,53 +1546,115 @@
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
-                    <i class="fas fa-filter"></i> Filter Clients
+                    <i class="fas fa-filter"></i> Filter Clients (Real-Time)
                 </div>
             </div>
             <div class="card-body">
-                <form method="get" action="">
-                    <!-- First Row: Search and Selection Fields -->
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">Client ID</label>
-                            <input type="text" class="form-control" name="client_id" value="{{ request.GET.client_id }}" placeholder="Enter client ID">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Account Code</label>
-                            <input type="text" class="form-control" name="account_code" value="{{ request.GET.account_code }}" placeholder="Enter account code">
-                        </div>
+                <!-- Real-time JavaScript filters -->
+                <div class="form-group">
+                    <div class="form-field">
+                        <label class="form-label">Client ID</label>
+                        <input type="text" class="form-control" id="filter-client-id" placeholder="Search client ID">
                     </div>
-                    
-                    <!-- Second Row: Date Range and Status -->
-                    <div class="form-group">
-                        <div class="form-field">
-                            <label class="form-label">Date From</label>
-                            <input type="date" class="form-control" name="date_from" value="{{ request.GET.date_from }}">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Date To</label>
-                            <input type="date" class="form-control" name="date_to" value="{{ request.GET.date_to }}">
-                        </div>
-                        <div class="form-field">
-                            <label class="form-label">Status</label>
-                            <select class="form-control" name="status">
-                                <option value="">All Clients</option>
-                                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active Only</option>
-                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive Only</option>
-                            </select>
-                        </div>
+                    <div class="form-field">
+                        <label class="form-label">Client Name</label>
+                        <input type="text" class="form-control" id="filter-client-name" placeholder="Search client name">
                     </div>
-                    
-                    <!-- Action Buttons Row -->
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Apply Filters
-                        </button>
-                        <a href="?" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Clear All
-                        </a>
+                    <div class="form-field">
+                        <label class="form-label">Corporate Group</label>
+                        <select class="form-control" id="filter-corporate-group">
+                            <option value="">All Corporate Groups</option>
+                            <option value="boxer">Boxer</option>
+                            <option value="checkers">Checkers</option>
+                            <option value="food lovers market">Food Lovers Market</option>
+                            <option value="makro">Makro</option>
+                            <option value="pick n pay">Pick n Pay</option>
+                            <option value="pick n pay - corporate">Pick n Pay - Corporate</option>
+                            <option value="pick n pay - franchise">Pick n Pay - Franchise</option>
+                            <option value="shoprite">Shoprite</option>
+                            <option value="spar">Spar</option>
+                            <option value="superspar">Superspar</option>
+                            <option value="usave">Usave</option>
+                            <option value="woolworths">Woolworths</option>
+                            <option value="not applicable (none)">Not Applicable (None)</option>
+                        </select>
                     </div>
-                </form>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-field">
+                        <label class="form-label">Commodity</label>
+                        <select class="form-control" id="filter-commodity">
+                            <option value="">All Commodities</option>
+                            <option value="egg">EGG</option>
+                            <option value="plt">PLT</option>
+                            <option value="pmp">PMP</option>
+                            <option value="raw">RAW</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Facility Type</label>
+                        <select class="form-control" id="filter-facility-type">
+                            <option value="">All Facility Types</option>
+                            <option value="ab">Abattoir</option>
+                            <option value="bu">Butchery</option>
+                            <option value="fa">Farm</option>
+                            <option value="pr">Production Plant</option>
+                            <option value="rp">Re-Packer</option>
+                            <option value="re">Retailer</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Facility Code</label>
+                        <select class="form-control" id="filter-facility-code">
+                            <option value="">All Facility Codes</option>
+                            <option value="ab">AB - Abattoir</option>
+                            <option value="bu">BU - Butchery</option>
+                            <option value="fa">FA - Farm</option>
+                            <option value="pr">PR - Production Plant</option>
+                            <option value="rp">RP - Re-Packer</option>
+                            <option value="re">RE - Retailer</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Province</label>
+                        <select class="form-control" id="filter-province">
+                            <option value="">All Provinces</option>
+                            <option value="eastern cape">Eastern Cape</option>
+                            <option value="free state">Free State</option>
+                            <option value="gauteng">Gauteng</option>
+                            <option value="kwazulu-natal">KwaZulu-Natal</option>
+                            <option value="limpopo">Limpopo</option>
+                            <option value="mpumalanga">Mpumalanga</option>
+                            <option value="north west">North West</option>
+                            <option value="northern cape">Northern Cape</option>
+                            <option value="western cape">Western Cape</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-field">
+                        <label class="form-label">Account Code</label>
+                        <input type="text" class="form-control" id="filter-account-code" placeholder="Search account code">
+                    </div>
+                    <div class="form-field">
+                        <label class="form-label">Group Type</label>
+                        <select class="form-control" id="filter-group-type">
+                            <option value="">All Group Types</option>
+                            <option value="cor">Corporate Store</option>
+                            <option value="frn">Franchise Store</option>
+                            <option value="ind">Individual / Independent Owner</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="clearAllFilters()">
+                        <i class="fas fa-times"></i> Clear All Filters
+                    </button>
+                    <span id="filter-count" style="margin-left: 10px; color: var(--text-light);"></span>
+                </div>
             </div>
         </div>
 
@@ -1635,9 +1707,17 @@
                                         <th>Phone Number</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="clientTableBody">
                                     {% for client in clients %}
-                                    <tr data-client-id="{{ client.id }}">
+                                    <tr data-client-id="{{ client.id }}"
+                                        data-filter-client-id="{{ client.client_id|lower }}"
+                                        data-filter-facility-type="{{ client.facility_type|default:''|lower }}"
+                                        data-filter-group-type="{{ client.group_type|default:''|lower }}"
+                                        data-filter-commodity="{{ client.commodity|default:''|lower }}"
+                                        data-filter-province="{{ client.province|default:''|lower }}"
+                                        data-filter-corporate-group="{{ client.corporate_group|default:''|lower }}"
+                                        data-filter-account-code="{{ client.internal_account_code|default:''|lower }}"
+                                        data-filter-client-name="{{ client.eclick_name|default:''|lower }}">
                                         <td>{{ client.client_id }}</td>
                                         <td>{{ client.facility_type|default:"-" }}</td>
                                         <td>{{ client.group_type|default:"-" }}</td>
@@ -1655,9 +1735,18 @@
                         </div>
                         
                         <!-- Mobile Card View -->
-                        <div class="mobile-view">
+                        <div class="mobile-view" id="clientMobileView">
                             {% for client in clients %}
-                            <div class="client-card" data-client-id="{{ client.id }}">
+                            <div class="client-card"
+                                data-client-id="{{ client.id }}"
+                                data-filter-client-id="{{ client.client_id|lower }}"
+                                data-filter-facility-type="{{ client.facility_type|default:''|lower }}"
+                                data-filter-group-type="{{ client.group_type|default:''|lower }}"
+                                data-filter-commodity="{{ client.commodity|default:''|lower }}"
+                                data-filter-province="{{ client.province|default:''|lower }}"
+                                data-filter-corporate-group="{{ client.corporate_group|default:''|lower }}"
+                                data-filter-account-code="{{ client.internal_account_code|default:''|lower }}"
+                                data-filter-client-name="{{ client.eclick_name|default:''|lower }}">
                                 <div class="client-card-header">
                                     <h3 class="client-name">{{ client.client_id }}</h3>
                                     <span class="client-id">{{ client.facility_type|default:"-" }}</span>
@@ -2268,8 +2357,895 @@
                 });
             }
         }
+
+        // ===================================================================
+        // CLIENT FILTERING LOGIC (Real-time JavaScript filters)
+        // ===================================================================
+
+        // Debounce function to improve performance
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Apply filters to client rows
+        function applyClientFilters() {
+            const filters = {
+                clientId: document.getElementById('filter-client-id')?.value.toLowerCase().trim() || '',
+                clientName: document.getElementById('filter-client-name')?.value.toLowerCase().trim() || '',
+                corporateGroup: document.getElementById('filter-corporate-group')?.value.toLowerCase().trim() || '',
+                commodity: document.getElementById('filter-commodity')?.value.toLowerCase().trim() || '',
+                facilityType: document.getElementById('filter-facility-type')?.value.toLowerCase().trim() || '',
+                facilityCode: document.getElementById('filter-facility-code')?.value.toLowerCase().trim() || '',
+                province: document.getElementById('filter-province')?.value.toLowerCase().trim() || '',
+                accountCode: document.getElementById('filter-account-code')?.value.toLowerCase().trim() || '',
+                groupType: document.getElementById('filter-group-type')?.value.toLowerCase().trim() || ''
+            };
+
+            // Get all client rows (both desktop table and mobile cards)
+            const tableRows = document.querySelectorAll('#clientTableBody tr');
+            const mobileCards = document.querySelectorAll('#clientMobileView .client-card');
+
+            let visibleCount = 0;
+            let totalCount = tableRows.length;
+
+            // Filter desktop table rows
+            tableRows.forEach(row => {
+                let show = true;
+
+                // Check each filter
+                if (filters.clientId && !row.getAttribute('data-filter-client-id').includes(filters.clientId)) {
+                    show = false;
+                }
+                if (filters.clientName && !row.getAttribute('data-filter-client-name').includes(filters.clientName)) {
+                    show = false;
+                }
+                if (filters.corporateGroup && !row.getAttribute('data-filter-corporate-group').includes(filters.corporateGroup)) {
+                    show = false;
+                }
+                if (filters.commodity && !row.getAttribute('data-filter-commodity').includes(filters.commodity)) {
+                    show = false;
+                }
+                if (filters.facilityType && !row.getAttribute('data-filter-facility-type').includes(filters.facilityType)) {
+                    show = false;
+                }
+                if (filters.facilityCode && !row.getAttribute('data-filter-facility-type').includes(filters.facilityCode)) {
+                    show = false;
+                }
+                if (filters.province && !row.getAttribute('data-filter-province').includes(filters.province)) {
+                    show = false;
+                }
+                if (filters.accountCode && !row.getAttribute('data-filter-account-code').includes(filters.accountCode)) {
+                    show = false;
+                }
+                if (filters.groupType && !row.getAttribute('data-filter-group-type').includes(filters.groupType)) {
+                    show = false;
+                }
+
+                // Apply visibility
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+
+            // Filter mobile cards
+            mobileCards.forEach(card => {
+                let show = true;
+
+                // Check each filter
+                if (filters.clientId && !card.getAttribute('data-filter-client-id').includes(filters.clientId)) {
+                    show = false;
+                }
+                if (filters.clientName && !card.getAttribute('data-filter-client-name').includes(filters.clientName)) {
+                    show = false;
+                }
+                if (filters.corporateGroup && !card.getAttribute('data-filter-corporate-group').includes(filters.corporateGroup)) {
+                    show = false;
+                }
+                if (filters.commodity && !card.getAttribute('data-filter-commodity').includes(filters.commodity)) {
+                    show = false;
+                }
+                if (filters.facilityType && !card.getAttribute('data-filter-facility-type').includes(filters.facilityType)) {
+                    show = false;
+                }
+                if (filters.facilityCode && !card.getAttribute('data-filter-facility-type').includes(filters.facilityCode)) {
+                    show = false;
+                }
+                if (filters.province && !card.getAttribute('data-filter-province').includes(filters.province)) {
+                    show = false;
+                }
+                if (filters.accountCode && !card.getAttribute('data-filter-account-code').includes(filters.accountCode)) {
+                    show = false;
+                }
+                if (filters.groupType && !card.getAttribute('data-filter-group-type').includes(filters.groupType)) {
+                    show = false;
+                }
+
+                // Apply visibility
+                card.style.display = show ? '' : 'none';
+            });
+
+            // Update filter count display
+            const filterCountEl = document.getElementById('filter-count');
+            if (filterCountEl) {
+                if (visibleCount < totalCount) {
+                    filterCountEl.textContent = `Showing ${visibleCount} of ${totalCount} clients`;
+                    filterCountEl.style.color = 'var(--primary)';
+                    filterCountEl.style.fontWeight = '600';
+                } else {
+                    filterCountEl.textContent = '';
+                }
+            }
+        }
+
+        // Clear all filters
+        function clearAllFilters() {
+            document.getElementById('filter-client-id').value = '';
+            document.getElementById('filter-client-name').value = '';
+            document.getElementById('filter-corporate-group').value = '';
+            document.getElementById('filter-commodity').value = '';
+            document.getElementById('filter-facility-type').value = '';
+            document.getElementById('filter-province').value = '';
+            document.getElementById('filter-account-code').value = '';
+            document.getElementById('filter-group-type').value = '';
+            applyClientFilters();
+        }
+
+        // Initialize filter event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Debounced filter function (wait 300ms after user stops typing)
+            const debouncedFilter = debounce(applyClientFilters, 300);
+
+            // Text input filters (use debounced input event)
+            const textInputs = [
+                'filter-client-id',
+                'filter-client-name',
+                'filter-account-code'
+            ];
+
+            textInputs.forEach(id => {
+                const input = document.getElementById(id);
+                if (input) {
+                    input.addEventListener('input', debouncedFilter);
+                    input.addEventListener('keyup', function(e) {
+                        if (e.key === 'Escape') {
+                            this.value = '';
+                            applyClientFilters();
+                        }
+                    });
+                }
+            });
+
+            // Dropdown filters (use immediate change event)
+            const dropdowns = [
+                'filter-corporate-group',
+                'filter-commodity',
+                'filter-facility-type',
+                'filter-facility-code',
+                'filter-province',
+                'filter-group-type'
+            ];
+
+            dropdowns.forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    select.addEventListener('change', applyClientFilters);
+                }
+            });
+        });
+        // ===================================================================
+        // MANAGE DROPDOWNS MODAL
+        // ===================================================================
+
+        function showManageDropdownsModal() {
+            const modal = document.getElementById('manageDropdownsModal');
+            if (modal) {
+                modal.style.display = 'block';
+                showCurrentOptions();
+            }
+        }
+
+        function closeManageDropdownsModal() {
+            const modal = document.getElementById('manageDropdownsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function showCurrentOptions() {
+            const dropdownType = document.getElementById('dropdown-type').value;
+            const selectElement = document.getElementById(dropdownType);
+            const currentOptionsList = document.getElementById('current-options-list');
+            const codeField = document.getElementById('facility-type-code-field');
+            const newValueLabel = document.getElementById('new-value-label');
+
+            if (!selectElement || !currentOptionsList) return;
+
+            // Show/hide code field for Facility Type
+            if (dropdownType === 'filter-facility-type') {
+                codeField.style.display = 'block';
+                newValueLabel.textContent = 'Description';
+            } else {
+                codeField.style.display = 'none';
+                newValueLabel.textContent = 'New Value';
+            }
+
+            // Get all options except the "All..." option
+            const options = Array.from(selectElement.options)
+                .filter(opt => opt.value !== '');
+
+            // Display options as badges with delete buttons
+            if (dropdownType === 'filter-facility-type') {
+                // For facility type, show code and description
+                currentOptionsList.innerHTML = options
+                    .map(opt => `<span style="
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 6px 12px;
+                        background-color: var(--primary, #007bff);
+                        color: white;
+                        border-radius: 4px;
+                        font-size: 13px;
+                        font-weight: 500;
+                    ">${opt.value.toUpperCase()} - ${opt.text}
+                    <button onclick="deleteDropdownOption('${opt.value}')" style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        cursor: pointer;
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    " title="Delete">&times;</button>
+                    </span>`)
+                    .join('');
+            } else {
+                currentOptionsList.innerHTML = options
+                    .map(opt => `<span style="
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        padding: 6px 12px;
+                        background-color: var(--primary, #007bff);
+                        color: white;
+                        border-radius: 4px;
+                        font-size: 13px;
+                        font-weight: 500;
+                    ">${opt.text}
+                    <button onclick="deleteDropdownOption('${opt.value}')" style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        cursor: pointer;
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                        font-size: 12px;
+                        font-weight: bold;
+                    " title="Delete">&times;</button>
+                    </span>`)
+                    .join('');
+            }
+        }
+
+        function addDropdownOption() {
+            const dropdown = document.getElementById('dropdown-type').value;
+            const optionText = document.getElementById('new-option-text').value.trim();
+
+            if (!dropdown) {
+                alert('Please select a dropdown');
+                return;
+            }
+
+            // For Facility Type, handle code separately
+            let optionValue;
+            if (dropdown === 'filter-facility-type') {
+                const code = document.getElementById('facility-type-code').value.trim().toUpperCase();
+
+                if (!code) {
+                    alert('Please enter a code');
+                    return;
+                }
+                if (code.length !== 2) {
+                    alert('Code must be 2 characters');
+                    return;
+                }
+                if (!optionText) {
+                    alert('Please enter a description');
+                    return;
+                }
+
+                optionValue = code.toLowerCase();
+            } else {
+                if (!optionText) {
+                    alert('Please enter a value');
+                    return;
+                }
+                optionValue = optionText.toLowerCase();
+            }
+
+            const selectElement = document.getElementById(dropdown);
+            if (!selectElement) {
+                alert('Dropdown not found');
+                return;
+            }
+
+            // Check if option already exists
+            const existingOption = Array.from(selectElement.options).find(
+                opt => opt.value.toLowerCase() === optionValue
+            );
+            if (existingOption) {
+                alert('This value already exists');
+                return;
+            }
+
+            // Add new option
+            const newOption = document.createElement('option');
+            newOption.value = optionValue;
+            newOption.textContent = optionText;
+            selectElement.appendChild(newOption);
+
+            // Clear inputs
+            document.getElementById('new-option-text').value = '';
+            if (dropdown === 'filter-facility-type') {
+                document.getElementById('facility-type-code').value = '';
+            }
+
+            // Refresh current options display
+            showCurrentOptions();
+
+            // Show success message
+            if (dropdown === 'filter-facility-type') {
+                alert(`Added ${optionValue.toUpperCase()} - ${optionText}`);
+            } else {
+                alert(`Added "${optionText}"`);
+            }
+        }
+
+        function deleteDropdownOption(optionValue) {
+            const dropdown = document.getElementById('dropdown-type').value;
+            const selectElement = document.getElementById(dropdown);
+
+            if (!selectElement) {
+                alert('Dropdown not found');
+                return;
+            }
+
+            // Find the option to delete
+            const optionToDelete = Array.from(selectElement.options).find(
+                opt => opt.value === optionValue
+            );
+
+            if (!optionToDelete) {
+                alert('Option not found');
+                return;
+            }
+
+            // Confirm deletion
+            const displayText = dropdown === 'filter-facility-type'
+                ? `${optionValue.toUpperCase()} - ${optionToDelete.text}`
+                : optionToDelete.text;
+
+            if (confirm(`Delete "${displayText}"?`)) {
+                selectElement.removeChild(optionToDelete);
+                showCurrentOptions();
+                alert('Deleted');
+            }
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const dropdownModal = document.getElementById('manageDropdownsModal');
+            const feesModal = document.getElementById('manageFeesModal');
+            if (event.target === dropdownModal) {
+                closeManageDropdownsModal();
+            }
+            if (event.target === feesModal) {
+                closeManageFeesModal();
+            }
+        }
+
+        // ===================================================================
+        // MANAGE FEES MODAL
+        // ===================================================================
+
+        let currentFees = [];
+
+        function showManageFeesModal() {
+            const modal = document.getElementById('manageFeesModal');
+            if (modal) {
+                modal.style.display = 'block';
+                loadFees();
+            }
+        }
+
+        function closeManageFeesModal() {
+            const modal = document.getElementById('manageFeesModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        function loadFees() {
+            fetch('/api/fees/get/')
+                .then(response => response.json())
+                .then(data => {
+                    currentFees = data.fees;
+                    displayFees(currentFees);
+                })
+                .catch(error => {
+                    console.error('Error loading fees:', error);
+                    alert('Failed to load fees');
+                });
+        }
+
+        function displayFees(fees) {
+            const feesList = document.getElementById('fees-list');
+            if (!feesList) return;
+
+            if (fees.length === 0) {
+                feesList.innerHTML = '<p style="text-align: center; color: var(--text-light, #666);">No fees found. Please run migrations and populate default fees.</p>';
+                return;
+            }
+
+            feesList.innerHTML = fees.map(fee => `
+                <div class="fee-item" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    padding: 15px;
+                    border-radius: 6px;
+                    margin-bottom: 10px;
+                ">
+                    <div style="flex: 1;">
+                        <div class="fee-name" style="font-weight: 600; margin-bottom: 5px;">${fee.fee_name}</div>
+                        <div class="fee-description" style="font-size: 12px;">${fee.description || ''}</div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 600;">R</span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value="${fee.rate}"
+                            data-fee-id="${fee.id}"
+                            class="fee-rate-input"
+                            style="
+                                width: 150px;
+                                padding: 8px 12px;
+                                font-size: 16px;
+                                border-radius: 4px;
+                            "
+                        />
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function saveAllFees() {
+            const feeInputs = document.querySelectorAll('.fee-rate-input');
+            const updatedFees = [];
+
+            feeInputs.forEach(input => {
+                const feeId = input.getAttribute('data-fee-id');
+                const newRate = parseFloat(input.value);
+
+                if (feeId && !isNaN(newRate)) {
+                    updatedFees.push({
+                        id: parseInt(feeId),
+                        rate: newRate
+                    });
+                }
+            });
+
+            if (updatedFees.length === 0) {
+                alert('No fees to update');
+                return;
+            }
+
+            fetch('/api/fees/update/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ fees: updatedFees })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Successfully updated ${data.updated_count} fees!`);
+                    loadFees(); // Reload to show updated values
+                } else {
+                    alert('Error updating fees: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving fees:', error);
+                alert('Failed to save fees');
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
     </script>
+
+    <!-- Manage Dropdowns Modal -->
+    <div id="manageDropdownsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-body" style="padding-top: 30px;">
+                <div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <div class="form-field">
+                            <label class="form-label">Dropdown</label>
+                            <select class="form-control" id="dropdown-type" onchange="showCurrentOptions()" style="font-size: 16px;">
+                                <option value="filter-corporate-group">Corporate Group</option>
+                                <option value="filter-commodity">Commodity</option>
+                                <option value="filter-facility-type">Facility Type</option>
+                                <option value="filter-province">Province</option>
+                                <option value="filter-group-type">Group Type</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="current-options-display" style="margin-bottom: 20px; padding: 15px; background-color: var(--bg-secondary, #f5f5f5); border-radius: 6px; border: 1px solid var(--border, #ddd);">
+                        <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600;">Current Values:</h4>
+                        <div id="current-options-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <!-- Options will be populated here -->
+                        </div>
+                    </div>
+
+                    <div id="facility-type-code-field" class="form-group" style="margin-bottom: 20px; display: none;">
+                        <div class="form-field">
+                            <label class="form-label">Code</label>
+                            <input type="text" class="form-control" id="facility-type-code" maxlength="2" style="font-size: 16px; text-transform: uppercase;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <div class="form-field">
+                            <label class="form-label" id="new-value-label">New Value</label>
+                            <input type="text" class="form-control" id="new-option-text" style="font-size: 16px;">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-success" onclick="addDropdownOption()" style="width: 100%; padding: 12px; font-size: 16px;">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeManageDropdownsModal()">Close</button>
+            </div>
+        </div>
     </div>
+
+    <!-- Manage Fees Modal -->
+    <div id="manageFeesModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-body" style="padding-top: 30px;">
+                <h3 style="margin-bottom: 20px; color: var(--text, #000);">Inspection & Testing Fees</h3>
+                <p style="margin-bottom: 20px; color: var(--text-light, #666); font-size: 14px;">Update fee rates according to Notice 2996 of 2025. All fees exclude VAT.</p>
+
+                <div id="fees-list" style="margin-bottom: 20px;">
+                    <!-- Fees will be loaded here -->
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" class="btn btn-success" onclick="saveAllFees()" style="flex: 1; padding: 12px; font-size: 16px;">
+                        <i class="fas fa-save"></i> Save All Changes
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeManageFeesModal()" style="padding: 12px; font-size: 16px;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <style>
+        /* Modal styles - Dark mode compatible */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary, #ffffff);
+            color: var(--text, #000000);
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid var(--border, #888);
+            width: 80%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            background-color: var(--primary, #007bff);
+            color: white;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 20px;
+            background-color: var(--bg-primary, #ffffff);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .modal-body h3,
+        .modal-body h4 {
+            color: var(--text, #000000);
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            background-color: var(--bg-secondary, #f8f9fa);
+            border-radius: 0 0 8px 8px;
+            text-align: right;
+            border-top: 1px solid var(--border, #dee2e6);
+        }
+
+        .close {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #ddd;
+        }
+
+        .option-item {
+            padding: 5px;
+            border-bottom: 1px solid var(--border-light, #eee);
+            color: var(--text, #000000);
+        }
+
+        .option-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Option list containers */
+        .option-list-container {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border, #ddd);
+            padding: 10px;
+            border-radius: 4px;
+            background-color: var(--bg-secondary, #ffffff);
+            color: var(--text, #000000);
+        }
+
+        /* EXPLICIT DARK MODE STYLES - Using all possible selectors */
+        @media (prefers-color-scheme: dark) {
+            .modal-content {
+                background-color: #1a1a1a;
+                color: #e0e0e0;
+                border-color: #444;
+            }
+            .modal-body {
+                background-color: #1a1a1a;
+            }
+            .modal-footer {
+                background-color: #2a2a2a;
+                border-color: #444;
+            }
+            .option-list-container,
+            .form-control {
+                background-color: #2a2a2a;
+                color: #e0e0e0;
+                border-color: #444;
+            }
+        }
+
+        [data-theme="dark"] .modal-content,
+        .dark-mode .modal-content,
+        body.dark .modal-content {
+            background-color: #1a1a1a !important;
+            color: #e0e0e0 !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] .modal-body,
+        .dark-mode .modal-body,
+        body.dark .modal-body {
+            background-color: #1a1a1a !important;
+        }
+
+        [data-theme="dark"] .modal-body h3,
+        [data-theme="dark"] .modal-body h4,
+        .dark-mode .modal-body h3,
+        .dark-mode .modal-body h4,
+        body.dark .modal-body h3,
+        body.dark .modal-body h4 {
+            color: #e0e0e0 !important;
+        }
+
+        [data-theme="dark"] .modal-footer,
+        .dark-mode .modal-footer,
+        body.dark .modal-footer {
+            background-color: #2a2a2a !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] .option-list-container,
+        .dark-mode .option-list-container,
+        body.dark .option-list-container {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] #dropdown-type,
+        [data-theme="dark"] #new-option-value,
+        [data-theme="dark"] #new-option-text,
+        [data-theme="dark"] #facility-type-code,
+        .dark-mode #dropdown-type,
+        .dark-mode #new-option-value,
+        .dark-mode #new-option-text,
+        .dark-mode #facility-type-code,
+        body.dark #dropdown-type,
+        body.dark #new-option-value,
+        body.dark #new-option-text,
+        body.dark #facility-type-code {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] .form-label,
+        .dark-mode .form-label,
+        body.dark .form-label {
+            color: #e0e0e0 !important;
+        }
+
+        [data-theme="dark"] #current-options-display,
+        .dark-mode #current-options-display,
+        body.dark #current-options-display {
+            background-color: #2a2a2a !important;
+            border-color: #444 !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #current-options-display {
+                background-color: #2a2a2a;
+                border-color: #444;
+            }
+            #current-options-display h4 {
+                color: #e0e0e0;
+            }
+        }
+
+        /* Manage Fees Modal - Light mode styles */
+        .fee-item {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+        }
+
+        .fee-name {
+            color: #000;
+        }
+
+        .fee-description {
+            color: #666;
+        }
+
+        .fee-rate-input {
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #ddd;
+        }
+
+        /* Dark mode styles for Manage Fees Modal */
+        [data-theme="dark"] .fee-rate-input,
+        .dark-mode .fee-rate-input,
+        body.dark .fee-rate-input {
+            background-color: #2a2a2a !important;
+            color: #e0e0e0 !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] .fee-item,
+        .dark-mode .fee-item,
+        body.dark .fee-item {
+            background-color: #2a2a2a !important;
+            border-color: #444 !important;
+        }
+
+        [data-theme="dark"] .fee-name,
+        .dark-mode .fee-name,
+        body.dark .fee-name {
+            color: #e0e0e0 !important;
+        }
+
+        [data-theme="dark"] .fee-description,
+        .dark-mode .fee-description,
+        body.dark .fee-description {
+            color: #999 !important;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .fee-rate-input {
+                background-color: #2a2a2a;
+                color: #e0e0e0;
+                border-color: #444;
+            }
+            .fee-item {
+                background-color: #2a2a2a;
+                border-color: #444;
+            }
+            .fee-name {
+                color: #e0e0e0;
+            }
+            .fee-description {
+                color: #999;
+            }
+        }
+
+        /* Manage Fees button styling */
+        .btn-warning {
+            background-color: #f59e0b !important;
+            color: white !important;
+            border: none !important;
+        }
+
+        .btn-warning:hover {
+            background-color: #d97706 !important;
+        }
+
+        [data-theme="dark"] .btn-warning,
+        .dark-mode .btn-warning,
+        body.dark .btn-warning {
+            background-color: #f59e0b !important;
+            color: white !important;
+        }
+
+        [data-theme="dark"] .btn-warning:hover,
+        .dark-mode .btn-warning:hover,
+        body.dark .btn-warning:hover {
+            background-color: #d97706 !important;
+        }
+    </style>
+
+</div>
+</div>
 </body>
 </html>

@@ -4,6 +4,14 @@
     {% load static %}
     {% load group_filters %}
 
+    <!-- Apply saved theme immediately to prevent flash -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
@@ -103,6 +111,112 @@
             --input-border: #404040;
             --success: #10b981;
             --info: #3b82f6;
+        }
+
+        /* Dark mode specific element styles */
+        [data-theme="dark"] #exportTable thead {
+            background-color: #2d2d2d;
+        }
+
+        [data-theme="dark"] #exportTable thead th {
+            background-color: #2d2d2d;
+            color: #ffffff;
+            border-bottom-color: #404040;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr {
+            background-color: #1a1a1a;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr:hover {
+            background-color: #2d2d2d;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr.invoiced {
+            background-color: #1e4620;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr.invoiced:hover {
+            background-color: #265a28;
+        }
+
+        [data-theme="dark"] #exportTable tbody td {
+            color: #ffffff;
+            border-bottom-color: #404040;
+        }
+
+        [data-theme="dark"] .invoice-input,
+        [data-theme="dark"] input[type="text"],
+        [data-theme="dark"] input[type="date"],
+        [data-theme="dark"] select {
+            background-color: var(--input-bg);
+            color: var(--text);
+            border-color: var(--input-border);
+        }
+
+        [data-theme="dark"] .invoice-input:focus,
+        [data-theme="dark"] input[type="text"]:focus,
+        [data-theme="dark"] input[type="date"]:focus,
+        [data-theme="dark"] select:focus {
+            border-color: var(--primary);
+            background-color: #383838;
+        }
+
+        [data-theme="dark"] .context-menu {
+            background-color: #2d2d2d;
+            border-color: #404040;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        [data-theme="dark"] .context-menu-item {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .context-menu-item:hover {
+            background-color: #383838;
+            color: var(--primary);
+        }
+
+        [data-theme="dark"] .context-menu-separator {
+            background-color: #404040;
+        }
+
+        [data-theme="dark"] .filter-controls {
+            background-color: var(--card-bg);
+            border-color: var(--border);
+        }
+
+        [data-theme="dark"] .filter-controls label {
+            color: var(--text);
+        }
+
+        [data-theme="dark"] .status-badge.status-invoiced {
+            background-color: #10b981;
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .status-badge.status-pending {
+            background-color: #f59e0b;
+            color: #1a1a1a;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr.invoiced .status-invoiced {
+            background-color: #ffffff;
+            color: #166534;
+            border-color: #166534;
+        }
+
+        [data-theme="dark"] #exportTable tbody td.selected-cell {
+            background-color: #1e3a5f !important;
+            outline-color: #3b82f6;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr.selected-row {
+            background-color: #1a2940 !important;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr.selected-row.invoiced {
+            background-color: #2d4a2f !important;
         }
         
         * {
@@ -603,6 +717,8 @@
         #exportTable tbody tr {
             background-color: var(--card-bg);
             transition: background-color 0.2s ease;
+            contain: layout style paint;
+            will-change: background-color;
         }
 
         #exportTable tbody tr:hover {
@@ -957,9 +1073,10 @@
                 </ul>
             </div>
 
-            <!-- Logout Button -->
+            <!-- Logout Section -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
-                <form action="{% url 'logout' %}" method="post" class="inline w-full">
+                <!-- Logout Button -->
+                <form action="{% url 'logout' %}" method="post" class="w-full">
                     {% csrf_token %}
                     <button type="submit" class="logout-btn">
                         <i class="fas fa-sign-out-alt"></i>
@@ -1192,7 +1309,13 @@
         // Helper function to check if there's data to export
         function hasExportData() {
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
-            return rows.length > 0;
+            // Check if there's at least one visible row
+            for (let row of rows) {
+                if (row.style.display !== 'none') {
+                    return true;
+                }
+            }
+            return false;
         }
 
         // Debounce function for filter inputs
@@ -1219,7 +1342,7 @@
             return dateStr;
         }
         
-        // Function to apply all filters
+        // Optimized filter function with batch processing
         function applyFilters() {
             // Get filter values (use cached elements if available)
             const filters = DOM.filters.contactName ? DOM.filters : {
@@ -1242,66 +1365,91 @@
             const month = filters.month.value;
             const year = filters.year.value;
 
+            // Check if any filters are active
+            const hasFilters = contactName || reference || city || inspector || invoiceDateFrom || invoiceDateTo || month || year;
+
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
-            let visibleCount = 0;
+            const rowCount = rows.length;
 
-            rows.forEach(row => {
-                let show = true;
+            // Batch process for smooth performance
+            const BATCH_SIZE = 50;
+            let currentIndex = 0;
 
-                // Contact Name filter
-                if (show && contactName) {
-                    const rowContact = (row.getAttribute('data-contact') || '').toLowerCase();
-                    show = rowContact.includes(contactName);
-                }
+            function processBatch() {
+                const endIndex = Math.min(currentIndex + BATCH_SIZE, rowCount);
 
-                // Reference Number filter
-                if (show && reference) {
-                    const rowReference = (row.getAttribute('data-reference') || '').toLowerCase();
-                    show = rowReference.includes(reference);
-                }
+                for (let i = currentIndex; i < endIndex; i++) {
+                    const row = rows[i];
 
-                // City filter
-                if (show && city) {
-                    const rowCity = (row.getAttribute('data-city') || '').toLowerCase();
-                    show = rowCity.includes(city);
-                }
-
-                // Inspector filter
-                if (show && inspector) {
-                    const rowInspector = (row.getAttribute('data-inspector') || '').toLowerCase();
-                    show = rowInspector.includes(inspector);
-                }
-
-                // Invoice Date range filter
-                if (show && (invoiceDateFrom || invoiceDateTo)) {
-                    const rowDate = row.getAttribute('data-date') || '';
-                    const parts = rowDate.split('/');
-                    if (parts.length === 3) {
-                        const rowDateFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                        if (invoiceDateFrom && rowDateFormatted < invoiceDateFrom) show = false;
-                        if (invoiceDateTo && rowDateFormatted > invoiceDateTo) show = false;
-                    } else {
-                        show = false;
+                    if (!hasFilters) {
+                        row.style.display = '';
+                        continue;
                     }
+
+                    let show = true;
+
+                    // Contact Name filter
+                    if (show && contactName) {
+                        const rowContact = (row.getAttribute('data-contact') || '').toLowerCase();
+                        show = rowContact.includes(contactName);
+                    }
+
+                    // Reference Number filter
+                    if (show && reference) {
+                        const rowReference = (row.getAttribute('data-reference') || '').toLowerCase();
+                        show = rowReference.includes(reference);
+                    }
+
+                    // City filter
+                    if (show && city) {
+                        const rowCity = (row.getAttribute('data-city') || '').toLowerCase();
+                        show = rowCity.includes(city);
+                    }
+
+                    // Inspector filter
+                    if (show && inspector) {
+                        const rowInspector = (row.getAttribute('data-inspector') || '').toLowerCase();
+                        show = rowInspector.includes(inspector);
+                    }
+
+                    // Invoice Date range filter
+                    if (show && (invoiceDateFrom || invoiceDateTo)) {
+                        const rowDate = row.getAttribute('data-date') || '';
+                        const parts = rowDate.split('/');
+                        if (parts.length === 3) {
+                            const rowDateFormatted = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            if (invoiceDateFrom && rowDateFormatted < invoiceDateFrom) show = false;
+                            if (invoiceDateTo && rowDateFormatted > invoiceDateTo) show = false;
+                        } else {
+                            show = false;
+                        }
+                    }
+
+                    // Month filter
+                    if (show && month) {
+                        const rowDate = row.getAttribute('data-date') || '';
+                        const parts = rowDate.split('/');
+                        if (parts.length !== 3 || parts[1] !== month) show = false;
+                    }
+
+                    // Year filter
+                    if (show && year) {
+                        const rowDate = row.getAttribute('data-date') || '';
+                        const parts = rowDate.split('/');
+                        if (parts.length !== 3 || parts[2] !== year) show = false;
+                    }
+
+                    row.style.display = show ? '' : 'none';
                 }
 
-                // Month filter
-                if (show && month) {
-                    const rowDate = row.getAttribute('data-date') || '';
-                    const parts = rowDate.split('/');
-                    if (parts.length !== 3 || parts[1] !== month) show = false;
-                }
+                currentIndex = endIndex;
 
-                // Year filter
-                if (show && year) {
-                    const rowDate = row.getAttribute('data-date') || '';
-                    const parts = rowDate.split('/');
-                    if (parts.length !== 3 || parts[2] !== year) show = false;
+                if (currentIndex < rowCount) {
+                    requestAnimationFrame(processBatch);
                 }
+            }
 
-                row.style.display = show ? '' : 'none';
-                if (show) visibleCount++;
-            });
+            processBatch();
         }
 
         // Function to clear all filters
@@ -1412,6 +1560,7 @@
                 'Discount',
                 '*AccountCode',
                 '*TaxType',
+                'InvoiceNumber',  // Column header present but values always blank
                 'TrackingName1',
                 'TrackingOption1',
                 'TrackingName2',
@@ -1422,14 +1571,20 @@
 
             const data = [headers];
 
-            // Get all visible table rows
+            // Get all visible table rows (only rows that are not hidden by filters)
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
             rows.forEach(row => {
+                // Skip hidden rows (filtered out)
+                if (row.style.display === 'none') {
+                    return;
+                }
+
                 const contactName = row.getAttribute('data-contact') || '';
                 const city = row.getAttribute('data-city') || '';
                 const country = row.getAttribute('data-country') || '';
-                const invoiceRef = row.getAttribute('data-reference') || '';
-                const rfiRef = row.getAttribute('data-rfi') || '';
+                // Note: invoiceRef is read but NOT exported (kept blank for Xero import)
+                // const invoiceRef = row.getAttribute('data-reference') || '';
+                // const rfiRef = row.getAttribute('data-rfi') || '';
                 const invoiceDate = row.getAttribute('data-date') || '';
                 const total = row.getAttribute('data-total') || '';
                 const itemCode = row.getAttribute('data-itemcode') || '';
@@ -1441,32 +1596,33 @@
 
                 data.push([
                     contactName,              // *ContactName
-                    '',                       // EmailAddress
-                    '',                       // POAddressLine1
-                    '',                       // POAddressLine2
-                    '',                       // POAddressLine3
-                    '',                       // POAddressLine4
+                    '',                       // EmailAddress (blank)
+                    '',                       // POAddressLine1 (blank)
+                    '',                       // POAddressLine2 (blank)
+                    '',                       // POAddressLine3 (blank)
+                    '',                       // POAddressLine4 (blank)
                     city,                     // POCity
-                    '',                       // PORegion
-                    '',                       // POPostalCode
-                    '',                       // POCountry (blank for export)
-                    '',                       // Reference (blank for export)
+                    '',                       // PORegion (blank)
+                    '',                       // POPostalCode (blank)
+                    '',                       // POCountry (ALWAYS BLANK - no country in export)
+                    '',                       // Reference (ALWAYS BLANK - no invoice numbers in export)
                     invoiceDate,              // *InvoiceDate
-                    '',                       // *DueDate
-                    '',                       // Total (blank for export)
+                    '',                       // *DueDate (blank - Xero will calculate)
+                    '',                       // Total (ALWAYS BLANK - Xero calculates from line items)
                     itemCode,                 // InventoryItemCode
                     description,              // *Description
                     quantity,                 // *Quantity
                     unitAmount,               // *UnitAmount
-                    '',                       // Discount (blank for export)
+                    '',                       // Discount (blank)
                     accountCode,              // *AccountCode
                     taxType,                  // *TaxType
-                    '',                       // TrackingName1
-                    '',                       // TrackingOption1
-                    '',                       // TrackingName2
-                    '',                       // TrackingOption2
-                    '',                       // Currency (blank for export)
-                    ''                        // BrandingTheme
+                    '',                       // InvoiceNumber (ALWAYS BLANK - column header present but values empty)
+                    '',                       // TrackingName1 (blank)
+                    '',                       // TrackingOption1 (blank)
+                    '',                       // TrackingName2 (blank)
+                    '',                       // TrackingOption2 (blank)
+                    '',                       // Currency (blank - uses default)
+                    ''                        // BrandingTheme (blank)
                 ]);
             });
 
@@ -1616,7 +1772,6 @@
                 { wch: 15 }, // PORegion
                 { wch: 12 }, // POPostalCode
                 { wch: 15 }, // POCountry
-                { wch: 20 }, // InvoiceNumber
                 { wch: 20 }, // Reference
                 { wch: 12 }, // InvoiceDate
                 { wch: 12 }, // DueDate
@@ -1628,7 +1783,7 @@
                 { wch: 10 }, // Discount
                 { wch: 15 }, // AccountCode
                 { wch: 25 }, // TaxType
-                { wch: 12 }, // TaxAmount
+                { wch: 20 }, // InvoiceNumber (column present but always blank)
                 { wch: 15 }, // TrackingName1
                 { wch: 15 }, // TrackingOption1
                 { wch: 15 }, // TrackingName2
@@ -1753,95 +1908,147 @@
             document.getElementById('uniqueClients').textContent = uniqueClients.size;
         }
 
-        // Add event listeners for filters (Enter key to apply)
+        // Optimized initialization with batch processing
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize DOM cache
+            // Initialize DOM cache first
             DOM.init();
 
-            // Get all rows once
-            const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
-            const groups = new Map();
-            const years = new Set();
+            // Use requestAnimationFrame for smooth loading
+            requestAnimationFrame(() => {
+                // Get all rows once
+                const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
+                const groups = new Map();
+                const years = new Set();
+                const rowCount = rows.length;
 
-            // Single pass: group rows and collect years
-            rows.forEach(row => {
-                const contactName = row.getAttribute('data-contact');
-                const invoiceDate = row.getAttribute('data-date');
-                const groupKey = `${contactName}|${invoiceDate}`;
+                // Batch process rows for better performance
+                const BATCH_SIZE = 100;
+                let currentIndex = 0;
 
-                if (!groups.has(groupKey)) {
-                    groups.set(groupKey, []);
-                }
-                groups.get(groupKey).push(row);
+                function processBatch() {
+                    const endIndex = Math.min(currentIndex + BATCH_SIZE, rowCount);
 
-                // Collect years
-                if (invoiceDate) {
-                    const parts = invoiceDate.split('/');
-                    if (parts.length === 3) {
-                        years.add(parts[2]);
+                    // Process batch
+                    for (let i = currentIndex; i < endIndex; i++) {
+                        const row = rows[i];
+                        const contactName = row.getAttribute('data-contact');
+                        const invoiceDate = row.getAttribute('data-date');
+                        const groupKey = `${contactName}|${invoiceDate}`;
+
+                        if (!groups.has(groupKey)) {
+                            groups.set(groupKey, []);
+                        }
+                        groups.get(groupKey).push(row);
+
+                        // Collect years
+                        if (invoiceDate) {
+                            const parts = invoiceDate.split('/');
+                            if (parts.length === 3) {
+                                years.add(parts[2]);
+                            }
+                        }
+                    }
+
+                    currentIndex = endIndex;
+
+                    // Continue processing or finalize
+                    if (currentIndex < rowCount) {
+                        requestAnimationFrame(processBatch);
+                    } else {
+                        finializeProcessing();
                     }
                 }
-            });
 
-            // Process groups - show input only on first row
-            groups.forEach(groupRows => {
-                for (let i = 1; i < groupRows.length; i++) {
-                    const row = groupRows[i];
-                    const inputCell = row.querySelector('td:nth-last-child(2)');
-                    const input = inputCell?.querySelector('input[data-invoice-input]');
+                function finializeProcessing() {
+                    // Process groups - show input only on first row (batch process)
+                    const groupsArray = Array.from(groups.values());
+                    let groupIndex = 0;
 
-                    if (input) {
-                        const textSpan = document.createElement('span');
-                        textSpan.setAttribute('data-invoice-display', '');
-                        textSpan.textContent = input.value;
-                        textSpan.style.cssText = 'display: inline-block; width: 140px; padding: 4px 8px; font-size: 0.65rem;';
-                        input.replaceWith(textSpan);
+                    function processGroupBatch() {
+                        const endGroupIndex = Math.min(groupIndex + 10, groupsArray.length);
+
+                        for (let g = groupIndex; g < endGroupIndex; g++) {
+                            const groupRows = groupsArray[g];
+                            for (let i = 1; i < groupRows.length; i++) {
+                                const row = groupRows[i];
+                                const inputCell = row.querySelector('td:nth-last-child(2)');
+                                const input = inputCell?.querySelector('input[data-invoice-input]');
+
+                                if (input) {
+                                    const textSpan = document.createElement('span');
+                                    textSpan.setAttribute('data-invoice-display', '');
+                                    textSpan.textContent = input.value;
+                                    textSpan.style.cssText = 'display: inline-block; width: 140px; padding: 4px 8px; font-size: 0.65rem;';
+                                    input.replaceWith(textSpan);
+                                }
+                            }
+                        }
+
+                        groupIndex = endGroupIndex;
+
+                        if (groupIndex < groupsArray.length) {
+                            requestAnimationFrame(processGroupBatch);
+                        } else {
+                            populateYearDropdown();
+                        }
                     }
+
+                    processGroupBatch();
                 }
-            });
 
-            // Populate year dropdown
-            const yearFilter = DOM.filters.year;
-            const sortedYears = Array.from(years).sort((a, b) => b - a);
-            const fragment = document.createDocumentFragment();
+                function populateYearDropdown() {
+                    // Populate year dropdown
+                    const yearFilter = DOM.filters.year;
+                    const sortedYears = Array.from(years).sort((a, b) => b - a);
+                    const fragment = document.createDocumentFragment();
 
-            sortedYears.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                fragment.appendChild(option);
-            });
-            yearFilter.appendChild(fragment);
+                    sortedYears.forEach(year => {
+                        const option = document.createElement('option');
+                        option.value = year;
+                        option.textContent = year;
+                        fragment.appendChild(option);
+                    });
+                    yearFilter.appendChild(fragment);
 
-            // Create debounced filter function
-            const debouncedApplyFilters = debounce(applyFilters, 300);
+                    // Setup event listeners
+                    setupEventListeners();
+                }
 
-            // Add input event listeners for text filters (with debounce)
-            ['contactName', 'reference', 'city', 'inspector'].forEach(key => {
-                const input = DOM.filters[key];
-                if (input) {
-                    input.addEventListener('input', debouncedApplyFilters);
-                    input.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            applyFilters();
+                function setupEventListeners() {
+                    // Create debounced filter function
+                    const debouncedApplyFilters = debounce(applyFilters, 300);
+
+                    // Add input event listeners for text filters (with debounce)
+                    ['contactName', 'reference', 'city', 'inspector'].forEach(key => {
+                        const input = DOM.filters[key];
+                        if (input) {
+                            input.addEventListener('input', debouncedApplyFilters);
+                            input.addEventListener('keypress', function(e) {
+                                if (e.key === 'Enter') {
+                                    applyFilters();
+                                }
+                            });
                         }
                     });
-                }
-            });
 
-            // Add change listeners for date and select inputs
-            if (DOM.filters.dateFrom) {
-                DOM.filters.dateFrom.addEventListener('change', applyFilters);
-            }
-            if (DOM.filters.dateTo) {
-                DOM.filters.dateTo.addEventListener('change', applyFilters);
-            }
-            if (DOM.filters.month) {
-                DOM.filters.month.addEventListener('change', applyFilters);
-            }
-            if (DOM.filters.year) {
-                DOM.filters.year.addEventListener('change', applyFilters);
-            }
+                    // Add change listeners for date and select inputs
+                    if (DOM.filters.dateFrom) {
+                        DOM.filters.dateFrom.addEventListener('change', applyFilters);
+                    }
+                    if (DOM.filters.dateTo) {
+                        DOM.filters.dateTo.addEventListener('change', applyFilters);
+                    }
+                    if (DOM.filters.month) {
+                        DOM.filters.month.addEventListener('change', applyFilters);
+                    }
+                    if (DOM.filters.year) {
+                        DOM.filters.year.addEventListener('change', applyFilters);
+                    }
+                }
+
+                // Start processing
+                processBatch();
+            });
         });
 
         // Excel-like Keyboard Navigation

@@ -3488,16 +3488,49 @@ def client_allocation(request):
 
         # Get clients from local database
         clients = ClientAllocation.objects.all().order_by('client_id')
-        
+
+        # Get unique values for dropdown filters
+        all_clients = ClientAllocation.objects.all()
+        unique_commodities = sorted(set(
+            all_clients.exclude(commodity__isnull=True)
+            .exclude(commodity='')
+            .exclude(commodity__iexact='-')
+            .values_list('commodity', flat=True)
+        ))
+        unique_facility_types = sorted(set(
+            all_clients.exclude(facility_type__isnull=True)
+            .exclude(facility_type='')
+            .exclude(facility_type__iexact='-')
+            .values_list('facility_type', flat=True)
+        ))
+        unique_provinces = sorted(set(
+            all_clients.exclude(province__isnull=True)
+            .exclude(province='')
+            .exclude(province__iexact='-')
+            .values_list('province', flat=True)
+        ))
+        unique_corporate_groups = sorted(set(
+            all_clients.exclude(corporate_group__isnull=True)
+            .exclude(corporate_group='')
+            .exclude(corporate_group__iexact='-')
+            .values_list('corporate_group', flat=True)
+        ))
+        unique_group_types = sorted(set(
+            all_clients.exclude(group_type__isnull=True)
+            .exclude(group_type='')
+            .exclude(group_type__iexact='-')
+            .values_list('group_type', flat=True)
+        ))
+
         # Apply comprehensive filters
         clients = apply_client_filters(request, clients)
-        
+
         # Get total count before pagination
         total_clients = clients.count()
-        
+
         # Check if user wants to see all clients
         show_all = request.GET.get('show_all', 'false').lower() == 'true'
-        
+
         if show_all:
             # Show all clients without pagination
             clients_list = list(clients)
@@ -3509,24 +3542,34 @@ def client_allocation(request):
             page_number = request.GET.get('page')
             page_obj = paginator.get_page(page_number)
             clients_list = page_obj
-        
+
         context = {
             'clients': clients_list,
             'page_obj': page_obj,
             'total_clients': total_clients,
             'show_all': show_all,
+            'unique_commodities': unique_commodities,
+            'unique_facility_types': unique_facility_types,
+            'unique_provinces': unique_provinces,
+            'unique_corporate_groups': unique_corporate_groups,
+            'unique_group_types': unique_group_types,
             'error': None
         }
-        
+
     except Exception as e:
         context = {
             'clients': [],
             'page_obj': None,
             'total_clients': 0,
             'show_all': False,
+            'unique_commodities': [],
+            'unique_facility_types': [],
+            'unique_provinces': [],
+            'unique_corporate_groups': [],
+            'unique_group_types': [],
             'error': f'Error fetching data: {str(e)}'
         }
-    
+
     return render(request, 'main/client_allocation.html', context)
 
 
@@ -3825,7 +3868,8 @@ def add_client_allocation(request):
                 internal_account_code=internal_account_code,
                 allocated=allocated,
                 representative_email=representative_email,
-                phone_number=phone_number
+                phone_number=phone_number,
+                manually_added=True  # Mark as manually added
             )
 
             # Clear cache
@@ -3988,83 +4032,167 @@ def delete_client_allocation(request):
 
 @login_required(login_url='login')
 def sync_client_allocations(request):
-    """Sync client allocation data from Google Sheets to PostgreSQL database.
+    """Sync client allocation data from SQL Server Clients table to PostgreSQL database.
 
     Optimized with bulk operations for maximum performance.
     """
-    from ..services.google_sheets_service import GoogleSheetsService
     from ..models import ClientAllocation
     from django.contrib import messages
     from django.db import transaction
     from django.core.cache import cache
+    from ..utils.sql_server_utils import SQLServerConnection
+
+    # Mapping dictionaries for internal account codes
+    FACILITY_TYPE_MAP = {
+        'RE': 'Retailer',
+        'BU': 'Butchery',
+        'RP': 'Re-Packer',
+        'PR': 'Production Plant',
+        'FA': 'Farm',
+        'AB': 'Abattoir'
+    }
+
+    GROUP_TYPE_MAP = {
+        'COR': 'Corporate Store',
+        'FRN': 'Franchise Store',
+        'IND': 'Individual / Independent Owner'
+    }
+
+    COMMODITY_MAP = {
+        'PMP': 'Processed Meat Products (PMP)',
+        'RAW': 'Certain Raw Processed Meat',
+        'EGG': 'Eggs',
+        'PLT': 'Poultry',
+        'XX': 'Unknown/Other'
+    }
+
+    def parse_internal_account_code(account_code):
+        """Parse internal account code to extract facility type, group type, and commodity"""
+        if not account_code:
+            return None, None, None
+
+        parts = account_code.split('-')
+        if len(parts) < 4:
+            return None, None, None
+
+        facility_code = parts[0]
+        group_code = parts[1]
+        commodity_code = parts[2]
+
+        facility_type = FACILITY_TYPE_MAP.get(facility_code)
+        group_type = GROUP_TYPE_MAP.get(group_code)
+        commodity = COMMODITY_MAP.get(commodity_code)
+
+        return facility_type, group_type, commodity
 
     if request.method == 'POST':
         try:
-            # Initialize Google Sheets service
-            sheets_service = GoogleSheetsService()
+            # Connect to SQL Server
+            sql_conn = SQLServerConnection()
 
-            # Spreadsheet details
-            spreadsheet_id = "1iNULGBAzJ9n2ZulxwP8ZZZbwcPhj7X6e6rPwYqtI_fM"
-            sheet_name = "Internal Account Code Generator"
+            if not sql_conn.connect():
+                messages.error(request, "Failed to connect to SQL Server.")
+                return redirect('client_allocation_sheet')
 
-            # Fetch all data from row 2 onwards (row 1 is headers)
-            # Fetch columns A through N (14 columns)
-            range_name = f"'{sheet_name}'!A2:N"
+            # Fetch all active clients from SQL Server
+            cursor = sql_conn.connection.cursor()
 
-            sheet_data = sheets_service.get_sheet_data(spreadsheet_id, range_name, request)
+            # Query to get all clients with province information
+            query = """
+                SELECT
+                    c.Id,
+                    c.Name,
+                    c.InternalAccountNumber,
+                    c.ContactNumber,
+                    c.ContactEmail,
+                    c.ContactNumberForInspections,
+                    c.ContactEmailForInspections,
+                    c.SiteName,
+                    c.PhysicalAddress,
+                    c.IsActive,
+                    CASE
+                        WHEN c.ProvinceStateId = 1 THEN 'Eastern Cape'
+                        WHEN c.ProvinceStateId = 2 THEN 'Gauteng'
+                        WHEN c.ProvinceStateId = 3 THEN 'KwaZulu-Natal'
+                        WHEN c.ProvinceStateId = 4 THEN 'Limpopo'
+                        WHEN c.ProvinceStateId = 5 THEN 'Mpumalanga'
+                        WHEN c.ProvinceStateId = 6 THEN 'Northern Cape'
+                        WHEN c.ProvinceStateId = 7 THEN 'North West'
+                        WHEN c.ProvinceStateId = 8 THEN 'Western Cape'
+                        WHEN c.ProvinceStateId = 9 THEN 'Free State'
+                        ELSE 'Unknown'
+                    END AS Province
+                FROM Clients c
+                WHERE c.IsActive = 1
+                ORDER BY c.Id
+            """
 
-            if not sheet_data:
-                messages.warning(request, "No data found in Google Sheets.")
+            cursor.execute(query)
+            sql_clients = cursor.fetchall()
+
+            if not sql_clients:
+                sql_conn.disconnect()
+                messages.warning(request, "No active clients found in SQL Server.")
                 return redirect('client_allocation_sheet')
 
             # Prepare bulk data - much faster than individual creates
             bulk_records = []
             seen_client_ids = set()
 
-            for row in sheet_data:
-                # Pad the row with empty strings if it has fewer than 14 columns
-                while len(row) < 14:
-                    row.append('')
+            for row in sql_clients:
+                client_id = row[0]
+                name = row[1]
+                internal_account_code = row[2]
+                contact_number = row[3]
+                contact_email = row[4]
+                contact_number_inspections = row[5]
+                contact_email_inspections = row[6]
+                site_name = row[7]
+                physical_address = row[8]
+                is_active = row[9]
+                province = row[10]
 
-                # Skip rows without a client ID
-                if not row[0] or str(row[0]).strip() == '':
-                    continue
-
-                try:
-                    client_id = int(row[0])
-                except (ValueError, TypeError):
-                    continue
-
-                # Skip duplicate client IDs within the same batch
+                # Skip duplicate client IDs
                 if client_id in seen_client_ids:
                     continue
                 seen_client_ids.add(client_id)
 
-                # Convert "TRUE"/"FALSE" string to boolean for allocated field
-                allocated = str(row[8]).strip().upper() == 'TRUE' if row[8] else False
+                # Use inspection contact info if available, otherwise use general contact info
+                phone_number = contact_number_inspections or contact_number
+                email = contact_email_inspections or contact_email
+
+                # Determine active status
+                active_status = "Active" if is_active else "Inactive"
+
+                # Parse internal account code to extract facility type, group type, and commodity
+                facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
 
                 # Create ClientAllocation object (not yet saved to DB)
                 bulk_records.append(ClientAllocation(
                     client_id=client_id,
-                    facility_type=row[1] if row[1] else None,
-                    group_type=row[2] if row[2] else None,
-                    commodity=row[3] if row[3] else None,
-                    province=row[4] if row[4] else None,
-                    corporate_group=row[5] if row[5] else None,
-                    other=row[6] if row[6] else None,
-                    internal_account_code=row[7] if row[7] else None,
-                    allocated=allocated,
-                    eclick_name=row[9] if row[9] else None,
-                    representative_email=row[10] if row[10] else None,
-                    phone_number=row[11] if row[11] else None,
-                    duplicates=row[12] if row[12] else None,
-                    active_status=row[13] if row[13] else None,
+                    facility_type=facility_type,
+                    group_type=group_type,
+                    commodity=commodity,
+                    province=province,
+                    corporate_group=None,
+                    other=physical_address,
+                    internal_account_code=internal_account_code,
+                    allocated=False,
+                    eclick_name=name,
+                    representative_email=email,
+                    phone_number=phone_number,
+                    duplicates=None,
+                    active_status=active_status,
+                    manually_added=False
                 ))
+
+            # Close SQL Server connection
+            sql_conn.disconnect()
 
             # Use atomic transaction for data integrity and speed
             with transaction.atomic():
-                # Delete all existing records
-                ClientAllocation.objects.all().delete()
+                # Only delete records synced from SQL Server (preserve manually added clients)
+                ClientAllocation.objects.filter(manually_added=False).delete()
 
                 # Bulk create all records in a single query (MUCH faster)
                 # batch_size=500 optimizes for PostgreSQL performance
@@ -4076,11 +4204,13 @@ def sync_client_allocations(request):
             cache.delete('client_allocation_count')
             cache.delete_pattern('client_allocation_*')
 
-            messages.success(request, f"Successfully synced {sync_count} client allocation records from Google Sheets.")
+            messages.success(request, f"Successfully synced {sync_count} client allocation records from SQL Server.")
             return redirect('client_allocation_sheet')
 
         except Exception as e:
-            print(f"Error syncing sheet data: {e}")
+            print(f"Error syncing SQL Server data: {e}")
+            import traceback
+            traceback.print_exc()
             messages.error(request, f"Error syncing data: {str(e)}")
             return redirect('client_allocation_sheet')
 
@@ -4089,9 +4219,55 @@ def sync_client_allocations(request):
 
 @login_required(login_url='login')
 def refresh_clients(request):
-    """Refresh the Food Safety Agency clients table with fresh data from Google Sheets."""
+    """Refresh the Food Safety Agency clients table with fresh data from SQL Server."""
+    from django.http import JsonResponse
+    from django.contrib import messages
+
+    # Mapping dictionaries for internal account codes
+    FACILITY_TYPE_MAP = {
+        'RE': 'Retailer',
+        'BU': 'Butchery',
+        'RP': 'Re-Packer',
+        'PR': 'Production Plant',
+        'FA': 'Farm',
+        'AB': 'Abattoir'
+    }
+
+    GROUP_TYPE_MAP = {
+        'COR': 'Corporate Store',
+        'FRN': 'Franchise Store',
+        'IND': 'Individual / Independent Owner'
+    }
+
+    COMMODITY_MAP = {
+        'PMP': 'Processed Meat Products (PMP)',
+        'RAW': 'Certain Raw Processed Meat',
+        'EGG': 'Eggs',
+        'PLT': 'Poultry',
+        'XX': 'Unknown/Other'
+    }
+
+    def parse_internal_account_code(account_code):
+        """Parse internal account code to extract facility type, group type, and commodity"""
+        if not account_code:
+            return None, None, None
+
+        parts = account_code.split('-')
+        if len(parts) < 4:
+            return None, None, None
+
+        facility_code = parts[0]
+        group_code = parts[1]
+        commodity_code = parts[2]
+
+        facility_type = FACILITY_TYPE_MAP.get(facility_code)
+        group_type = GROUP_TYPE_MAP.get(group_code)
+        commodity = COMMODITY_MAP.get(commodity_code)
+
+        return facility_type, group_type, commodity
+
     clear_messages(request)
-    
+
     if request.method == 'POST':
         # Check if client sync is already running
         from django.core.cache import cache
@@ -4100,86 +4276,182 @@ def refresh_clients(request):
                 'success': False,
                 'error': 'Client sync is already running. Please wait for it to complete.'
             })
-        
+
         # Set sync lock
         cache.set('client_sync_running', True, 300)  # 5 minutes timeout
-        
+
         print("\n" + "="*60)
         print(" STARTING CLIENT SYNC OPERATION")
         print("="*60)
-        
+
         try:
-            from ..services.google_sheets_service import GoogleSheetsService
-            
-            print(" Step 1: Initializing Google Sheets Service...")
-            sheets_service = GoogleSheetsService()
-            print(" Google Sheets Service initialized successfully")
-            
-            print("\n Step 2: Starting client table refresh...")
-            
+            from ..utils.sql_server_utils import SQLServerConnection
+            from ..models import ClientAllocation
+            from django.db import transaction
+
+            print(" Step 1: Connecting to SQL Server...")
+            sql_conn = SQLServerConnection()
+
+            if not sql_conn.connect():
+                cache.delete('client_sync_running')
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Failed to connect to SQL Server'
+                })
+
+            print(" SQL Server connection established successfully")
+
+            print("\n Step 2: Fetching clients from SQL Server...")
+
             # Force session save before long operation
             request.session.save()
-            
-            refresh_result = sheets_service.refresh_clients_table(request)
+
+            # Fetch all active clients from SQL Server
+            cursor = sql_conn.connection.cursor()
+
+            # Query to get all clients with province information
+            query = """
+                SELECT
+                    c.Id,
+                    c.Name,
+                    c.InternalAccountNumber,
+                    c.ContactNumber,
+                    c.ContactEmail,
+                    c.ContactNumberForInspections,
+                    c.ContactEmailForInspections,
+                    c.SiteName,
+                    c.PhysicalAddress,
+                    c.IsActive,
+                    CASE
+                        WHEN c.ProvinceStateId = 1 THEN 'Eastern Cape'
+                        WHEN c.ProvinceStateId = 2 THEN 'Gauteng'
+                        WHEN c.ProvinceStateId = 3 THEN 'KwaZulu-Natal'
+                        WHEN c.ProvinceStateId = 4 THEN 'Limpopo'
+                        WHEN c.ProvinceStateId = 5 THEN 'Mpumalanga'
+                        WHEN c.ProvinceStateId = 6 THEN 'Northern Cape'
+                        WHEN c.ProvinceStateId = 7 THEN 'North West'
+                        WHEN c.ProvinceStateId = 8 THEN 'Western Cape'
+                        WHEN c.ProvinceStateId = 9 THEN 'Free State'
+                        ELSE 'Unknown'
+                    END AS Province
+                FROM Clients c
+                WHERE c.IsActive = 1
+                ORDER BY c.Id
+            """
+
+            cursor.execute(query)
+            sql_clients = cursor.fetchall()
+
+            print(f"    Found {len(sql_clients)} active clients in SQL Server")
+
+            # Prepare bulk data
+            bulk_records = []
+            seen_client_ids = set()
+
+            for row in sql_clients:
+                client_id = row[0]
+                name = row[1]
+                internal_account_code = row[2]
+                contact_number = row[3]
+                contact_email = row[4]
+                contact_number_inspections = row[5]
+                contact_email_inspections = row[6]
+                site_name = row[7]
+                physical_address = row[8]
+                is_active = row[9]
+                province = row[10]
+
+                # Skip duplicate client IDs
+                if client_id in seen_client_ids:
+                    continue
+                seen_client_ids.add(client_id)
+
+                # Use inspection contact info if available, otherwise use general contact info
+                phone_number = contact_number_inspections or contact_number
+                email = contact_email_inspections or contact_email
+
+                # Determine active status
+                active_status = "Active" if is_active else "Inactive"
+
+                # Parse internal account code to extract facility type, group type, and commodity
+                facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
+
+                # Create ClientAllocation object (not yet saved to DB)
+                bulk_records.append(ClientAllocation(
+                    client_id=client_id,
+                    facility_type=facility_type,
+                    group_type=group_type,
+                    commodity=commodity,
+                    province=province,
+                    corporate_group=None,
+                    other=physical_address,
+                    internal_account_code=internal_account_code,
+                    allocated=False,
+                    eclick_name=name,
+                    representative_email=email,
+                    phone_number=phone_number,
+                    duplicates=None,
+                    active_status=active_status,
+                    manually_added=False
+                ))
+
+            # Close SQL Server connection
+            sql_conn.disconnect()
+
+            print(f"\n Step 3: Syncing to database...")
+
+            # Get count before deletion
+            old_count = ClientAllocation.objects.filter(manually_added=False).count()
+
+            # Use atomic transaction for data integrity and speed
+            with transaction.atomic():
+                # Only delete records synced from SQL Server (preserve manually added clients)
+                deleted_count = ClientAllocation.objects.filter(manually_added=False).delete()[0]
+                print(f"    Deleted {deleted_count} old synced clients")
+
+                # Bulk create all records in a single query
+                ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
+                print(f"    Created {len(bulk_records)} new clients")
 
             # Detect AJAX request
             is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
 
-            if refresh_result.get('success'):
-                print(f" CLIENT SYNC COMPLETED SUCCESSFULLY!")
-                print(f"    Deleted: {refresh_result['deleted_count']} old clients")
-                print(f"    Created: {refresh_result['clients_created']} new clients")
-                print(f"    Processed: {refresh_result['total_processed']} total rows from Google Sheets")
-                
-                # Clear sync lock
-                cache.delete('client_sync_running')
+            print(f"\n CLIENT SYNC COMPLETED SUCCESSFULLY!")
+            print(f"    Deleted: {deleted_count} old clients")
+            print(f"    Created: {len(bulk_records)} new clients")
+            print(f"    Processed: {len(sql_clients)} total rows from SQL Server")
 
-                if is_ajax:
-                    from django.http import JsonResponse
-                    return JsonResponse({
-                        'success': True,
-                        'message': f"Successfully synced clients! Deleted {refresh_result['deleted_count']} old clients and created {refresh_result['clients_created']} new clients from Google Sheets."
-                    })
-                else:
-                    from django.contrib import messages
-                    messages.success(request, f"Clients synced. Deleted {refresh_result['deleted_count']} old, created {refresh_result['clients_created']} new. Processed {refresh_result['total_processed']} rows.")
-                    return redirect('client_allocation')
+            # Clear sync lock
+            cache.delete('client_sync_running')
+
+            if is_ajax:
+                return JsonResponse({
+                    'success': True,
+                    'message': f"Successfully synced clients! Deleted {deleted_count} old clients and created {len(bulk_records)} new clients from SQL Server."
+                })
             else:
-                print(f" CLIENT SYNC FAILED!")
-                print(f"   Error: {refresh_result.get('error', 'Unknown error')}")
-                
-                # Clear sync lock on error too
-                cache.delete('client_sync_running')
+                messages.success(request, f"Clients synced. Deleted {deleted_count} old, created {len(bulk_records)} new. Processed {len(sql_clients)} rows.")
+                return redirect('client_allocation')
 
-                if is_ajax:
-                    from django.http import JsonResponse
-                    return JsonResponse({
-                        'success': False,
-                        'error': refresh_result.get('error', 'Unknown error')
-                    })
-                else:
-                    from django.contrib import messages
-                    messages.error(request, f"Client sync failed: {refresh_result.get('error', 'Unknown error')}")
-                    return redirect('client_allocation')
-                
         except Exception as e:
             print(f" CLIENT SYNC EXCEPTION!")
             print(f"   Exception: {str(e)}")
-            
+            import traceback
+            traceback.print_exc()
+
             # Clear sync lock on exception too
             cache.delete('client_sync_running')
-            
+
             # Return JSON response for AJAX
-            from django.http import JsonResponse
             return JsonResponse({
                 'success': False,
                 'error': str(e)
             })
-        
-        print("="*60)
-        print(" CLIENT SYNC OPERATION ENDED")
-        print("="*60 + "\n")
-    
+        finally:
+            print("="*60)
+            print(" CLIENT SYNC OPERATION ENDED")
+            print("="*60 + "\n")
+
     # If not POST, redirect back to client allocation page
     return redirect('client_allocation')
 
@@ -4680,18 +4952,32 @@ def export_sheet(request):
     return render(request, 'main/export_sheet.html', context)
 
 
+def get_fee_rate(fee_code, default_value):
+    """Get fee rate from database, fallback to default if not found"""
+    try:
+        from ..models import InspectionFee
+        fee = InspectionFee.objects.filter(fee_code=fee_code).first()
+        return float(fee.rate) if fee else default_value
+    except:
+        return default_value
+
+
 def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref, product_type, city, lab_name):
     """Generate up to 13 invoice line items for a single inspection"""
     items = []
 
-    # Pricing constants - 2025 rates (as per Notice 2996 of 2025)
-    INSPECTION_HOUR_RATE = 510.00  # Normal Time (08:00 - 16:00)
-    TRAVEL_RATE_PER_KM = 6.50
-    FAT_TEST_RATE = 779.81
-    PROTEIN_TEST_RATE = 474.52
-    CALCIUM_TEST_RATE_PMP = 269.72
-    CALCIUM_TEST_RATE_RAW = 357.6
-    DNA_TEST_RATE = 2458.2
+    # Load pricing from database (fallback to 2025 gazette rates if not in DB)
+    INSPECTION_HOUR_RATE = get_fee_rate('inspection_hour_rate', 510.00)
+    INSPECTION_OVERTIME_RATE = get_fee_rate('inspection_overtime_rate', 567.00)
+    INSPECTION_SUNDAY_RATE = get_fee_rate('inspection_sunday_rate', 680.00)
+    TRAVEL_RATE_PER_KM = get_fee_rate('travel_rate_per_km', 6.50)
+    FAT_TEST_RATE = get_fee_rate('fat_test_rate', 826.00)
+    PROTEIN_TEST_RATE = get_fee_rate('protein_test_rate', 503.00)
+    CALCIUM_TEST_RATE = get_fee_rate('calcium_test_rate', 379.00)
+    DNA_TEST_RATE = get_fee_rate('dna_test_rate', 2605.00)
+    SOYA_TEST_RATE = get_fee_rate('soya_test_rate', 1665.00)
+    STARCH_TEST_RATE = get_fee_rate('starch_test_rate', 1472.00)
+    PHYSICAL_TEST_RATE = get_fee_rate('physical_test_rate', 200.00)
 
     # Get inspector initials + last name
     inspector_display = ''
@@ -4821,7 +5107,7 @@ def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref,
                 'item_code': 'PMP 066',
                 'description': 'Sample Taking: Calcium Determination (MRM only)',
                 'quantity': 1,
-                'unit_amount': CALCIUM_TEST_RATE_PMP,
+                'unit_amount': CALCIUM_TEST_RATE,
                 'account_code': '1000/060',
                 'tax_rate': 'Standard Rate Sales (15%)',
                 'country': 'South Africa',
@@ -4992,7 +5278,7 @@ def generate_invoice_line_items(inspection_id, inspection, invoice_ref, rfi_ref,
                 'item_code': 'RAW 057',
                 'description': 'Sample Taking: Calcium Determination (MRM Only) (Certain Raw Processed Meat Products)',
                 'quantity': 1,
-                'unit_amount': CALCIUM_TEST_RATE_RAW,
+                'unit_amount': CALCIUM_TEST_RATE,
                 'account_code': '1000/050',
                 'tax_rate': 'Standard Rate Sales (15%)',
                 'country': 'South Africa',

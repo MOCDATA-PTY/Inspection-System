@@ -434,6 +434,10 @@ class FoodSafetyAgencyInspection(models.Model):
         ordering = ['-date_of_inspection', '-created_at']
         verbose_name = "Food Safety Agency Inspection"
         verbose_name_plural = "Food Safety Agency Inspections"
+        # IMPORTANT: Use composite key (commodity, remote_id) for uniqueness
+        # This is a workaround for SQL Server database design issue where
+        # each commodity table uses its own ID sequence, causing duplicate IDs
+        unique_together = [['commodity', 'remote_id']]
         indexes = [
             models.Index(fields=['commodity']),
             models.Index(fields=['date_of_inspection']),
@@ -441,10 +445,25 @@ class FoodSafetyAgencyInspection(models.Model):
             models.Index(fields=['client_name']),
             models.Index(fields=['inspector_id']),
             models.Index(fields=['internal_account_code']),
+            models.Index(fields=['commodity', 'remote_id']),  # Composite key index for performance
         ]
-    
+
+    @property
+    def unique_inspection_id(self):
+        """
+        Generate globally unique inspection ID combining commodity and remote_id.
+        This is necessary because the SQL Server database reuses inspection IDs
+        across different commodity tables (e.g., ID 8487 exists in both RAW and PMP tables).
+
+        Returns:
+            str: Formatted as 'COMMODITY-REMOTEID' (e.g., 'RAW-8487', 'PMP-8487')
+        """
+        if self.commodity and self.remote_id:
+            return f"{self.commodity}-{self.remote_id}"
+        return str(self.remote_id) if self.remote_id else "Unknown"
+
     def __str__(self):
-        return f"{self.inspector_name} - {self.client_name} - {self.date_of_inspection} ({self.commodity})"
+        return f"[{self.unique_inspection_id}] {self.inspector_name} - {self.client_name} - {self.date_of_inspection}"
 
     @property
     def rfi_uploaded(self):
@@ -745,6 +764,7 @@ class ClientAllocation(models.Model):
     active_status = models.CharField(max_length=50, blank=True, null=True, verbose_name="Active/Deactive")
 
     # Metadata fields
+    manually_added = models.BooleanField(default=False, verbose_name="Manually Added", help_text="True if added manually via UI, False if synced from sheets")
     last_synced = models.DateTimeField(auto_now=True, verbose_name="Last Synced")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
 
@@ -774,4 +794,23 @@ class ClientAllocation(models.Model):
 
     def __str__(self):
         return f"Client {self.client_id} - {self.internal_account_code or 'No Code'}"
+
+
+class InspectionFee(models.Model):
+    """Store inspection and testing fee rates"""
+    fee_code = models.CharField(max_length=50, unique=True, help_text="Unique code for the fee (e.g., 'inspection_hour_rate')")
+    fee_name = models.CharField(max_length=200, help_text="Display name for the fee")
+    rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Fee rate amount")
+    description = models.TextField(blank=True, null=True, help_text="Description of the fee")
+    last_updated = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        db_table = 'inspection_fees'
+        ordering = ['fee_code']
+        verbose_name = 'Inspection Fee'
+        verbose_name_plural = 'Inspection Fees'
+
+    def __str__(self):
+        return f"{self.fee_name}: R{self.rate}"
 

@@ -22,6 +22,7 @@ django.setup()
 
 from django.conf import settings
 from django.core.cache import cache
+from django.db.models import Q
 from ..models import FoodSafetyAgencyInspection, Client, SystemSettings
 from ..views.core_views import load_drive_files_real, find_document_link_apps_script_replica
 from django.http import HttpRequest
@@ -142,52 +143,185 @@ class ScheduledSyncService:
             return False
     
     def sync_google_sheets(self):
-        """Sync data with Google Sheets."""
+        """Sync client data from SQL Server."""
         from django.db import close_old_connections
 
+        # Mapping dictionaries for internal account codes
+        FACILITY_TYPE_MAP = {
+            'RE': 'Retailer',
+            'BU': 'Butchery',
+            'RP': 'Re-Packer',
+            'PR': 'Production Plant',
+            'FA': 'Farm',
+            'AB': 'Abattoir'
+        }
+
+        GROUP_TYPE_MAP = {
+            'COR': 'Corporate Store',
+            'FRN': 'Franchise Store',
+            'IND': 'Individual / Independent Owner'
+        }
+
+        COMMODITY_MAP = {
+            'PMP': 'Processed Meat Products (PMP)',
+            'RAW': 'Certain Raw Processed Meat',
+            'EGG': 'Eggs',
+            'PLT': 'Poultry',
+            'XX': 'Unknown/Other'
+        }
+
+        def parse_internal_account_code(account_code):
+            """Parse internal account code to extract facility type, group type, and commodity"""
+            if not account_code:
+                return None, None, None
+
+            parts = account_code.split('-')
+            if len(parts) < 4:
+                return None, None, None
+
+            facility_code = parts[0]
+            group_code = parts[1]
+            commodity_code = parts[2]
+
+            facility_type = FACILITY_TYPE_MAP.get(facility_code)
+            group_type = GROUP_TYPE_MAP.get(group_code)
+            commodity = COMMODITY_MAP.get(commodity_code)
+
+            return facility_type, group_type, commodity
+
         try:
-            print("📊 Starting Google Sheets sync...")
+            print("📊 Starting SQL Server client sync...")
 
             # Ensure fresh database connection
             close_old_connections()
 
-            # Import Google Sheets service
-            from ..services.google_sheets_service import GoogleSheetsService
+            # Import SQL Server utilities and models
+            from ..utils.sql_server_utils import SQLServerConnection
+            from ..models import ClientAllocation
+            from django.db import transaction
 
-            sheets_service = GoogleSheetsService()
+            # Connect to SQL Server
+            sql_conn = SQLServerConnection()
 
-            # Refresh clients table
-            result = sheets_service.refresh_clients_table()
-
-            # Check if result is a dictionary (error response) or boolean (success/failure)
-            if isinstance(result, dict):
-                if result.get('success'):
-                    print(f"✅ Google Sheets sync completed successfully")
-                    print(f"   - Clients created: {result.get('clients_created', 0)}")
-                    print(f"   - Clients updated: {result.get('clients_updated', 0)}")
-                    print(f"   - Total processed: {result.get('total_processed', 0)}")
-                    self.last_sync_times['google_sheets'] = datetime.now()
-                    return True
-                else:
-                    error_msg = result.get('error', 'Unknown error')
-                    print(f"❌ Google Sheets sync failed: {error_msg}")
-                    # Store error in cache for frontend
-                    cache.set('google_sheets_sync_error', error_msg, 300)
-                    return False
-            elif result:
-                # Boolean True - success
-                print("✅ Google Sheets sync completed successfully")
-                self.last_sync_times['google_sheets'] = datetime.now()
-                return True
-            else:
-                # Boolean False - failure
-                print("❌ Google Sheets sync failed")
-                cache.set('google_sheets_sync_error', 'Unknown error - sync returned False', 300)
+            if not sql_conn.connect():
+                error_msg = "Failed to connect to SQL Server"
+                print(f"❌ {error_msg}")
+                cache.set('google_sheets_sync_error', error_msg, 300)
                 return False
+
+            print("   ✅ SQL Server connection established")
+
+            # Fetch all active clients from SQL Server
+            cursor = sql_conn.connection.cursor()
+
+            # Query to get all clients with province information
+            query = """
+                SELECT
+                    c.Id,
+                    c.Name,
+                    c.InternalAccountNumber,
+                    c.ContactNumber,
+                    c.ContactEmail,
+                    c.ContactNumberForInspections,
+                    c.ContactEmailForInspections,
+                    c.SiteName,
+                    c.PhysicalAddress,
+                    c.IsActive,
+                    CASE
+                        WHEN c.ProvinceStateId = 1 THEN 'Eastern Cape'
+                        WHEN c.ProvinceStateId = 2 THEN 'Gauteng'
+                        WHEN c.ProvinceStateId = 3 THEN 'KwaZulu-Natal'
+                        WHEN c.ProvinceStateId = 4 THEN 'Limpopo'
+                        WHEN c.ProvinceStateId = 5 THEN 'Mpumalanga'
+                        WHEN c.ProvinceStateId = 6 THEN 'Northern Cape'
+                        WHEN c.ProvinceStateId = 7 THEN 'North West'
+                        WHEN c.ProvinceStateId = 8 THEN 'Western Cape'
+                        WHEN c.ProvinceStateId = 9 THEN 'Free State'
+                        ELSE 'Unknown'
+                    END AS Province
+                FROM Clients c
+                WHERE c.IsActive = 1
+                ORDER BY c.Id
+            """
+
+            cursor.execute(query)
+            sql_clients = cursor.fetchall()
+
+            print(f"   📊 Found {len(sql_clients)} active clients in SQL Server")
+
+            # Prepare bulk data
+            bulk_records = []
+            seen_client_ids = set()
+
+            for row in sql_clients:
+                client_id = row[0]
+                name = row[1]
+                internal_account_code = row[2]
+                contact_number = row[3]
+                contact_email = row[4]
+                contact_number_inspections = row[5]
+                contact_email_inspections = row[6]
+                site_name = row[7]
+                physical_address = row[8]
+                is_active = row[9]
+                province = row[10]
+
+                # Skip duplicate client IDs
+                if client_id in seen_client_ids:
+                    continue
+                seen_client_ids.add(client_id)
+
+                # Use inspection contact info if available, otherwise use general contact info
+                phone_number = contact_number_inspections or contact_number
+                email = contact_email_inspections or contact_email
+
+                # Determine active status
+                active_status = "Active" if is_active else "Inactive"
+
+                # Parse internal account code to extract facility type, group type, and commodity
+                facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
+
+                # Create ClientAllocation object (not yet saved to DB)
+                bulk_records.append(ClientAllocation(
+                    client_id=client_id,
+                    facility_type=facility_type,
+                    group_type=group_type,
+                    commodity=commodity,
+                    province=province,
+                    corporate_group=None,
+                    other=physical_address,
+                    internal_account_code=internal_account_code,
+                    allocated=False,
+                    eclick_name=name,
+                    representative_email=email,
+                    phone_number=phone_number,
+                    duplicates=None,
+                    active_status=active_status,
+                    manually_added=False
+                ))
+
+            # Close SQL Server connection
+            sql_conn.disconnect()
+
+            # Use atomic transaction for data integrity and speed
+            with transaction.atomic():
+                # Only delete records synced from SQL Server (preserve manually added clients)
+                deleted_count = ClientAllocation.objects.filter(manually_added=False).delete()[0]
+
+                # Bulk create all records in a single query
+                ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
+
+            print(f"✅ SQL Server client sync completed successfully")
+            print(f"   - Clients deleted: {deleted_count}")
+            print(f"   - Clients created: {len(bulk_records)}")
+            print(f"   - Total processed: {len(sql_clients)}")
+
+            self.last_sync_times['google_sheets'] = datetime.now()
+            return True
 
         except Exception as e:
             error_msg = str(e)
-            print(f"❌ Error in Google Sheets sync: {error_msg}")
+            print(f"❌ Error in SQL Server client sync: {error_msg}")
             import traceback
             traceback.print_exc()
             # Store error in cache for frontend
@@ -212,8 +346,27 @@ class ScheduledSyncService:
             import pymssql
             from datetime import datetime, timedelta
 
+            # PRESERVE KM/HOURS DATA BEFORE DELETING
+            print(f"\n💾 STEP 1a: PRESERVING KM AND HOURS DATA...")
+            km_hours_backup = {}
+            inspections_with_data = FoodSafetyAgencyInspection.objects.filter(
+                Q(km_traveled__isnull=False) | Q(hours__isnull=False)
+            ).exclude(Q(km_traveled=0) & Q(hours=0))
+
+            for insp in inspections_with_data:
+                # Use (remote_id, date) as key since remote_id might not be unique alone
+                key = (insp.remote_id, insp.date_of_inspection)
+                km_hours_backup[key] = {
+                    'km_traveled': insp.km_traveled,
+                    'hours': insp.hours
+                }
+
+            print(f"   📊 Backed up km/hours data for {len(km_hours_backup):,} inspections")
+            if len(km_hours_backup) > 0:
+                print(f"   ✅ This data will be restored after sync!")
+
             # DELETE ALL EXISTING INSPECTIONS FIRST (prevents duplicates)
-            print(f"\n🗑️  STEP 1: CLEARING EXISTING INSPECTION DATA...")
+            print(f"\n🗑️  STEP 1b: CLEARING EXISTING INSPECTION DATA...")
             existing_count = FoodSafetyAgencyInspection.objects.count()
             print(f"   Found {existing_count:,} existing inspection records")
             print(f"   Deleting all records to ensure fresh sync...")
@@ -395,13 +548,41 @@ class ScheduledSyncService:
                     print(f"\n   ⚠️  Error syncing inspection {inspection_id}: {e}")
                     continue
 
-            # SYNC COMPLETE
+            # RESTORE KM/HOURS DATA
             print(f"\n" + "="*80)
             print(f"✅ SYNC COMPLETE: Inspections created with product names!")
             print(f"   - New inspections created: {synced_count}")
             print(f"   - Google Sheets matches: {google_sheets_matched}/{account_codes_found}")
             print(f"   - Product names from SQL query (no additional fetching needed)")
             print("="*80)
+
+            # Restore km/hours data from backup
+            if km_hours_backup:
+                print(f"\n🔄 STEP 3: RESTORING KM AND HOURS DATA...")
+                restored_count = 0
+                for (remote_id, date_of_inspection), data in km_hours_backup.items():
+                    try:
+                        # Find inspections matching this remote_id and date
+                        inspections = FoodSafetyAgencyInspection.objects.filter(
+                            remote_id=remote_id,
+                            date_of_inspection=date_of_inspection
+                        )
+
+                        # Restore km/hours to all matching inspections
+                        if inspections.exists():
+                            inspections.update(
+                                km_traveled=data['km_traveled'],
+                                hours=data['hours']
+                            )
+                            restored_count += inspections.count()
+
+                    except Exception as e:
+                        print(f"   ⚠️  Error restoring km/hours for inspection {remote_id}: {e}")
+                        continue
+
+                print(f"✅ Restored km/hours data to {restored_count:,} inspections!")
+            else:
+                print(f"\n   ℹ️  No km/hours data to restore (this is normal for first sync)")
 
             cursor.close()
             connection.close()

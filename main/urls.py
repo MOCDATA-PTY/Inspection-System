@@ -25,7 +25,7 @@ from .views.core_views import (
     get_dropdown_options, delete_dropdown_option, delete_client_allocation, send_password_reset_email
 )
 from .views.data_views import (
-    export_shipments,
+    export_shipments, get_inspection_fees, update_inspection_fees,
 )
 
 urlpatterns = [
@@ -57,6 +57,8 @@ urlpatterns = [
     path('export-sheet/', export_sheet, name='export_sheet'),
     path('export-to-google-sheets/', export_to_google_sheets, name='export_to_google_sheets'),
     path('update-invoice-number/', update_invoice_number, name='update_invoice_number'),
+    path('api/fees/get/', get_inspection_fees, name='get_inspection_fees'),
+    path('api/fees/update/', update_inspection_fees, name='update_inspection_fees'),
     path('inspections/files/', get_inspection_files, name='get_inspection_files'),
     path('inspections/download-file/', download_inspection_file, name='download_inspection_file'),
     path('inspections/download-all-files/', download_all_inspection_files, name='download_all_inspection_files'),
