@@ -4958,12 +4958,16 @@ def export_sheet(request):
     from ..models import SystemSettings
     settings = SystemSettings.get_settings()
 
+    # Get current month for default filter
+    current_month = datetime.now().strftime('%Y-%m')
+
     context = {
         'invoice_items': invoice_items,
         'total_items': len(invoice_items),
         'inspections_processed': inspections_processed,
         'unique_inspectors': len(unique_inspectors),
         'settings': settings,
+        'current_month': current_month,
     }
 
     return render(request, 'main/export_sheet.html', context)

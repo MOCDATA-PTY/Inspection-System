@@ -1894,7 +1894,16 @@
             // Initialize DOM cache first
             DOM.init();
 
-            // Don't set default date filters - let user see all data and filter manually
+            // Set default date filters to current month
+            const currentMonth = '{{ current_month }}';
+            if (currentMonth && DOM.filters.dateFrom && DOM.filters.dateTo) {
+                // Set date from to first day of current month
+                DOM.filters.dateFrom.value = currentMonth + '-01';
+
+                // Set date to to last day of current month
+                const lastDay = new Date(currentMonth.split('-')[0], currentMonth.split('-')[1], 0).getDate();
+                DOM.filters.dateTo.value = currentMonth + '-' + String(lastDay).padStart(2, '0');
+            }
 
             // Use requestAnimationFrame for smooth loading
             requestAnimationFrame(() => {
@@ -2004,7 +2013,8 @@
                         DOM.filters.dateTo.addEventListener('change', applyFilters);
                     }
 
-                    // Don't auto-apply filters - let user see all data first
+                    // Auto-apply filters to show current month by default
+                    applyFilters();
                 }
 
                 // Start processing
