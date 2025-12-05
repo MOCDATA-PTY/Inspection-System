@@ -422,13 +422,13 @@ class ScheduledSyncService:
                 'current': 0,
                 'total': len(sql_inspections),
                 'percent': 0,
-                'message': 'Syncing inspections with Google Sheets...'
+                'message': 'Syncing inspections with SQL Server clients...'
             }, 300)
 
             print(f"\n" + "="*80)
             print(f"📋 SYNCING INSPECTIONS WITH CLIENT NAMES AND PRODUCTS")
-            print(f"   SQL Server → Inspection Data + Account Codes + Products")
-            print(f"   Google Sheets → Client Names (SOLE SOURCE)")
+            print(f"   SQL Server → Inspection Data + Account Codes + Products + Client Names")
+            print(f"   All data from SQL Server")
             print("="*80)
 
             for idx, sql_insp in enumerate(sql_inspections, 1):
@@ -447,12 +447,11 @@ class ScheduledSyncService:
                         inspector_id_int = None
                     inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
 
-                    # IMPORTANT: ONLY use Google Sheets for client names
-                    # SQL Server ONLY provides: inspection data, account code
-                    # Google Sheets is the SOLE source for client names
-                    from ..models import Client
-                    client_name = None  # Will be set from Google Sheets ONLY
-                    google_sheets_match_found = False
+                    # IMPORTANT: Use SQL Server ClientAllocation for client names
+                    # SQL Server provides: inspection data, account code, and client names
+                    from ..models import ClientAllocation
+                    client_name = None
+                    client_match_found = False
 
                     # Log only every 100th inspection to reduce console spam (was every 10th - too verbose!)
                     # Only log first 3 inspections for initial verification
@@ -461,53 +460,53 @@ class ScheduledSyncService:
                     if internal_account_code:
                         account_codes_found += 1
 
-                        # Look up client in Google Sheets by account code
+                        # Look up client in SQL Server ClientAllocation by account code
                         try:
-                            google_client = Client.objects.filter(
+                            sql_client = ClientAllocation.objects.filter(
                                 internal_account_code=internal_account_code
                             ).first()
 
-                            if google_client and google_client.name:
-                                # Use Google Sheets name (ONLY source for names)
+                            if sql_client and sql_client.eclick_name:
+                                # Use SQL Server client name
                                 google_sheets_matched += 1
-                                google_sheets_match_found = True
-                                client_name = google_client.name
+                                client_match_found = True
+                                client_name = sql_client.eclick_name
                                 google_sheets_used += 1
 
                                 if show_detailed_log:
                                     print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
                                     print(f"      📋 Account Code: {internal_account_code}")
-                                    print(f"      ✅ Google Sheets Match: FOUND")
-                                    print(f"      📊 Google Sheets Name: {google_client.name}")
-                                    print(f"      ⭐ USING: {client_name} (from Google Sheets)")
+                                    print(f"      ✅ SQL Server Match: FOUND")
+                                    print(f"      📊 Client Name: {sql_client.eclick_name}")
+                                    print(f"      ⭐ USING: {client_name} (from SQL Server)")
                             else:
-                                # No match in Google Sheets - leave as "-"
+                                # No match in SQL Server - leave as "-"
                                 sql_server_fallback += 1
                                 client_name = "-"
                                 if show_detailed_log:
                                     print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
                                     print(f"      📋 Account Code: {internal_account_code}")
-                                    print(f"      ❌ Google Sheets Match: NOT FOUND")
+                                    print(f"      ❌ SQL Server Match: NOT FOUND")
                                     print(f"      ⚠️  Client name set to: -")
-                                    print(f"      → Add account code '{internal_account_code}' to Google Sheets to set client name!")
+                                    print(f"      → Sync clients from SQL Server to populate client names!")
 
                         except Exception as e:
-                            # Error looking up Google Sheets - leave as "-"
+                            # Error looking up SQL Server client - leave as "-"
                             sql_server_fallback += 1
                             client_name = "-"
                             if show_detailed_log:
                                 print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
                                 print(f"      📋 Account Code: {internal_account_code}")
-                                print(f"      ⚠️  Error looking up Google Sheets: {e}")
+                                print(f"      ⚠️  Error looking up SQL Server client: {e}")
                                 print(f"      ⚠️  Client name set to: -")
                     else:
-                        # No account code - leave as "-" (cannot look up in Google Sheets without account code)
+                        # No account code - leave as "-" (cannot look up without account code)
                         sql_server_fallback += 1
                         client_name = "-"
                         if show_detailed_log:
                             print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
                             print(f"      📋 Account Code: NONE")
-                            print(f"      ⚠️  Cannot look up in Google Sheets without account code")
+                            print(f"      ⚠️  Cannot look up client without account code")
                             print(f"      ⚠️  Client name set to: -")
 
                     # PHASE 1: Create inspection WITH product name from SQL query
@@ -530,8 +529,8 @@ class ScheduledSyncService:
                     if idx % 250 == 0:
                         print(f"\n   📈 Progress: {idx}/{len(sql_inspections)} inspections synced...")
                         print(f"      - Account codes found: {account_codes_found}")
-                        print(f"      - Google Sheets matches: {google_sheets_matched}")
-                        print(f"      - Using Google Sheets names: {google_sheets_used}")
+                        print(f"      - SQL Server client matches: {google_sheets_matched}")
+                        print(f"      - Using SQL Server client names: {google_sheets_used}")
                         print(f"      - Using placeholder names: {sql_server_fallback}")
 
                         # Update progress in cache for frontend
@@ -552,7 +551,7 @@ class ScheduledSyncService:
             print(f"\n" + "="*80)
             print(f"✅ SYNC COMPLETE: Inspections created with product names!")
             print(f"   - New inspections created: {synced_count}")
-            print(f"   - Google Sheets matches: {google_sheets_matched}/{account_codes_found}")
+            print(f"   - SQL Server client matches: {google_sheets_matched}/{account_codes_found}")
             print(f"   - Product names from SQL query (no additional fetching needed)")
             print("="*80)
 

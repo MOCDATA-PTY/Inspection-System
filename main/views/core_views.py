@@ -4494,7 +4494,7 @@ def refresh_inspections(request):
                         request._sync_in_progress = True
                         print("\n" + "="*80)
                         print(" STARTING COMPLETE SYNC OPERATION (BACKGROUND)")
-                        print(" Google Sheets → SQL Server → Account Code Matching")
+                        print(" SQL Server → Clients + Inspections + Account Code Matching")
                         print("="*80)
 
                         # USE NEW SYNC SERVICE - Syncs EVERYTHING in correct order
@@ -4504,16 +4504,16 @@ def refresh_inspections(request):
                         sync_service = ScheduledSyncService()
                         print(" ✅ Sync Service initialized successfully")
 
-                        print("\n Step 2: Syncing Google Sheets (Client names & account codes)...")
+                        print("\n Step 2: Syncing SQL Server clients (names & account codes)...")
                         google_success = sync_service.sync_google_sheets()
 
                         if google_success:
-                            print(" ✅ Google Sheets sync completed!")
+                            print(" ✅ SQL Server client sync completed!")
                         else:
-                            print(" ⚠️ Google Sheets sync had issues (continuing anyway)")
+                            print(" ⚠️ SQL Server client sync had issues (continuing anyway)")
 
                         print("\n Step 3: Syncing SQL Server inspections...")
-                        print(" (Matching account codes with Google Sheets for client names)")
+                        print(" (Matching account codes with SQL Server clients for names)")
                         sql_success = sync_service.sync_sql_server()
 
                         if sql_success:
@@ -4523,13 +4523,13 @@ def refresh_inspections(request):
 
                             print(f"\n ✅ COMPLETE SYNC SUCCESSFUL!")
                             print(f"    Total inspections in database: {total_count}")
-                            print(f"    ✅ Google Sheets is the SOLE source for client names!")
+                            print(f"    ✅ SQL Server is the source for all data!")
                             print(f"    ✅ All account codes matched and names updated!")
 
                             # Store result in cache for frontend to check FIRST (before clearing cache)
                             sync_result_data = {
                                 'success': True,
-                                'message': f'Successfully synced {total_count} inspections with Google Sheets names!',
+                                'message': f'Successfully synced {total_count} inspections with SQL Server client names!',
                                 'created_count': total_count,
                                 'total_processed': total_count
                             }
