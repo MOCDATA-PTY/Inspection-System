@@ -7,8 +7,20 @@
     <!-- Apply saved theme immediately to prevent flash -->
     <script>
         (function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            // Check server-side dark mode setting first
+            const serverDarkMode = '{{ settings.dark_mode }}' === 'True';
+            const savedTheme = localStorage.getItem('theme');
+
+            // Priority: localStorage > server setting > default (light)
+            let theme = 'light';
+            if (savedTheme) {
+                theme = savedTheme;
+            } else if (serverDarkMode) {
+                theme = 'dark';
+                localStorage.setItem('theme', 'dark');
+            }
+
+            document.documentElement.setAttribute('data-theme', theme);
         })();
     </script>
 

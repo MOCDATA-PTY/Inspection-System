@@ -4942,11 +4942,16 @@ def export_sheet(request):
     # Calculate unique inspectors
     unique_inspectors = set(item['inspector_name'] for item in invoice_items if item.get('inspector_name'))
 
+    # Get system settings for theme
+    from ..models import SystemSettings
+    settings = SystemSettings.get_settings()
+
     context = {
         'invoice_items': invoice_items,
         'total_items': len(invoice_items),
         'inspections_processed': inspections_processed,
         'unique_inspectors': len(unique_inspectors),
+        'settings': settings,
     }
 
     return render(request, 'main/export_sheet.html', context)
