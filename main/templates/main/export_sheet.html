@@ -1332,6 +1332,8 @@
         
         // Optimized filter function with batch processing
         function applyFilters() {
+            console.log('applyFilters called');
+
             // Get filter values (use cached elements if available)
             const filters = DOM.filters.contactName ? DOM.filters : {
                 contactName: document.getElementById('contactNameFilter'),
@@ -1342,12 +1344,15 @@
                 dateTo: document.getElementById('invoiceDateToFilter')
             };
 
-            const contactName = filters.contactName.value.toLowerCase().trim();
-            const reference = filters.reference.value.toLowerCase().trim();
-            const city = filters.city.value.toLowerCase().trim();
-            const inspector = filters.inspector.value.toLowerCase().trim();
-            const invoiceDateFrom = filters.dateFrom.value;
-            const invoiceDateTo = filters.dateTo.value;
+            // Null-safe value extraction
+            const contactName = filters.contactName?.value?.toLowerCase().trim() || '';
+            const reference = filters.reference?.value?.toLowerCase().trim() || '';
+            const city = filters.city?.value?.toLowerCase().trim() || '';
+            const inspector = filters.inspector?.value?.toLowerCase().trim() || '';
+            const invoiceDateFrom = filters.dateFrom?.value || '';
+            const invoiceDateTo = filters.dateTo?.value || '';
+
+            console.log('Filter values:', { contactName, reference, city, inspector, invoiceDateFrom, invoiceDateTo });
 
             // Check if any filters are active
             const hasFilters = contactName || reference || city || inspector || invoiceDateFrom || invoiceDateTo;
@@ -1355,9 +1360,12 @@
             const rows = document.querySelectorAll('#exportTableBody tr[data-contact]');
             const rowCount = rows.length;
 
+            console.log('Total rows to filter:', rowCount);
+
             // Batch process for smooth performance
             const BATCH_SIZE = 50;
             let currentIndex = 0;
+            let visibleCount = 0;
 
             function processBatch() {
                 const endIndex = Math.min(currentIndex + BATCH_SIZE, rowCount);
@@ -1367,6 +1375,7 @@
 
                     if (!hasFilters) {
                         row.style.display = '';
+                        visibleCount++;
                         continue;
                     }
 
@@ -1410,12 +1419,15 @@
                     }
 
                     row.style.display = show ? '' : 'none';
+                    if (show) visibleCount++;
                 }
 
                 currentIndex = endIndex;
 
                 if (currentIndex < rowCount) {
                     requestAnimationFrame(processBatch);
+                } else {
+                    console.log('Filtering complete. Visible rows:', visibleCount, '/', rowCount);
                 }
             }
 
