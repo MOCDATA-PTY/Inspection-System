@@ -251,13 +251,14 @@ def user_login(request):
     if request.method == 'POST':
         try:
             form = LoginForm(request, data=request.POST)
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-            
+            # Strip spaces from username and password
+            username = request.POST.get('username', '').strip()
+            password = request.POST.get('password', '').strip()
+
             # Debug print
             print(f"Login attempt - Username: {username}")
             print(f"Password length: {len(password) if password else 0}")
-            
+
             user = authenticate(request, username=username, password=password)
             print(f"Authentication result: {user}")
             if user is not None:
