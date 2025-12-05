@@ -1928,6 +1928,29 @@
             // Initialize DOM cache first
             DOM.init();
 
+            // Set default date range to current month
+            const today = new Date();
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            // Format dates as YYYY-MM-DD for input[type="date"]
+            const formatDate = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+
+            // Set date filter values
+            const dateFromInput = document.getElementById('invoiceDateFromFilter');
+            const dateToInput = document.getElementById('invoiceDateToFilter');
+
+            if (dateFromInput) {
+                dateFromInput.value = formatDate(firstDayOfMonth);
+            }
+            if (dateToInput) {
+                dateToInput.value = formatDate(today);
+            }
+
             // Use requestAnimationFrame for smooth loading
             requestAnimationFrame(() => {
                 // Get all rows once
@@ -2059,6 +2082,9 @@
                     if (DOM.filters.year) {
                         DOM.filters.year.addEventListener('change', applyFilters);
                     }
+
+                    // Apply initial filters with default date range
+                    applyFilters();
                 }
 
                 // Start processing
