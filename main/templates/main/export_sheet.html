@@ -1549,7 +1549,7 @@
 
         // Get data for export
         function getExportData() {
-            // Xero-compatible headers with all required columns
+            // Xero-compatible headers with all required columns (exact order as specified)
             const headers = [
                 '*ContactName',
                 'EmailAddress',
@@ -1561,6 +1561,7 @@
                 'PORegion',
                 'POPostalCode',
                 'POCountry',
+                '*InvoiceNumber',
                 'Reference',
                 '*InvoiceDate',
                 '*DueDate',
@@ -1572,7 +1573,7 @@
                 'Discount',
                 '*AccountCode',
                 '*TaxType',
-                'InvoiceNumber',  // Column header present but values always blank
+                'Tax Amount',
                 'TrackingName1',
                 'TrackingOption1',
                 'TrackingName2',
@@ -1616,11 +1617,12 @@
                     city,                     // POCity
                     '',                       // PORegion (blank)
                     '',                       // POPostalCode (blank)
-                    '',                       // POCountry (ALWAYS BLANK - no country in export)
-                    '',                       // Reference (ALWAYS BLANK - no invoice numbers in export)
+                    '',                       // POCountry (blank)
+                    '',                       // *InvoiceNumber (blank - Xero will generate)
+                    '',                       // Reference (blank)
                     invoiceDate,              // *InvoiceDate
                     '',                       // *DueDate (blank - Xero will calculate)
-                    '',                       // Total (ALWAYS BLANK - Xero calculates from line items)
+                    '',                       // Total (blank - Xero calculates from line items)
                     itemCode,                 // InventoryItemCode
                     description,              // *Description
                     quantity,                 // *Quantity
@@ -1628,7 +1630,7 @@
                     '',                       // Discount (blank)
                     accountCode,              // *AccountCode
                     taxType,                  // *TaxType
-                    '',                       // InvoiceNumber (ALWAYS BLANK - column header present but values empty)
+                    '',                       // Tax Amount (blank - Xero calculates)
                     '',                       // TrackingName1 (blank)
                     '',                       // TrackingOption1 (blank)
                     '',                       // TrackingName2 (blank)
@@ -1774,7 +1776,7 @@
 
             // Set column widths for better readability
             const colWidths = [
-                { wch: 25 }, // ContactName
+                { wch: 25 }, // *ContactName
                 { wch: 20 }, // EmailAddress
                 { wch: 20 }, // POAddressLine1
                 { wch: 20 }, // POAddressLine2
@@ -1784,18 +1786,19 @@
                 { wch: 15 }, // PORegion
                 { wch: 12 }, // POPostalCode
                 { wch: 15 }, // POCountry
+                { wch: 20 }, // *InvoiceNumber
                 { wch: 20 }, // Reference
-                { wch: 12 }, // InvoiceDate
-                { wch: 12 }, // DueDate
+                { wch: 12 }, // *InvoiceDate
+                { wch: 12 }, // *DueDate
                 { wch: 12 }, // Total
                 { wch: 15 }, // InventoryItemCode
-                { wch: 50 }, // Description
-                { wch: 10 }, // Quantity
-                { wch: 12 }, // UnitAmount
+                { wch: 50 }, // *Description
+                { wch: 10 }, // *Quantity
+                { wch: 12 }, // *UnitAmount
                 { wch: 10 }, // Discount
-                { wch: 15 }, // AccountCode
-                { wch: 25 }, // TaxType
-                { wch: 20 }, // InvoiceNumber (column present but always blank)
+                { wch: 15 }, // *AccountCode
+                { wch: 25 }, // *TaxType
+                { wch: 12 }, // Tax Amount
                 { wch: 15 }, // TrackingName1
                 { wch: 15 }, // TrackingOption1
                 { wch: 15 }, // TrackingName2
