@@ -2010,15 +2010,10 @@
                         }
                     });
 
-                    // Add change listeners for date and select inputs
-                    if (DOM.filters.dateFrom) {
-                        DOM.filters.dateFrom.addEventListener('change', applyFilters);
-                    }
-                    if (DOM.filters.dateTo) {
-                        DOM.filters.dateTo.addEventListener('change', applyFilters);
-                    }
+                    // Note: Date filters require clicking Apply button to reload page
+                    // Other filters (text inputs) can still use instant filtering
 
-                    // Auto-apply filters to show current month by default
+                    // Auto-apply frontend filters on initial load (for non-date filters)
                     applyFilters();
                 }
 
