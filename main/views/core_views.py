@@ -4893,12 +4893,19 @@ def export_sheet(request):
 
     # Fetch inspections with billable data
     # REQUIRED: Both hours AND km must be present for an inspection to appear
+    # REQUIRED: At least one lab sample must be taken (fat, protein, calcium, dna, or bought_sample)
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
     inspections = FoodSafetyAgencyInspection.objects.filter(
         hours__isnull=False,
         km_traveled__isnull=False,
         date_of_inspection__gte=start_date,
         date_of_inspection__lte=end_date
+    ).filter(
+        Q(fat=True) |
+        Q(protein=True) |
+        Q(calcium=True) |
+        Q(dna=True) |
+        Q(bought_sample__isnull=False)
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
     ).distinct('id').order_by('id', '-date_of_inspection', 'inspector_name')
