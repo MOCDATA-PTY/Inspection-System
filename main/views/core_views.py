@@ -4958,11 +4958,11 @@ def export_sheet(request):
     from ..models import SystemSettings
     settings = SystemSettings.get_settings()
 
-    # Get last 7 days for default filter
+    # Get yesterday to today for default filter
     from datetime import timedelta
     today = datetime.now().date()
-    seven_days_ago = today - timedelta(days=7)
-    default_start_date = seven_days_ago.strftime('%Y-%m-%d')
+    yesterday = today - timedelta(days=1)
+    default_start_date = yesterday.strftime('%Y-%m-%d')
     default_end_date = today.strftime('%Y-%m-%d')
 
     context = {

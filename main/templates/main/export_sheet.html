@@ -1894,11 +1894,11 @@
             // Initialize DOM cache first
             DOM.init();
 
-            // Set default date filters to last 7 days
+            // Set default date filters to yesterday to today
             const defaultStartDate = '{{ default_start_date }}';
             const defaultEndDate = '{{ default_end_date }}';
             if (defaultStartDate && defaultEndDate && DOM.filters.dateFrom && DOM.filters.dateTo) {
-                // Set date from to 7 days ago
+                // Set date from to yesterday
                 DOM.filters.dateFrom.value = defaultStartDate;
 
                 // Set date to to today
