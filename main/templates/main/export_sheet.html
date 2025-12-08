@@ -1675,7 +1675,7 @@
             }
         }
 
-        // Export as CSV
+        // Export as CSV (Tab-separated for Xero)
         function exportAsCSV() {
             document.getElementById('contextMenu').style.display = 'none';
 
@@ -1685,15 +1685,14 @@
             }
 
             const exportData = getExportData();
-            const csvRows = exportData.map(row =>
-                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-            );
+            // Use tabs instead of commas for Xero import
+            const csvRows = exportData.map(row => row.join('\t'));
             const csvContent = csvRows.join('\n');
 
-            downloadFile(csvContent, 'text/csv', 'Export_Data.csv');
+            downloadFile(csvContent, 'text/tab-separated-values', 'Xero_Import.txt');
         }
 
-        // Export as CSV (Excel)
+        // Export as CSV (Excel) - Tab-separated for Xero
         function exportAsExcelCSV() {
             document.getElementById('contextMenu').style.display = 'none';
 
@@ -1705,13 +1704,12 @@
             const exportData = getExportData();
 
             // Excel CSV needs BOM for UTF-8
+            // Use tabs instead of commas for Xero import
             const BOM = '\uFEFF';
-            const csvRows = exportData.map(row =>
-                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-            );
+            const csvRows = exportData.map(row => row.join('\t'));
             const csvContent = BOM + csvRows.join('\r\n');
 
-            downloadFile(csvContent, 'text/csv', 'Export_Data.csv');
+            downloadFile(csvContent, 'text/tab-separated-values', 'Xero_Import.txt');
         }
 
         // Helper function to download file
