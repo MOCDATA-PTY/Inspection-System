@@ -4897,8 +4897,10 @@ def export_sheet(request):
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
     # DEDUPLICATION: Use composite key (commodity, remote_id) to prevent duplicates
     #                Each commodity table has its own ID sequence, so the same remote_id can exist across commodities
-    #                Example: RAW-8487, PMP-8487, POULTRY-8487, EGGS-8487 are 4 separate inspections (4 billable items)
+    #                Example: RAW-8487 and PMP-8487 are 2 separate inspections (2 billable items)
+    # FILTERING: Only include RAW and PMP commodities (exclude POULTRY and EGGS from export)
     inspections = FoodSafetyAgencyInspection.objects.filter(
+        commodity__in=['RAW', 'PMP'],
         hours__isnull=False,
         km_traveled__isnull=False,
         date_of_inspection__gte=start_date,
