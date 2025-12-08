@@ -4989,8 +4989,8 @@ def export_sheet(request):
         'inspections_processed': inspections_processed,
         'unique_inspectors': len(unique_inspectors),
         'settings': settings,
-        'default_start_date': default_start_date,
-        'default_end_date': default_end_date,
+        'default_start_date': start_date.strftime('%Y-%m-%d'),
+        'default_end_date': end_date.strftime('%Y-%m-%d'),
     }
 
     return render(request, 'main/export_sheet.html', context)
