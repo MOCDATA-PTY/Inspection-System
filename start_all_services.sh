@@ -11,19 +11,15 @@ source venv/bin/activate
 
 # Start data sync service (SQL Server + Google Sheets)
 echo "Starting data sync service..."
-python manage.py start_sync_service &
+python manage.py start_data_sync &
 
-# Start backup service
-echo "Starting backup service..."
-python manage.py start_backup_service &
+# Start daily compliance sync service (every 5 minutes)
+echo "Starting compliance document processor..."
+python manage.py process_compliance_documents &
 
-# Start daily compliance sync service
-echo "Starting daily compliance sync..."
-python manage.py start_daily_sync &
-
-# Start OneDrive auto-upload service
-echo "Starting OneDrive service..."
-python manage.py start_onedrive_service &
+# Start OneDrive auto-upload service (every 1 hour)
+echo "Starting OneDrive scheduler..."
+python manage.py run_onedrive_scheduler &
 
 echo ""
 echo "=========================================="
@@ -32,9 +28,8 @@ echo "=========================================="
 echo ""
 echo "Services running:"
 echo "  - Data Sync (every 1 hour)"
-echo "  - Backup Service"
-echo "  - Daily Compliance Sync"
-echo "  - OneDrive Auto-Upload"
+echo "  - Compliance Document Processor (every 5 minutes)"
+echo "  - OneDrive Auto-Upload (every 1 hour)"
 echo ""
 echo "Services will continue running in background."
 echo "=========================================="
