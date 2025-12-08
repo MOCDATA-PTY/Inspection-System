@@ -4895,9 +4895,9 @@ def export_sheet(request):
     # REQUIRED: Both hours AND km must be present for an inspection to appear
     # REQUIRED: At least one lab sample must be taken (fat, protein, calcium, dna, or bought_sample)
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
-    # DEDUPLICATION: Same SQL Server inspection can exist as multiple Django records (different commodities)
-    #                Use distinct on remote_id to ensure each SQL Server inspection appears only once
-    #                This allows multiple inspections at same location/date (PMP + RAW) if they have different remote_ids
+    # DEDUPLICATION: Use composite key (commodity, remote_id) to prevent duplicates
+    #                Each commodity table has its own ID sequence, so the same remote_id can exist across commodities
+    #                Example: RAW-8487, PMP-8487, POULTRY-8487, EGGS-8487 are 4 separate inspections (4 billable items)
     inspections = FoodSafetyAgencyInspection.objects.filter(
         hours__isnull=False,
         km_traveled__isnull=False,
@@ -4911,7 +4911,7 @@ def export_sheet(request):
         Q(bought_sample__isnull=False)
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
-    ).distinct('remote_id').order_by('remote_id', '-date_of_inspection', 'inspector_name')
+    ).distinct('commodity', 'remote_id').order_by('commodity', 'remote_id', '-date_of_inspection', 'inspector_name')
 
     # Generate invoice line items
     invoice_items = []
