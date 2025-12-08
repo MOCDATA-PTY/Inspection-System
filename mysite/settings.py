@@ -195,7 +195,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Azure app registration values - Load from environment variables
 ONEDRIVE_CLIENT_ID = env('ONEDRIVE_CLIENT_ID', default='e6e7e71e-9f96-41ac-a4c2-5ae0f347e56f')
 ONEDRIVE_CLIENT_SECRET = env('ONEDRIVE_CLIENT_SECRET', default='.EF8Q~bdB4Njdl4tm0LuOgB4PA1sc636B7Z0Hb.Q')
-ONEDRIVE_REDIRECT_URI = env('ONEDRIVE_REDIRECT_URI', default='http://localhost:8000/onedrive/callback')
+# Use production server URL for OneDrive callback
+ONEDRIVE_REDIRECT_URI = env('ONEDRIVE_REDIRECT_URI', default='http://45.33.7.175:8000/onedrive/callback')
 
 # Feature flags
 ONEDRIVE_ENABLED = True
