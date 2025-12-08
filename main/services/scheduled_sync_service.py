@@ -613,19 +613,13 @@ class ScheduledSyncService:
 
                         # Restore km/hours to all matching inspections
                         if inspections.exists():
-                            # IMPORTANT: Only update if the new data doesn't have km/hours yet
+                            # IMPORTANT: If backup has km/hours data, ALWAYS restore it
                             # This preserves manually entered data from Google Sheets
                             for insp in inspections:
-                                if not insp.km_traveled and not insp.hours:
-                                    # No data yet, restore from backup
-                                    insp.km_traveled = data['km_traveled']
-                                    insp.hours = data['hours']
-                                    insp.save(update_fields=['km_traveled', 'hours'])
-                                    restored_count += 1
-                                elif data['km_traveled'] or data['hours']:
-                                    # Backup has data, new record doesn't - restore it
-                                    insp.km_traveled = data['km_traveled']
-                                    insp.hours = data['hours']
+                                # Only restore if backup actually has data
+                                if data.get('km_traveled') or data.get('hours'):
+                                    insp.km_traveled = data.get('km_traveled')
+                                    insp.hours = data.get('hours')
                                     insp.save(update_fields=['km_traveled', 'hours'])
                                     restored_count += 1
                         else:
