@@ -4891,18 +4891,12 @@ def export_sheet(request):
     except:
         end_date = today
 
-    # Fetch inspections with billable data (has hours, travel, or tests)
-    # Only include inspections that have at least one billable item
+    # Fetch inspections with billable data
+    # REQUIRED: Both hours AND km must be present for an inspection to appear
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
     inspections = FoodSafetyAgencyInspection.objects.filter(
-        Q(hours__isnull=False) |
-        Q(km_traveled__isnull=False) |
-        Q(fat=True) |
-        Q(protein=True) |
-        Q(calcium=True) |
-        Q(dna=True) |
-        Q(bought_sample__isnull=False)
-    ).filter(
+        hours__isnull=False,
+        km_traveled__isnull=False,
         date_of_inspection__gte=start_date,
         date_of_inspection__lte=end_date
     ).select_related(
