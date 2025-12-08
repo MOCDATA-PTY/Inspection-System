@@ -4978,6 +4978,14 @@ def export_sheet(request):
     # Debug: Final summary
     print(f"[EXPORT_SHEET] Processed {inspections_processed} inspections, generated {len(invoice_items)} line items")
 
+    # Sort invoice items by client name, then date, then item code
+    # This groups all items for the same client together (RAW and PMP intermixed)
+    invoice_items.sort(key=lambda x: (
+        x.get('client_name', ''),
+        x.get('invoice_date', ''),
+        x.get('item_code', '')
+    ))
+
     # Get system settings for theme
     from ..models import SystemSettings
     settings = SystemSettings.get_settings()
