@@ -117,10 +117,10 @@ class SystemSettings(models.Model):
     backup_frequency_days = models.IntegerField(default=7, verbose_name="Backup Frequency (days)")
     session_timeout_minutes = models.IntegerField(default=30, verbose_name="Session Timeout (minutes)")
     
-    # Data Sync Settings
+    # Data Sync Settings (runs automatically in background)
     google_sheets_enabled = models.BooleanField(default=True, verbose_name="Google Sheets Integration")
     sql_server_enabled = models.BooleanField(default=True, verbose_name="SQL Server Integration")
-    sync_interval_hours = models.FloatField(default=24.0, verbose_name="Sync Interval (hours)")
+    sync_interval_hours = models.FloatField(default=1.0, verbose_name="Sync Interval (hours)")
     
     # Compliance Documents Settings
     compliance_sync_enabled = models.BooleanField(default=True, verbose_name="Enable Automatic Compliance Sync")
