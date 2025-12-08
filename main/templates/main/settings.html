@@ -1271,36 +1271,8 @@
                     
                     <form method="post">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label>Master Service Control</label>
-                            <div style="margin-top: 0.5rem;">
-                                <span style="color: var(--text); font-size: 0.9rem;">Control all background services (Sync, Backup, Daily Compliance) with individual buttons below.</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Master Service Control Buttons -->
-                        <div style="margin-top: 1rem;">
-                            <div class="service-control-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button type="button" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="startAllServices()">
-                                    <i class="fas fa-play"></i>
-                                    Start All Services
-                                </button>
-                                <button type="button" class="btn" style="background-color: #ef4444; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="stopAllServices()">
-                                    <i class="fas fa-stop"></i>
-                                    Stop All Services
-                                </button>
-                                <button type="button" class="btn" style="background-color: #3b82f6; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="refreshServiceStatus()">
-                                    <i class="fas fa-sync"></i>
-                                    Refresh Status
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Master Service Status -->
-                        <div id="masterServiceStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
-                            <div id="masterServiceStatusContent"></div>
-                        </div>
-                        
+                        <!-- Background services run automatically every hour -->
+
                         <div class="form-group">
                             <label for="backup_frequency">Backup Frequency (days)</label>
                             <select id="backup_frequency" name="backup_frequency" class="form-control">
@@ -1312,33 +1284,6 @@
                                 Choose how often to automatically backup your data
                             </small>
                         </div>
-                        
-                        <!-- Backup Controls -->
-                        <div style="margin-top: 1rem;">
-                            <div class="backup-control-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button type="submit" name="action" value="create_backup" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;">
-                                    <i class="fas fa-download"></i>
-                                    Create Manual Backup
-                                </button>
-                                <button type="button" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="startBackupService()">
-                                    <i class="fas fa-play"></i>
-                                    Start Auto Backup
-                                </button>
-                                <button type="button" class="btn" style="background-color: #ef4444; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="stopBackupService()">
-                                    <i class="fas fa-stop"></i>
-                                    Stop Auto Backup
-                                </button>
-                            </div>
-                            <small style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.5rem; display: block;">
-                                💡 <strong>Tip:</strong> All services can run simultaneously! You can have backup, sync, and daily compliance services all running at the same time.
-                            </small>
-                        </div>
-                        
-                        <!-- Backup Service Status -->
-                        <div id="backupServiceStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
-                            <div id="backupServiceStatusContent"></div>
-                        </div>
-                        
                          
                          <div class="form-group">
                              <label for="theme_mode">Theme Mode</label>
@@ -1353,45 +1298,6 @@
                                  Switch between light and dark themes for better visibility
                              </small>
                          </div>
-                        
-                        <!-- System Status -->
-                        <div class="sync-status" style="margin-top: 1.5rem;">
-                            <div class="status-item" id="masterServiceStatusItem">
-                                <i class="fas fa-power-off" style="color: #6b7280;"></i>
-                                <span>Master Services: <span id="masterServiceStatusText">Loading...</span></span>
-                            </div>
-                            <div class="status-item">
-                                <i class="fas fa-database" style="color: #10b981;"></i>
-                                <span>Backup Frequency: 
-                                    {% if settings.backup_frequency == 'daily' %}Daily (1 day)
-                                    {% elif settings.backup_frequency == 'weekly' %}Weekly (7 days)
-                                    {% elif settings.backup_frequency == 'monthly' %}Monthly (30 days)
-                                    {% else %}Weekly (7 days)
-                                    {% endif %}
-                                </span>
-                            </div>
-                             <div class="status-item">
-                                 <i class="fas fa-palette" style="color: {% if settings.dark_mode %}#10b981{% else %}#6b7280{% endif %};"></i>
-                                 <span>Theme: {% if settings.dark_mode %}Dark Mode{% else %}Light Mode{% endif %}</span>
-                             </div>
-                             <div class="status-item" id="syncIntervalStatus">
-                                 <i class="fas fa-clock" style="color: #10b981;"></i>
-                                 <span>Sync Interval: <span id="syncIntervalDisplay">Loading...</span></span>
-                             </div>
-                            {% if backup_status.last_backup %}
-                            <div class="status-item">
-                                <i class="fas fa-calendar-check" style="color: #10b981;"></i>
-                                <span>Last Backup: {{ backup_status.last_backup|date:"M d, Y H:i" }}</span>
-                            </div>
-                            {% endif %}
-                            {% if backup_status.next_backup %}
-                            <div class="status-item">
-                                <i class="fas fa-calendar-plus" style="color: #f59e0b;"></i>
-                                <span>Next Backup: {{ backup_status.next_backup|date:"M d, Y H:i" }}</span>
-                            </div>
-                            {% endif %}
-                        </div>
-                        
                         <!-- OneDrive Auto-Upload Settings -->
                         <div class="form-group" style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
                             <h4 style="color: var(--text); margin-bottom: 1rem; display: flex; align-items: center;">
@@ -1416,58 +1322,6 @@
                                 <small style="color: var(--text-light); font-size: 0.85rem; margin-top: 0.25rem; display: block;">
                                     Files will be automatically uploaded to OneDrive after this delay period when inspections are marked as "sent". Default: 3 days.
                                 </small>
-                            </div>
-                            
-                            <!-- OneDrive Service Controls -->
-                            <div style="margin-top: 1rem;">
-                                <div class="onedrive-control-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                                    <button type="button" class="btn" style="background-color: #10b981; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="startOneDriveService()">
-                                        <i class="fas fa-play"></i>
-                                        Start OneDrive Service
-                                    </button>
-                                    <button type="button" class="btn" style="background-color: #ef4444; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="stopOneDriveService()">
-                                        <i class="fas fa-stop"></i>
-                                        Stop OneDrive Service
-                                    </button>
-                                    <button type="button" class="btn" style="background-color: #3b82f6; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="testOneDriveConnection()">
-                                        <i class="fas fa-plug"></i>
-                                        Test Connection
-                                    </button>
-                                    <button type="button" class="btn" style="background-color: #f59e0b; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="reauthenticateOneDrive()">
-                                        <i class="fas fa-key"></i>
-                                        Re-authenticate
-                                    </button>
-                                    <button type="button" class="btn" style="background-color: #6b7280; font-size: 0.9rem; padding: 0.75rem 1.5rem;" onclick="refreshOneDriveStatus()">
-                                        <i class="fas fa-sync"></i>
-                                        Refresh Status
-                                    </button>
-                                </div>
-                                
-                                <!-- OneDrive Authentication Status -->
-                                <div id="onedriveAuthStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
-                                    <div id="onedriveAuthStatusContent"></div>
-                                </div>
-                            </div>
-                            
-                            <!-- OneDrive Status Display -->
-                            <div class="sync-status" style="margin-top: 1rem;">
-                                <div class="status-item" id="onedriveServiceStatusItem">
-                                    <i class="fas fa-cloud" style="color: #6b7280;"></i>
-                                    <span>OneDrive Service: <span id="onedriveServiceStatusText">Loading...</span></span>
-                                </div>
-                                <div class="status-item" id="onedriveConnectionStatusItem">
-                                    <i class="fas fa-plug" style="color: #6b7280;"></i>
-                                    <span>Connection: <span id="onedriveConnectionStatusText">Loading...</span></span>
-                                </div>
-                                <div class="status-item">
-                                    <i class="fas fa-clock" style="color: #0078d4;"></i>
-                                    <span>Upload Delay: {{ settings.onedrive_upload_delay_days|default:3 }} {{ settings.onedrive_upload_delay_unit|default:'days' }}</span>
-                                </div>
-                            </div>
-                            
-                            <!-- OneDrive Service Status Details -->
-                            <div id="onedriveServiceStatus" style="margin-top: 1rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); border: 1px solid var(--border); display: none;">
-                                <div id="onedriveServiceStatusContent"></div>
                             </div>
                         </div>
                         
