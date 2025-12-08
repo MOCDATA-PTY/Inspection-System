@@ -1155,7 +1155,7 @@
 
                     <!-- Second row: Buttons -->
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button onclick="applyFilters()" class="btn btn-primary" style="padding: 8px 14px; font-size: 0.75rem;">
+                        <button onclick="applyDateFilter()" class="btn btn-primary" style="padding: 8px 14px; font-size: 0.75rem;">
                             <i class="fas fa-filter"></i> Apply
                         </button>
 
@@ -1331,6 +1331,28 @@
         }
         
         // Optimized filter function with batch processing
+        function applyDateFilter() {
+            console.log('applyDateFilter called');
+
+            // Get date filter values
+            const dateFrom = document.getElementById('invoiceDateFromFilter')?.value || '';
+            const dateTo = document.getElementById('invoiceDateToFilter')?.value || '';
+
+            // Build URL with query parameters
+            const url = new URL(window.location.href);
+            url.search = ''; // Clear existing params
+
+            if (dateFrom) {
+                url.searchParams.set('date_from', dateFrom);
+            }
+            if (dateTo) {
+                url.searchParams.set('date_to', dateTo);
+            }
+
+            // Reload page with new date filters
+            window.location.href = url.toString();
+        }
+
         function applyFilters() {
             console.log('applyFilters called');
 
@@ -1436,27 +1458,10 @@
 
         // Function to clear all filters
         function clearAllFilters() {
-            // Get filter elements (use cached if available)
-            const filters = DOM.filters.contactName ? DOM.filters : {
-                contactName: document.getElementById('contactNameFilter'),
-                reference: document.getElementById('referenceFilter'),
-                city: document.getElementById('cityFilter'),
-                inspector: document.getElementById('inspectorFilter'),
-                dateFrom: document.getElementById('invoiceDateFromFilter'),
-                dateTo: document.getElementById('invoiceDateToFilter')
-            };
-
-            // Clear all filter values
-            filters.contactName.value = '';
-            filters.reference.value = '';
-            filters.city.value = '';
-            filters.inspector.value = '';
-            filters.dateFrom.value = '';
-            filters.dateTo.value = '';
-
-            // Show all rows
-            const rows = document.querySelectorAll('#exportTableBody tr');
-            rows.forEach(row => row.style.display = '');
+            // Reload page without any query parameters (will use default yesterday-today)
+            const url = new URL(window.location.href);
+            url.search = ''; // Clear all query params
+            window.location.href = url.toString();
         }
 
         // Legacy function for backward compatibility

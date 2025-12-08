@@ -4876,9 +4876,24 @@ def export_sheet(request):
     default_start_date = yesterday.strftime('%Y-%m-%d')
     default_end_date = today.strftime('%Y-%m-%d')
 
+    # Get date range from request parameters or use defaults
+    date_from = request.GET.get('date_from', default_start_date)
+    date_to = request.GET.get('date_to', default_end_date)
+
+    # Parse dates
+    try:
+        start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+    except:
+        start_date = yesterday
+
+    try:
+        end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+    except:
+        end_date = today
+
     # Fetch inspections with billable data (has hours, travel, or tests)
     # Only include inspections that have at least one billable item
-    # PERFORMANCE: Default to yesterday-today to avoid loading thousands of records
+    # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
     inspections = FoodSafetyAgencyInspection.objects.filter(
         Q(hours__isnull=False) |
         Q(km_traveled__isnull=False) |
@@ -4888,8 +4903,8 @@ def export_sheet(request):
         Q(dna=True) |
         Q(bought_sample__isnull=False)
     ).filter(
-        date_of_inspection__gte=yesterday,
-        date_of_inspection__lte=today
+        date_of_inspection__gte=start_date,
+        date_of_inspection__lte=end_date
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
     ).order_by('-date_of_inspection', 'inspector_name')
