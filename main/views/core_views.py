@@ -4907,7 +4907,7 @@ def export_sheet(request):
         date_of_inspection__lte=end_date
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
-    ).order_by('-date_of_inspection', 'inspector_name')
+    ).distinct().order_by('-date_of_inspection', 'inspector_name')
 
     # Generate invoice line items
     invoice_items = []
