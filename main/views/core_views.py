@@ -4958,8 +4958,12 @@ def export_sheet(request):
     from ..models import SystemSettings
     settings = SystemSettings.get_settings()
 
-    # Get current month for default filter
-    current_month = datetime.now().strftime('%Y-%m')
+    # Get last 7 days for default filter
+    from datetime import timedelta
+    today = datetime.now().date()
+    seven_days_ago = today - timedelta(days=7)
+    default_start_date = seven_days_ago.strftime('%Y-%m-%d')
+    default_end_date = today.strftime('%Y-%m-%d')
 
     context = {
         'invoice_items': invoice_items,
@@ -4967,7 +4971,8 @@ def export_sheet(request):
         'inspections_processed': inspections_processed,
         'unique_inspectors': len(unique_inspectors),
         'settings': settings,
-        'current_month': current_month,
+        'default_start_date': default_start_date,
+        'default_end_date': default_end_date,
     }
 
     return render(request, 'main/export_sheet.html', context)

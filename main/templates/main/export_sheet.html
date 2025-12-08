@@ -1894,15 +1894,15 @@
             // Initialize DOM cache first
             DOM.init();
 
-            // Set default date filters to current month
-            const currentMonth = '{{ current_month }}';
-            if (currentMonth && DOM.filters.dateFrom && DOM.filters.dateTo) {
-                // Set date from to first day of current month
-                DOM.filters.dateFrom.value = currentMonth + '-01';
+            // Set default date filters to last 7 days
+            const defaultStartDate = '{{ default_start_date }}';
+            const defaultEndDate = '{{ default_end_date }}';
+            if (defaultStartDate && defaultEndDate && DOM.filters.dateFrom && DOM.filters.dateTo) {
+                // Set date from to 7 days ago
+                DOM.filters.dateFrom.value = defaultStartDate;
 
-                // Set date to to last day of current month
-                const lastDay = new Date(currentMonth.split('-')[0], currentMonth.split('-')[1], 0).getDate();
-                DOM.filters.dateTo.value = currentMonth + '-' + String(lastDay).padStart(2, '0');
+                // Set date to to today
+                DOM.filters.dateTo.value = defaultEndDate;
             }
 
             // Use requestAnimationFrame for smooth loading
