@@ -639,6 +639,31 @@ class ScheduledSyncService:
             else:
                 print(f"\n   ℹ️  No km/hours data to restore (this is normal for first sync)")
 
+            # STEP 4: SYNC LAB SAMPLE DATA
+            print(f"\n" + "="*80)
+            print(f"[SYNC] STEP 4: SYNCING LAB SAMPLE DATA FROM SQL SERVER...")
+            print("="*80)
+
+            try:
+                from ..utils.lab_sample_sync import sync_all_lab_samples
+
+                # Sync lab samples for all inspections
+                lab_sample_stats = sync_all_lab_samples(show_progress=True)
+
+                if lab_sample_stats.get('success', 0) > 0:
+                    print(f"\n[OK] Lab sample sync completed successfully!")
+                    print(f"   ✓ Inspections with lab samples: {lab_sample_stats['success']:,}")
+                    print(f"   📦 PMP samples: {lab_sample_stats.get('pmp_samples', 0):,}")
+                    print(f"   🥩 RAW samples: {lab_sample_stats.get('raw_samples', 0):,}")
+                    if lab_sample_stats.get('not_found', 0) > 0:
+                        print(f"   ℹ️  Inspections not found in Django: {lab_sample_stats['not_found']} (may be old records)")
+                else:
+                    print(f"\n[WARNING]  No lab samples found or error occurred")
+
+            except Exception as e:
+                print(f"\n[WARNING]  Error syncing lab samples: {e}")
+                print(f"   Continuing with sync - lab samples can be synced manually later")
+
             cursor.close()
             connection.close()
 
