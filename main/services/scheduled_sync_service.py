@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Scheduled Sync Service
 Handles all automatic synchronization tasks based on user settings
@@ -6,6 +7,13 @@ Handles all automatic synchronization tasks based on user settings
 
 import os
 import sys
+import io
+
+# Fix Windows console encoding for emoji support
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 import django
 import threading
 import time
@@ -373,7 +381,6 @@ class ScheduledSyncService:
                 print(f"   🔍 Sample backup keys: {sample_keys}")
 
                 # ALSO SAVE TO PERSISTENT CACHE (survives process restart)
-                from django.core.cache import cache
                 cache.set('km_hours_backup_persistent', km_hours_backup, timeout=86400)  # 24 hours
                 print(f"   💾 Also saved to persistent cache for disaster recovery!")
 
@@ -825,14 +832,14 @@ class ScheduledSyncService:
             if was_running:
                 # Don't print on every page load - only on actual restart
                 if not self.sync_thread or not self.sync_thread.is_alive():
-                    print("🔄 Auto-restarting sync service (was running before)...")
+                    print("[SYNC] Auto-restarting sync service (was running before)...")
                     self.is_running = True
                     self._load_stats()
                     self.sync_thread = threading.Thread(target=self._background_service_loop, daemon=True)
                     self.sync_thread.start()
-                    print("✅ Sync service auto-restarted successfully")
+                    print("[OK] Sync service auto-restarted successfully")
         except Exception as e:
-            print(f"⚠️ Failed to auto-restart sync service: {e}")
+            print(f"[WARNING] Failed to auto-restart sync service: {e}")
 
     def start_background_service(self):
         """Start the background sync service."""
