@@ -4867,11 +4867,18 @@ def dashboard(request):
 @login_required(login_url='login')
 def export_sheet(request):
     """Export Sheet page - Invoice dashboard replicating Looker Studio"""
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from django.db.models import Q
+
+    # Get yesterday to today for default filter
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    default_start_date = yesterday.strftime('%Y-%m-%d')
+    default_end_date = today.strftime('%Y-%m-%d')
 
     # Fetch inspections with billable data (has hours, travel, or tests)
     # Only include inspections that have at least one billable item
+    # PERFORMANCE: Default to yesterday-today to avoid loading thousands of records
     inspections = FoodSafetyAgencyInspection.objects.filter(
         Q(hours__isnull=False) |
         Q(km_traveled__isnull=False) |
@@ -4880,6 +4887,9 @@ def export_sheet(request):
         Q(calcium=True) |
         Q(dna=True) |
         Q(bought_sample__isnull=False)
+    ).filter(
+        date_of_inspection__gte=yesterday,
+        date_of_inspection__lte=today
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
     ).order_by('-date_of_inspection', 'inspector_name')
@@ -4957,13 +4967,6 @@ def export_sheet(request):
     # Get system settings for theme
     from ..models import SystemSettings
     settings = SystemSettings.get_settings()
-
-    # Get yesterday to today for default filter
-    from datetime import timedelta
-    today = datetime.now().date()
-    yesterday = today - timedelta(days=1)
-    default_start_date = yesterday.strftime('%Y-%m-%d')
-    default_end_date = today.strftime('%Y-%m-%d')
 
     context = {
         'invoice_items': invoice_items,
