@@ -189,11 +189,11 @@ def sync_all_lab_samples(limit=None, show_progress=True):
 
         if show_progress:
             print(f"\n[LAB SAMPLE SYNC] Complete!")
-            print(f"  ✓ Success: {stats['success']}")
-            print(f"  ✗ Failed: {stats['failed']}")
-            print(f"  ? Not found in Django: {stats['not_found']}")
-            print(f"  📦 PMP samples: {stats['pmp_samples']}")
-            print(f"  🥩 RAW samples: {stats['raw_samples']}")
+            print(f"  [OK] Success: {stats['success']}")
+            print(f"  [FAIL] Failed: {stats['failed']}")
+            print(f"  [INFO] Not found in Django: {stats['not_found']}")
+            print(f"  [PMP] PMP samples: {stats['pmp_samples']}")
+            print(f"  [RAW] RAW samples: {stats['raw_samples']}")
 
         return stats
 

@@ -652,11 +652,11 @@ class ScheduledSyncService:
 
                 if lab_sample_stats.get('success', 0) > 0:
                     print(f"\n[OK] Lab sample sync completed successfully!")
-                    print(f"   ✓ Inspections with lab samples: {lab_sample_stats['success']:,}")
-                    print(f"   📦 PMP samples: {lab_sample_stats.get('pmp_samples', 0):,}")
-                    print(f"   🥩 RAW samples: {lab_sample_stats.get('raw_samples', 0):,}")
+                    print(f"   [OK] Inspections with lab samples: {lab_sample_stats['success']:,}")
+                    print(f"   [PMP] PMP samples: {lab_sample_stats.get('pmp_samples', 0):,}")
+                    print(f"   [RAW] RAW samples: {lab_sample_stats.get('raw_samples', 0):,}")
                     if lab_sample_stats.get('not_found', 0) > 0:
-                        print(f"   ℹ️  Inspections not found in Django: {lab_sample_stats['not_found']} (may be old records)")
+                        print(f"   [INFO] Inspections not found in Django: {lab_sample_stats['not_found']} (may be old records)")
                 else:
                     print(f"\n[WARNING]  No lab samples found or error occurred")
 
