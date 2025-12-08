@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deployment script for Client Allocation Sheet feature
+# Deployment script for Inspection System
 # Run this on the production server
 
 echo "========================================="
@@ -19,6 +19,7 @@ git pull origin master || exit 1
 
 # Run database migrations
 echo "Running database migrations..."
+python3 manage.py makemigrations
 python3 manage.py migrate || exit 1
 
 # Collect static files (if needed)
@@ -41,10 +42,21 @@ sudo systemctl status gunicorn --no-pager -l
 
 echo ""
 echo "========================================="
+echo "Starting background services..."
+echo "========================================="
+# Make script executable and run it
+chmod +x start_all_services.sh
+./start_all_services.sh
+
+echo ""
+echo "========================================="
 echo "Deployment complete!"
 echo "========================================="
-echo "The Client Allocation Sheet should now be available at:"
-echo "https://your-domain.com/client-allocation-sheet/"
+echo "All services are now running in background:"
+echo "  - Data Sync (every 1 hour)"
+echo "  - Backup Service"
+echo "  - Daily Compliance Sync"
+echo "  - OneDrive Auto-Upload"
 echo ""
 echo "To verify migrations were applied, run:"
 echo "source venv/bin/activate && python3 manage.py showmigrations main | tail -5"
