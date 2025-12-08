@@ -91,7 +91,7 @@ class ScheduledSyncService:
             }
             
         except Exception as e:
-            print(f"⚠️ Error getting system settings: {e}")
+            print(f"[WARNING] Error getting system settings: {e}")
             return self._get_default_settings()
     
     def _get_default_settings(self):
@@ -127,14 +127,14 @@ class ScheduledSyncService:
                 
                 # If interval is 0, don't sync automatically (manual only)
                 if interval_hours <= 0:
-                    print(f"⚠️ Sync interval is {interval_hours} hours - skipping automatic sync for {sync_type}")
+                    print(f"[WARNING] Sync interval is {interval_hours} hours - skipping automatic sync for {sync_type}")
                     return False
                 
                 # Check if enough time has passed
                 required_seconds = interval_hours * 3600
                 time_passed = time_since_last.total_seconds()
                 
-                print(f"🕐 {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s")
+                print(f"[TIME] {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s")
                 return time_passed >= required_seconds
             
             elif sync_type == 'onedrive':
@@ -147,7 +147,7 @@ class ScheduledSyncService:
             return False
             
         except Exception as e:
-            print(f"⚠️ Error checking sync timing: {e}")
+            print(f"[WARNING] Error checking sync timing: {e}")
             return False
     
     def sync_google_sheets(self):
@@ -198,7 +198,7 @@ class ScheduledSyncService:
             return facility_type, group_type, commodity
 
         try:
-            print("📊 Starting SQL Server client sync...")
+            print("[DATA] Starting SQL Server client sync...")
 
             # Ensure fresh database connection
             close_old_connections()
@@ -217,7 +217,7 @@ class ScheduledSyncService:
                 cache.set('google_sheets_sync_error', error_msg, 300)
                 return False
 
-            print("   ✅ SQL Server connection established")
+            print("   [OK] SQL Server connection established")
 
             # Fetch all active clients from SQL Server
             cursor = sql_conn.connection.cursor()
@@ -255,7 +255,7 @@ class ScheduledSyncService:
             cursor.execute(query)
             sql_clients = cursor.fetchall()
 
-            print(f"   📊 Found {len(sql_clients)} active clients in SQL Server")
+            print(f"   [DATA] Found {len(sql_clients)} active clients in SQL Server")
 
             # Prepare bulk data
             bulk_records = []
@@ -319,7 +319,7 @@ class ScheduledSyncService:
                 # Bulk create all records in a single query
                 ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
 
-            print(f"✅ SQL Server client sync completed successfully")
+            print(f"[OK] SQL Server client sync completed successfully")
             print(f"   - Clients deleted: {deleted_count}")
             print(f"   - Clients created: {len(bulk_records)}")
             print(f"   - Total processed: {len(sql_clients)}")
@@ -346,7 +346,7 @@ class ScheduledSyncService:
         """Sync inspection data with SQL Server - DELETE ALL then fetch fresh data."""
         try:
             print("\n" + "="*80)
-            print("🗄️  STARTING SQL SERVER SYNC (FULL REFRESH)")
+            print("[SQL]  STARTING SQL SERVER SYNC (FULL REFRESH)")
             print("="*80)
 
             from ..models import FoodSafetyAgencyInspection, Inspection
@@ -355,7 +355,7 @@ class ScheduledSyncService:
             from datetime import datetime, timedelta
 
             # PRESERVE KM/HOURS DATA BEFORE DELETING
-            print(f"\n💾 STEP 1a: PRESERVING KM AND HOURS DATA...")
+            print(f"\n[BACKUP] STEP 1a: PRESERVING KM AND HOURS DATA...")
             km_hours_backup = {}
             inspections_with_data = FoodSafetyAgencyInspection.objects.filter(
                 Q(km_traveled__isnull=False) | Q(hours__isnull=False)
@@ -373,19 +373,19 @@ class ScheduledSyncService:
                     'product_name': insp.product_name
                 }
 
-            print(f"   📊 Backed up km/hours data for {len(km_hours_backup):,} inspections")
+            print(f"   [DATA] Backed up km/hours data for {len(km_hours_backup):,} inspections")
             if len(km_hours_backup) > 0:
-                print(f"   ✅ This data will be restored after sync!")
+                print(f"   [OK] This data will be restored after sync!")
                 # Show sample backup keys for debugging
                 sample_keys = list(km_hours_backup.keys())[:3]
-                print(f"   🔍 Sample backup keys: {sample_keys}")
+                print(f"   [DEBUG] Sample backup keys: {sample_keys}")
 
                 # ALSO SAVE TO PERSISTENT CACHE (survives process restart)
                 cache.set('km_hours_backup_persistent', km_hours_backup, timeout=86400)  # 24 hours
-                print(f"   💾 Also saved to persistent cache for disaster recovery!")
+                print(f"   [BACKUP] Also saved to persistent cache for disaster recovery!")
 
             # DELETE ALL EXISTING INSPECTIONS FIRST (prevents duplicates)
-            print(f"\n🗑️  STEP 1b: CLEARING EXISTING INSPECTION DATA...")
+            print(f"\n[DELETE]  STEP 1b: CLEARING EXISTING INSPECTION DATA...")
             existing_count = FoodSafetyAgencyInspection.objects.count()
             print(f"   Found {existing_count:,} existing inspection records")
             print(f"   Deleting all records to ensure fresh sync...")
@@ -393,13 +393,13 @@ class ScheduledSyncService:
             FoodSafetyAgencyInspection.objects.all().delete()
 
             final_count = FoodSafetyAgencyInspection.objects.count()
-            print(f"✅ Database cleared: {final_count:,} inspections remaining (should be 0)")
+            print(f"[OK] Database cleared: {final_count:,} inspections remaining (should be 0)")
             print(f"   This prevents duplicates and ensures fresh data!\n")
 
             # Connect to SQL Server using pymssql
             sql_server_config = settings.DATABASES.get('sql_server', {})
 
-            print(f"📡 STEP 2: CONNECTING TO SQL SERVER...")
+            print(f"[CONNECT] STEP 2: CONNECTING TO SQL SERVER...")
             print(f"   Server: {sql_server_config.get('HOST')}:{sql_server_config.get('PORT', 1433)}")
             print(f"   Database: {sql_server_config.get('NAME')}")
 
@@ -412,16 +412,16 @@ class ScheduledSyncService:
                 timeout=30
             )
             cursor = connection.cursor(as_dict=True)
-            print(f"✅ Connected successfully!\n")
+            print(f"[OK] Connected successfully!\n")
 
-            print(f"📅 Fetching inspections and account codes from SQL Server...")
+            print(f"[FETCH] Fetching inspections and account codes from SQL Server...")
             print(f"   Query: FSA_INSPECTION_QUERY (includes InternalAccountNumber)")
 
             # Use the FSA_INSPECTION_QUERY that's already working
             cursor.execute(FSA_INSPECTION_QUERY)
 
             sql_inspections = cursor.fetchall()
-            print(f"\n📊 Retrieved {len(sql_inspections)} inspections from SQL Server")
+            print(f"\n[DATA] Retrieved {len(sql_inspections)} inspections from SQL Server")
             print(f"   Each inspection includes: Client Name, Account Code, Date, Inspector, Commodity")
 
             # Tracking stats
@@ -445,7 +445,7 @@ class ScheduledSyncService:
             }, 300)
 
             print(f"\n" + "="*80)
-            print(f"📋 SYNCING INSPECTIONS WITH CLIENT NAMES AND PRODUCTS")
+            print(f"[INFO] SYNCING INSPECTIONS WITH CLIENT NAMES AND PRODUCTS")
             print(f"   SQL Server → Inspection Data + Account Codes + Products + Client Names")
             print(f"   All data from SQL Server")
             print("="*80)
@@ -494,9 +494,9 @@ class ScheduledSyncService:
 
                                 if show_detailed_log:
                                     print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                                    print(f"      📋 Account Code: {internal_account_code}")
-                                    print(f"      ✅ SQL Server Match: FOUND")
-                                    print(f"      📊 Client Name: {sql_client.eclick_name}")
+                                    print(f"      [INFO] Account Code: {internal_account_code}")
+                                    print(f"      [OK] SQL Server Match: FOUND")
+                                    print(f"      [DATA] Client Name: {sql_client.eclick_name}")
                                     print(f"      ⭐ USING: {client_name} (from SQL Server)")
                             else:
                                 # No match in SQL Server - leave as "-"
@@ -504,9 +504,9 @@ class ScheduledSyncService:
                                 client_name = "-"
                                 if show_detailed_log:
                                     print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                                    print(f"      📋 Account Code: {internal_account_code}")
+                                    print(f"      [INFO] Account Code: {internal_account_code}")
                                     print(f"      ❌ SQL Server Match: NOT FOUND")
-                                    print(f"      ⚠️  Client name set to: -")
+                                    print(f"      [WARNING]  Client name set to: -")
                                     print(f"      → Sync clients from SQL Server to populate client names!")
 
                         except Exception as e:
@@ -515,18 +515,18 @@ class ScheduledSyncService:
                             client_name = "-"
                             if show_detailed_log:
                                 print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                                print(f"      📋 Account Code: {internal_account_code}")
-                                print(f"      ⚠️  Error looking up SQL Server client: {e}")
-                                print(f"      ⚠️  Client name set to: -")
+                                print(f"      [INFO] Account Code: {internal_account_code}")
+                                print(f"      [WARNING]  Error looking up SQL Server client: {e}")
+                                print(f"      [WARNING]  Client name set to: -")
                     else:
                         # No account code - leave as "-" (cannot look up without account code)
                         sql_server_fallback += 1
                         client_name = "-"
                         if show_detailed_log:
                             print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                            print(f"      📋 Account Code: NONE")
-                            print(f"      ⚠️  Cannot look up client without account code")
-                            print(f"      ⚠️  Client name set to: -")
+                            print(f"      [INFO] Account Code: NONE")
+                            print(f"      [WARNING]  Cannot look up client without account code")
+                            print(f"      [WARNING]  Client name set to: -")
 
                     # PHASE 1: Create inspection WITH product name from SQL query
                     # Using create() since we deleted all records - no need for update_or_create
@@ -546,7 +546,7 @@ class ScheduledSyncService:
 
                     # Progress indicator every 250 inspections (was 50 - reduced console spam)
                     if idx % 250 == 0:
-                        print(f"\n   📈 Progress: {idx}/{len(sql_inspections)} inspections synced...")
+                        print(f"\n    Progress: {idx}/{len(sql_inspections)} inspections synced...")
                         print(f"      - Account codes found: {account_codes_found}")
                         print(f"      - SQL Server client matches: {google_sheets_matched}")
                         print(f"      - Using SQL Server client names: {google_sheets_used}")
@@ -563,12 +563,12 @@ class ScheduledSyncService:
                         }, 300)
 
                 except Exception as e:
-                    print(f"\n   ⚠️  Error syncing inspection {inspection_id}: {e}")
+                    print(f"\n   [WARNING]  Error syncing inspection {inspection_id}: {e}")
                     continue
 
             # RESTORE KM/HOURS DATA
             print(f"\n" + "="*80)
-            print(f"✅ SYNC COMPLETE: Inspections created with product names!")
+            print(f"[OK] SYNC COMPLETE: Inspections created with product names!")
             print(f"   - New inspections created: {synced_count}")
             print(f"   - SQL Server client matches: {google_sheets_matched}/{account_codes_found}")
             print(f"   - Product names from SQL query (no additional fetching needed)")
@@ -576,12 +576,12 @@ class ScheduledSyncService:
 
             # Restore km/hours data from backup
             if km_hours_backup:
-                print(f"\n🔄 STEP 3: RESTORING KM AND HOURS DATA...")
+                print(f"\n[SYNC] STEP 3: RESTORING KM AND HOURS DATA...")
 
                 # Show sample inspection keys after sync for debugging
                 sample_inspections = FoodSafetyAgencyInspection.objects.all()[:3]
                 if sample_inspections.exists():
-                    print(f"   🔍 Sample inspection keys after sync:")
+                    print(f"   [DEBUG] Sample inspection keys after sync:")
                     for insp in sample_inspections:
                         print(f"      - ({insp.commodity}, {insp.remote_id}, {insp.date_of_inspection})")
 
@@ -609,7 +609,7 @@ class ScheduledSyncService:
                             # Only restore if we find exactly one match (avoid ambiguity)
                             if inspections.count() > 1:
                                 # Multiple matches - use first one but log warning
-                                print(f"   ⚠️  Multiple matches for {commodity}-{date_of_inspection}, using first match")
+                                print(f"   [WARNING]  Multiple matches for {commodity}-{date_of_inspection}, using first match")
 
                         # Restore km/hours to all matching inspections
                         if inspections.exists():
@@ -627,15 +627,15 @@ class ScheduledSyncService:
                             not_found_keys.append((commodity, remote_id, date_of_inspection))
 
                     except Exception as e:
-                        print(f"   ⚠️  Error restoring km/hours for inspection {commodity}-{remote_id}: {e}")
+                        print(f"   [WARNING]  Error restoring km/hours for inspection {commodity}-{remote_id}: {e}")
                         continue
 
-                print(f"✅ Restored km/hours data to {restored_count:,} inspections!")
+                print(f"[OK] Restored km/hours data to {restored_count:,} inspections!")
                 if not_found_count > 0:
-                    print(f"⚠️  Could not find {not_found_count} inspections to restore (they may have been removed from SQL Server)")
+                    print(f"[WARNING]  Could not find {not_found_count} inspections to restore (they may have been removed from SQL Server)")
                     # Show first 3 keys that weren't found
                     if not_found_keys:
-                        print(f"   🔍 Sample keys not found: {not_found_keys[:3]}")
+                        print(f"   [DEBUG] Sample keys not found: {not_found_keys[:3]}")
             else:
                 print(f"\n   ℹ️  No km/hours data to restore (this is normal for first sync)")
 
@@ -646,18 +646,18 @@ class ScheduledSyncService:
             total_inspections = FoodSafetyAgencyInspection.objects.count()
 
             print(f"\n" + "="*80)
-            print(f"✅ SQL SERVER SYNC COMPLETED (FULL REFRESH)")
+            print(f"[OK] SQL SERVER SYNC COMPLETED (FULL REFRESH)")
             print("="*80)
-            print(f"\n📊 Sync Statistics:")
+            print(f"\n[DATA] Sync Statistics:")
             print(f"   - Old inspections deleted: {existing_count:,}")
             print(f"   - SQL Server inspections fetched: {len(sql_inspections)}")
             print(f"   - New inspections created: {synced_count:,}")
-            print(f"\n📋 Account Code & Name Matching Statistics:")
+            print(f"\n[INFO] Account Code & Name Matching Statistics:")
             print(f"   - Inspections with account codes: {account_codes_found} ({(account_codes_found/len(sql_inspections)*100) if len(sql_inspections) > 0 else 0:.1f}%)")
             print(f"   - Google Sheets matches found: {google_sheets_matched} ({(google_sheets_matched/account_codes_found*100) if account_codes_found > 0 else 0:.1f}% of those with codes)")
             print(f"   - Using Google Sheets names: {google_sheets_used}")
             print(f"   - Using placeholders (no match): {sql_server_fallback}")
-            print(f"\n💾 Database Status:")
+            print(f"\n[BACKUP] Database Status:")
             print(f"   - Total inspection records in database: {total_inspections:,}")
             print(f"   - (One record per inspection, multiple products comma-separated)")
             print(f"\n⭐ Data Sources:")
@@ -687,7 +687,7 @@ class ScheduledSyncService:
     def sync_compliance_documents(self):
         """Sync compliance documents from Google Drive (REMOVED - OneDrive service handles this)."""
         try:
-            print("⚠️ Compliance documents sync has been removed - OneDrive service handles this automatically")
+            print("[WARNING] Compliance documents sync has been removed - OneDrive service handles this automatically")
             return True  # Return True to avoid errors
                 
         except Exception as e:
@@ -697,7 +697,7 @@ class ScheduledSyncService:
     def sync_onedrive(self):
         """Sync OneDrive files in background to prevent user waiting."""
         try:
-            print("🔄 Starting OneDrive auto-sync (background)...")
+            print("[SYNC] Starting OneDrive auto-sync (background)...")
             
             from ..views.core_views import check_for_compliance_documents
             from datetime import datetime, timedelta
@@ -733,7 +733,7 @@ class ScheduledSyncService:
             # Compute slice window [offset, offset+batch)
             start_index = current_offset
             end_index = min(current_offset + batch_size, total)
-            print(f"📊 OneDrive auto-sync: total={total}, processing index {start_index}..{end_index-1} (batch {batch_size})")
+            print(f"[DATA] OneDrive auto-sync: total={total}, processing index {start_index}..{end_index-1} (batch {batch_size})")
 
             # Fetch just the batch we need
             # Using iterator over sliced queryset to reduce memory
@@ -779,17 +779,17 @@ class ScheduledSyncService:
 
                     processed_count += 1
                     if processed_count % 500 == 0:
-                        print(f"📊 OneDrive auto-sync: processed {processed_count}/{len(batch_items)} in current batch; changes={changes_detected}")
+                        print(f"[DATA] OneDrive auto-sync: processed {processed_count}/{len(batch_items)} in current batch; changes={changes_detected}")
                 except Exception as e:
                     # Continue on errors to avoid blocking the whole batch
-                    print(f"⚠️ OneDrive auto-sync error for {client_name} @ {inspection_date}: {e}")
+                    print(f"[WARNING] OneDrive auto-sync error for {client_name} @ {inspection_date}: {e}")
                     continue
 
             # Update rolling offset for next hourly run
             next_offset = end_index if end_index < total else 0
             cache.set(offset_key, next_offset, 60 * 60 * 48)  # keep for 48 hours
 
-            print(f"✅ OneDrive auto-sync completed batch: processed={processed_count}, changes={changes_detected}, next_offset={next_offset}, total={total}")
+            print(f"[OK] OneDrive auto-sync completed batch: processed={processed_count}, changes={changes_detected}, next_offset={next_offset}, total={total}")
             self.last_sync_times['onedrive'] = datetime.now()
             return True
             
@@ -804,7 +804,7 @@ class ScheduledSyncService:
             cache.set('scheduled_sync_service:stats', self.sync_stats, 3600)
             cache.set('scheduled_sync_service:last_sync_times', self.last_sync_times, 3600)
         except Exception as e:
-            print(f"⚠️ Failed to save sync stats: {e}")
+            print(f"[WARNING] Failed to save sync stats: {e}")
     
     def _load_stats(self):
         """Load sync statistics from cache."""
@@ -817,7 +817,7 @@ class ScheduledSyncService:
             if cached_times:
                 self.last_sync_times = cached_times
         except Exception as e:
-            print(f"⚠️ Failed to load sync stats: {e}")
+            print(f"[WARNING] Failed to load sync stats: {e}")
 
     def _auto_restart_if_needed(self):
         """Auto-restart service if it was running before Django reloaded."""
@@ -842,7 +842,7 @@ class ScheduledSyncService:
             if self.sync_thread and self.sync_thread.is_alive():
                 return False, "Background sync service already running"
             # Thread died but cache says running - restart it
-            print("⚠️ Service was marked running but thread died. Restarting...")
+            print("[WARNING] Service was marked running but thread died. Restarting...")
 
         self.is_running = True
         self._load_stats()
@@ -853,7 +853,7 @@ class ScheduledSyncService:
         self.sync_thread = threading.Thread(target=self._background_service_loop, daemon=True)
         self.sync_thread.start()
 
-        print("✅ Scheduled sync service started successfully")
+        print("[OK] Scheduled sync service started successfully")
         return True, "Scheduled sync service started"
     
     def stop_background_service(self):
@@ -870,7 +870,7 @@ class ScheduledSyncService:
         """Background service loop."""
         from django.db import close_old_connections
 
-        print("🚀 Background sync service loop started")
+        print("[START] Background sync service loop started")
 
         while self.is_running:
             try:
@@ -889,7 +889,7 @@ class ScheduledSyncService:
                     sql_server_due = settings.get('sql_server_enabled', True) and self.should_run_sync('sql_server')
 
                     if google_sheets_due or sql_server_due:
-                        print("🔄 Running scheduled syncs...")
+                        print("[SYNC] Running scheduled syncs...")
                         sync_results = {}
 
                         # Google Sheets sync
@@ -926,7 +926,7 @@ class ScheduledSyncService:
                         # Print detailed summary
                         successful_count = sum(1 for result in sync_results.values() if result)
                         failed_count = len(sync_results) - successful_count
-                        print(f"✅ Scheduled syncs completed: {len(sync_results)} tasks ({successful_count} successful, {failed_count} failed)")
+                        print(f"[OK] Scheduled syncs completed: {len(sync_results)} tasks ({successful_count} successful, {failed_count} failed)")
 
                         # Show next sync time
                         next_sync_time = self.sync_stats.get('next_sync_time', 'Unknown')
@@ -966,7 +966,7 @@ class ScheduledSyncService:
                     pass
                 time.sleep(60)  # Wait 1 minute before retrying
 
-        print("🛑 Background sync service loop stopped")
+        print(" Background sync service loop stopped")
     
     def get_service_status(self):
         """Get current service status."""
@@ -1029,7 +1029,7 @@ class ScheduledSyncService:
     def run_manual_sync(self, sync_type):
         """Run a manual sync of a specific type."""
         try:
-            print(f"🔄 Running manual {sync_type} sync...")
+            print(f"[SYNC] Running manual {sync_type} sync...")
             
             if sync_type == 'google_sheets':
                 success = self.sync_google_sheets()
@@ -1037,7 +1037,7 @@ class ScheduledSyncService:
                 success = self.sync_sql_server()
             elif sync_type == 'all':
                 # Run both Google Sheets and SQL Server sync
-                print("🔄 Running all sync operations...")
+                print("[SYNC] Running all sync operations...")
                 google_success = self.sync_google_sheets()
                 sql_success = self.sync_sql_server()
                 success = google_success and sql_success
@@ -1121,7 +1121,7 @@ def run_manual_sync(sync_type):
 
 
 if __name__ == "__main__":
-    print("🕐 Scheduled Sync Service")
+    print("[TIME] Scheduled Sync Service")
     print("=" * 50)
     
     # Test the service
