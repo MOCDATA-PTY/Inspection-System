@@ -66,8 +66,7 @@ print("-" * 100)
 
 # Check raw data without distinct
 raw_inspections = FoodSafetyAgencyInspection.objects.filter(
-    client_name__icontains='Roots Butchery',
-    client_name__icontains='Birch Acres',
+    client_name__icontains='Roots Butchery Birch Acres',
     date_of_inspection=test_date,
     hours__isnull=False,
     km_traveled__isnull=False
