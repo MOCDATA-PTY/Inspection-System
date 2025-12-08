@@ -19,6 +19,7 @@ git pull origin master || exit 1
 
 # Run database migrations
 echo "Running database migrations..."
+python3 manage.py makemigrations
 python3 manage.py migrate || exit 1
 
 # Collect static files (if needed)
@@ -43,8 +44,9 @@ echo ""
 echo "========================================="
 echo "Starting background services..."
 echo "========================================="
-# Auto-start all background services
-bash start_all_services.sh
+# Make script executable and run it
+chmod +x start_all_services.sh
+./start_all_services.sh
 
 echo ""
 echo "========================================="
