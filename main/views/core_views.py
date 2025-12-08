@@ -4895,6 +4895,8 @@ def export_sheet(request):
     # REQUIRED: Both hours AND km must be present for an inspection to appear
     # REQUIRED: At least one lab sample must be taken (fat, protein, calcium, dna, or bought_sample)
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
+    # DEDUPLICATION: Same inspection can exist as multiple records (one per commodity type)
+    #                Use distinct on (client_name, date, inspector) to show only one
     inspections = FoodSafetyAgencyInspection.objects.filter(
         hours__isnull=False,
         km_traveled__isnull=False,
@@ -4908,7 +4910,7 @@ def export_sheet(request):
         Q(bought_sample__isnull=False)
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
-    ).distinct('id').order_by('id', '-date_of_inspection', 'inspector_name')
+    ).distinct('client_name', 'date_of_inspection', 'inspector_name').order_by('client_name', 'date_of_inspection', 'inspector_name', '-id')
 
     # Generate invoice line items
     invoice_items = []
