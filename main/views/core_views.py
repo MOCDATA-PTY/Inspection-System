@@ -4278,8 +4278,8 @@ def refresh_clients(request):
                 'error': 'Client sync is already running. Please wait for it to complete.'
             })
 
-        # Set sync lock
-        cache.set('client_sync_running', True, 300)  # 5 minutes timeout
+        # Set sync lock - expires after 1 hour as safety measure
+        cache.set('client_sync_running', True, 3600)  # 1 hour timeout
 
         print("\n" + "="*60)
         print(" STARTING CLIENT SYNC OPERATION")
@@ -4480,14 +4480,28 @@ def refresh_inspections(request):
                 from django.http import JsonResponse
                 from django.core.cache import cache
                 import threading
-                
+
+                # CHECK IF SYNC IS ALREADY RUNNING - Prevent concurrent syncs
+                sync_lock_key = 'inspection_sync_lock'
+                if cache.get(sync_lock_key):
+                    print("[SYNC] Sync already in progress - rejecting duplicate request")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'A sync is already in progress. Please wait for it to complete.',
+                        'status': 'already_running'
+                    })
+
+                # Acquire lock - expires after 1 hour (3600 seconds) as safety measure
+                cache.set(sync_lock_key, True, 3600)
+                print("[SYNC] Lock acquired - starting sync operation")
+
                 # Store user info before starting background operation to avoid session issues
                 user_id = request.user.id
                 user_role = getattr(request.user, 'role', 'user')
-                
+
                 # Don't modify session for AJAX requests to avoid conflicts with middleware
                 # The middleware will handle session timeout automatically
-                
+
                 # Start sync in background thread
                 def run_sync():
                     try:
@@ -4567,6 +4581,11 @@ def refresh_inspections(request):
                             'success': False,
                             'error': f'Error syncing: {str(e)}'
                         }, 300)
+
+                    finally:
+                        # ALWAYS release the lock when sync completes (success or failure)
+                        cache.delete(sync_lock_key)
+                        print("[SYNC] Lock released - sync operation complete")
 
                     print("="*80)
                     print(" COMPLETE SYNC OPERATION ENDED")
