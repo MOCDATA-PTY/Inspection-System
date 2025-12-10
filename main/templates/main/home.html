@@ -709,8 +709,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role ==
-                    'financial_admin' %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li>
                         <a href="{% url 'export_sheet' %}"
                             class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
@@ -801,15 +800,12 @@
             <!-- Statistics Grid -->
             <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 mx-4 lg:mx-8">
                 <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{
-                        total_clients|default:"0" }}</h3>
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_clients|default:"0" }}</h3>
                     <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Clients</p>
                 </div>
                 <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{
-                        total_inspections|default:"0" }}</h3>
-                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Inspections
-                    </p>
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_inspections|default:"0" }}</h3>
+                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Inspections</p>
                 </div>
             </div>
 
@@ -865,8 +861,7 @@
                             <span
                                 class="status-value flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span>{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif
-                                    %}</span>
+                                <span>{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif %}</span>
                             </span>
                         </div>
                         <div class="status-item flex items-center justify-between">
@@ -889,8 +884,7 @@
                             {% if 'client' in activity.description|lower or 'client' in activity.object_type|lower %}
                             <i class="fas fa-user-plus text-green-500 mr-2"></i>
                             New client added to system
-                            {% elif 'inspection' in activity.description|lower or 'inspection' in
-                            activity.object_type|lower %}
+                            {% elif 'inspection' in activity.description|lower or 'inspection' in activity.object_type|lower %}
                             <i class="fas fa-clipboard-check text-blue-500 mr-2"></i>
                             New inspection created
                             {% else %}

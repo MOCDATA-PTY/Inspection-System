@@ -374,7 +374,7 @@ class ScheduledSyncService:
                     'client_name': insp.client_name,
                     'inspector_name': insp.inspector_name,
                     'product_name': insp.product_name,
-                    'account_code': insp.account_code,
+                    'internal_account_code': insp.internal_account_code,
                     'django_id': insp.id  # Store Django ID for tracking
                 }
 
@@ -404,7 +404,7 @@ class ScheduledSyncService:
                             'client_name': data['client_name'],
                             'inspector_name': data['inspector_name'],
                             'product_name': data['product_name'],
-                            'account_code': data['account_code']
+                            'internal_account_code': data.get('internal_account_code')
                         }
 
                     with open(backup_file, 'w') as f:
