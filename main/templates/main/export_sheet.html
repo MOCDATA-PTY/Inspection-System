@@ -1754,9 +1754,16 @@
                 width: width
             }));
 
-            // Format header row
+            // Format header row with white background
             const headerRow = worksheet.getRow(1);
             headerRow.font = { bold: true };
+            headerRow.eachCell((cell) => {
+                cell.fill = {
+                    type: 'pattern',
+                    pattern: 'solid',
+                    fgColor: { argb: 'FFFFFFFF' }
+                };
+            });
 
             // Create Excel Table with proper header recognition
             worksheet.addTable({
