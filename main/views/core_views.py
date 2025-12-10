@@ -5003,36 +5003,17 @@ def export_sheet(request):
                 total_km += float(insp.km_traveled)
 
         # STEP 4: Generate HOURS/KM line items ONCE per visit
-        # Group by commodity type for the visit
-        pmp_products = [i for i in visit_inspections if i.commodity and 'PMP' in i.commodity.upper()]
-        raw_products = [i for i in visit_inspections if i.commodity and 'RAW' in i.commodity.upper()]
+        # Business Rule: Charge hours/km only ONCE per visit (same location)
+        # Use first inspection's commodity type regardless of what products were inspected
+        if total_hours > 0 or total_km > 0:
+            product_type = 'RAW' if first_inspection.commodity and 'RAW' in first_inspection.commodity.upper() else 'PMP'
 
-        # Business Rule: Generate hours/km for BOTH categories if both are present
-        # Use the SAME hours/km values for both (not split proportionally)
-
-        # Generate PMP hours/km if there are ANY PMP products
-        if pmp_products and (total_hours > 0 or total_km > 0):
             visit_items = generate_visit_hours_km_items(
                 inspection_id=inspection_id,
-                inspection=pmp_products[0],  # Use first PMP product for metadata
+                inspection=first_inspection,
                 invoice_ref=invoice_ref,
                 rfi_ref=rfi_ref,
-                product_type='PMP',
-                city=city,
-                lab_name=lab_name,
-                total_hours=total_hours,
-                total_km=total_km
-            )
-            invoice_items.extend(visit_items)
-
-        # Generate RAW hours/km if there are ANY RAW products
-        if raw_products and (total_hours > 0 or total_km > 0):
-            visit_items = generate_visit_hours_km_items(
-                inspection_id=inspection_id,
-                inspection=raw_products[0],  # Use first RAW product for metadata
-                invoice_ref=invoice_ref,
-                rfi_ref=rfi_ref,
-                product_type='RAW',
+                product_type=product_type,
                 city=city,
                 lab_name=lab_name,
                 total_hours=total_hours,
