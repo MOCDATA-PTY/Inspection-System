@@ -4992,15 +4992,10 @@ def export_sheet(request):
         # Lab used
         lab_name = 'Food Safety Laboratory' if first_inspection.lab else ''
 
-        # STEP 3: Aggregate hours and km across all products in this visit
-        # (Hours and KM should only be charged ONCE per visit, not per product)
-        total_hours = 0
-        total_km = 0
-        for insp in visit_inspections:
-            if insp.hours:
-                total_hours += float(insp.hours)
-            if insp.km_traveled:
-                total_km += float(insp.km_traveled)
+        # STEP 3: Get hours and km from first inspection
+        # (All products in same visit should have same hours/km, not summed)
+        total_hours = float(first_inspection.hours) if first_inspection.hours else 0
+        total_km = float(first_inspection.km_traveled) if first_inspection.km_traveled else 0
 
         # STEP 4: Generate HOURS/KM line items ONCE per visit
         # Business Rule: Charge hours/km only ONCE per visit (same location)
