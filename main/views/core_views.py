@@ -4997,24 +4997,63 @@ def export_sheet(request):
         total_hours = float(first_inspection.hours) if first_inspection.hours else 0
         total_km = float(first_inspection.km_traveled) if first_inspection.km_traveled else 0
 
-        # STEP 4: Generate HOURS/KM line items ONCE per visit
-        # Business Rule: Charge hours/km only ONCE per visit (same location)
-        # Use first inspection's commodity type regardless of what products were inspected
+        # STEP 4: Generate HOURS/KM line items
+        # Business Rule: If visit has BOTH PMP and RAW, split hours/km equally between them
+        # If only one commodity type, charge full amount to that type
         if total_hours > 0 or total_km > 0:
-            product_type = 'RAW' if first_inspection.commodity and 'RAW' in first_inspection.commodity.upper() else 'PMP'
+            pmp_products = [i for i in visit_inspections if 'PMP' in (i.commodity or '').upper()]
+            raw_products = [i for i in visit_inspections if 'RAW' in (i.commodity or '').upper()]
 
-            visit_items = generate_visit_hours_km_items(
-                inspection_id=inspection_id,
-                inspection=first_inspection,
-                invoice_ref=invoice_ref,
-                rfi_ref=rfi_ref,
-                product_type=product_type,
-                city=city,
-                lab_name=lab_name,
-                total_hours=total_hours,
-                total_km=total_km
-            )
-            invoice_items.extend(visit_items)
+            has_both_types = len(pmp_products) > 0 and len(raw_products) > 0
+
+            if has_both_types:
+                # Split hours/km equally between PMP and RAW
+                split_hours = total_hours / 2
+                split_km = total_km / 2
+
+                # Generate PMP hours/km (half)
+                pmp_items = generate_visit_hours_km_items(
+                    inspection_id=inspection_id,
+                    inspection=pmp_products[0],
+                    invoice_ref=invoice_ref,
+                    rfi_ref=rfi_ref,
+                    product_type='PMP',
+                    city=city,
+                    lab_name=lab_name,
+                    total_hours=split_hours,
+                    total_km=split_km
+                )
+                invoice_items.extend(pmp_items)
+
+                # Generate RAW hours/km (half)
+                raw_items = generate_visit_hours_km_items(
+                    inspection_id=inspection_id,
+                    inspection=raw_products[0],
+                    invoice_ref=invoice_ref,
+                    rfi_ref=rfi_ref,
+                    product_type='RAW',
+                    city=city,
+                    lab_name=lab_name,
+                    total_hours=split_hours,
+                    total_km=split_km
+                )
+                invoice_items.extend(raw_items)
+            else:
+                # Only one commodity type - charge full amount
+                product_type = 'RAW' if first_inspection.commodity and 'RAW' in first_inspection.commodity.upper() else 'PMP'
+
+                visit_items = generate_visit_hours_km_items(
+                    inspection_id=inspection_id,
+                    inspection=first_inspection,
+                    invoice_ref=invoice_ref,
+                    rfi_ref=rfi_ref,
+                    product_type=product_type,
+                    city=city,
+                    lab_name=lab_name,
+                    total_hours=total_hours,
+                    total_km=total_km
+                )
+                invoice_items.extend(visit_items)
 
         # STEP 5: Generate TEST line items ONCE per visit (aggregate by test type)
         # Check which tests are needed across ALL products in this visit
