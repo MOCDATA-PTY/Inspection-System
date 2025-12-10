@@ -561,6 +561,7 @@ class ScheduledSyncService:
                     # Using create() since we deleted all records - no need for update_or_create
                     product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
                     is_direction_present = sql_insp.get('IsDirectionPresentForthisInspection', False)  # Get direction status
+                    is_sample_taken = sql_insp.get('IsSampleTaken', False)  # Get sample status
 
                     inspection = FoodSafetyAgencyInspection.objects.create(
                         remote_id=inspection_id,
@@ -570,7 +571,8 @@ class ScheduledSyncService:
                         inspector_name=inspector_name,
                         commodity=commodity,
                         product_name=product_name,  # Use product name from SQL query (already correct!)
-                        is_direction_present_for_this_inspection=is_direction_present  # COMPLIANCE STATUS
+                        is_direction_present_for_this_inspection=is_direction_present,  # COMPLIANCE STATUS
+                        is_sample_taken=is_sample_taken  # SAMPLE STATUS
                     )
 
                     synced_count += 1
