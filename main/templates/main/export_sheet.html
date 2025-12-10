@@ -1740,8 +1740,20 @@
             // Create a new workbook
             const wb = XLSX.utils.book_new();
 
-            // Convert the data array to a worksheet
-            const ws = XLSX.utils.aoa_to_sheet(exportData);
+            // Convert array format to JSON format for better header recognition
+            const headers = exportData[0];
+            const rows = exportData.slice(1);
+
+            const jsonData = rows.map(row => {
+                const obj = {};
+                headers.forEach((header, i) => {
+                    obj[header] = row[i];
+                });
+                return obj;
+            });
+
+            // Create worksheet using JSON format
+            const ws = XLSX.utils.json_to_sheet(jsonData, { header: headers });
 
             // Set column widths for better readability
             const colWidths = [
@@ -1776,17 +1788,6 @@
                 { wch: 15 }  // BrandingTheme
             ];
             ws['!cols'] = colWidths;
-
-            // Create Excel Table so headers are recognized properly
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            const tableRef = XLSX.utils.encode_range(range);
-            if (!ws['!tables']) ws['!tables'] = [];
-            ws['!tables'].push({
-                ref: tableRef,
-                name: 'InvoiceTable',
-                headerRow: true,
-                totalsRow: false
-            });
 
             // Add the worksheet to the workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Invoice Data');
