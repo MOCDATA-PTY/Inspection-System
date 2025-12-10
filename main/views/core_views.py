@@ -5007,35 +5007,10 @@ def export_sheet(request):
         pmp_products = [i for i in visit_inspections if i.commodity and 'PMP' in i.commodity.upper()]
         raw_products = [i for i in visit_inspections if i.commodity and 'RAW' in i.commodity.upper()]
 
-        # If visit has both PMP and RAW products, split hours/km proportionally
-        # Otherwise, charge all to the category that was inspected
-        total_products = len(visit_inspections)
-        pmp_ratio = len(pmp_products) / total_products if total_products > 0 else 0
-        raw_ratio = len(raw_products) / total_products if total_products > 0 else 0
-
-        # Generate hours/km for PMP if any PMP products
-        if pmp_products and (total_hours > 0 or total_km > 0):
-            pmp_hours = total_hours * pmp_ratio
-            pmp_km = total_km * pmp_ratio
-
-            visit_items = generate_visit_hours_km_items(
-                inspection_id=inspection_id,
-                inspection=pmp_products[0],  # Use first PMP product for metadata
-                invoice_ref=invoice_ref,
-                rfi_ref=rfi_ref,
-                product_type='PMP',
-                city=city,
-                lab_name=lab_name,
-                total_hours=pmp_hours,
-                total_km=pmp_km
-            )
-            invoice_items.extend(visit_items)
-
-        # Generate hours/km for RAW if any RAW products
+        # Business Rule: If visit has ANY RAW products, charge ALL hours/km to RAW
+        # Only charge to PMP if visit has ONLY PMP products (no RAW)
         if raw_products and (total_hours > 0 or total_km > 0):
-            raw_hours = total_hours * raw_ratio
-            raw_km = total_km * raw_ratio
-
+            # Charge everything to RAW
             visit_items = generate_visit_hours_km_items(
                 inspection_id=inspection_id,
                 inspection=raw_products[0],  # Use first RAW product for metadata
@@ -5044,8 +5019,22 @@ def export_sheet(request):
                 product_type='RAW',
                 city=city,
                 lab_name=lab_name,
-                total_hours=raw_hours,
-                total_km=raw_km
+                total_hours=total_hours,
+                total_km=total_km
+            )
+            invoice_items.extend(visit_items)
+        elif pmp_products and (total_hours > 0 or total_km > 0):
+            # Only PMP products in this visit, charge everything to PMP
+            visit_items = generate_visit_hours_km_items(
+                inspection_id=inspection_id,
+                inspection=pmp_products[0],  # Use first PMP product for metadata
+                invoice_ref=invoice_ref,
+                rfi_ref=rfi_ref,
+                product_type='PMP',
+                city=city,
+                lab_name=lab_name,
+                total_hours=total_hours,
+                total_km=total_km
             )
             invoice_items.extend(visit_items)
 
