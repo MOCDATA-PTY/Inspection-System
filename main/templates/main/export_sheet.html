@@ -1777,6 +1777,9 @@
             ];
             ws['!cols'] = colWidths;
 
+            // Enable auto-filter (makes first row headers for sorting)
+            ws['!autofilter'] = { ref: ws['!ref'] };
+
             // Add the worksheet to the workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Invoice Data');
 
