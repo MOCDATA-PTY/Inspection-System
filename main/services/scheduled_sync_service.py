@@ -110,40 +110,35 @@ class ScheduledSyncService:
         """Check if a specific sync should run based on timing."""
         try:
             settings = self.get_system_settings()
-            
-            if not settings.get('auto_sync_enabled', False):
-                return False
-            
+
+            # REMOVED: No auto_sync_enabled check - always runs
+
             last_sync = self.last_sync_times.get(sync_type)
             if not last_sync:
                 return True  # First time running
-            
+
             current_time = datetime.now()
             time_since_last = current_time - last_sync
-            
+
             # Check specific sync intervals
             if sync_type in ['google_sheets', 'sql_server']:
-                interval_hours = settings.get('sync_interval_hours', 24)
-                
-                # If interval is 0, don't sync automatically (manual only)
-                if interval_hours <= 0:
-                    print(f"[WARNING] Sync interval is {interval_hours} hours - skipping automatic sync for {sync_type}")
-                    return False
-                
+                # FIXED: Always sync every 1 hour (no settings check)
+                interval_hours = 1.0
+
                 # Check if enough time has passed
                 required_seconds = interval_hours * 3600
                 time_passed = time_since_last.total_seconds()
-                
-                print(f"[TIME] {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s")
+
+                print(f"[TIME] {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s (1 hour)")
                 return time_passed >= required_seconds
-            
+
             elif sync_type == 'onedrive':
                 # Use OneDrive auto-sync interval from settings
                 interval_hours = settings.get('onedrive_sync_interval_hours', 2)
                 if interval_hours <= 0:
                     return False
                 return time_since_last.total_seconds() >= (interval_hours * 3600)
-            
+
             return False
             
         except Exception as e:
@@ -1001,73 +996,67 @@ class ScheduledSyncService:
                 # Check if any syncs are due and run them
                 settings = self.get_system_settings()
 
-                if settings.get('auto_sync_enabled', False):
-                    # Check if any syncs are due
-                    google_sheets_due = settings.get('google_sheets_enabled', True) and self.should_run_sync('google_sheets')
-                    sql_server_due = settings.get('sql_server_enabled', True) and self.should_run_sync('sql_server')
+                # ALWAYS run syncs - no off switch
+                # Check if any syncs are due (runs every hour)
+                google_sheets_due = settings.get('google_sheets_enabled', True) and self.should_run_sync('google_sheets')
+                sql_server_due = settings.get('sql_server_enabled', True) and self.should_run_sync('sql_server')
 
-                    if google_sheets_due or sql_server_due:
-                        print("[SYNC] Running scheduled syncs...")
-                        sync_results = {}
+                if google_sheets_due or sql_server_due:
+                    print("[SYNC] Running scheduled syncs...")
+                    sync_results = {}
 
-                        # Google Sheets sync
-                        if google_sheets_due:
-                            try:
-                                close_old_connections()  # Ensure fresh connection
-                                sync_results['google_sheets'] = self.sync_google_sheets()
-                            except Exception as e:
-                                print(f"❌ Google Sheets sync failed: {e}")
-                                sync_results['google_sheets'] = False
+                    # Google Sheets sync
+                    if google_sheets_due:
+                        try:
+                            close_old_connections()  # Ensure fresh connection
+                            sync_results['google_sheets'] = self.sync_google_sheets()
+                        except Exception as e:
+                            print(f"[ERROR] Google Sheets sync failed: {e}")
+                            sync_results['google_sheets'] = False
 
-                        # SQL Server sync
-                        if sql_server_due:
-                            try:
-                                close_old_connections()  # Ensure fresh connection
-                                sync_results['sql_server'] = self.sync_sql_server()
-                            except Exception as e:
-                                print(f"❌ SQL Server sync failed: {e}")
-                                sync_results['sql_server'] = False
+                    # SQL Server sync
+                    if sql_server_due:
+                        try:
+                            close_old_connections()  # Ensure fresh connection
+                            sync_results['sql_server'] = self.sync_sql_server()
+                        except Exception as e:
+                            print(f"[ERROR] SQL Server sync failed: {e}")
+                            sync_results['sql_server'] = False
 
-                        # Update statistics
-                        self.sync_stats['total_syncs'] += len(sync_results)
-                        self.sync_stats['successful_syncs'] += sum(1 for result in sync_results.values() if result)
-                        self.sync_stats['failed_syncs'] += sum(1 for result in sync_results.values() if not result)
-                        self.sync_stats['last_sync_time'] = datetime.now()
+                    # Update statistics
+                    self.sync_stats['total_syncs'] += len(sync_results)
+                    self.sync_stats['successful_syncs'] += sum(1 for result in sync_results.values() if result)
+                    self.sync_stats['failed_syncs'] += sum(1 for result in sync_results.values() if not result)
+                    self.sync_stats['last_sync_time'] = datetime.now()
 
-                        # Calculate next sync time
-                        next_sync = datetime.now() + timedelta(hours=settings.get('sync_interval_hours', 24))
-                        self.sync_stats['next_sync_time'] = next_sync
+                    # Calculate next sync time (always 1 hour from now)
+                    next_sync = datetime.now() + timedelta(hours=1)
+                    self.sync_stats['next_sync_time'] = next_sync
 
-                        # Save stats to cache
-                        self._save_stats()
+                    # Save stats to cache
+                    self._save_stats()
 
-                        # Print detailed summary
-                        successful_count = sum(1 for result in sync_results.values() if result)
-                        failed_count = len(sync_results) - successful_count
-                        print(f"[OK] Scheduled syncs completed: {len(sync_results)} tasks ({successful_count} successful, {failed_count} failed)")
+                    # Print detailed summary
+                    successful_count = sum(1 for result in sync_results.values() if result)
+                    failed_count = len(sync_results) - successful_count
+                    print(f"[OK] Scheduled syncs completed: {len(sync_results)} tasks ({successful_count} successful, {failed_count} failed)")
 
-                        # Show next sync time
-                        next_sync_time = self.sync_stats.get('next_sync_time', 'Unknown')
-                        if next_sync_time != 'Unknown':
-                            print(f"⏰ Next sync scheduled for: {next_sync_time.strftime('%Y-%m-%d %H:%M:%S')}")
-                    else:
-                        print("⏰ No syncs due at this time")
+                    # Show next sync time
+                    next_sync_time = self.sync_stats.get('next_sync_time', 'Unknown')
+                    if next_sync_time != 'Unknown':
+                        print(f"[NEXT] Next sync scheduled for: {next_sync_time.strftime('%Y-%m-%d %H:%M:%S')}")
                 else:
-                    print("ℹ️ Auto sync is disabled")
+                    print("[WAIT] No syncs due at this time")
 
-                # Wait based on sync interval setting
-                sync_interval_hours = settings.get('sync_interval_hours', 24)
+                # FIXED: Always sync every 1 hour (60 minutes)
+                sync_interval_hours = 1.0
 
-                # If sync interval is very short (less than 1 hour), check every minute
-                if sync_interval_hours < 1:
-                    check_interval_minutes = 1
-                else:
-                    # For longer intervals, check every 1/10th of the interval, max 5 min, min 1 min
-                    check_interval_minutes = min(5, max(1, sync_interval_hours * 60 / 10))
+                # Check every 5 minutes for the hourly sync
+                check_interval_minutes = 5
 
                 check_interval_seconds = int(check_interval_minutes * 60)
 
-                print(f"⏰ Waiting {check_interval_minutes:.1f} minutes before next sync check...")
+                print(f"[WAIT] Waiting {check_interval_minutes:.1f} minutes before next sync check...")
                 for _ in range(check_interval_seconds):
                     if not self.is_running:
                         break
