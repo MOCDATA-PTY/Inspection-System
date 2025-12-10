@@ -28,6 +28,6 @@ sudo systemctl restart nginx
 # Start background services
 echo "Starting background services..."
 chmod +x start_all_services.sh
-./start_all_services.sh
+nohup ./start_all_services.sh >/dev/null 2>&1 &
 
 echo "Deployment complete!"
