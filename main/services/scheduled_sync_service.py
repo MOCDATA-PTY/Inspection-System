@@ -560,6 +560,7 @@ class ScheduledSyncService:
                     # PHASE 1: Create inspection WITH product name from SQL query
                     # Using create() since we deleted all records - no need for update_or_create
                     product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
+                    is_direction_present = sql_insp.get('IsDirectionPresentForthisInspection', False)  # Get direction status
 
                     inspection = FoodSafetyAgencyInspection.objects.create(
                         remote_id=inspection_id,
@@ -568,7 +569,8 @@ class ScheduledSyncService:
                         date_of_inspection=inspection_date,
                         inspector_name=inspector_name,
                         commodity=commodity,
-                        product_name=product_name  # Use product name from SQL query (already correct!)
+                        product_name=product_name,  # Use product name from SQL query (already correct!)
+                        is_direction_present_for_this_inspection=is_direction_present  # COMPLIANCE STATUS
                     )
 
                     synced_count += 1
