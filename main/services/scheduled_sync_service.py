@@ -370,11 +370,11 @@ class ScheduledSyncService:
                 km_hours_backup[primary_key] = {
                     'km_traveled': insp.km_traveled,
                     'hours': insp.hours,
-                    # Store LOTS of data for fallback matching
-                    'client_name': insp.client_name,
-                    'inspector_name': insp.inspector_name,
-                    'product_name': insp.product_name,
-                    'internal_account_code': insp.internal_account_code,
+                    # Store stable identifiers for robust fallback matching
+                    'internal_account_code': insp.internal_account_code,  # Most stable
+                    'inspector_name': insp.inspector_name,  # Rarely changes
+                    'client_name': insp.client_name,  # May have spelling corrections
+                    'product_name': insp.product_name,  # Least stable
                     'django_id': insp.id  # Store Django ID for tracking
                 }
 
@@ -625,8 +625,9 @@ class ScheduledSyncService:
                 for (commodity, remote_id, date_of_inspection), data in km_hours_backup.items():
                     try:
                         matched = False
+                        match_strategy = None
 
-                        # STRATEGY 1: Try EXACT match by composite key (commodity, remote_id, date)
+                        # STRATEGY 1: Try EXACT match by composite key (commodity, remote_id, date) - MOST RELIABLE
                         inspections = FoodSafetyAgencyInspection.objects.filter(
                             commodity=commodity,
                             remote_id=remote_id,
@@ -635,9 +636,36 @@ class ScheduledSyncService:
 
                         if inspections.exists():
                             matched = True
+                            match_strategy = "remote_id+date"
 
-                        # STRATEGY 2: Match by client_name + date + commodity (if remote_id changed)
+                        # STRATEGY 2: Match by internal_account_code + date + commodity - MORE STABLE THAN CLIENT NAME
+                        if not matched and data.get('internal_account_code'):
+                            inspections = FoodSafetyAgencyInspection.objects.filter(
+                                commodity=commodity,
+                                internal_account_code=data['internal_account_code'],
+                                date_of_inspection=date_of_inspection
+                            )
+                            if inspections.count() == 1:
+                                matched = True
+                                match_strategy = "account_code"
+                                print(f"   [MATCH] {commodity}-{remote_id} by account_code -> {inspections[0].remote_id}")
+
+                        # STRATEGY 3: Match by inspector + date + commodity - INSPECTOR RARELY CHANGES
+                        if not matched and data.get('inspector_name'):
+                            inspections = FoodSafetyAgencyInspection.objects.filter(
+                                commodity=commodity,
+                                inspector_name=data['inspector_name'],
+                                date_of_inspection=date_of_inspection
+                            )
+                            # Only match if there's exactly 1 inspection by this inspector on this date
+                            if inspections.count() == 1:
+                                matched = True
+                                match_strategy = "inspector+date"
+                                print(f"   [MATCH] {commodity}-{remote_id} by inspector+date -> {inspections[0].remote_id}")
+
+                        # STRATEGY 4: Fuzzy match by client_name - HANDLES SPELLING CORRECTIONS
                         if not matched and data.get('client_name'):
+                            # First try exact match
                             inspections = FoodSafetyAgencyInspection.objects.filter(
                                 commodity=commodity,
                                 client_name=data['client_name'],
@@ -645,20 +673,26 @@ class ScheduledSyncService:
                             )
                             if inspections.count() == 1:
                                 matched = True
-                                print(f"   [MATCH] Matched by client_name: {commodity}-{remote_id} -> {inspections[0].remote_id}")
+                                match_strategy = "client_name"
+                                print(f"   [MATCH] {commodity}-{remote_id} by client_name -> {inspections[0].remote_id}")
+                            else:
+                                # Try fuzzy match (case-insensitive, ignoring extra spaces)
+                                client_name_normalized = data['client_name'].strip().lower()
+                                all_inspections = FoodSafetyAgencyInspection.objects.filter(
+                                    commodity=commodity,
+                                    date_of_inspection=date_of_inspection
+                                )
+                                fuzzy_matches = [
+                                    insp for insp in all_inspections
+                                    if insp.client_name and insp.client_name.strip().lower() == client_name_normalized
+                                ]
+                                if len(fuzzy_matches) == 1:
+                                    inspections = FoodSafetyAgencyInspection.objects.filter(id=fuzzy_matches[0].id)
+                                    matched = True
+                                    match_strategy = "client_name_fuzzy"
+                                    print(f"   [MATCH] {commodity}-{remote_id} by fuzzy client_name -> {inspections[0].remote_id}")
 
-                        # STRATEGY 3: Match by account_code + date + commodity
-                        if not matched and data.get('account_code'):
-                            inspections = FoodSafetyAgencyInspection.objects.filter(
-                                commodity=commodity,
-                                account_code=data['account_code'],
-                                date_of_inspection=date_of_inspection
-                            )
-                            if inspections.count() == 1:
-                                matched = True
-                                print(f"   [MATCH] Matched by account_code: {commodity}-{remote_id}")
-
-                        # STRATEGY 4: Match by product_name + date + commodity (last resort)
+                        # STRATEGY 5: Match by product_name + date + commodity (last resort)
                         if not matched and data.get('product_name'):
                             inspections = FoodSafetyAgencyInspection.objects.filter(
                                 commodity=commodity,
@@ -667,7 +701,8 @@ class ScheduledSyncService:
                             )
                             if inspections.count() == 1:
                                 matched = True
-                                print(f"   [MATCH] Matched by product_name: {commodity}-{remote_id}")
+                                match_strategy = "product_name"
+                                print(f"   [MATCH] {commodity}-{remote_id} by product_name -> {inspections[0].remote_id}")
 
                         # Restore km/hours to matched inspections
                         if matched and inspections.exists():
