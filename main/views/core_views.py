@@ -4913,9 +4913,6 @@ def export_sheet(request):
     # Fetch inspections with billable data
     # REQUIRED: Both hours AND km must be present for an inspection to appear
     # PERFORMANCE: Filter by date range at database level to avoid loading thousands of records
-    # DEDUPLICATION: Use composite key (commodity, remote_id) to prevent duplicates
-    #                Each commodity table has its own ID sequence, so the same remote_id can exist across commodities
-    #                Example: RAW-8487 and PMP-8487 are 2 separate inspections (2 billable items)
     # FILTERING: Only include RAW and PMP commodities (exclude POULTRY and EGGS from export)
     inspections = FoodSafetyAgencyInspection.objects.filter(
         commodity__in=['RAW', 'PMP'],
@@ -4925,18 +4922,35 @@ def export_sheet(request):
         date_of_inspection__lte=end_date
     ).select_related(
         'sent_by', 'rfi_uploaded_by', 'invoice_uploaded_by'
-    ).distinct('commodity', 'remote_id').order_by('commodity', 'remote_id', '-date_of_inspection', 'inspector_name')
+    ).order_by('client_name', 'date_of_inspection', 'commodity')
 
     # Generate invoice line items
     invoice_items = []
     inspection_counter = {}  # Track sequential inspection IDs per inspector
     inspections_processed = 0
 
-    # Debug: Log total inspections found
-    total_inspections = inspections.count()
-    print(f"[EXPORT_SHEET] Total inspections found: {total_inspections}")
+    # DEDUPLICATION: Track unique inspections to avoid duplicates from re-syncs
+    # The remote_id alone isn't reliable because SQL Server can assign different IDs to the same inspection
+    # We use (inspector, client, commodity, date, product) as the unique key
+    seen_inspections = set()
+
+    print(f"[EXPORT_SHEET] Fetching inspections...")
 
     for inspection in inspections:
+        # Create unique key for this inspection
+        unique_key = (
+            inspection.inspector_name or '',
+            inspection.client_name or '',
+            inspection.commodity or '',
+            str(inspection.date_of_inspection) if inspection.date_of_inspection else '',
+            inspection.product_name or ''
+        )
+
+        # Skip if we've already processed this inspection
+        if unique_key in seen_inspections:
+            continue
+
+        seen_inspections.add(unique_key)
         inspections_processed += 1
         # Generate unique inspection ID
         inspector_key = inspection.inspector_name or 'Unknown'
