@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     {% load static %}
     <meta charset="UTF-8">
@@ -16,8 +17,11 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
 
     <!-- Async Font Awesome loading for better performance -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -51,8 +55,8 @@
             --text-light: #6b7280;
             --border: #e5e7eb;
             --radius: 6px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             --spacing: 5px;
             --sidebar-bg: #ffffff;
             --sidebar-text: #1f2937;
@@ -75,8 +79,8 @@
             --text: #ffffff;
             --text-light: #b0b0b0;
             --border: #404040;
-            --shadow: 0 1px 3px rgba(0,0,0,0.5);
-            --shadow-lg: 0 4px 6px -1px rgba(0,0,0,0.6), 0 2px 4px -1px rgba(0,0,0,0.4);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.6), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
             --sidebar-bg: #1a1a1a;
             --sidebar-text: #ffffff;
             --sidebar-hover: #404040;
@@ -85,86 +89,96 @@
             --success: #10b981;
             --info: #3b82f6;
         }
-        
+
         /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
             height: 100%;
         }
-        
+
         /* Prevent horizontal scroll and fix background */
         body {
             overflow-x: hidden;
             position: relative;
             height: 100%;
         }
-        
+
         /* Sidebar theme styles */
         #sidebar {
             background-color: var(--sidebar-bg) !important;
             color: var(--sidebar-text) !important;
         }
-        
+
         #sidebar a {
             color: var(--sidebar-text) !important;
         }
-        
+
         #sidebar a:hover {
             background-color: rgba(255, 255, 255, 0.1) !important;
         }
-        
+
         #sidebar .border-slate-600 {
             border-color: rgba(255, 255, 255, 0.2) !important;
         }
-        
+
         #sidebar .text-sidebar-text {
             color: var(--sidebar-text) !important;
         }
-        
+
         /* Force sidebar colors based on theme */
         [data-theme="light"] #sidebar {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
         }
-        
+
         [data-theme="light"] #sidebar a {
             color: #f1f5f9 !important;
         }
-        
+
         [data-theme="dark"] #sidebar {
             background-color: #1a1a1a !important;
             color: #ffffff !important;
         }
-        
+
         [data-theme="dark"] #sidebar a {
             color: #ffffff !important;
         }
-        
+
         /* Dark mode text overrides */
         [data-theme="dark"] .text-gray-800,
         [data-theme="dark"] .text-gray-600,
         [data-theme="dark"] .text-gray-500 {
             color: #ffffff !important;
         }
-        
+
         /* Quick Actions links - keep black in dark mode */
         [data-theme="dark"] .quick-action-link span {
             color: #000000 !important;
         }
-        
+
         /* Smooth transitions */
-        body, .container, .theme-toggle, .bg-white, .bg-card-bg, .text-gray-800, .text-gray-600,
-        #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
+        body,
+        .container,
+        .theme-toggle,
+        .bg-white,
+        .bg-card-bg,
+        .text-gray-800,
+        .text-gray-600,
+        #sidebar,
+        #sidebar *,
+        #sidebar a,
+        #sidebar .border-slate-600 {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
-        
+
         /* Theme-aware background */
         .bg-card-bg {
             background-color: var(--card-bg);
         }
-        
+
         body {
-            background: var(--background);  /* Fallback color while image loads */
+            background: var(--background);
+            /* Fallback color while image loads */
             color: var(--text);
             min-height: 100vh;
             position: relative;
@@ -186,14 +200,14 @@
             z-index: -1;
             pointer-events: none;
         }
-        
+
         /* Mobile menu button - ABSOLUTE FIXED POSITIONING */
         .mobile-menu-btn,
         #mobile-menu-btn,
         button#mobile-menu-btn {
             display: none;
         }
-        
+
         .mobile-menu-btn {
             position: fixed !important;
             top: 12px !important;
@@ -213,17 +227,18 @@
             transform: translate3d(0, 0, 0);
             will-change: transform;
         }
-        
+
         .mobile-menu-btn:active {
             transform: translate3d(0, 0, 0) scale(0.95);
         }
-        
+
         .mobile-menu-btn:hover {
             background-color: var(--sidebar-hover) !important;
         }
-        
+
         /* Force fixed positioning on mobile */
         @media (max-width: 1024px) {
+
             .mobile-menu-btn,
             #mobile-menu-btn,
             button#mobile-menu-btn {
@@ -235,7 +250,7 @@
                 transform: translate3d(0, 0, 0) !important;
             }
         }
-        
+
         /* Sidebar mobile positioning */
         #sidebar {
             position: fixed;
@@ -278,11 +293,12 @@
 
         /* Mobile styles */
         @media (max-width: 1024px) {
+
             /* Show mobile menu button */
             .mobile-menu-btn {
                 display: flex !important;
             }
-            
+
             /* Hide sidebar by default on mobile */
             #sidebar {
                 transform: translateX(-100%);
@@ -290,12 +306,12 @@
                 width: 280px;
                 box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
-            
+
             /* Show sidebar when active */
             #sidebar.show {
                 transform: translateX(0);
             }
-            
+
             /* Remove left margin on main content */
             #main-content {
                 margin-left: 0 !important;
@@ -303,7 +319,7 @@
                 padding-left: 0 !important;
                 padding-right: 0 !important;
             }
-            
+
             /* Sidebar overlay */
             .sidebar-overlay {
                 position: fixed;
@@ -316,17 +332,17 @@
                 display: none;
                 backdrop-filter: blur(2px);
             }
-            
+
             .sidebar-overlay.show {
                 display: block;
             }
-            
+
             /* Mobile background - keep it fixed */
             body::before {
                 position: fixed;
                 background-attachment: fixed;
             }
-            
+
             /* Header mobile adjustments */
             .header-section {
                 padding-top: 5rem !important;
@@ -334,77 +350,78 @@
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
-            
+
             .header-title {
                 font-size: 1.5rem !important;
                 line-height: 1.3 !important;
             }
-            
+
             .header-subtitle {
                 font-size: 0.95rem !important;
                 line-height: 1.4 !important;
             }
         }
-        
+
         @media (max-width: 768px) {
+
             /* Full width sidebar on tablet */
             #sidebar {
                 width: 85%;
                 max-width: 320px;
             }
-            
+
             /* Content spacing */
             .content-container {
                 padding-left: 0.75rem;
                 padding-right: 0.75rem;
             }
-            
+
             /* Welcome section */
             .welcome-section {
                 padding: 1.25rem !important;
                 margin: 0 0.75rem 1rem 0.75rem !important;
             }
-            
+
             .welcome-title {
                 font-size: 1.25rem !important;
             }
-            
+
             .welcome-text {
                 font-size: 0.875rem !important;
                 line-height: 1.6 !important;
             }
-            
+
             /* Sync buttons */
             .sync-buttons {
                 flex-direction: column !important;
                 gap: 0.75rem !important;
             }
-            
+
             .sync-button {
                 width: 100% !important;
                 min-height: 48px !important;
                 font-size: 0.9rem !important;
             }
-            
+
             /* Statistics grid */
             .stats-grid {
                 grid-template-columns: 1fr !important;
                 gap: 0.75rem !important;
                 margin: 0 0.75rem 1rem 0.75rem !important;
             }
-            
+
             .stat-card {
                 padding: 1.25rem !important;
             }
-            
+
             .stat-number {
                 font-size: 2.25rem !important;
             }
-            
+
             .stat-label {
                 font-size: 0.8rem !important;
             }
-            
+
             /* Content grid */
             .content-grid {
                 grid-template-columns: 1fr !important;
@@ -412,31 +429,32 @@
                 margin: 0 0.75rem !important;
                 padding-bottom: 2rem !important;
             }
-            
+
             .content-card {
                 padding: 1.25rem !important;
             }
-            
+
             .card-title {
                 font-size: 1.1rem !important;
             }
-            
+
             /* Quick actions */
             .quick-action-link {
                 padding: 0.875rem !important;
                 min-height: 48px !important;
             }
-            
+
             .quick-action-icon {
                 font-size: 1.1rem !important;
             }
-            
+
             .quick-action-text {
                 font-size: 0.9rem !important;
             }
         }
-        
+
         @media (max-width: 640px) {
+
             /* Small mobile */
             .mobile-menu-btn {
                 top: 10px !important;
@@ -444,207 +462,220 @@
                 width: 44px !important;
                 height: 44px !important;
             }
-            
+
             #sidebar {
                 width: 90%;
             }
-            
+
             .header-section {
                 padding-top: 4rem !important;
             }
-            
+
             .header-title {
                 font-size: 1.25rem !important;
             }
-            
+
             .header-subtitle {
                 font-size: 0.875rem !important;
             }
-            
+
             .welcome-section,
             .stats-grid,
             .content-grid {
                 margin-left: 0.5rem !important;
                 margin-right: 0.5rem !important;
             }
-            
+
             .welcome-section {
                 padding: 1rem !important;
             }
-            
+
             .stat-card,
             .content-card {
                 padding: 1rem !important;
             }
-            
+
             .stat-number {
                 font-size: 2rem !important;
             }
         }
-        
+
         @media (max-width: 480px) {
+
             /* Extra small devices */
             #sidebar {
                 width: 100%;
                 max-width: 100%;
             }
-            
+
             .mobile-menu-btn {
                 top: 8px !important;
                 left: 8px !important;
                 width: 40px !important;
                 height: 40px !important;
             }
-            
+
             .header-section {
                 padding-top: 3.5rem !important;
                 padding-bottom: 1rem !important;
             }
-            
+
             .header-title {
                 font-size: 1.125rem !important;
             }
-            
+
             .header-subtitle {
                 font-size: 0.8rem !important;
             }
-            
+
             .welcome-section,
             .stats-grid,
             .content-grid {
                 margin-left: 0.5rem !important;
                 margin-right: 0.5rem !important;
             }
-            
+
             .welcome-section {
                 padding: 0.875rem !important;
             }
-            
+
             .welcome-title {
                 font-size: 1rem !important;
             }
-            
+
             .welcome-text {
                 font-size: 0.8rem !important;
             }
-            
+
             .sync-button {
                 min-height: 44px !important;
                 font-size: 0.85rem !important;
             }
-            
+
             .stat-card {
                 padding: 0.875rem !important;
             }
-            
+
             .stat-number {
                 font-size: 1.75rem !important;
             }
-            
+
             .stat-label {
                 font-size: 0.7rem !important;
             }
-            
+
             .content-card {
                 padding: 0.875rem !important;
             }
-            
+
             .card-title {
                 font-size: 0.95rem !important;
             }
-            
+
             .quick-action-link {
                 padding: 0.75rem !important;
             }
-            
+
             .quick-action-text {
                 font-size: 0.85rem !important;
             }
-            
+
             .status-item,
             .activity-item {
                 font-size: 0.8rem !important;
             }
         }
-        
+
         /* Touch-friendly adjustments */
         @media (hover: none) and (pointer: coarse) {
+
             /* Increase touch targets */
-            button, a, .quick-action-link, .sync-button {
+            button,
+            a,
+            .quick-action-link,
+            .sync-button {
                 min-height: 44px !important;
             }
-            
+
             /* Remove hover effects on touch devices */
             #sidebar a:hover {
                 background-color: transparent !important;
             }
-            
+
             #sidebar a:active {
                 background-color: rgba(255, 255, 255, 0.1) !important;
             }
         }
     </style>
 </head>
+
 <body class="min-h-screen text-gray-800">
     <!-- Mobile Menu Button -->
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
         <i class="fas fa-bars text-xl"></i>
     </button>
-    
+
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
-    
+
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <div id="sidebar" class="w-64 h-screen bg-sidebar-bg text-sidebar-text flex flex-col">
             <div class="px-4 py-4 border-b border-slate-600 flex-shrink-0">
                 <div class="text-center mb-2">
-                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo" class="max-h-12 mx-auto">
+                    <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Food Safety Agency Logo"
+                        class="max-h-12 mx-auto">
                 </div>
                 <div class="text-sidebar-text text-sm font-semibold text-center">
                     Food Safety Agency (Pty) Ltd
                 </div>
             </div>
-            
+
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'home' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Home Center
                         </a>
                     </li>
                     {% if request.user.role == 'inspector' %}
                     <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'inspector_dashboard' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
                     {% else %}
-                   
+
 
                     <li>
-                        <a href="{% url 'client_allocation' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'client_allocation' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
                             Client Allocation
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
                         </a>
                     </li>
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'user_management' %}" title="Manage system users and permissions" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'user_management' %}" title="Manage system users and permissions"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
                             User Management
                         </a>
@@ -653,7 +684,8 @@
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'system_logs' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
                         </a>
@@ -661,7 +693,8 @@
                     {% endif %}
                     {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'onedrive_view' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
                             OneDrive View
                         </a>
@@ -669,15 +702,18 @@
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'server_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'server_view' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
                             Server View
                         </a>
                     </li>
                     {% endif %}
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role ==
+                    'financial_admin' %}
                     <li>
-                        <a href="{% url 'export_sheet' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'export_sheet' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
                             Export Sheet
                         </a>
@@ -685,21 +721,23 @@
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'analytics_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'analytics_dashboard' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
                             Inspector Analytics
                         </a>
                     </li>
                     {% endif %}
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'settings' %}"
+                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
                             <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
                     </li>
                 </ul>
             </div>
-            
+
             <!-- Logout Button -->
             <div class="flex-shrink-0 px-2 py-2 border-t border-slate-600">
                 <form action="{% url 'logout' %}" method="post" class="inline w-full">
@@ -711,26 +749,31 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- Main Content -->
         <div id="main-content" class="flex-1 w-full lg:ml-64">
             <!-- Header -->
             <div class="header-section pt-16 lg:pt-16 pb-8 text-center mb-4 lg:mb-8 px-4">
-                <h1 class="header-title text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style="color: #ffffff;">Welcome to Food Safety Agency</h1>
-                <h2 class="header-subtitle text-base sm:text-lg lg:text-xl font-normal" style="color: #ffffff;">Your comprehensive food safety management platform</h2>
+                <h1 class="header-title text-2xl sm:text-3xl lg:text-4xl font-semibold mb-2" style="color: #ffffff;">
+                    Welcome to Food Safety Agency</h1>
+                <h2 class="header-subtitle text-base sm:text-lg lg:text-xl font-normal" style="color: #ffffff;">Your
+                    comprehensive food safety management platform</h2>
             </div>
-            
+
             <!-- Welcome Section -->
             <div class="welcome-section bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 mb-6 mx-4 lg:mx-8">
                 <h2 class="welcome-title text-xl font-semibold text-gray-800 mb-4">Getting Started</h2>
                 <p class="welcome-text text-gray-600 leading-relaxed mb-6">
-                    Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different sections of the platform.
-                    You can manage clients, track inspections, handle inspections, and integrate with SQL Server for data management.
+                    Welcome to the Food Safety Agency management system. Use the sidebar navigation to access different
+                    sections of the platform.
+                    You can manage clients, track inspections, handle inspections, and integrate with SQL Server for
+                    data management.
                 </p>
-                
+
                 {% if request.user.role != 'admin' %}
                 <div class="sync-buttons flex flex-col gap-4">
-                    <button id="sync-inspections-btn" onclick="syncInspections()" class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
+                    <button id="sync-inspections-btn" onclick="syncInspections()"
+                        class="sync-button flex items-center justify-center gap-2 px-6 py-3 bg-secondary text-white rounded-lg font-semibold hover:bg-red-600 transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:transform-none">
                         <i class="fas fa-sync-alt"></i>
                         <span id="sync-inspections-text">Sync Everything</span>
                     </button>
@@ -745,38 +788,45 @@
                 <!-- Progress Bar -->
                 <div id="sync-progress-container" class="mt-4 hidden">
                     <div class="bg-gray-200 rounded-full h-6 overflow-hidden shadow-inner">
-                        <div id="sync-progress-bar" class="bg-gradient-to-r from-primary to-blue-600 h-full transition-all duration-300 flex items-center justify-center text-white text-xs font-semibold" style="width: 0%">
+                        <div id="sync-progress-bar"
+                            class="bg-gradient-to-r from-primary to-blue-600 h-full transition-all duration-300 flex items-center justify-center text-white text-xs font-semibold"
+                            style="width: 0%">
                             <span id="sync-progress-text">0%</span>
                         </div>
                     </div>
                     <div id="sync-progress-details" class="text-sm text-gray-600 mt-2 text-center"></div>
                 </div>
             </div>
-            
+
             <!-- Statistics Grid -->
             <div class="stats-grid grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 mx-4 lg:mx-8">
                 <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_clients|default:"0" }}</h3>
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{
+                        total_clients|default:"0" }}</h3>
                     <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Clients</p>
                 </div>
                 <div class="stat-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6 text-center">
-                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{ total_inspections|default:"0" }}</h3>
-                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Inspections</p>
+                    <h3 class="stat-number text-primary text-3xl lg:text-4xl font-bold mb-2">{{
+                        total_inspections|default:"0" }}</h3>
+                    <p class="stat-label text-gray-500 text-sm uppercase tracking-wide font-medium">Total Inspections
+                    </p>
                 </div>
             </div>
-            
+
             <!-- Content Grid -->
             <div class="content-grid grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 mx-4 lg:mx-8 pb-8">
                 <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 class="card-title text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
                     <div class="quick-actions space-y-3">
-                        <a href="{% url 'client_list' %}" class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <a href="{% url 'client_list' %}"
+                            class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                             <div class="flex items-center gap-3">
                                 <i class="quick-action-icon fas fa-users text-primary"></i>
                                 <span class="quick-action-text font-medium">View All Clients</span>
                             </div>
                         </a>
-                        <a href="{% url 'shipment_list' %}" class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                        <a href="{% url 'shipment_list' %}"
+                            class="quick-action-link block p-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                             <div class="flex items-center gap-3">
                                 <i class="quick-action-icon fas fa-clipboard-check text-primary"></i>
                                 <span class="quick-action-text font-medium">View All Inspections</span>
@@ -784,34 +834,39 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="card-title text-lg font-semibold text-gray-800">System Status</h3>
-                        <a href="?refresh_status=true" class="btn btn-sm bg-blue-500 text-white hover:bg-blue-600 px-3 py-1 rounded text-sm">
+                        <a href="?refresh_status=true"
+                            class="btn btn-sm bg-blue-500 text-white hover:bg-blue-600 px-3 py-1 rounded text-sm">
                             <i class="fas fa-sync-alt mr-1"></i> Refresh
                         </a>
                     </div>
                     <div class="space-y-3">
                         <div class="status-item flex items-center justify-between">
                             <span class="status-label text-gray-600">PostgreSQL</span>
-                            <span class="status-value flex items-center gap-2 {% if system_status.postgresql_online %}text-green-600{% else %}text-red-600{% endif %}">
+                            <span
+                                class="status-value flex items-center gap-2 {% if system_status.postgresql_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
                                 <span>{% if system_status.postgresql_online %}Online{% else %}Offline{% endif %}</span>
                             </span>
                         </div>
                         <div class="status-item flex items-center justify-between">
                             <span class="status-label text-gray-600">SQL Server</span>
-                            <span class="status-value flex items-center gap-2 {% if system_status.sql_server_online %}text-green-600{% else %}text-red-600{% endif %}">
+                            <span
+                                class="status-value flex items-center gap-2 {% if system_status.sql_server_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
                                 <span>{% if system_status.sql_server_online %}Online{% else %}Offline{% endif %}</span>
                             </span>
                         </div>
                         <div class="status-item flex items-center justify-between">
                             <span class="status-label text-gray-600">Google Sheets</span>
-                            <span class="status-value flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
+                            <span
+                                class="status-value flex items-center gap-2 {% if system_status.google_sheets_online %}text-green-600{% else %}text-red-600{% endif %}">
                                 <i class="fas fa-circle text-xs"></i>
-                                <span>{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif %}</span>
+                                <span>{% if system_status.google_sheets_online %}Connected{% else %}Disconnected{% endif
+                                    %}</span>
                             </span>
                         </div>
                         <div class="status-item flex items-center justify-between">
@@ -820,64 +875,65 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="content-card bg-card-bg rounded-lg shadow-sm border border-gray-200 p-6">
                     <h3 class="card-title text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
                     <div class="space-y-3">
                         {% if recent_activities %}
-                            {% for activity in recent_activities %}
-                                <div class="activity-item text-sm text-gray-600">
-                                    {% if activity.action == 'SYNC' %}
-                                        <i class="fas fa-sync text-green-500 mr-2"></i>
-                                        Data synced successfully
-                                    {% elif activity.action == 'CREATE' %}
-                                        {% if 'client' in activity.description|lower or 'client' in activity.object_type|lower %}
-                                            <i class="fas fa-user-plus text-green-500 mr-2"></i>
-                                            New client added to system
-                                        {% elif 'inspection' in activity.description|lower or 'inspection' in activity.object_type|lower %}
-                                            <i class="fas fa-clipboard-check text-blue-500 mr-2"></i>
-                                            New inspection created
-                                        {% else %}
-                                            <i class="fas fa-plus text-green-500 mr-2"></i>
-                                            New record created
-                                        {% endif %}
-                                    {% elif activity.action == 'LOGIN' %}
-                                        <i class="fas fa-sign-in-alt text-blue-500 mr-2"></i>
-                                        User logged in
-                                    {% elif activity.action == 'LOGOUT' %}
-                                        <i class="fas fa-sign-out-alt text-gray-500 mr-2"></i>
-                                        User logged out
-                                    {% elif activity.action == 'UPDATE' %}
-                                        <i class="fas fa-edit text-yellow-500 mr-2"></i>
-                                        Record updated
-                                    {% elif activity.action == 'DELETE' %}
-                                        <i class="fas fa-trash text-red-500 mr-2"></i>
-                                        Record deleted
-                                    {% elif activity.action == 'EXPORT' %}
-                                        <i class="fas fa-download text-blue-500 mr-2"></i>
-                                        Data exported
-                                    {% elif activity.action == 'IMPORT' %}
-                                        <i class="fas fa-upload text-green-500 mr-2"></i>
-                                        Data imported
-                                    {% elif activity.action == 'FILE_UPLOAD' %}
-                                        <i class="fas fa-file-upload text-blue-500 mr-2"></i>
-                                        File uploaded
-                                    {% elif activity.action == 'SETTINGS' %}
-                                        <i class="fas fa-cog text-gray-500 mr-2"></i>
-                                        Settings updated
-                                    {% else %}
-                                        <i class="fas fa-info-circle text-gray-500 mr-2"></i>
-                                        {{ activity.action|title }}
-                                    {% endif %}
-                                    <span class="text-gray-400 text-xs ml-2">
-                                        {{ activity.timestamp|timesince }} ago
-                                    </span>
-                                </div>
-                            {% endfor %}
+                        {% for activity in recent_activities %}
+                        <div class="activity-item text-sm text-gray-600">
+                            {% if activity.action == 'SYNC' %}
+                            <i class="fas fa-sync text-green-500 mr-2"></i>
+                            Data synced successfully
+                            {% elif activity.action == 'CREATE' %}
+                            {% if 'client' in activity.description|lower or 'client' in activity.object_type|lower %}
+                            <i class="fas fa-user-plus text-green-500 mr-2"></i>
+                            New client added to system
+                            {% elif 'inspection' in activity.description|lower or 'inspection' in
+                            activity.object_type|lower %}
+                            <i class="fas fa-clipboard-check text-blue-500 mr-2"></i>
+                            New inspection created
+                            {% else %}
+                            <i class="fas fa-plus text-green-500 mr-2"></i>
+                            New record created
+                            {% endif %}
+                            {% elif activity.action == 'LOGIN' %}
+                            <i class="fas fa-sign-in-alt text-blue-500 mr-2"></i>
+                            User logged in
+                            {% elif activity.action == 'LOGOUT' %}
+                            <i class="fas fa-sign-out-alt text-gray-500 mr-2"></i>
+                            User logged out
+                            {% elif activity.action == 'UPDATE' %}
+                            <i class="fas fa-edit text-yellow-500 mr-2"></i>
+                            Record updated
+                            {% elif activity.action == 'DELETE' %}
+                            <i class="fas fa-trash text-red-500 mr-2"></i>
+                            Record deleted
+                            {% elif activity.action == 'EXPORT' %}
+                            <i class="fas fa-download text-blue-500 mr-2"></i>
+                            Data exported
+                            {% elif activity.action == 'IMPORT' %}
+                            <i class="fas fa-upload text-green-500 mr-2"></i>
+                            Data imported
+                            {% elif activity.action == 'FILE_UPLOAD' %}
+                            <i class="fas fa-file-upload text-blue-500 mr-2"></i>
+                            File uploaded
+                            {% elif activity.action == 'SETTINGS' %}
+                            <i class="fas fa-cog text-gray-500 mr-2"></i>
+                            Settings updated
+                            {% else %}
+                            <i class="fas fa-info-circle text-gray-500 mr-2"></i>
+                            {{ activity.action|title }}
+                            {% endif %}
+                            <span class="text-gray-400 text-xs ml-2">
+                                {{ activity.timestamp|timesince }} ago
+                            </span>
+                        </div>
+                        {% endfor %}
                         {% else %}
-                            <div class="activity-item text-sm text-gray-500 italic">
-                                No recent activity
-                            </div>
+                        <div class="activity-item text-sm text-gray-500 italic">
+                            No recent activity
+                        </div>
                         {% endif %}
                     </div>
                 </div>
@@ -889,20 +945,20 @@
 
     <script>
         // Load background image after page loads for better performance
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             document.body.classList.add('bg-loaded');
         });
 
         // Mobile Menu Toggle
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
-            
+
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 sidebarOverlay.classList.toggle('show');
-                
+
                 const icon = mobileMenuBtn.querySelector('i');
                 if (sidebar.classList.contains('show')) {
                     icon.className = 'fas fa-times text-xl';
@@ -910,20 +966,20 @@
                     icon.className = 'fas fa-bars text-xl';
                 }
             }
-            
+
             mobileMenuBtn.addEventListener('click', toggleSidebar);
             sidebarOverlay.addEventListener('click', toggleSidebar);
-            
+
             const navLinks = sidebar.querySelectorAll('a');
             navLinks.forEach(link => {
-                link.addEventListener('click', function() {
+                link.addEventListener('click', function () {
                     if (window.innerWidth <= 1024) {
                         toggleSidebar();
                     }
                 });
             });
-            
-            window.addEventListener('resize', function() {
+
+            window.addEventListener('resize', function () {
                 if (window.innerWidth > 1024) {
                     sidebar.classList.remove('show');
                     sidebarOverlay.classList.remove('show');
@@ -931,7 +987,7 @@
                     icon.className = 'fas fa-bars text-xl';
                 }
             });
-            
+
             initTheme();
             clearStuckSyncStatus();
         });
@@ -941,7 +997,7 @@
             const btn = document.getElementById('sync-clients-btn');
             const text = document.getElementById('sync-clients-text');
             const statusDiv = document.getElementById('sync-status');
-            
+
             btn.disabled = true;
             text.textContent = 'Syncing...';
             btn.style.opacity = '0.7';
@@ -956,47 +1012,47 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (response.status === 302 || response.status === 401 || response.status === 403) {
-                    throw new Error('Authentication required. Please refresh the page and log in again.');
-                }
-                
-                if (response.ok) {
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        throw new Error('Session expired. Please refresh the page and log in again.');
+                .then(response => {
+                    if (response.status === 302 || response.status === 401 || response.status === 403) {
+                        throw new Error('Authentication required. Please refresh the page and log in again.');
                     }
-                } else {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-            })
-            .then(data => {
-                if (data.success) {
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    statusDiv.innerHTML = `
+
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            throw new Error('Session expired. Please refresh the page and log in again.');
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        statusDiv.innerHTML = `
                         <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                             <i class="fas fa-exclamation-circle mr-2"></i>
                             ❌ Sync failed: ${data.error || 'Unknown error occurred'}
                         </div>
                     `;
-                }
-                resetClientButton();
-            })
-            .catch(error => {
-                console.error('Error syncing clients:', error);
-                statusDiv.innerHTML = `
+                    }
+                    resetClientButton();
+                })
+                .catch(error => {
+                    console.error('Error syncing clients:', error);
+                    statusDiv.innerHTML = `
                     <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                         <i class="fas fa-exclamation-circle mr-2"></i>
                         ❌ Error: ${error.message}
                     </div>
                 `;
-                resetClientButton();
-            });
+                    resetClientButton();
+                });
 
             function resetClientButton() {
                 btn.disabled = false;
@@ -1004,33 +1060,38 @@
                 btn.style.opacity = '1';
             }
         }
+        // Track sync state globally
+        let isSyncing = false;
+        let syncPollTimeout = null;
+        let syncMaxTimeout = null;
 
         function syncInspections() {
             const btn = document.getElementById('sync-inspections-btn');
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
-            if (text.textContent.includes('Syncing')) {
-                const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
-                if (userConfirm) {
-                    resetButton();
-                    return;
-                } else {
-                    return;
-                }
+            // If already syncing, stop it first
+            if (isSyncing) {
+                console.log('Sync already running - stopping current sync before restart');
+                stopSync();
+
+                // Wait for cleanup, then restart
+                setTimeout(() => {
+                    console.log('Restarting sync...');
+                    syncInspections();
+                }, 1000);
+                return;
             }
+
+            // Mark as syncing
+            isSyncing = true;
 
             btn.disabled = true;
             text.textContent = 'Syncing Everything...';
             btn.style.opacity = '0.7';
-            statusDiv.innerHTML = `
-                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                    <p class="text-sm text-primary font-semibold">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
-                        Step 1/2: Syncing SQL Server (client data)...
-                    </p>
-                </div>
-            `;
+            statusDiv.innerHTML = `<div class="alert alert-info">
+        Step 1/2: Syncing SQL Server (client data)...
+    </div>`;
 
             // Show and initialize progress bar
             const progressContainer = document.getElementById('sync-progress-container');
@@ -1045,9 +1106,11 @@
 
             let pollCount = 0;
             const maxPolls = 1800;
-            
-            const maxTimeout = setTimeout(() => {
+
+            // Set max timeout
+            syncMaxTimeout = setTimeout(() => {
                 console.log('Sync timeout reached - resetting button');
+                stopSync();
                 resetButton();
             }, 3600000);
 
@@ -1061,178 +1124,221 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (response.status === 302 || response.status === 401 || response.status === 403) {
-                    throw new Error('Authentication required. Please refresh the page and log in again.');
-                }
-                
-                if (response.ok) {
-                    const contentType = response.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        return response.json();
-                    } else {
-                        throw new Error('Session expired. Please refresh the page and log in again.');
-                    }
-                } else {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-            })
-            .then(data => {
-                if (data.success && data.status === 'started') {
-                    pollSyncStatus();
-                } else if (data.success) {
-                    resetButton();
-                } else {
-                    statusDiv.innerHTML = `
-                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            ${data.error || 'Failed to start sync'}
-                        </div>
-                    `;
-                    resetButton();
-                }
-            })
-            .catch(error => {
-                console.error('Error starting sync:', error);
-                statusDiv.innerHTML = `
-                    <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                        <i class="fas fa-exclamation-circle mr-2"></i>
-                        Error: ${error.message}
-                    </div>
-                `;
-                resetButton();
-            });
-
-            function pollSyncStatus() {
-                pollCount++;
-                if (pollCount > maxPolls) {
-                    resetButton();
-                    return;
-                }
-
-                if (pollCount % 5 === 0) {
-                    fetch('{% url "session_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => {});
-                }
-
-                fetch('{% url "check_sync_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => {
-                    if (response.ok) { 
-                        return response.json(); 
-                    } else { 
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`); 
+                    if (response.status === 302 || response.status === 401 || response.status === 403) {
+                        throw new Error('Authentication required. Please refresh the page and log in again.');
+                    }
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json();
+                        } else {
+                            throw new Error('Session expired. Please refresh the page and log in again.');
+                        }
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                 })
                 .then(data => {
-                    if (data.success && data.message) {
-                        // Sync completed successfully
-                        const progressContainer = document.getElementById('sync-progress-container');
-                        const progressBar = document.getElementById('sync-progress-bar');
-                        const progressText = document.getElementById('sync-progress-text');
-
-                        // Set to 100% before hiding
-                        progressBar.style.width = '100%';
-                        progressText.textContent = '100%';
-
-                        statusDiv.innerHTML = `
-                            <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
-                                <i class="fas fa-check-circle mr-2"></i>
-                                ✅ ${data.message}
-                                <br>Deleted: ${data.deleted_count || 0} old inspections
-                                <br>Created: ${data.created_count || 0} new inspections
-                                <br>Total processed: ${data.total_processed || 0} records
-                            </div>
-                        `;
-
-                        // Hide progress bar after a short delay
-                        setTimeout(() => {
-                            progressContainer.classList.add('hidden');
-                        }, 1000);
-
-                        clearTimeout(maxTimeout);
+                    if (data.success && data.status === 'started') {
+                        pollSyncStatus();
+                    } else if (data.success) {
+                        stopSync();
                         resetButton();
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2000);
-                    } else if (data.success === false && data.error) {
-                        // Sync failed
-                        const progressContainer = document.getElementById('sync-progress-container');
-                        progressContainer.classList.add('hidden');
-
-                        statusDiv.innerHTML = `
-                            <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                                <i class="fas fa-exclamation-circle mr-2"></i>
-                                ❌ Sync failed: ${data.error}
-                            </div>
-                        `;
-                        clearTimeout(maxTimeout);
-                        resetButton();
-                    } else if (data.status === 'running' || data.message === 'Sync is still running...') {
-                        // Sync still running - update progress bar
-                        text.textContent = 'Syncing...';
-
-                        const progressContainer = document.getElementById('sync-progress-container');
-                        const progressBar = document.getElementById('sync-progress-bar');
-                        const progressText = document.getElementById('sync-progress-text');
-                        const progressDetails = document.getElementById('sync-progress-details');
-
-                        // Show progress bar container
-                        progressContainer.classList.remove('hidden');
-
-                        // Update progress if available
-                        if (data.progress) {
-                            const percent = data.progress.percent || 0;
-                            const message = data.progress.message || 'Processing...';
-
-                            // Update progress bar width
-                            progressBar.style.width = percent + '%';
-
-                            // Update percentage text
-                            progressText.textContent = percent + '%';
-
-                            // Update details message
-                            progressDetails.textContent = message;
-
-                            // Update status div with current step
-                            statusDiv.innerHTML = `
-                                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                                    <p class="text-sm text-primary font-semibold">
-                                        <i class="fas fa-spinner fa-spin mr-2"></i>
-                                        ${message}
-                                    </p>
-                                </div>
-                            `;
-                        }
-
-                        setTimeout(pollSyncStatus, 2000);
                     } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">
+                ❌ ${data.error || 'Failed to start sync'}
+            </div>`;
+                        stopSync();
                         resetButton();
                     }
                 })
                 .catch(error => {
+                    console.error('Error starting sync:', error);
+                    statusDiv.innerHTML = `<div class="alert alert-danger">
+            ❌ Error: ${error.message}
+        </div>`;
+                    stopSync();
                     resetButton();
                 });
+
+            function pollSyncStatus() {
+                if (!isSyncing) {
+                    console.log('Sync stopped - cancelling poll');
+                    return;
+                }
+
+                pollCount++;
+
+                if (pollCount > maxPolls) {
+                    stopSync();
+                    resetButton();
+                    return;
+                }
+
+                // Session check every 5 polls
+                if (pollCount % 5 === 0) {
+                    fetch('{% url "session_status" %}', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).catch(() => { });
+                }
+
+                fetch('{% url "check_sync_status" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                    })
+                    .then(data => {
+                        if (!isSyncing) {
+                            console.log('Sync stopped during poll - cancelling');
+                            return;
+                        }
+
+                        if (data.success && data.message) {
+                            // Sync completed successfully
+                            const progressContainer = document.getElementById('sync-progress-container');
+                            const progressBar = document.getElementById('sync-progress-bar');
+                            const progressText = document.getElementById('sync-progress-text');
+
+                            // Set to 100% before hiding
+                            progressBar.style.width = '100%';
+                            progressText.textContent = '100%';
+
+                            statusDiv.innerHTML = `<div class="alert alert-success">
+                    ✅ ${data.message}
+                    <br>Deleted: ${data.deleted_count || 0} old inspections
+                    <br>Created: ${data.created_count || 0} new inspections
+                    <br>Total processed: ${data.total_processed || 0} records
+                </div>`;
+
+                            // Hide progress bar after a short delay
+                            setTimeout(() => {
+                                progressContainer.classList.add('hidden');
+                            }, 1000);
+
+                            stopSync();
+                            resetButton();
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000);
+
+                        } else if (data.success === false && data.error) {
+                            // Sync failed
+                            const progressContainer = document.getElementById('sync-progress-container');
+                            progressContainer.classList.add('hidden');
+
+                            statusDiv.innerHTML = `<div class="alert alert-danger">
+                    ❌ Sync failed: ${data.error}
+                </div>`;
+
+                            stopSync();
+                            resetButton();
+
+                        } else if (data.status === 'running' || data.message === 'Sync is still running...') {
+                            // Sync still running - update progress
+                            text.textContent = 'Syncing...';
+
+                            const progressContainer = document.getElementById('sync-progress-container');
+                            const progressBar = document.getElementById('sync-progress-bar');
+                            const progressText = document.getElementById('sync-progress-text');
+                            const progressDetails = document.getElementById('sync-progress-details');
+
+                            // Show progress bar container
+                            progressContainer.classList.remove('hidden');
+
+                            // Update progress if available
+                            if (data.progress) {
+                                const percent = data.progress.percent || 0;
+                                const message = data.progress.message || 'Processing...';
+
+                                // Update progress bar width
+                                progressBar.style.width = percent + '%';
+
+                                // Update percentage text
+                                progressText.textContent = percent + '%';
+
+                                // Update details message
+                                progressDetails.textContent = message;
+
+                                // Update status div with current step
+                                statusDiv.innerHTML = `<div class="alert alert-info">
+                        ${message}
+                    </div>`;
+                            }
+
+                            // Schedule next poll
+                            syncPollTimeout = setTimeout(pollSyncStatus, 2000);
+                        } else {
+                            stopSync();
+                            resetButton();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Poll error:', error);
+                        stopSync();
+                        resetButton();
+                    });
             }
         }
 
+        function stopSync() {
+            console.log('Stopping sync...');
+            isSyncing = false;
+
+            // Clear all timeouts
+            if (syncPollTimeout) {
+                clearTimeout(syncPollTimeout);
+                syncPollTimeout = null;
+            }
+
+            if (syncMaxTimeout) {
+                clearTimeout(syncMaxTimeout);
+                syncMaxTimeout = null;
+            }
+        }
+
+        function resetButton() {
+            const btn = document.getElementById('sync-inspections-btn');
+            const text = document.getElementById('sync-inspections-text');
+
+            btn.disabled = false;
+            text.textContent = 'Sync Everything';
+            btn.style.opacity = '1';
+
+            // Clear syncing flag
+            isSyncing = false;
+        }
         // Theme management
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
-            
+
             let activeTheme = 'light';
             if (savedTheme) {
                 activeTheme = savedTheme;
             } else if (serverTheme) {
                 activeTheme = serverTheme;
             }
-            
+
             document.documentElement.setAttribute('data-theme', activeTheme);
         }
-        
+
         function getCsrfToken() {
             return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
         }
-        
+
         async function saveThemeToServer(theme) {
             try {
                 const response = await fetch(window.location.pathname, {
@@ -1247,7 +1353,7 @@
                 // Silent fail
             }
         }
-        
+
         function resetButton() {
             const inspectionsBtn = document.getElementById('sync-inspections-btn');
             const inspectionsText = document.getElementById('sync-inspections-text');
@@ -1269,30 +1375,31 @@
                 progressContainer.classList.add('hidden');
             }
         }
-        
+
         function resetClientsButton() {
             const clientsBtn = document.getElementById('sync-clients-btn');
             const clientsText = document.getElementById('sync-clients-text');
-            
+
             if (clientsBtn && clientsText) {
                 clientsBtn.disabled = false;
                 clientsText.textContent = 'Sync Clients';
                 clientsBtn.style.opacity = '1';
             }
         }
-        
+
         function clearStuckSyncStatus() {
             const syncInspectionsBtn = document.getElementById('sync-inspections-text');
             const syncClientsBtn = document.getElementById('sync-clients-text');
-            
+
             if (syncInspectionsBtn && syncInspectionsBtn.textContent === 'Syncing...') {
                 resetButton();
             }
-            
+
             if (syncClientsBtn && syncClientsBtn.textContent === 'Syncing...') {
                 resetClientsButton();
             }
         }
     </script>
 </body>
+
 </html>

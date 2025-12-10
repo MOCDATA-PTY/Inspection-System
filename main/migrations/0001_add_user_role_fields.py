@@ -1,16 +1,16 @@
-from django.db import migrations
+from django.db import migrations, connection
 
 
-class Migration(migrations.Migration):
-    initial = False
+def run_postgres_sql(apps, schema_editor):
+    """Run PostgreSQL-specific SQL only if using PostgreSQL."""
+    # Skip for non-PostgreSQL databases (e.g., SQLite for testing)
+    if connection.vendor != 'postgresql':
+        return
 
-    dependencies = [
-        ('auth', '0012_alter_user_first_name_max_length'),
-    ]
-
-    operations = [
-        migrations.RunSQL(
-            sql='''
+    # These fields are now added by auth app migrations (0013-0023)
+    # This migration is kept for backward compatibility but may be redundant
+    with connection.cursor() as cursor:
+        cursor.execute('''
 DO $$
 BEGIN
     -- Add role column if it does not exist
@@ -52,8 +52,16 @@ BEGIN
         END;
     END IF;
 END $$;
-''',
-            reverse_sql='''
+''')
+
+
+def reverse_postgres_sql(apps, schema_editor):
+    """Reverse PostgreSQL-specific SQL only if using PostgreSQL."""
+    if connection.vendor != 'postgresql':
+        return
+
+    with connection.cursor() as cursor:
+        cursor.execute('''
 DO $$
 BEGIN
     -- Drop columns only if they exist
@@ -92,8 +100,18 @@ BEGIN
         ALTER TABLE auth_user DROP COLUMN role;
     END IF;
 END $$;
-'''
-        )
+''')
+
+
+class Migration(migrations.Migration):
+    initial = False
+
+    dependencies = [
+        ('auth', '0012_alter_user_first_name_max_length'),
+    ]
+
+    operations = [
+        migrations.RunPython(run_postgres_sql, reverse_postgres_sql),
     ]
 
 
