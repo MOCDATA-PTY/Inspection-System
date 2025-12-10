@@ -1060,38 +1060,34 @@
                 btn.style.opacity = '1';
             }
         }
-        // Track sync state globally
-        let isSyncing = false;
-        let syncPollTimeout = null;
-        let syncMaxTimeout = null;
 
         function syncInspections() {
             const btn = document.getElementById('sync-inspections-btn');
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
-            // If already syncing, stop it first
-            if (isSyncing) {
-                console.log('Sync already running - stopping current sync before restart');
-                stopSync();
-
-                // Wait for cleanup, then restart
+            // If already syncing, force stop and restart
+            if (text.textContent.includes('Syncing')) {
+                console.log('Sync already running - forcing restart');
+                resetButton();
+                // Wait a moment for cleanup then restart
                 setTimeout(() => {
-                    console.log('Restarting sync...');
                     syncInspections();
-                }, 1000);
+                }, 500);
                 return;
             }
-
-            // Mark as syncing
-            isSyncing = true;
 
             btn.disabled = true;
             text.textContent = 'Syncing Everything...';
             btn.style.opacity = '0.7';
-            statusDiv.innerHTML = `<div class="alert alert-info">
-        Step 1/2: Syncing SQL Server (client data)...
-    </div>`;
+            statusDiv.innerHTML = `
+                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                    <p class="text-sm text-primary font-semibold">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Step 1/2: Syncing SQL Server (client data)...
+                    </p>
+                </div>
+            `;
 
             // Show and initialize progress bar
             const progressContainer = document.getElementById('sync-progress-container');
@@ -1107,10 +1103,8 @@
             let pollCount = 0;
             const maxPolls = 1800;
 
-            // Set max timeout
-            syncMaxTimeout = setTimeout(() => {
+            const maxTimeout = setTimeout(() => {
                 console.log('Sync timeout reached - resetting button');
-                stopSync();
                 resetButton();
             }, 3600000);
 
@@ -1128,6 +1122,7 @@
                     if (response.status === 302 || response.status === 401 || response.status === 403) {
                         throw new Error('Authentication required. Please refresh the page and log in again.');
                     }
+
                     if (response.ok) {
                         const contentType = response.headers.get('content-type');
                         if (contentType && contentType.includes('application/json')) {
@@ -1143,55 +1138,40 @@
                     if (data.success && data.status === 'started') {
                         pollSyncStatus();
                     } else if (data.success) {
-                        stopSync();
                         resetButton();
                     } else {
-                        statusDiv.innerHTML = `<div class="alert alert-danger">
-                ❌ ${data.error || 'Failed to start sync'}
-            </div>`;
-                        stopSync();
+                        statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            ${data.error || 'Failed to start sync'}
+                        </div>
+                    `;
                         resetButton();
                     }
                 })
                 .catch(error => {
                     console.error('Error starting sync:', error);
-                    statusDiv.innerHTML = `<div class="alert alert-danger">
-            ❌ Error: ${error.message}
-        </div>`;
-                    stopSync();
+                    statusDiv.innerHTML = `
+                    <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        Error: ${error.message}
+                    </div>
+                `;
                     resetButton();
                 });
 
             function pollSyncStatus() {
-                if (!isSyncing) {
-                    console.log('Sync stopped - cancelling poll');
-                    return;
-                }
-
                 pollCount++;
-
                 if (pollCount > maxPolls) {
-                    stopSync();
                     resetButton();
                     return;
                 }
 
-                // Session check every 5 polls
                 if (pollCount % 5 === 0) {
-                    fetch('{% url "session_status" %}', {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    }).catch(() => { });
+                    fetch('{% url "session_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } }).catch(() => { });
                 }
 
-                fetch('{% url "check_sync_status" %}', {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
+                fetch('{% url "check_sync_status" %}', { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                     .then(response => {
                         if (response.ok) {
                             return response.json();
@@ -1200,11 +1180,6 @@
                         }
                     })
                     .then(data => {
-                        if (!isSyncing) {
-                            console.log('Sync stopped during poll - cancelling');
-                            return;
-                        }
-
                         if (data.success && data.message) {
                             // Sync completed successfully
                             const progressContainer = document.getElementById('sync-progress-container');
@@ -1215,39 +1190,41 @@
                             progressBar.style.width = '100%';
                             progressText.textContent = '100%';
 
-                            statusDiv.innerHTML = `<div class="alert alert-success">
-                    ✅ ${data.message}
-                    <br>Deleted: ${data.deleted_count || 0} old inspections
-                    <br>Created: ${data.created_count || 0} new inspections
-                    <br>Total processed: ${data.total_processed || 0} records
-                </div>`;
+                            statusDiv.innerHTML = `
+                            <div class="p-4 mt-4 rounded-lg bg-green-50 border border-green-200 text-green-700">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                ✅ ${data.message}
+                                <br>Deleted: ${data.deleted_count || 0} old inspections
+                                <br>Created: ${data.created_count || 0} new inspections
+                                <br>Total processed: ${data.total_processed || 0} records
+                            </div>
+                        `;
 
                             // Hide progress bar after a short delay
                             setTimeout(() => {
                                 progressContainer.classList.add('hidden');
                             }, 1000);
 
-                            stopSync();
+                            clearTimeout(maxTimeout);
                             resetButton();
-
                             setTimeout(() => {
                                 window.location.reload();
                             }, 2000);
-
                         } else if (data.success === false && data.error) {
                             // Sync failed
                             const progressContainer = document.getElementById('sync-progress-container');
                             progressContainer.classList.add('hidden');
 
-                            statusDiv.innerHTML = `<div class="alert alert-danger">
-                    ❌ Sync failed: ${data.error}
-                </div>`;
-
-                            stopSync();
+                            statusDiv.innerHTML = `
+                            <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                                <i class="fas fa-exclamation-circle mr-2"></i>
+                                ❌ Sync failed: ${data.error}
+                            </div>
+                        `;
+                            clearTimeout(maxTimeout);
                             resetButton();
-
                         } else if (data.status === 'running' || data.message === 'Sync is still running...') {
-                            // Sync still running - update progress
+                            // Sync still running - update progress bar
                             text.textContent = 'Syncing...';
 
                             const progressContainer = document.getElementById('sync-progress-container');
@@ -1273,53 +1250,27 @@
                                 progressDetails.textContent = message;
 
                                 // Update status div with current step
-                                statusDiv.innerHTML = `<div class="alert alert-info">
-                        ${message}
-                    </div>`;
+                                statusDiv.innerHTML = `
+                                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                                    <p class="text-sm text-primary font-semibold">
+                                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                                        ${message}
+                                    </p>
+                                </div>
+                            `;
                             }
 
-                            // Schedule next poll
-                            syncPollTimeout = setTimeout(pollSyncStatus, 2000);
+                            setTimeout(pollSyncStatus, 2000);
                         } else {
-                            stopSync();
                             resetButton();
                         }
                     })
                     .catch(error => {
-                        console.error('Poll error:', error);
-                        stopSync();
                         resetButton();
                     });
             }
         }
 
-        function stopSync() {
-            console.log('Stopping sync...');
-            isSyncing = false;
-
-            // Clear all timeouts
-            if (syncPollTimeout) {
-                clearTimeout(syncPollTimeout);
-                syncPollTimeout = null;
-            }
-
-            if (syncMaxTimeout) {
-                clearTimeout(syncMaxTimeout);
-                syncMaxTimeout = null;
-            }
-        }
-
-        function resetButton() {
-            const btn = document.getElementById('sync-inspections-btn');
-            const text = document.getElementById('sync-inspections-text');
-
-            btn.disabled = false;
-            text.textContent = 'Sync Everything';
-            btn.style.opacity = '1';
-
-            // Clear syncing flag
-            isSyncing = false;
-        }
         // Theme management
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
