@@ -1066,15 +1066,14 @@
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
-            // If already syncing, force stop and restart
             if (text.textContent.includes('Syncing')) {
-                console.log('Sync already running - forcing restart');
-                resetButton();
-                // Wait a moment for cleanup then restart
-                setTimeout(() => {
-                    syncInspections();
-                }, 500);
-                return;
+                const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
+                if (userConfirm) {
+                    resetButton();
+                    return;
+                } else {
+                    return;
+                }
             }
 
             btn.disabled = true;
