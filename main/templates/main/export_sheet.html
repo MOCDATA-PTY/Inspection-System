@@ -1271,8 +1271,8 @@
         </div>
     </div>
 
-    <!-- SheetJS Library for Excel Export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- ExcelJS Library for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
     <script>
         // Cache DOM elements for performance
@@ -1729,7 +1729,7 @@
         }
 
         // Export to Excel using SheetJS
-        function exportToExcel() {
+        async function exportToExcel() {
             const exportData = getExportData();
 
             if (exportData.length <= 1) {
@@ -1737,60 +1737,40 @@
                 return;
             }
 
-            // Create a new workbook
-            const wb = XLSX.utils.book_new();
+            // Create a new workbook using ExcelJS
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Invoice Data');
 
-            // Convert array format to JSON format for better header recognition
+            // Get headers and data rows
             const headers = exportData[0];
-            const rows = exportData.slice(1);
+            const dataRows = exportData.slice(1);
 
-            const jsonData = rows.map(row => {
-                const obj = {};
-                headers.forEach((header, i) => {
-                    obj[header] = row[i];
-                });
-                return obj;
+            // Add all data (headers + rows)
+            worksheet.addRows(exportData);
+
+            // Set column widths
+            const colWidths = [25, 20, 20, 20, 20, 20, 15, 15, 12, 15, 20, 20, 12, 12, 12, 15, 50, 10, 12, 10, 15, 25, 12, 15, 15, 15, 15, 10, 15];
+            worksheet.columns = colWidths.map((width, i) => ({
+                width: width
+            }));
+
+            // Format header row
+            const headerRow = worksheet.getRow(1);
+            headerRow.font = { bold: true };
+
+            // Create Excel Table with proper header recognition
+            worksheet.addTable({
+                name: 'InvoiceTable',
+                ref: `A1:${String.fromCharCode(64 + headers.length)}${dataRows.length + 1}`,
+                headerRow: true,
+                totalsRow: false,
+                style: {
+                    theme: 'TableStyleMedium2',
+                    showRowStripes: true
+                },
+                columns: headers.map(h => ({ name: h })),
+                rows: dataRows
             });
-
-            // Create worksheet using JSON format
-            const ws = XLSX.utils.json_to_sheet(jsonData, { header: headers });
-
-            // Set column widths for better readability
-            const colWidths = [
-                { wch: 25 }, // *ContactName
-                { wch: 20 }, // EmailAddress
-                { wch: 20 }, // POAddressLine1
-                { wch: 20 }, // POAddressLine2
-                { wch: 20 }, // POAddressLine3
-                { wch: 20 }, // POAddressLine4
-                { wch: 15 }, // POCity
-                { wch: 15 }, // PORegion
-                { wch: 12 }, // POPostalCode
-                { wch: 15 }, // POCountry
-                { wch: 20 }, // *InvoiceNumber
-                { wch: 20 }, // Reference
-                { wch: 12 }, // *InvoiceDate
-                { wch: 12 }, // *DueDate
-                { wch: 12 }, // Total
-                { wch: 15 }, // InventoryItemCode
-                { wch: 50 }, // *Description
-                { wch: 10 }, // *Quantity
-                { wch: 12 }, // *UnitAmount
-                { wch: 10 }, // Discount
-                { wch: 15 }, // *AccountCode
-                { wch: 25 }, // *TaxType
-                { wch: 12 }, // Tax Amount
-                { wch: 15 }, // TrackingName1
-                { wch: 15 }, // TrackingOption1
-                { wch: 15 }, // TrackingName2
-                { wch: 15 }, // TrackingOption2
-                { wch: 10 }, // Currency
-                { wch: 15 }  // BrandingTheme
-            ];
-            ws['!cols'] = colWidths;
-
-            // Add the worksheet to the workbook
-            XLSX.utils.book_append_sheet(wb, ws, 'Invoice Data');
 
             // Generate filename with current date
             const today = new Date();
@@ -1798,7 +1778,14 @@
             const filename = `Invoice_Export_${dateStr}.xlsx`;
 
             // Write the workbook and trigger download
-            XLSX.writeFile(wb, filename);
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
 
             console.log('Excel file exported successfully');
         }
