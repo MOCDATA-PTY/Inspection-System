@@ -1777,8 +1777,16 @@
             ];
             ws['!cols'] = colWidths;
 
-            // Enable auto-filter (makes first row headers for sorting)
-            ws['!autofilter'] = { ref: ws['!ref'] };
+            // Create Excel Table so headers are recognized properly
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const tableRef = XLSX.utils.encode_range(range);
+            if (!ws['!tables']) ws['!tables'] = [];
+            ws['!tables'].push({
+                ref: tableRef,
+                name: 'InvoiceTable',
+                headerRow: true,
+                totalsRow: false
+            });
 
             // Add the worksheet to the workbook
             XLSX.utils.book_append_sheet(wb, ws, 'Invoice Data');
