@@ -1754,14 +1754,14 @@
                 width: width
             }));
 
-            // Format header row with white background
+            // Format header row with blue background and white text
             const headerRow = worksheet.getRow(1);
-            headerRow.font = { bold: true };
             headerRow.eachCell((cell) => {
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.fill = {
                     type: 'pattern',
                     pattern: 'solid',
-                    fgColor: { argb: 'FFFFFFFF' }
+                    fgColor: { argb: 'FF4472C4' }
                 };
             });
 
