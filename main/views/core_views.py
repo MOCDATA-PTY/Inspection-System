@@ -5221,7 +5221,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
     if product_type == 'PMP':
         # PMP Test Items
         # Fat Test
-        if inspection.fat:
+        if inspection.fat and inspection.is_sample_taken:
             items.append({
                 'row_number': 3,
                 'inspection_id': inspection_id,
@@ -5248,7 +5248,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Protein Test
-        if inspection.protein:
+        if inspection.protein and inspection.is_sample_taken:
             items.append({
                 'row_number': 4,
                 'inspection_id': inspection_id,
@@ -5275,7 +5275,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Calcium Test
-        if inspection.calcium:
+        if inspection.calcium and inspection.is_sample_taken:
             items.append({
                 'row_number': 5,
                 'inspection_id': inspection_id,
@@ -5330,7 +5330,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
 
     else:  # RAW products
         # Fat Test
-        if inspection.fat:
+        if inspection.fat and inspection.is_sample_taken:
             items.append({
                 'row_number': 9,
                 'inspection_id': inspection_id,
@@ -5357,7 +5357,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Protein Test
-        if inspection.protein:
+        if inspection.protein and inspection.is_sample_taken:
             items.append({
                 'row_number': 10,
                 'inspection_id': inspection_id,
@@ -5384,7 +5384,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # DNA Test
-        if inspection.dna:
+        if inspection.dna and inspection.is_sample_taken:
             items.append({
                 'row_number': 11,
                 'inspection_id': inspection_id,
@@ -5411,7 +5411,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Calcium Test
-        if inspection.calcium:
+        if inspection.calcium and inspection.is_sample_taken:
             items.append({
                 'row_number': 12,
                 'inspection_id': inspection_id,
