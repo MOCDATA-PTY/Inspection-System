@@ -5016,18 +5016,42 @@ def export_sheet(request):
             )
             invoice_items.extend(visit_items)
 
-        # STEP 5: Generate TEST line items for EACH product
-        for inspection in visit_inspections:
-            product_type = 'RAW' if inspection.commodity and 'RAW' in inspection.commodity.upper() else 'PMP'
+        # STEP 5: Generate TEST line items ONCE per visit (aggregate by test type)
+        # Check which tests are needed across ALL products in this visit
+        pmp_needs_fat = any(i.fat and i.is_sample_taken and 'PMP' in (i.commodity or '').upper() for i in visit_inspections)
+        pmp_needs_protein = any(i.protein and i.is_sample_taken and 'PMP' in (i.commodity or '').upper() for i in visit_inspections)
+        pmp_needs_calcium = any(i.calcium and i.is_sample_taken and 'PMP' in (i.commodity or '').upper() for i in visit_inspections)
+        raw_needs_fat = any(i.fat and i.is_sample_taken and 'RAW' in (i.commodity or '').upper() for i in visit_inspections)
+        raw_needs_protein = any(i.protein and i.is_sample_taken and 'RAW' in (i.commodity or '').upper() for i in visit_inspections)
+        raw_needs_dna = any(i.dna and i.is_sample_taken and 'RAW' in (i.commodity or '').upper() for i in visit_inspections)
 
+        # Generate PMP test items if ANY PMP product needs them
+        pmp_products = [i for i in visit_inspections if 'PMP' in (i.commodity or '').upper()]
+        if pmp_products:
             test_items = generate_test_line_items(
                 inspection_id=inspection_id,
-                inspection=inspection,
+                inspection=pmp_products[0],  # Use first PMP product for metadata
                 invoice_ref=invoice_ref,
                 rfi_ref=rfi_ref,
-                product_type=product_type,
+                product_type='PMP',
                 city=city,
-                lab_name=lab_name
+                lab_name=lab_name,
+                force_tests={'fat': pmp_needs_fat, 'protein': pmp_needs_protein, 'calcium': pmp_needs_calcium}
+            )
+            invoice_items.extend(test_items)
+
+        # Generate RAW test items if ANY RAW product needs them
+        raw_products = [i for i in visit_inspections if 'RAW' in (i.commodity or '').upper()]
+        if raw_products:
+            test_items = generate_test_line_items(
+                inspection_id=inspection_id,
+                inspection=raw_products[0],  # Use first RAW product for metadata
+                invoice_ref=invoice_ref,
+                rfi_ref=rfi_ref,
+                product_type='RAW',
+                city=city,
+                lab_name=lab_name,
+                force_tests={'fat': raw_needs_fat, 'protein': raw_needs_protein, 'dna': raw_needs_dna}
             )
             invoice_items.extend(test_items)
 
@@ -5166,8 +5190,13 @@ def generate_visit_hours_km_items(inspection_id, inspection, invoice_ref, rfi_re
     return items
 
 
-def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, product_type, city, lab_name):
-    """Generate TEST line items for each product (fat, protein, dna, calcium, samples bought)"""
+def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, product_type, city, lab_name, force_tests=None):
+    """Generate TEST line items (aggregated per visit, not per product)
+
+    Args:
+        force_tests: Dict of which tests to generate {'fat': bool, 'protein': bool, 'calcium': bool, 'dna': bool}
+                    If provided, uses these flags instead of inspection's individual test flags
+    """
     items = []
 
     # Load pricing
@@ -5185,10 +5214,16 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
     # Lab used
     lab_name_val = 'Food Safety Laboratory' if inspection.lab else ''
 
+    # Determine which tests to generate (use force_tests if provided, else use inspection fields)
+    generate_fat = force_tests['fat'] if force_tests else (inspection.fat and inspection.is_sample_taken)
+    generate_protein = force_tests['protein'] if force_tests else (inspection.protein and inspection.is_sample_taken)
+    generate_calcium = force_tests.get('calcium', False) if force_tests else (inspection.calcium and inspection.is_sample_taken)
+    generate_dna = force_tests.get('dna', False) if force_tests else (inspection.dna and inspection.is_sample_taken)
+
     if product_type == 'PMP':
         # PMP Test Items
         # Fat Test
-        if inspection.fat and inspection.is_sample_taken:
+        if generate_fat:
             items.append({
                 'row_number': 3,
                 'inspection_id': inspection_id,
@@ -5215,7 +5250,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Protein Test
-        if inspection.protein and inspection.is_sample_taken:
+        if generate_protein:
             items.append({
                 'row_number': 4,
                 'inspection_id': inspection_id,
@@ -5242,7 +5277,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Calcium Test
-        if inspection.calcium and inspection.is_sample_taken:
+        if generate_calcium:
             items.append({
                 'row_number': 5,
                 'inspection_id': inspection_id,
@@ -5324,7 +5359,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Protein Test
-        if inspection.protein and inspection.is_sample_taken:
+        if generate_protein:
             items.append({
                 'row_number': 10,
                 'inspection_id': inspection_id,
@@ -5351,7 +5386,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # DNA Test
-        if inspection.dna and inspection.is_sample_taken:
+        if generate_dna:
             items.append({
                 'row_number': 11,
                 'inspection_id': inspection_id,
@@ -5378,7 +5413,7 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
             })
 
         # Calcium Test
-        if inspection.calcium and inspection.is_sample_taken:
+        if generate_calcium:
             items.append({
                 'row_number': 12,
                 'inspection_id': inspection_id,
