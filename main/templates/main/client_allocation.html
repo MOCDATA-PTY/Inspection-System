@@ -823,7 +823,84 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px var(--primary-light);
         }
-        
+
+        /* Fix dropdown arrow overflow */
+        select.form-control {
+            box-sizing: border-box;
+            padding-right: 30px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23333" d="M6 8L0 0h12z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] select.form-control {
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23e0e0e0" d="M6 8L0 0h12z"/></svg>');
+        }
+
+        /* Manage Dropdowns Modal improvements */
+        #manageDropdownsModal {
+            overflow: hidden;
+        }
+
+        /* Only apply flex layout when modal is visible (controlled by JavaScript) */
+        #manageDropdownsModal[style*="display: flex"],
+        #manageDropdownsModal[style*="display:flex"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        #manageDropdownsModal .modal-content {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden !important;
+            max-height: none !important;
+            margin: 0 !important;
+        }
+
+        #manageDropdownsModal .modal-body {
+            overflow: visible !important;
+        }
+
+        #manageDropdownsModal .form-field {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #manageDropdownsModal .form-control {
+            box-sizing: border-box;
+        }
+
+        #manageDropdownsModal select.form-control {
+            font-weight: 500;
+        }
+
+        #current-options-display {
+            min-height: 80px;
+        }
+
+        #current-options-display h4 {
+            color: var(--text);
+        }
+
+        #manageDropdownsModal .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        #manageDropdownsModal .btn-success:active {
+            transform: translateY(0);
+        }
+
+        #manageDropdownsModal input.form-control::placeholder {
+            color: #999;
+            opacity: 0.7;
+        }
+
         .search-field {
             position: relative;
         }
@@ -2546,7 +2623,8 @@
         function showManageDropdownsModal() {
             const modal = document.getElementById('manageDropdownsModal');
             if (modal) {
-                modal.style.display = 'block';
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
                 showCurrentOptions();
             }
         }
@@ -2555,6 +2633,7 @@
             const modal = document.getElementById('manageDropdownsModal');
             if (modal) {
                 modal.style.display = 'none';
+                document.body.style.overflow = '';
             }
         }
 
@@ -2587,12 +2666,12 @@
                     .map(opt => `<span style="
                         display: inline-flex;
                         align-items: center;
-                        gap: 8px;
-                        padding: 6px 12px;
+                        gap: 4px;
+                        padding: 3px 6px;
                         background-color: var(--primary, #007bff);
                         color: white;
-                        border-radius: 4px;
-                        font-size: 13px;
+                        border-radius: 3px;
+                        font-size: 10px;
                         font-weight: 500;
                     ">${opt.value.toUpperCase()} - ${opt.text}
                     <button onclick="deleteDropdownOption('${opt.value}')" style="
@@ -2600,10 +2679,11 @@
                         border: none;
                         color: white;
                         cursor: pointer;
-                        padding: 2px 6px;
-                        border-radius: 3px;
-                        font-size: 12px;
+                        padding: 0px 3px;
+                        border-radius: 2px;
+                        font-size: 11px;
                         font-weight: bold;
+                        line-height: 1;
                     " title="Delete">&times;</button>
                     </span>`)
                     .join('');
@@ -2612,12 +2692,12 @@
                     .map(opt => `<span style="
                         display: inline-flex;
                         align-items: center;
-                        gap: 8px;
-                        padding: 6px 12px;
+                        gap: 4px;
+                        padding: 3px 6px;
                         background-color: var(--primary, #007bff);
                         color: white;
-                        border-radius: 4px;
-                        font-size: 13px;
+                        border-radius: 3px;
+                        font-size: 10px;
                         font-weight: 500;
                     ">${opt.text}
                     <button onclick="deleteDropdownOption('${opt.value}')" style="
@@ -2625,10 +2705,11 @@
                         border: none;
                         color: white;
                         cursor: pointer;
-                        padding: 2px 6px;
-                        border-radius: 3px;
-                        font-size: 12px;
+                        padding: 0px 3px;
+                        border-radius: 2px;
+                        font-size: 11px;
                         font-weight: bold;
+                        line-height: 1;
                     " title="Delete">&times;</button>
                     </span>`)
                     .join('');
@@ -2889,14 +2970,17 @@
     </script>
 
     <!-- Manage Dropdowns Modal -->
-    <div id="manageDropdownsModal" class="modal" style="display: none;">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-body" style="padding-top: 30px;">
+    <div id="manageDropdownsModal" class="modal" style="display: none;" onclick="closeManageDropdownsModal()">
+        <div class="modal-content" style="max-width: 380px; width: 90%; max-height: none !important; overflow: visible !important; border-radius: 8px; position: relative;" onclick="event.stopPropagation();">
+            <button type="button" onclick="closeManageDropdownsModal(); return false;" style="position: absolute; top: 8px; right: 8px; background: none; border: none; font-size: 18px; color: #999; cursor: pointer; padding: 2px 6px; line-height: 1; transition: color 0.2s; z-index: 1000; pointer-events: auto;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#999'">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-body" style="padding: 12px; overflow: visible !important;">
                 <div>
-                    <div class="form-group" style="margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 8px;">
                         <div class="form-field">
-                            <label class="form-label">Dropdown</label>
-                            <select class="form-control" id="dropdown-type" onchange="showCurrentOptions()" style="font-size: 16px;">
+                            <label class="form-label" style="font-size: 11px; font-weight: 600; margin-bottom: 3px; color: var(--text);">Select Dropdown Type</label>
+                            <select class="form-control" id="dropdown-type" onchange="showCurrentOptions()" style="font-size: 12px; padding: 5px 25px 5px 8px;">
                                 <option value="filter-corporate-group">Corporate Group</option>
                                 <option value="filter-commodity">Commodity</option>
                                 <option value="filter-facility-type">Facility Type</option>
@@ -2906,33 +2990,30 @@
                         </div>
                     </div>
 
-                    <div id="current-options-display" style="margin-bottom: 20px; padding: 15px; background-color: var(--bg-secondary, #f5f5f5); border-radius: 6px; border: 1px solid var(--border, #ddd);">
-                        <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600;">Current Values:</h4>
-                        <div id="current-options-list" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div id="current-options-display" style="margin-bottom: 8px; padding: 6px; background-color: var(--bg-secondary, #f8f9fa); border-radius: 4px; border: 1px solid var(--border, #e0e0e0);">
+                        <h4 style="margin: 0 0 4px 0; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-light, #666);">Current Values</h4>
+                        <div id="current-options-list" style="display: flex; flex-wrap: wrap; gap: 3px; min-height: 20px;">
                             <!-- Options will be populated here -->
                         </div>
                     </div>
 
-                    <div id="facility-type-code-field" class="form-group" style="margin-bottom: 20px; display: none;">
+                    <div id="facility-type-code-field" class="form-group" style="margin-bottom: 8px; display: none;">
                         <div class="form-field">
-                            <label class="form-label">Code</label>
-                            <input type="text" class="form-control" id="facility-type-code" maxlength="2" style="font-size: 16px; text-transform: uppercase;">
+                            <label class="form-label" style="font-size: 11px; font-weight: 600; margin-bottom: 3px; color: var(--text);">Code (2 characters)</label>
+                            <input type="text" class="form-control" id="facility-type-code" maxlength="2" placeholder="e.g., AB" style="font-size: 12px; padding: 5px 8px; text-transform: uppercase;">
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 8px;">
                         <div class="form-field">
-                            <label class="form-label" id="new-value-label">New Value</label>
-                            <input type="text" class="form-control" id="new-option-text" style="font-size: 16px;">
+                            <label class="form-label" id="new-value-label" style="font-size: 11px; font-weight: 600; margin-bottom: 3px; color: var(--text);">New Value</label>
+                            <input type="text" class="form-control" id="new-option-text" placeholder="Enter new option..." style="font-size: 12px; padding: 5px 8px;">
                         </div>
                     </div>
-                    <button type="button" class="btn btn-success" onclick="addDropdownOption()" style="width: 100%; padding: 12px; font-size: 16px;">
-                        <i class="fas fa-plus"></i> Add
+                    <button type="button" class="btn btn-success" onclick="addDropdownOption()" style="width: auto; padding: 5px 15px; font-size: 12px; font-weight: 600; border-radius: 4px; transition: all 0.2s; display: block; margin: 0 auto;">
+                        <i class="fas fa-plus" style="margin-right: 4px; font-size: 10px;"></i> Add Option
                     </button>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeManageDropdownsModal()">Close</button>
             </div>
         </div>
     </div>
