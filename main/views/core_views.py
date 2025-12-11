@@ -4758,8 +4758,8 @@ def refresh_inspections(request):
             sheets_service = GoogleSheetsService()
             print(" Google Sheets Service initialized successfully")
             
-            print("\n Step 2: Starting inspection table refresh from SQL Server...")
-            refresh_result = sheets_service.populate_inspections_table(request)
+            print("\n Step 2: Starting inspection sync from SQL Server...")
+            refresh_result = sheets_service.sync_inspections_from_sql_server(request)
             
             if refresh_result.get('success'):
                 print(f" INSPECTION SYNC COMPLETED SUCCESSFULLY!")

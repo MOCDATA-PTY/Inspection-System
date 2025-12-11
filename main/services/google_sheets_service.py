@@ -722,8 +722,8 @@ class GoogleSheetsService:
                 'total_processed': 0
             }
 
-    def populate_inspections_table(self, request=None):
-        """Populate the Food Safety Agency inspections table with data from remote SQL Server"""
+    def sync_inspections_from_sql_server(self, request=None):
+        """Sync Food Safety Agency inspections from SQL Server to Django database"""
         from django.contrib import messages
         from ..models import FoodSafetyAgencyInspection
         import pymssql
@@ -757,68 +757,18 @@ class GoogleSheetsService:
             rows = cursor.fetchall()
             print(f"      📊 Retrieved {len(rows)} inspection records from SQL Server")
             
-            print("\n   🗑️  Step 2.3: Clearing existing inspections from database...")
-            # Clear existing data - need to delete in correct order due to foreign key constraints
-            deleted_count = FoodSafetyAgencyInspection.objects.count()
-            print(f"      📊 Found {deleted_count} existing inspections to delete")
-            
-            # First, delete inspection_document_logs records that reference inspections (if table exists)
-            from django.db import connection
-            with connection.cursor() as cursor:
-                try:
-                    cursor.execute("DELETE FROM inspection_document_logs")
-                    document_logs_deleted = cursor.rowcount
-                    print(f"      🗑️  Deleted {document_logs_deleted} inspection_document_logs records")
-                except Exception as e:
-                    if "does not exist" in str(e) or "relation" in str(e).lower():
-                        print(f"      ℹ️  inspection_document_logs table does not exist (skipping)")
-                    else:
-                        print(f"      ⚠️  Warning: Could not delete inspection_document_logs: {e}")
-            
-            # PRESERVE LOCAL FIELDS: Save sent status, OneDrive tracking, KM and Hours
-            print("      💾 Preserving local fields (sent status, OneDrive tracking, KM, Hours)...")
-
-            # Store local data in memory instead of temporary table (more reliable)
-            print("      💾 Storing local data in memory...")
-            local_data_dict = {}
-            local_data_count = 0
-            processed_remote_ids = set()
-
-            for inspection in FoodSafetyAgencyInspection.objects.all():
-                # Skip if we've already processed this remote_id
-                if inspection.remote_id in processed_remote_ids:
-                    continue
-
-                local_data_dict[inspection.remote_id] = {
-                    'is_sent': inspection.is_sent,
-                    'sent_date': inspection.sent_date,
-                    'sent_by_id': inspection.sent_by_id if inspection.sent_by else None,
-                    'onedrive_uploaded': inspection.onedrive_uploaded,
-                    'onedrive_upload_date': inspection.onedrive_upload_date,
-                    'onedrive_folder_id': inspection.onedrive_folder_id,
-                    'km_traveled': inspection.km_traveled,
-                    'hours': inspection.hours
-                }
-                local_data_count += 1
-                processed_remote_ids.add(inspection.remote_id)
-            
-            print(f"      💾 Preserved local data for {local_data_count} inspections in memory")
-            
-            # Now delete the inspections
-            FoodSafetyAgencyInspection.objects.all().delete()
-            print(f"      ✅ Successfully deleted {deleted_count} existing inspections")
+            print("\n   🔄 Step 2.3: Using update_or_create to preserve existing data...")
+            print("      ✅ KM/Hours and local fields will be preserved automatically!")
             
             inspections_created = 0
             total_processed = 0
             
-            print("\n   🔄 Step 2.4: Processing and creating new inspections...")
-            
-            # OPTIMIZATION: Use bulk_create instead of individual creates
-            inspection_objects = []
+            print("\n   🔄 Step 2.4: Syncing inspections with update_or_create...")
 
             # Product names now come directly from the query (JOIN already done in SQL)
             print("      ✅ Product names included in query results")
 
+            synced_count = 0
             for i, row in enumerate(rows, 1):
                 total_processed += 1
                 # row is already a dictionary with pymssql as_dict=True
@@ -837,124 +787,58 @@ class GoogleSheetsService:
                 remote_id = row_dict.get('Id')
                 client_name = row_dict.get('Client')
                 inspection_date = row_dict.get('DateOfInspection')
+                commodity = row_dict.get('Commodity')
 
                 # Product name comes directly from the query result (already JOINed in SQL)
                 product_name_str = row_dict.get('ProductName')
 
-                # Create inspection object (but don't save yet)
-                # Note: km_traveled and hours are intentionally left as None - these should be manually entered
-                inspection_obj = FoodSafetyAgencyInspection(
-                    commodity=row_dict.get('Commodity'),
-                    date_of_inspection=inspection_date,
-                    start_of_inspection=row_dict.get('StartOfInspection'),
-                    end_of_inspection=row_dict.get('EndOfInspection'),
-                    inspection_location_type_id=row_dict.get('InspectionLocationTypeID'),
-                    is_direction_present_for_this_inspection=row_dict.get('IsDirectionPresentForthisInspection', False),
-                    inspector_id=inspector_id_int,
-                    inspector_name=inspector_name,
-                    latitude=row_dict.get('Latitude'),
-                    longitude=row_dict.get('Longitude'),
-                    is_sample_taken=row_dict.get('IsSampleTaken', False),
+                # Use update_or_create to preserve km/hours and local fields
+                inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
+                    # Match on these unique fields
+                    commodity=commodity,
                     remote_id=remote_id,
-                    client_name=client_name,
-                    product_name=product_name_str,
-                    internal_account_code=row_dict.get('InternalAccountNumber')
+                    date_of_inspection=inspection_date,
+                    # Update these fields only (km/hours and local fields NOT here - preserved!)
+                    defaults={
+                        'start_of_inspection': row_dict.get('StartOfInspection'),
+                        'end_of_inspection': row_dict.get('EndOfInspection'),
+                        'inspection_location_type_id': row_dict.get('InspectionLocationTypeID'),
+                        'is_direction_present_for_this_inspection': row_dict.get('IsDirectionPresentForthisInspection', False),
+                        'inspector_id': inspector_id_int,
+                        'inspector_name': inspector_name,
+                        'latitude': row_dict.get('Latitude'),
+                        'longitude': row_dict.get('Longitude'),
+                        'is_sample_taken': row_dict.get('IsSampleTaken', False),
+                        'client_name': client_name,
+                        'product_name': product_name_str,
+                        'internal_account_code': row_dict.get('InternalAccountNumber')
+                        # km_traveled, hours, is_sent, sent_date, onedrive_* NOT here - all preserved!
+                    }
                 )
-                
-                # RESTORE LOCAL FIELDS: Apply preserved local data if it exists
-                # We'll restore this data after bulk_create for better performance
-                inspection_objects.append(inspection_obj)
-                
-                if i <= 5:  # Show first 5 created inspections for debugging
-                    client_name = row_dict.get('Client', 'Unknown')
-                    commodity = row_dict.get('Commodity', 'Unknown')
-                    print(f"      ✅ Prepared inspection {i}: {client_name} - {commodity} (Inspector: {inspector_name})")
-            
-            # BULK CREATE ALL INSPECTIONS - OPTIMIZED FOR MASSIVE DATASETS
-            total_inspections = len(inspection_objects)
-            print(f"      🚀 Bulk creating {total_inspections} inspections...")
-            
-            if total_inspections > 50000:
-                # For massive datasets (50k+), use larger batches and progress reporting
-                batch_size = 5000
-                print(f"      📊 Large dataset detected - using batch size of {batch_size}")
-                
-                for i in range(0, total_inspections, batch_size):
-                    batch = inspection_objects[i:i + batch_size]
-                    FoodSafetyAgencyInspection.objects.bulk_create(batch, batch_size=batch_size)
-                    progress = ((i + len(batch)) / total_inspections) * 100
-                    print(f"      ⏳ Progress: {i + len(batch):,}/{total_inspections:,} ({progress:.1f}%)")
-            else:
-                # For smaller datasets, use standard batch size
-                FoodSafetyAgencyInspection.objects.bulk_create(inspection_objects, batch_size=2000)
-            
-            inspections_created = len(inspection_objects)
-            print(f"      ✅ Summary: Created {inspections_created:,} inspections from {total_processed:,} records")
-            
-            # RESTORE LOCAL FIELDS: Apply preserved data from memory - TRUE BULK OPERATION
-            print(f"      🔄 Restoring local fields for {len(local_data_dict):,} inspections from memory...")
-            updated_count = 0
-            
-            # Get all inspections that need updating in one query
-            remote_ids = list(local_data_dict.keys())
-            inspections_to_update = FoodSafetyAgencyInspection.objects.filter(remote_id__in=remote_ids)
-            
-            # Create a mapping for quick lookup
-            inspection_map = {insp.remote_id: insp for insp in inspections_to_update}
-            
-            # Prepare all inspections for bulk update
-            inspections_for_bulk_update = []
-            
-            for remote_id, local_data in local_data_dict.items():
-                if remote_id in inspection_map:
-                    inspection = inspection_map[remote_id]
-                    
-                    # Get the data from our in-memory dictionary
-                    is_sent = local_data['is_sent']
-                    sent_date = local_data['sent_date']
-                    sent_by_id = local_data['sent_by_id']
-                    onedrive_uploaded = local_data['onedrive_uploaded']
-                    onedrive_upload_date = local_data['onedrive_upload_date']
-                    onedrive_folder_id = local_data['onedrive_folder_id']
-                    km_traveled = local_data['km_traveled']
-                    hours = local_data['hours']
 
-                    # Convert naive datetimes to timezone-aware if needed
-                    if sent_date and timezone.is_naive(sent_date):
-                        sent_date = timezone.make_aware(sent_date)
-                    if onedrive_upload_date and timezone.is_naive(onedrive_upload_date):
-                        onedrive_upload_date = timezone.make_aware(onedrive_upload_date)
+                synced_count += 1
 
-                    # Update the inspection object
-                    inspection.is_sent = is_sent
-                    inspection.sent_date = sent_date
-                    inspection.sent_by_id = sent_by_id
-                    inspection.onedrive_uploaded = onedrive_uploaded
-                    inspection.onedrive_upload_date = onedrive_upload_date
-                    inspection.onedrive_folder_id = onedrive_folder_id
-                    inspection.km_traveled = km_traveled
-                    inspection.hours = hours
-                    
-                    inspections_for_bulk_update.append(inspection)
-            
-            # Perform ONE bulk update operation
-            if inspections_for_bulk_update:
-                print(f"      🚀 Performing single bulk update for {len(inspections_for_bulk_update):,} inspections...")
-                FoodSafetyAgencyInspection.objects.bulk_update(
-                    inspections_for_bulk_update,
-                    ['is_sent', 'sent_date', 'sent_by_id', 'onedrive_uploaded', 'onedrive_upload_date', 'onedrive_folder_id', 'km_traveled', 'hours'],
-                    batch_size=2000
-                )
-                updated_count = len(inspections_for_bulk_update)
-                print(f"      ✅ Bulk update completed in one operation!")
-            
-            print(f"      ✅ Restored local data for {updated_count:,} inspections")
-            print("      🗑️ Memory cleanup complete")
-            
+                if i <= 5:  # Show first 5 synced inspections for debugging
+                    print(f"      ✅ Synced inspection {i}: {client_name} - {commodity} (Inspector: {inspector_name})")
+
+                # Progress indicator every 500 inspections
+                if i % 500 == 0:
+                    print(f"      ⏳ Progress: {i:,}/{len(rows):,} inspections synced...")
+
+            # Summary
+            inspections_created = synced_count
+            print(f"      ✅ Summary: Synced {synced_count:,} inspections from {total_processed:,} records")
+            print(f"      💾 KM/Hours and local fields preserved automatically!")
+
             # Report on preserved local data
             preserved_sent = FoodSafetyAgencyInspection.objects.filter(is_sent=True).count()
             preserved_onedrive = FoodSafetyAgencyInspection.objects.filter(onedrive_uploaded=True).count()
-            print(f"      💾 Final counts: {preserved_sent} sent inspections, {preserved_onedrive} OneDrive uploads")
+            preserved_km_hours = FoodSafetyAgencyInspection.objects.filter(
+                km_traveled__isnull=False
+            ).count() | FoodSafetyAgencyInspection.objects.filter(
+                hours__isnull=False
+            ).count()
+            print(f"      💾 Preserved: {preserved_sent} sent, {preserved_onedrive} OneDrive, {preserved_km_hours} with km/hours")
             
             # Close connection
             cursor.close()
@@ -963,7 +847,7 @@ class GoogleSheetsService:
             
             return {
                 'success': True,
-                'deleted_count': deleted_count,
+                'deleted_count': 0,  # No longer deleting - using update_or_create
                 'inspections_created': inspections_created,
                 'total_processed': total_processed
             }

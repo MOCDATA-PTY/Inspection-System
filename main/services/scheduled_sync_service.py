@@ -30,7 +30,7 @@ django.setup()
 
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q
+# Q import removed - no longer needed with update_or_create approach
 from ..models import FoodSafetyAgencyInspection, Client, SystemSettings
 from ..views.core_views import load_drive_files_real, find_document_link_apps_script_replica
 from django.http import HttpRequest
@@ -456,76 +456,12 @@ class ScheduledSyncService:
             import pymssql
             from datetime import datetime, timedelta
 
-            # PRESERVE KM/HOURS DATA BEFORE DELETING
-            print(f"\n[BACKUP] STEP 1a: PRESERVING KM AND HOURS DATA...")
-            km_hours_backup = {}
-            # Get ALL inspections with KM or Hours data (including 0 values)
-            inspections_with_data = FoodSafetyAgencyInspection.objects.filter(
-                Q(km_traveled__isnull=False) | Q(hours__isnull=False)
-            )
-
-            for insp in inspections_with_data:
-                # Use MULTIPLE keys for better matching
-                primary_key = (insp.commodity, insp.remote_id, insp.date_of_inspection)
-
-                # Create multiple lookup keys to improve restore success rate
-                km_hours_backup[primary_key] = {
-                    'km_traveled': insp.km_traveled,
-                    'hours': insp.hours,
-                    # Store stable identifiers for robust fallback matching
-                    'internal_account_code': insp.internal_account_code,  # Most stable
-                    'inspector_name': insp.inspector_name,  # Rarely changes
-                    'client_name': insp.client_name,  # May have spelling corrections
-                    'product_name': insp.product_name,  # Least stable
-                    'django_id': insp.id  # Store Django ID for tracking
-                }
-
-            print(f"   [DATA] Backed up km/hours data for {len(km_hours_backup):,} inspections")
-            if len(km_hours_backup) > 0:
-                print(f"   [OK] This data will be restored after sync!")
-                # Show sample backup keys for debugging
-                sample_keys = list(km_hours_backup.keys())[:3]
-                print(f"   [DEBUG] Sample backup keys: {sample_keys}")
-
-                # SAVE TO PERSISTENT CACHE (survives process restart)
-                cache.set('km_hours_backup_persistent', km_hours_backup, timeout=86400)  # 24 hours
-                print(f"   [BACKUP] Saved to persistent cache for disaster recovery!")
-
-                # ALSO SAVE TO FILE as additional backup
-                import json
-                from datetime import datetime
-                backup_file = f'km_hours_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-                try:
-                    # Convert date objects to strings for JSON
-                    json_backup = {}
-                    for (commodity, remote_id, date), data in km_hours_backup.items():
-                        key_str = f"{commodity}|{remote_id}|{date}"
-                        json_backup[key_str] = {
-                            'km_traveled': data['km_traveled'],
-                            'hours': data['hours'],
-                            'client_name': data['client_name'],
-                            'inspector_name': data['inspector_name'],
-                            'product_name': data['product_name'],
-                            'internal_account_code': data.get('internal_account_code')
-                        }
-
-                    with open(backup_file, 'w') as f:
-                        json.dump(json_backup, f, indent=2)
-                    print(f"   [FILE] Also saved to file: {backup_file}")
-                except Exception as e:
-                    print(f"   [WARNING] Could not save backup file: {e}")
-
-            # DELETE ALL EXISTING INSPECTIONS FIRST (prevents duplicates)
-            print(f"\n[DELETE]  STEP 1b: CLEARING EXISTING INSPECTION DATA...")
+            # UPDATE OR CREATE APPROACH - km/hours preserved automatically!
+            print(f"\n[UPDATE] STEP 1: SYNCING INSPECTIONS (preserving km/hours data)...")
             existing_count = FoodSafetyAgencyInspection.objects.count()
             print(f"   Found {existing_count:,} existing inspection records")
-            print(f"   Deleting all records to ensure fresh sync...")
-
-            FoodSafetyAgencyInspection.objects.all().delete()
-
-            final_count = FoodSafetyAgencyInspection.objects.count()
-            print(f"[OK] Database cleared: {final_count:,} inspections remaining (should be 0)")
-            print(f"   This prevents duplicates and ensures fresh data!\n")
+            print(f"   Using update_or_create to preserve km/hours data...")
+            print(f"   This will update existing records and create new ones without losing km/hours!\n")
 
             # Connect to SQL Server using pymssql
             sql_server_config = settings.DATABASES.get('sql_server', {})
@@ -659,22 +595,26 @@ class ScheduledSyncService:
                             print(f"      [WARNING]  Cannot look up client without account code")
                             print(f"      [WARNING]  Client name set to: -")
 
-                    # PHASE 1: Create inspection WITH product name from SQL query
-                    # Using create() since we deleted all records - no need for update_or_create
+                    # PHASE 1: Update or create inspection WITH product name from SQL query
+                    # Using update_or_create to preserve km_traveled and hours fields
                     product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
                     is_direction_present = sql_insp.get('IsDirectionPresentForthisInspection', False)  # Get direction status
                     is_sample_taken = sql_insp.get('IsSampleTaken', False)  # Get sample status
 
-                    inspection = FoodSafetyAgencyInspection.objects.create(
-                        remote_id=inspection_id,
-                        client_name=client_name,  # Use Google Sheets name if matched
-                        internal_account_code=internal_account_code,  # Store account code for future matches
-                        date_of_inspection=inspection_date,
-                        inspector_name=inspector_name,
+                    inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
+                        # Match on these unique fields
                         commodity=commodity,
-                        product_name=product_name,  # Use product name from SQL query (already correct!)
-                        is_direction_present_for_this_inspection=is_direction_present,  # COMPLIANCE STATUS
-                        is_sample_taken=is_sample_taken  # SAMPLE STATUS
+                        remote_id=inspection_id,
+                        date_of_inspection=inspection_date,
+                        # Update these fields (km_traveled and hours are NOT here, so they're preserved!)
+                        defaults={
+                            'client_name': client_name,  # Use Google Sheets name if matched
+                            'internal_account_code': internal_account_code,  # Store account code for future matches
+                            'inspector_name': inspector_name,
+                            'product_name': product_name,  # Use product name from SQL query (already correct!)
+                            'is_direction_present_for_this_inspection': is_direction_present,  # COMPLIANCE STATUS
+                            'is_sample_taken': is_sample_taken  # SAMPLE STATUS
+                        }
                     )
 
                     synced_count += 1
@@ -701,138 +641,14 @@ class ScheduledSyncService:
                     print(f"\n   [WARNING]  Error syncing inspection {inspection_id}: {e}")
                     continue
 
-            # RESTORE KM/HOURS DATA
+            # SYNC COMPLETE - km/hours preserved automatically!
             print(f"\n" + "="*80)
-            print(f"[OK] SYNC COMPLETE: Inspections created with product names!")
-            print(f"   - New inspections created: {synced_count}")
+            print(f"[OK] SYNC COMPLETE: Inspections synced with km/hours preserved!")
+            print(f"   - Inspections synced: {synced_count}")
             print(f"   - SQL Server client matches: {google_sheets_matched}/{account_codes_found}")
             print(f"   - Product names from SQL query (no additional fetching needed)")
+            print(f"   - KM/Hours data preserved automatically (not overwritten)")
             print("="*80)
-
-            # Restore km/hours data from backup
-            if km_hours_backup:
-                print(f"\n[SYNC] STEP 3: RESTORING KM AND HOURS DATA...")
-
-                # Show sample inspection keys after sync for debugging
-                sample_inspections = FoodSafetyAgencyInspection.objects.all()[:3]
-                if sample_inspections.exists():
-                    print(f"   [DEBUG] Sample inspection keys after sync:")
-                    for insp in sample_inspections:
-                        print(f"      - ({insp.commodity}, {insp.remote_id}, {insp.date_of_inspection})")
-
-                restored_count = 0
-                not_found_count = 0
-                not_found_keys = []
-
-                for (commodity, remote_id, date_of_inspection), data in km_hours_backup.items():
-                    try:
-                        matched = False
-                        match_strategy = None
-
-                        # STRATEGY 1: Try EXACT match by composite key (commodity, remote_id, date) - MOST RELIABLE
-                        inspections = FoodSafetyAgencyInspection.objects.filter(
-                            commodity=commodity,
-                            remote_id=remote_id,
-                            date_of_inspection=date_of_inspection
-                        )
-
-                        if inspections.exists():
-                            matched = True
-                            match_strategy = "remote_id+date"
-
-                        # STRATEGY 2: Match by internal_account_code + date + commodity - MORE STABLE THAN CLIENT NAME
-                        if not matched and data.get('internal_account_code'):
-                            inspections = FoodSafetyAgencyInspection.objects.filter(
-                                commodity=commodity,
-                                internal_account_code=data['internal_account_code'],
-                                date_of_inspection=date_of_inspection
-                            )
-                            if inspections.count() == 1:
-                                matched = True
-                                match_strategy = "account_code"
-                                print(f"   [MATCH] {commodity}-{remote_id} by account_code -> {inspections[0].remote_id}")
-
-                        # STRATEGY 3: Match by inspector + date + commodity - INSPECTOR RARELY CHANGES
-                        if not matched and data.get('inspector_name'):
-                            inspections = FoodSafetyAgencyInspection.objects.filter(
-                                commodity=commodity,
-                                inspector_name=data['inspector_name'],
-                                date_of_inspection=date_of_inspection
-                            )
-                            # Only match if there's exactly 1 inspection by this inspector on this date
-                            if inspections.count() == 1:
-                                matched = True
-                                match_strategy = "inspector+date"
-                                print(f"   [MATCH] {commodity}-{remote_id} by inspector+date -> {inspections[0].remote_id}")
-
-                        # STRATEGY 4: Fuzzy match by client_name - HANDLES SPELLING CORRECTIONS
-                        if not matched and data.get('client_name'):
-                            # First try exact match
-                            inspections = FoodSafetyAgencyInspection.objects.filter(
-                                commodity=commodity,
-                                client_name=data['client_name'],
-                                date_of_inspection=date_of_inspection
-                            )
-                            if inspections.count() == 1:
-                                matched = True
-                                match_strategy = "client_name"
-                                print(f"   [MATCH] {commodity}-{remote_id} by client_name -> {inspections[0].remote_id}")
-                            else:
-                                # Try fuzzy match (case-insensitive, ignoring extra spaces)
-                                client_name_normalized = data['client_name'].strip().lower()
-                                all_inspections = FoodSafetyAgencyInspection.objects.filter(
-                                    commodity=commodity,
-                                    date_of_inspection=date_of_inspection
-                                )
-                                fuzzy_matches = [
-                                    insp for insp in all_inspections
-                                    if insp.client_name and insp.client_name.strip().lower() == client_name_normalized
-                                ]
-                                if len(fuzzy_matches) == 1:
-                                    inspections = FoodSafetyAgencyInspection.objects.filter(id=fuzzy_matches[0].id)
-                                    matched = True
-                                    match_strategy = "client_name_fuzzy"
-                                    print(f"   [MATCH] {commodity}-{remote_id} by fuzzy client_name -> {inspections[0].remote_id}")
-
-                        # STRATEGY 5: Match by product_name + date + commodity (last resort)
-                        if not matched and data.get('product_name'):
-                            inspections = FoodSafetyAgencyInspection.objects.filter(
-                                commodity=commodity,
-                                product_name=data['product_name'],
-                                date_of_inspection=date_of_inspection
-                            )
-                            if inspections.count() == 1:
-                                matched = True
-                                match_strategy = "product_name"
-                                print(f"   [MATCH] {commodity}-{remote_id} by product_name -> {inspections[0].remote_id}")
-
-                        # Restore km/hours to matched inspections
-                        if matched and inspections.exists():
-                            for insp in inspections:
-                                # FIXED: Check for None explicitly, not falsy (0 is valid!)
-                                if data.get('km_traveled') is not None or data.get('hours') is not None:
-                                    insp.km_traveled = data.get('km_traveled')
-                                    insp.hours = data.get('hours')
-                                    insp.save(update_fields=['km_traveled', 'hours'])
-                                    restored_count += 1
-                        else:
-                            not_found_count += 1
-                            not_found_keys.append((commodity, remote_id, date_of_inspection))
-
-                    except Exception as e:
-                        print(f"   [ERROR] Error restoring km/hours for {commodity}-{remote_id}: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        continue
-
-                print(f"[OK] Restored km/hours data to {restored_count:,} inspections!")
-                if not_found_count > 0:
-                    print(f"[WARNING]  Could not find {not_found_count} inspections to restore (they may have been removed from SQL Server)")
-                    # Show first 3 keys that weren't found
-                    if not_found_keys:
-                        print(f"   [DEBUG] Sample keys not found: {not_found_keys[:3]}")
-            else:
-                print(f"\n   ℹ️  No km/hours data to restore (this is normal for first sync)")
 
             # STEP 4: SYNC LAB SAMPLE DATA
             print(f"\n" + "="*80)
