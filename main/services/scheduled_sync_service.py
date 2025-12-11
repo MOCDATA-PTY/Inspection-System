@@ -36,6 +36,110 @@ from ..views.core_views import load_drive_files_real, find_document_link_apps_sc
 from django.http import HttpRequest
 
 
+def detect_corporate_group(client_name):
+    """Auto-detect corporate group based on client name"""
+    if not client_name:
+        return "Other (Unlisted Group)"
+
+    name = client_name.lower().strip()
+
+    # Corporate group matching rules (ordered by specificity)
+    rules = [
+        # Pick n Pay variations
+        (['pick n pay franchise', 'pnp franchise', "pick 'n pay franchise"], 'Pick n Pay - Franchise'),
+        (['pick n pay corporate', 'pnp corporate', "pick 'n pay corporate"], 'Pick n Pay - Corporate'),
+        (['pick n pay', 'pnp', "pick'n pay", "pick 'n pay", 'picknpay'], 'Pick n Pay - Corporate'),
+
+        # Fruit & Veg
+        (['fruit & veg', 'fruit and veg', 'fruit&veg'], 'Fruit & Veg'),
+
+        # OK Foods
+        (['ok foods', 'ok food', 'okfoods'], 'OK Foods'),
+
+        # Checkers
+        (['checkers'], 'Checkers'),
+
+        # Spar variations
+        (['spar northrand', 'spar - northrand'], 'Spar - Northrand'),
+        (['superspar', 'super spar'], 'SuperSpar'),
+        (['spar'], 'Spar'),
+
+        # Shoprite
+        (['shoprite', 'shop rite'], 'Shoprite'),
+
+        # Massmart
+        (['massmart'], 'Massmart'),
+
+        # Chester Butcheries
+        (['chester butcheries', 'chester butchery'], 'Chester Butcheries'),
+
+        # Boxer
+        (['boxer'], 'Boxer'),
+
+        # Food Lovers Market
+        (['food lovers market', "food lover's market", 'foodlovers'], 'Food Lovers Market'),
+
+        # Cambridge
+        (['cambridge'], 'Cambridge'),
+
+        # Woolworths
+        (['woolworths', 'woolworth'], 'Woolworths'),
+
+        # Jwayelani
+        (['jwayelani'], 'Jwayelani'),
+
+        # Usave
+        (['usave', 'u-save', 'u save'], 'Usave'),
+
+        # OBC
+        (['obc'], 'OBC'),
+
+        # Roots
+        (['roots'], 'Roots'),
+
+        # Meat World
+        (['meat world', 'meatworld'], 'Meat World'),
+
+        # Quantum Foods Nulaid
+        (['quantum foods', 'nulaid', 'quantum'], 'Quantum Foods Nulaid'),
+
+        # Bluff Meat Supply
+        (['bluff meat supply', 'bluff meat'], 'Bluff Meat Supply'),
+
+        # Eat Sum Meat
+        (['eat sum meat', 'eatsum'], 'Eat Sum Meat'),
+
+        # Waltloo Meat and Chicken
+        (['waltloo meat', 'waltloo chicken', 'waltloo'], 'Waltloo Meat and Chicken'),
+
+        # Choppies
+        (['choppies', 'choppy'], 'Choppies'),
+
+        # Econo Foods
+        (['econo foods', 'econofoods'], 'Econo Foods'),
+
+        # Makro
+        (['makro'], 'Makro'),
+
+        # Boma Vleismark
+        (['boma vleismark', 'boma vleis'], 'Boma Vleismark'),
+
+        # Nesta Foods
+        (['nesta foods', 'nesta'], 'Nesta Foods'),
+
+        # Eskort
+        (['eskort'], 'Eskort'),
+    ]
+
+    # Check each rule
+    for keywords, group in rules:
+        for keyword in keywords:
+            if keyword in name:
+                return group
+
+    return "Other (Unlisted Group)"
+
+
 class ScheduledSyncService:
     """Service for scheduled synchronization tasks."""
     
@@ -284,6 +388,9 @@ class ScheduledSyncService:
                 # Parse internal account code to extract facility type, group type, and commodity
                 facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
 
+                # Auto-detect corporate group from client name
+                corporate_group = detect_corporate_group(name)
+
                 # Create ClientAllocation object (not yet saved to DB)
                 bulk_records.append(ClientAllocation(
                     client_id=client_id,
@@ -291,7 +398,7 @@ class ScheduledSyncService:
                     group_type=group_type,
                     commodity=commodity,
                     province=province,
-                    corporate_group=None,
+                    corporate_group=corporate_group,
                     other=physical_address,
                     internal_account_code=internal_account_code,
                     allocated=False,
