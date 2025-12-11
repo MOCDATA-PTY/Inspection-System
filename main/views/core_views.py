@@ -3430,31 +3430,61 @@ def apply_fsa_inspection_filters(request, inspections):
 
 def apply_client_filters(request, clients):
     """Apply filters to the clients queryset based on request parameters."""
-    
+
     # Filter by client ID
     client_id = request.GET.get('client_id')
     if client_id:
         clients = clients.filter(client_id__icontains=client_id)
-    
+
     # Filter by client name
-    client_name = request.GET.get('client')
+    client_name = request.GET.get('client_name')
     if client_name:
-        clients = clients.filter(name__icontains=client_name)
-    
+        clients = clients.filter(eclick_name__icontains=client_name)
+
     # Filter by account code
     account_code = request.GET.get('account_code')
     if account_code:
         clients = clients.filter(internal_account_code__icontains=account_code)
-    
+
+    # Filter by commodity
+    commodity = request.GET.get('commodity')
+    if commodity:
+        clients = clients.filter(commodity__iexact=commodity)
+
+    # Filter by facility type
+    facility_type = request.GET.get('facility_type')
+    if facility_type:
+        clients = clients.filter(facility_type__iexact=facility_type)
+
+    # Filter by province
+    province = request.GET.get('province')
+    if province:
+        clients = clients.filter(province__iexact=province)
+
+    # Filter by corporate group
+    corporate_group = request.GET.get('corporate_group')
+    if corporate_group:
+        clients = clients.filter(corporate_group__iexact=corporate_group)
+
+    # Filter by group type
+    group_type = request.GET.get('group_type')
+    if group_type:
+        clients = clients.filter(group_type__iexact=group_type)
+
+    # Filter by facility code
+    facility_code = request.GET.get('facility_code')
+    if facility_code:
+        clients = clients.filter(facility_code__icontains=facility_code)
+
     # Filter by date range (using created_at field)
     date_from = request.GET.get('date_from')
     if date_from:
         clients = clients.filter(created_at__gte=date_from)
-    
+
     date_to = request.GET.get('date_to')
     if date_to:
         clients = clients.filter(created_at__lte=date_to)
-    
+
     # Filter by status - since Client model doesn't have is_active field,
     # we'll filter by email presence as a proxy for "active" status
     status = request.GET.get('status')
@@ -3470,7 +3500,7 @@ def apply_client_filters(request, clients):
                 models.Q(email__isnull=True) | models.Q(email=''),
                 models.Q(manual_email__isnull=True) | models.Q(manual_email='')
             )
-    
+
     return clients
 
 
@@ -3787,10 +3817,59 @@ def add_client_allocation(request):
             group_type = request.POST.get('group_type')
             commodity = request.POST.get('commodity')
             province = request.POST.get('province')
-            corporate_group = request.POST.get('corporate_group')
             allocated = request.POST.get('allocated') == 'yes'
             representative_email = request.POST.get('representative_email')
             phone_number = request.POST.get('phone_number')
+
+            # Auto-detect corporate group from business name
+            def detect_corporate_group(client_name):
+                if not client_name:
+                    return "Other (Unlisted Group)"
+
+                name = client_name.lower().strip()
+
+                rules = [
+                    (['pick n pay franchise', 'pnp franchise'], 'Pick n Pay - Franchise'),
+                    (['pick n pay corporate', 'pnp corporate'], 'Pick n Pay - Corporate'),
+                    (['pick n pay', 'pnp', "pick'n pay", 'picknpay'], 'Pick n Pay - Corporate'),
+                    (['fruit & veg', 'fruit and veg', 'fruit&veg'], 'Fruit & Veg'),
+                    (['ok foods', 'ok food', 'okfoods'], 'OK Foods'),
+                    (['checkers'], 'Checkers'),
+                    (['spar northrand', 'spar - northrand'], 'Spar - Northrand'),
+                    (['superspar', 'super spar'], 'SuperSpar'),
+                    (['spar'], 'Spar'),
+                    (['shoprite', 'shop rite'], 'Shoprite'),
+                    (['massmart'], 'Massmart'),
+                    (['chester butcheries', 'chester butchery'], 'Chester Butcheries'),
+                    (['boxer'], 'Boxer'),
+                    (['food lovers market', "food lover's market", 'foodlovers'], 'Food Lovers Market'),
+                    (['cambridge'], 'Cambridge'),
+                    (['woolworths', 'woolworth'], 'Woolworths'),
+                    (['jwayelani'], 'Jwayelani'),
+                    (['usave', 'u-save', 'u save'], 'Usave'),
+                    (['obc'], 'OBC'),
+                    (['roots'], 'Roots'),
+                    (['meat world', 'meatworld'], 'Meat World'),
+                    (['quantum foods', 'nulaid', 'quantum'], 'Quantum Foods Nulaid'),
+                    (['bluff meat supply', 'bluff meat'], 'Bluff Meat Supply'),
+                    (['eat sum meat', 'eatsum'], 'Eat Sum Meat'),
+                    (['waltloo meat', 'waltloo chicken', 'waltloo'], 'Waltloo Meat and Chicken'),
+                    (['choppies', 'choppy'], 'Choppies'),
+                    (['econo foods', 'econofoods'], 'Econo Foods'),
+                    (['makro'], 'Makro'),
+                    (['boma vleismark', 'boma vleis'], 'Boma Vleismark'),
+                    (['eskort'], 'Eskort'),
+                    (['nesta foods', 'nesta'], 'Nesta Foods'),
+                ]
+
+                for keywords, group in rules:
+                    for keyword in keywords:
+                        if keyword in name:
+                            return group
+
+                return "Other (Unlisted Group)"
+
+            corporate_group = detect_corporate_group(business_name)
 
             # Generate internal account code
             def generate_account_code(facility_type, group_type, commodity, corporate_group, client_id):
@@ -3906,7 +3985,13 @@ def edit_client_allocation(request):
             allocation.group_type = request.POST.get('group_type')
             allocation.commodity = request.POST.get('commodity')
             allocation.province = request.POST.get('province')
-            allocation.corporate_group = request.POST.get('corporate_group')
+
+            # Get corporate group from form, or auto-detect if empty
+            corporate_group = request.POST.get('corporate_group', '').strip()
+            if not corporate_group:
+                corporate_group = detect_corporate_group(allocation.eclick_name)
+            allocation.corporate_group = corporate_group
+
             allocation.allocated = request.POST.get('allocated') == 'yes'
             allocation.representative_email = request.POST.get('representative_email')
             allocation.phone_number = request.POST.get('phone_number')
@@ -4031,7 +4116,56 @@ def delete_client_allocation(request):
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 
-@login_required(login_url='login')
+def detect_corporate_group(client_name):
+    """Auto-detect corporate group based on client name"""
+    if not client_name:
+        return "Other (Unlisted Group)"
+
+    name = client_name.lower().strip()
+
+    # Corporate group matching rules (ordered by specificity)
+    rules = [
+        (['pick n pay franchise', 'pnp franchise', "pick 'n pay franchise"], 'Pick n Pay - Franchise'),
+        (['pick n pay corporate', 'pnp corporate', "pick 'n pay corporate"], 'Pick n Pay - Corporate'),
+        (['pick n pay', 'pnp', "pick'n pay", "pick 'n pay", 'picknpay'], 'Pick n Pay - Corporate'),
+        (['fruit & veg', 'fruit and veg', 'fruit&veg'], 'Fruit & Veg'),
+        (['ok foods', 'ok food', 'okfoods'], 'OK Foods'),
+        (['checkers'], 'Checkers'),
+        (['spar northrand', 'spar - northrand'], 'Spar - Northrand'),
+        (['superspar', 'super spar'], 'SuperSpar'),
+        (['spar'], 'Spar'),
+        (['shoprite', 'shop rite'], 'Shoprite'),
+        (['massmart'], 'Massmart'),
+        (['chester butcheries', 'chester butchery'], 'Chester Butcheries'),
+        (['boxer'], 'Boxer'),
+        (['food lovers market', "food lover's market", 'foodlovers'], 'Food Lovers Market'),
+        (['cambridge'], 'Cambridge'),
+        (['woolworths', 'woolworth'], 'Woolworths'),
+        (['jwayelani'], 'Jwayelani'),
+        (['usave', 'u-save', 'u save'], 'Usave'),
+        (['obc'], 'OBC'),
+        (['roots'], 'Roots'),
+        (['meat world', 'meatworld'], 'Meat World'),
+        (['quantum foods', 'nulaid', 'quantum'], 'Quantum Foods Nulaid'),
+        (['bluff meat supply', 'bluff meat'], 'Bluff Meat Supply'),
+        (['eat sum meat', 'eatsum'], 'Eat Sum Meat'),
+        (['waltloo meat', 'waltloo chicken', 'waltloo'], 'Waltloo Meat and Chicken'),
+        (['choppies', 'choppy'], 'Choppies'),
+        (['econo foods', 'econofoods'], 'Econo Foods'),
+        (['makro'], 'Makro'),
+        (['boma vleismark', 'boma vleis'], 'Boma Vleismark'),
+        (['nesta foods', 'nesta'], 'Nesta Foods'),
+        (['eskort'], 'Eskort'),
+    ]
+
+    for keywords, group in rules:
+        for keyword in keywords:
+            if keyword in name:
+                return group
+
+    return "Other (Unlisted Group)"
+
+
 def sync_client_allocations(request):
     """Sync client allocation data from SQL Server Clients table to PostgreSQL database.
 
@@ -4168,6 +4302,9 @@ def sync_client_allocations(request):
                 # Parse internal account code to extract facility type, group type, and commodity
                 facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
 
+                # Auto-detect corporate group from client name
+                corporate_group = detect_corporate_group(name)
+
                 # Create ClientAllocation object (not yet saved to DB)
                 bulk_records.append(ClientAllocation(
                     client_id=client_id,
@@ -4175,7 +4312,7 @@ def sync_client_allocations(request):
                     group_type=group_type,
                     commodity=commodity,
                     province=province,
-                    corporate_group=None,
+                    corporate_group=corporate_group,
                     other=physical_address,
                     internal_account_code=internal_account_code,
                     allocated=False,
@@ -4377,6 +4514,9 @@ def refresh_clients(request):
                 # Parse internal account code to extract facility type, group type, and commodity
                 facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
 
+                # Auto-detect corporate group from client name
+                corporate_group = detect_corporate_group(name)
+
                 # Create ClientAllocation object (not yet saved to DB)
                 bulk_records.append(ClientAllocation(
                     client_id=client_id,
@@ -4384,7 +4524,7 @@ def refresh_clients(request):
                     group_type=group_type,
                     commodity=commodity,
                     province=province,
-                    corporate_group=None,
+                    corporate_group=corporate_group,
                     other=physical_address,
                     internal_account_code=internal_account_code,
                     allocated=False,
