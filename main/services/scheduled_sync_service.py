@@ -690,6 +690,7 @@ class ScheduledSyncService:
                 relationships_found = 0
 
                 print(f"\n[SEARCH] Searching for client name relationships...")
+                print(f"   Only matching when one name starts with 'New'...")
                 for date, client_names in date_to_clients.items():
                     if len(client_names) < 2:
                         continue  # Need at least 2 different names to find relationships
@@ -703,32 +704,45 @@ class ScheduledSyncService:
                             name1_lower = name1.lower()
                             name2_lower = name2.lower()
 
+                            # IMPORTANT: Only match if at least one name starts with "New"
+                            # This prevents incorrectly combining similar names like different Boxer stores
+                            name1_starts_with_new = name1_lower.startswith('new ')
+                            name2_starts_with_new = name2_lower.startswith('new ')
+
+                            # Skip if neither name starts with "New"
+                            if not name1_starts_with_new and not name2_starts_with_new:
+                                continue
+
                             # Check if one contains the other
                             if name2_lower in name1_lower:
                                 # name1 contains name2, use name2 as canonical (shorter/simpler)
-                                canonical = name2
-                                variant = name1
-                                relationships_found += 1
+                                # But only if name1 starts with "New" (the generic placeholder)
+                                if name1_starts_with_new:
+                                    canonical = name2
+                                    variant = name1
+                                    relationships_found += 1
 
-                                # Store mapping
-                                if variant not in client_name_mapping:
-                                    client_name_mapping[variant] = canonical
-                                    print(f"\n   [MATCH] Found relationship on {date}:")
-                                    print(f"      Variant: '{variant}'")
-                                    print(f"      Canonical: '{canonical}'")
+                                    # Store mapping
+                                    if variant not in client_name_mapping:
+                                        client_name_mapping[variant] = canonical
+                                        print(f"\n   [MATCH] Found relationship on {date}:")
+                                        print(f"      Variant (starts with 'New'): '{variant}'")
+                                        print(f"      Canonical: '{canonical}'")
 
                             elif name1_lower in name2_lower:
                                 # name2 contains name1, use name1 as canonical (shorter/simpler)
-                                canonical = name1
-                                variant = name2
-                                relationships_found += 1
+                                # But only if name2 starts with "New" (the generic placeholder)
+                                if name2_starts_with_new:
+                                    canonical = name1
+                                    variant = name2
+                                    relationships_found += 1
 
-                                # Store mapping
-                                if variant not in client_name_mapping:
-                                    client_name_mapping[variant] = canonical
-                                    print(f"\n   [MATCH] Found relationship on {date}:")
-                                    print(f"      Variant: '{variant}'")
-                                    print(f"      Canonical: '{canonical}'")
+                                    # Store mapping
+                                    if variant not in client_name_mapping:
+                                        client_name_mapping[variant] = canonical
+                                        print(f"\n   [MATCH] Found relationship on {date}:")
+                                        print(f"      Variant (starts with 'New'): '{variant}'")
+                                        print(f"      Canonical: '{canonical}'")
 
                 print(f"\n[STATS] Relationship matching complete:")
                 print(f"   - Relationships found: {relationships_found}")
