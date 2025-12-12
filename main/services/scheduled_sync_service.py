@@ -543,45 +543,13 @@ class ScheduledSyncService:
                     # Only log first 3 inspections for initial verification
                     show_detailed_log = (idx <= 3) or (idx % 100 == 0)
 
-                    # Normalize client names when inspectors manually type variations
-                    # This handles cases like "New Processed Meat Producer /Amans meat & deli",
-                    # "New Producer / Client Name", etc. and normalizes them to the correct client name
+                    # Use client name from SQL query directly (relationship matching will normalize later)
                     if client_name_sql:
-                        client_name_lower = client_name_sql.lower()
-
-                        # PATTERN 1: Check if name contains "/" - extract actual client name after the slash
-                        # Handles: "New [Producer Type] / [Actual Client Name]" → "[Actual Client Name]"
-                        if '/' in client_name_sql:
-                            # Split by "/" and take the part after it (the actual client name)
-                            parts = client_name_sql.split('/', 1)
-                            if len(parts) > 1:
-                                # Get the actual client name after "/" and clean up whitespace
-                                actual_client_name = parts[1].strip()
-
-                                # Use the extracted name if it's not empty
-                                if actual_client_name:
-                                    client_name = actual_client_name
-                                    client_match_found = True
-                                    if show_detailed_log:
-                                        print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                                        print(f"      [INFO] NewClientName with '/': {client_name_sql}")
-                                        print(f"      ⭐ EXTRACTED client name: {actual_client_name}")
-
-                        # PATTERN 2: Specific client name normalizations for known variations
-                        # Check for specific patterns that need standardization
-                        elif 'amans' in client_name_lower:
-                            client_name = "Amans meat & deli"
-                            client_match_found = True
-                            if show_detailed_log:
-                                print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                                print(f"      [INFO] NewClientName contains 'Amans': {client_name_sql}")
-                                print(f"      ⭐ NORMALIZED to: Amans meat & deli")
-
-                        # Add more specific normalizations here as needed
-                        # Example format:
-                        # elif 'specific pattern' in client_name_lower:
-                        #     client_name = "Standardized Client Name"
-                        #     client_match_found = True
+                        client_name = client_name_sql
+                        client_match_found = True
+                        if show_detailed_log:
+                            print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                            print(f"      [INFO] Using SQL client name: {client_name_sql}")
 
                     if not client_match_found and internal_account_code:
                         account_codes_found += 1
@@ -691,6 +659,107 @@ class ScheduledSyncService:
             print(f"   - Product names from SQL query (no additional fetching needed)")
             print(f"   - KM/Hours data preserved automatically (not overwritten)")
             print("="*80)
+
+            # STEP 3.5: RELATIONSHIP-BASED CLIENT NAME MATCHING
+            print(f"\n" + "="*80)
+            print(f"[MATCH] STEP 3.5: RELATIONSHIP-BASED CLIENT NAME MATCHING")
+            print(f"   Finding inspections on same date with overlapping client names...")
+            print("="*80)
+
+            try:
+                from collections import defaultdict
+                from django.db import transaction
+
+                # Group inspections by date
+                print(f"\n[DATA] Grouping inspections by date...")
+                date_to_clients = defaultdict(set)
+
+                # Get all unique (date, client_name) combinations
+                inspections_by_date = FoodSafetyAgencyInspection.objects.values('date_of_inspection', 'client_name').distinct()
+
+                for item in inspections_by_date:
+                    date = item['date_of_inspection']
+                    client = item['client_name']
+                    if client and client != '-':  # Skip empty or placeholder names
+                        date_to_clients[date].add(client)
+
+                print(f"   Found {len(date_to_clients)} unique inspection dates")
+
+                # Find relationships and create mapping
+                client_name_mapping = {}  # Maps: old_name -> canonical_name
+                relationships_found = 0
+
+                print(f"\n[SEARCH] Searching for client name relationships...")
+                for date, client_names in date_to_clients.items():
+                    if len(client_names) < 2:
+                        continue  # Need at least 2 different names to find relationships
+
+                    # Convert to list for easier iteration
+                    names_list = list(client_names)
+
+                    # Compare each pair of names
+                    for i, name1 in enumerate(names_list):
+                        for name2 in names_list[i+1:]:
+                            name1_lower = name1.lower()
+                            name2_lower = name2.lower()
+
+                            # Check if one contains the other
+                            if name2_lower in name1_lower:
+                                # name1 contains name2, use name2 as canonical (shorter/simpler)
+                                canonical = name2
+                                variant = name1
+                                relationships_found += 1
+
+                                # Store mapping
+                                if variant not in client_name_mapping:
+                                    client_name_mapping[variant] = canonical
+                                    print(f"\n   [MATCH] Found relationship on {date}:")
+                                    print(f"      Variant: '{variant}'")
+                                    print(f"      Canonical: '{canonical}'")
+
+                            elif name1_lower in name2_lower:
+                                # name2 contains name1, use name1 as canonical (shorter/simpler)
+                                canonical = name1
+                                variant = name2
+                                relationships_found += 1
+
+                                # Store mapping
+                                if variant not in client_name_mapping:
+                                    client_name_mapping[variant] = canonical
+                                    print(f"\n   [MATCH] Found relationship on {date}:")
+                                    print(f"      Variant: '{variant}'")
+                                    print(f"      Canonical: '{canonical}'")
+
+                print(f"\n[STATS] Relationship matching complete:")
+                print(f"   - Relationships found: {relationships_found}")
+                print(f"   - Unique name mappings: {len(client_name_mapping)}")
+
+                # Apply the mappings to update client names
+                if client_name_mapping:
+                    print(f"\n[UPDATE] Applying canonical names to inspections...")
+                    updated_count = 0
+
+                    with transaction.atomic():
+                        for variant, canonical in client_name_mapping.items():
+                            # Update all inspections with this variant name
+                            result = FoodSafetyAgencyInspection.objects.filter(
+                                client_name=variant
+                            ).update(client_name=canonical)
+
+                            updated_count += result
+                            if result > 0:
+                                print(f"   Updated {result} inspections: '{variant}' -> '{canonical}'")
+
+                    print(f"\n[OK] Canonical name application complete!")
+                    print(f"   - Total inspections updated: {updated_count}")
+                else:
+                    print(f"\n[INFO] No name mappings to apply")
+
+            except Exception as e:
+                print(f"\n[WARNING] Error in relationship-based matching: {e}")
+                import traceback
+                traceback.print_exc()
+                print(f"   Continuing with sync - relationship matching can be run again later")
 
             # STEP 4: SYNC LAB SAMPLE DATA
             print(f"\n" + "="*80)
