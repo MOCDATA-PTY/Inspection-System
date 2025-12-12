@@ -545,12 +545,31 @@ class ScheduledSyncService:
 
                     # Normalize client names when inspectors manually type variations
                     # This handles cases like "New Processed Meat Producer /Amans meat & deli",
-                    # "New Producer / Amans meat &", etc. and normalizes them to the correct client name
+                    # "New Producer / Client Name", etc. and normalizes them to the correct client name
                     if client_name_sql:
                         client_name_lower = client_name_sql.lower()
 
-                        # Check for Amans variations (case-insensitive)
-                        if 'amans' in client_name_lower:
+                        # PATTERN 1: Check if name contains "/" - extract actual client name after the slash
+                        # Handles: "New [Producer Type] / [Actual Client Name]" → "[Actual Client Name]"
+                        if '/' in client_name_sql:
+                            # Split by "/" and take the part after it (the actual client name)
+                            parts = client_name_sql.split('/', 1)
+                            if len(parts) > 1:
+                                # Get the actual client name after "/" and clean up whitespace
+                                actual_client_name = parts[1].strip()
+
+                                # Use the extracted name if it's not empty
+                                if actual_client_name:
+                                    client_name = actual_client_name
+                                    client_match_found = True
+                                    if show_detailed_log:
+                                        print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                                        print(f"      [INFO] NewClientName with '/': {client_name_sql}")
+                                        print(f"      ⭐ EXTRACTED client name: {actual_client_name}")
+
+                        # PATTERN 2: Specific client name normalizations for known variations
+                        # Check for specific patterns that need standardization
+                        elif 'amans' in client_name_lower:
                             client_name = "Amans meat & deli"
                             client_match_found = True
                             if show_detailed_log:
@@ -558,10 +577,10 @@ class ScheduledSyncService:
                                 print(f"      [INFO] NewClientName contains 'Amans': {client_name_sql}")
                                 print(f"      ⭐ NORMALIZED to: Amans meat & deli")
 
-                        # Add more client name normalizations here as needed
+                        # Add more specific normalizations here as needed
                         # Example format:
-                        # elif 'client variation' in client_name_lower:
-                        #     client_name = "Correct Standardized Client Name"
+                        # elif 'specific pattern' in client_name_lower:
+                        #     client_name = "Standardized Client Name"
                         #     client_match_found = True
 
                     if not client_match_found and internal_account_code:
