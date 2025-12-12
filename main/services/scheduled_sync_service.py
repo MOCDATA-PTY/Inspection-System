@@ -543,7 +543,28 @@ class ScheduledSyncService:
                     # Only log first 3 inspections for initial verification
                     show_detailed_log = (idx <= 3) or (idx % 100 == 0)
 
-                    if internal_account_code:
+                    # Normalize client names when inspectors manually type variations
+                    # This handles cases like "New Processed Meat Producer /Amans meat & deli",
+                    # "New Producer / Amans meat &", etc. and normalizes them to the correct client name
+                    if client_name_sql:
+                        client_name_lower = client_name_sql.lower()
+
+                        # Check for Amans variations (case-insensitive)
+                        if 'amans' in client_name_lower:
+                            client_name = "Amans meat & deli"
+                            client_match_found = True
+                            if show_detailed_log:
+                                print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
+                                print(f"      [INFO] NewClientName contains 'Amans': {client_name_sql}")
+                                print(f"      ⭐ NORMALIZED to: Amans meat & deli")
+
+                        # Add more client name normalizations here as needed
+                        # Example format:
+                        # elif 'client variation' in client_name_lower:
+                        #     client_name = "Correct Standardized Client Name"
+                        #     client_match_found = True
+
+                    if not client_match_found and internal_account_code:
                         account_codes_found += 1
 
                         # Look up client in SQL Server ClientAllocation by account code
@@ -585,14 +606,16 @@ class ScheduledSyncService:
                                 print(f"      [INFO] Account Code: {internal_account_code}")
                                 print(f"      [WARNING]  Error looking up SQL Server client: {e}")
                                 print(f"      [WARNING]  Client name set to: -")
-                    else:
-                        # No account code - leave as "-" (cannot look up without account code)
+
+                    # If still no client name match, set to "-"
+                    if not client_match_found:
+                        # No account code or no match - leave as "-" (cannot look up without account code)
                         sql_server_fallback += 1
                         client_name = "-"
                         if show_detailed_log:
                             print(f"\n   [{idx}/{len(sql_inspections)}] Inspection #{inspection_id}")
-                            print(f"      [INFO] Account Code: NONE")
-                            print(f"      [WARNING]  Cannot look up client without account code")
+                            print(f"      [INFO] Account Code: {internal_account_code if internal_account_code else 'NONE'}")
+                            print(f"      [WARNING]  Cannot look up client")
                             print(f"      [WARNING]  Client name set to: -")
 
                     # PHASE 1: Update or create inspection WITH product name from SQL query
