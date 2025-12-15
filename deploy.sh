@@ -1,5 +1,6 @@
 #!/bin/bash
 # Deployment script for Inspection System
+# Auto-deploy via GitHub Actions
 set -e  # Exit on error
 
 echo "[1/7] Starting deployment..."
