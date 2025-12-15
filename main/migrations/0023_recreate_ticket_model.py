@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0022_delete_ticket'),
+        ('main', '0022_populate_initial_fee_history'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
