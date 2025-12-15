@@ -18,8 +18,8 @@ git pull origin master -q || exit 1
 
 # Run migrations
 echo "[5/7] Running migrations..."
-python3 manage.py makemigrations --noinput >/dev/null 2>&1
-python3 manage.py migrate --noinput >/dev/null 2>&1 || exit 1
+python3 manage.py makemigrations --noinput 2>&1 | grep -v "No changes detected" || true
+python3 manage.py migrate --noinput || exit 1
 
 # Restart services with timeout
 echo "[6/7] Restarting services..."
