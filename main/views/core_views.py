@@ -1870,7 +1870,7 @@ def shipment_list(request):
     
     
     try:
-        return render(request, 'main/shipment_list_clean.html', context)
+        return render(request, 'main/inspection_records.html', context)
     except BrokenPipeError:
         print(" Broken pipe error detected - client disconnected")
         # Return a minimal response to prevent server error
@@ -5265,13 +5265,32 @@ def export_sheet(request):
     return render(request, 'main/export_sheet.html', context)
 
 
-def get_fee_rate(fee_code, default_value):
-    """Get fee rate from database, fallback to default if not found"""
+def get_fee_rate(fee_code, default_value, inspection_date=None):
+    """
+    Get fee rate from database, fallback to default if not found.
+
+    Args:
+        fee_code: The fee code to look up (e.g., 'inspection_hour_rate')
+        default_value: Fallback value if fee not found
+        inspection_date: Optional date to get historical rate for that date
+
+    Returns:
+        Float rate value (historical if date provided, current if not)
+    """
     try:
         from ..models import InspectionFee
         fee = InspectionFee.objects.filter(fee_code=fee_code).first()
-        return float(fee.rate) if fee else default_value
-    except:
+        if not fee:
+            return default_value
+
+        # If inspection date provided, use historical rate lookup
+        if inspection_date:
+            return float(fee.get_rate_for_date(inspection_date))
+        else:
+            # No date provided, return current rate
+            return float(fee.rate)
+    except Exception as e:
+        print(f"[ERROR] get_fee_rate({fee_code}): {e}")
         return default_value
 
 
@@ -5279,9 +5298,9 @@ def generate_visit_hours_km_items(inspection_id, inspection, invoice_ref, rfi_re
     """Generate HOURS and KM line items ONCE per visit (not per product)"""
     items = []
 
-    # Load pricing
-    INSPECTION_HOUR_RATE = get_fee_rate('inspection_hour_rate', 510.00)
-    TRAVEL_RATE_PER_KM = get_fee_rate('travel_rate_per_km', 6.50)
+    # Load pricing - Use HISTORICAL rates based on inspection date
+    INSPECTION_HOUR_RATE = get_fee_rate('inspection_hour_rate', 510.00, inspection.date_of_inspection)
+    TRAVEL_RATE_PER_KM = get_fee_rate('travel_rate_per_km', 6.50, inspection.date_of_inspection)
 
     # Handle missing client name
     client_name = inspection.client_name if inspection.client_name else 'Unknown Client'
@@ -5378,11 +5397,11 @@ def generate_test_line_items(inspection_id, inspection, invoice_ref, rfi_ref, pr
     """
     items = []
 
-    # Load pricing
-    FAT_TEST_RATE = get_fee_rate('fat_test_rate', 826.00)
-    PROTEIN_TEST_RATE = get_fee_rate('protein_test_rate', 503.00)
-    CALCIUM_TEST_RATE = get_fee_rate('calcium_test_rate', 379.00)
-    DNA_TEST_RATE = get_fee_rate('dna_test_rate', 2605.00)
+    # Load pricing - Use HISTORICAL rates based on inspection date
+    FAT_TEST_RATE = get_fee_rate('fat_test_rate', 826.00, inspection.date_of_inspection)
+    PROTEIN_TEST_RATE = get_fee_rate('protein_test_rate', 503.00, inspection.date_of_inspection)
+    CALCIUM_TEST_RATE = get_fee_rate('calcium_test_rate', 379.00, inspection.date_of_inspection)
+    DNA_TEST_RATE = get_fee_rate('dna_test_rate', 2605.00, inspection.date_of_inspection)
 
     # Handle missing client name
     client_name = inspection.client_name if inspection.client_name else 'Unknown Client'
@@ -13805,6 +13824,221 @@ def system_logs(request):
 
 
 @login_required
+@role_required(['super_admin', 'developer'])
+def fsa_operations_board(request):
+    """FSA Operations Board - Dashboard for operational metrics and monitoring."""
+    if not (request.user.role in ['super_admin', 'developer']):
+        messages.error(request, "You don't have permission to access the FSA Operations Board.")
+        return redirect('home')
+
+    # Load all tickets from the database
+    from main.models import Ticket
+    tickets = Ticket.objects.all().select_related('created_by', 'assigned_to')
+
+    # Get list of all users for assignment dropdown
+    all_users = User.objects.filter(is_active=True).order_by('username')
+
+    context = {
+        'user': request.user,
+        'tickets': tickets,
+        'all_users': all_users,
+    }
+
+    return render(request, 'main/fsa_operations_board.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_ticket_status(request, ticket_id):
+    """Update ticket status via AJAX."""
+    from main.models import Ticket
+    import json
+
+    try:
+        ticket = Ticket.objects.get(id=ticket_id)
+        data = json.loads(request.body)
+        new_status = data.get('status')
+
+        # Validate status
+        valid_statuses = ['open', 'in-progress', 'resolved']
+        if new_status not in valid_statuses:
+            return JsonResponse({'success': False, 'error': 'Invalid status'}, status=400)
+
+        # Update the ticket
+        ticket.status = new_status
+        ticket.save()
+
+        return JsonResponse({
+            'success': True,
+            'ticket_id': ticket.id,
+            'status': ticket.status,
+            'updated_at': ticket.updated_at.strftime('%Y-%m-%d %H:%M')
+        })
+
+    except Ticket.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Ticket not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def submit_ticket(request):
+    """Allow users to submit tickets/issues for the FSA Operations Board."""
+    from main.models import Ticket
+    from datetime import date
+    from django.core.mail import send_mail
+
+    if request.method == 'POST':
+        # Get all form fields
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        issue_type = request.POST.get('issue_type')
+        affected_area = request.POST.get('affected_area')
+        priority = request.POST.get('priority', 'medium')
+
+        # Optional fields
+        steps_to_reproduce = request.POST.get('steps_to_reproduce', '')
+        expected_behavior = request.POST.get('expected_behavior', '')
+        actual_behavior = request.POST.get('actual_behavior', '')
+        impact_users = request.POST.get('impact_users', '')
+        is_blocking = request.POST.get('is_blocking', '')
+        browser_info = request.POST.get('browser_info', '')
+        additional_notes = request.POST.get('additional_notes', '')
+
+        # Validate required fields
+        if not title or not description or not issue_type or not affected_area:
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('submit_ticket')
+
+        # Get or create user Ethan for auto-assignment
+        try:
+            ethan = User.objects.get(username='Ethan')
+        except User.DoesNotExist:
+            # Create Ethan if doesn't exist
+            ethan = User.objects.create_user(
+                username='Ethan',
+                email='ethan.sevenster@moc-pty.com',
+                first_name='Ethan',
+                last_name='Sevenster'
+            )
+
+        # Create the ticket with all fields and auto-assign to Ethan
+        ticket = Ticket.objects.create(
+            title=title,
+            description=description,
+            issue_type=issue_type,
+            affected_area=affected_area,
+            priority=priority,
+            steps_to_reproduce=steps_to_reproduce if steps_to_reproduce else None,
+            expected_behavior=expected_behavior if expected_behavior else None,
+            actual_behavior=actual_behavior if actual_behavior else None,
+            impact_users=impact_users if impact_users else None,
+            is_blocking=is_blocking if is_blocking else None,
+            browser_info=browser_info if browser_info else None,
+            additional_notes=additional_notes if additional_notes else None,
+            created_by=request.user,
+            assigned_to=ethan,  # Auto-assign to Ethan
+            status='open'
+        )
+
+        # Send email notification to Ethan
+        try:
+            email_subject = f"New Ticket #{ticket.id}: {title}"
+
+            email_body = f"""Good day Ethan,
+
+A new ticket has been submitted to the Food Safety Agency Operations Board and assigned to you.
+
+TICKET DETAILS
+{"="*60}
+
+Ticket ID: #{ticket.id}
+Title: {title}
+Status: Open
+Priority: {ticket.get_priority_display()}
+
+Issue Type: {issue_type}
+Affected Area: {affected_area}
+
+Description:
+{description}
+"""
+
+            if steps_to_reproduce:
+                email_body += f"""
+Steps to Reproduce:
+{steps_to_reproduce}
+"""
+
+            if expected_behavior:
+                email_body += f"""
+Expected Behavior:
+{expected_behavior}
+"""
+
+            if actual_behavior:
+                email_body += f"""
+Actual Behavior:
+{actual_behavior}
+"""
+
+            if impact_users:
+                email_body += f"""
+Impact: {impact_users} users affected
+"""
+
+            if is_blocking:
+                email_body += f"""
+Blocking Work: {is_blocking}
+"""
+
+            if browser_info:
+                email_body += f"""
+Browser/Device Info:
+{browser_info}
+"""
+
+            if additional_notes:
+                email_body += f"""
+Additional Notes:
+{additional_notes}
+"""
+
+            email_body += f"""
+
+Submitted By: {request.user.get_full_name() or request.user.username}
+Created: {ticket.created_at.strftime('%Y-%m-%d %H:%M')}
+{"="*60}
+
+Please review this ticket in the FSA Operations Board.
+
+Best regards,
+Food Safety Agency System
+"""
+
+            send_mail(
+                subject=email_subject,
+                message=email_body,
+                from_email='info@eclick.co.za',
+                recipient_list=['ethan.sevenster@moc-pty.com'],
+                fail_silently=True,  # Don't break if email fails
+            )
+        except Exception as e:
+            # Log email error but don't stop ticket creation
+            print(f"Failed to send email notification: {e}")
+
+        messages.success(request, f'✅ Ticket #{ticket.id} submitted successfully! Ethan has been notified via email.')
+        return redirect('submit_ticket')
+
+    # GET request - show the form
+    context = {
+        'user': request.user,
+        'today': date.today().isoformat(),
+    }
+    return render(request, 'main/submit_ticket.html', context)
+
+
+@login_required
 @role_required(['admin', 'super_admin', 'developer'])
 def refresh_tokens(request):
     """Refresh OneDrive and Google Sheets tokens."""
@@ -15155,3 +15389,131 @@ Food Safety Agency Team
             'success': False,
             'error': str(e)
         }, status=500)
+
+# =============================
+# Password Reset Views (For Login Page)
+# =============================
+
+def forgot_password(request):
+    """
+    Handle forgot password requests - ONLY for developer account (ethansevenster5@gmail.com)
+    """
+    from django.shortcuts import render, redirect
+    from django.contrib import messages
+    from django.contrib.auth.models import User
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_encode
+    from django.utils.encoding import force_bytes
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.conf import settings
+    from datetime import datetime
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+
+        # IMPORTANT: Only allow password reset for developer account
+        if email != 'ethansevenster5@gmail.com':
+            messages.error(request, 'Password reset is only available for the developer account.')
+            return redirect('forgot_password')
+
+        try:
+            # Find user with this email
+            user = User.objects.filter(email__iexact=email).first()
+
+            if not user:
+                # Don't reveal if user exists or not (security best practice)
+                messages.success(request, 'If an account with that email exists, a password reset link has been sent.')
+                return redirect('forgot_password')
+
+            # Generate password reset token
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            # Build reset link
+            reset_link = request.build_absolute_uri(
+                f'/reset-password/{uid}/{token}/'
+            )
+
+            # Prepare email context
+            context = {
+                'user': user,
+                'reset_link': reset_link,
+                'current_year': datetime.now().year,
+            }
+
+            # Render email template
+            html_message = render_to_string('main/password_reset_email.html', context)
+
+            # Send email with proper no-reply display name
+            send_mail(
+                subject='Food Safety Agency – Password Reset Instructions',
+                message=f'Hello {user.username},\n\nClick the link below to reset your password:\n\n{reset_link}\n\nThis link will expire in 1 hour.\n\nIf you did not request this, please ignore this email.',
+                from_email='Food Safety Agency - No Reply <info@eclick.co.za>',
+                recipient_list=[email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            messages.success(request, 'Password reset link has been sent to your email. Please check your inbox (and spam folder).')
+            return redirect('forgot_password')
+
+        except Exception as e:
+            messages.error(request, f'Error sending password reset email: {str(e)}')
+            return redirect('forgot_password')
+
+    # GET request - show the form
+    return render(request, 'main/forgot_password.html')
+
+
+def reset_password_confirm(request, uidb64, token):
+    """
+    Handle password reset confirmation (when user clicks link in email)
+    """
+    from django.shortcuts import render, redirect
+    from django.contrib import messages
+    from django.contrib.auth.models import User
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_decode
+    from django.utils.encoding import force_str
+
+    # Decode user ID from URL
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    # Verify token is valid
+    if user is not None and default_token_generator.check_token(user, token):
+        # Token is valid
+        if request.method == 'POST':
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            # Validate passwords
+            if not new_password or not confirm_password:
+                messages.error(request, 'Both password fields are required.')
+                return render(request, 'main/reset_password_confirm.html')
+
+            if len(new_password) < 8:
+                messages.error(request, 'Password must be at least 8 characters long.')
+                return render(request, 'main/reset_password_confirm.html')
+
+            if new_password != confirm_password:
+                messages.error(request, 'Passwords do not match.')
+                return render(request, 'main/reset_password_confirm.html')
+
+            # Set new password
+            user.set_password(new_password)
+            user.save()
+
+            messages.success(request, 'Your password has been reset successfully! You can now log in with your new password.')
+            return redirect('login')
+
+        # GET request - show password reset form
+        return render(request, 'main/reset_password_confirm.html')
+    else:
+        # Invalid or expired token
+        messages.error(request, 'This password reset link is invalid or has expired. Please request a new one.')
+        return redirect('forgot_password')

@@ -3,7 +3,7 @@ from . import views
 from .views.core_views import (
     settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients,
     refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment,
-    delete_inspection, upload_document, user_management, system_logs, refresh_tokens,
+    delete_inspection, upload_document, user_management, system_logs, fsa_operations_board, submit_ticket, update_ticket_status, refresh_tokens,
     update_bought_sample, update_group_approved, update_sample_taken, dashboard, compliance_documents, onedrive_view, compliance_linking_page,
     get_inspection_data, process_document_links, download_compliance_documents,
     process_all_compliance_documents, start_compliance_document_download,
@@ -22,7 +22,8 @@ from .views.core_views import (
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
     reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets, update_invoice_number, export_client_allocations, add_client_allocation, edit_client_allocation,
-    get_dropdown_options, delete_dropdown_option, delete_client_allocation, send_password_reset_email
+    get_dropdown_options, delete_dropdown_option, delete_client_allocation, send_password_reset_email,
+    forgot_password, reset_password_confirm
 )
 from .views.data_views import (
     export_shipments, get_inspection_fees, update_inspection_fees,
@@ -38,6 +39,11 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('hidden-register/', views.register, name='register'),
     path('logout/', views.user_logout, name='logout'),
+
+    # Password Reset URLs (Developer Account Only)
+    path('forgot-password/', forgot_password, name='forgot_password'),
+    path('reset-password/<uidb64>/<token>/', reset_password_confirm, name='reset_password_confirm'),
+
     path('dashboard/', views.dashboard, name='dashboard'),
     path('inspector-dashboard/', views.inspector_dashboard, name='inspector_dashboard'),
     path('analytics-dashboard/', views.analytics_dashboard, name='analytics_dashboard'),    
@@ -126,6 +132,9 @@ urlpatterns = [
     path('user-management/', user_management, name='user_management'),
     path('send-password-reset-email/', send_password_reset_email, name='send_password_reset_email'),
     path('system-logs/', system_logs, name='system_logs'),
+    path('fsa-operations-board/', fsa_operations_board, name='fsa_operations_board'),
+    path('submit-ticket/', submit_ticket, name='submit_ticket'),
+    path('tickets/<int:ticket_id>/update-status/', update_ticket_status, name='update_ticket_status'),
     path('api/refresh-tokens/', refresh_tokens, name='refresh_tokens'),
     path('developer/compliance-documents/', compliance_documents, name='compliance_documents'),
     path('developer/onedrive-view/', onedrive_view, name='onedrive_view'),
