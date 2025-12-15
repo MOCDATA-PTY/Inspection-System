@@ -800,7 +800,7 @@ class InspectionFee(models.Model):
     """Store inspection and testing fee rates"""
     fee_code = models.CharField(max_length=50, unique=True, help_text="Unique code for the fee (e.g., 'inspection_hour_rate')")
     fee_name = models.CharField(max_length=200, help_text="Display name for the fee")
-    rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Fee rate amount")
+    rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Current fee rate amount (always reflects latest rate)")
     description = models.TextField(blank=True, null=True, help_text="Description of the fee")
     last_updated = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
@@ -813,4 +813,125 @@ class InspectionFee(models.Model):
 
     def __str__(self):
         return f"{self.fee_name}: R{self.rate}"
+
+    def get_rate_for_date(self, target_date):
+        """
+        Get the fee rate that was/is active on the target date.
+
+        Args:
+            target_date: A date or datetime object representing the date to query
+
+        Returns:
+            Decimal: The fee rate that was active on the target date
+
+        Example:
+            # Get rate for a specific inspection date
+            fee = InspectionFee.objects.get(fee_code='inspection_hour_rate')
+            rate = fee.get_rate_for_date(inspection.date_of_inspection)
+        """
+        # Convert datetime to date if necessary
+        if hasattr(target_date, 'date'):
+            target_date = target_date.date()
+
+        # Find the most recent history entry where effective_date <= target_date
+        history = self.history.filter(effective_date__lte=target_date).order_by('-effective_date').first()
+
+        if history:
+            return history.rate
+
+        # Fallback to current rate if no history found
+        # This handles cases where we're querying dates before any history was recorded
+        return self.rate
+
+
+class FeeHistory(models.Model):
+    """
+    Track historical changes to fee rates with effective dates.
+    When a fee is changed, a new history record is created instead of overwriting the old rate.
+    This allows for accurate historical fee lookups based on inspection dates.
+    """
+    fee = models.ForeignKey('InspectionFee', on_delete=models.CASCADE, related_name='history')
+    rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Historical fee rate")
+    effective_date = models.DateField(help_text="Date when this rate becomes/became active")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, help_text="User who created this fee version")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="When this history record was created")
+    notes = models.TextField(blank=True, null=True, help_text="Optional notes about why the fee was changed")
+
+    class Meta:
+        db_table = 'inspection_fee_history'
+        ordering = ['-effective_date', '-created_at']
+        verbose_name = 'Fee History'
+        verbose_name_plural = 'Fee Histories'
+        indexes = [
+            models.Index(fields=['fee', '-effective_date'], name='idx_fee_effective_date'),
+            models.Index(fields=['effective_date'], name='idx_effective_date'),
+        ]
+        # Prevent duplicate effective dates for the same fee
+        unique_together = [['fee', 'effective_date']]
+
+    def __str__(self):
+        return f"{self.fee.fee_name} - R{self.rate} (effective {self.effective_date})"
+
+
+class Ticket(models.Model):
+    """Model for FSA Operations Board tickets/issues"""
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in-progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('closed', 'Closed'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('urgent', 'Urgent'),
+    ]
+
+    # Basic Information
+    title = models.CharField(max_length=200, help_text="Ticket title/summary")
+    issue_type = models.CharField(max_length=50, blank=True, null=True, help_text="Type of issue (bug, feature, question, etc.)")
+    affected_area = models.CharField(max_length=100, blank=True, null=True, help_text="Affected module/area of the system")
+
+    # Description & Details
+    description = models.TextField(help_text="Detailed description of the issue")
+    steps_to_reproduce = models.TextField(blank=True, null=True, help_text="Steps to reproduce the issue")
+    expected_behavior = models.TextField(blank=True, null=True, help_text="What should happen")
+    actual_behavior = models.TextField(blank=True, null=True, help_text="What actually happened")
+
+    # Priority & Status
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', help_text="Current status of the ticket")
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='medium', help_text="Priority level")
+
+    # Impact Assessment
+    impact_users = models.CharField(max_length=50, blank=True, null=True, help_text="Number of affected users")
+    is_blocking = models.CharField(max_length=20, blank=True, null=True, help_text="Is this blocking work?")
+
+    # Additional Information
+    browser_info = models.CharField(max_length=200, blank=True, null=True, help_text="Browser/device information")
+    additional_notes = models.TextField(blank=True, null=True, help_text="Any other relevant details")
+
+    # Assignment & Dates
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_tickets', help_text="User who created the ticket")
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_tickets', help_text="User assigned to handle this ticket")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    due_date = models.DateField(null=True, blank=True, help_text="Target completion date")
+
+    class Meta:
+        db_table = 'fsa_tickets'
+        ordering = ['-created_at']
+        verbose_name = 'Ticket'
+        verbose_name_plural = 'Tickets'
+        indexes = [
+            models.Index(fields=['status'], name='idx_ticket_status'),
+            models.Index(fields=['priority'], name='idx_ticket_priority'),
+            models.Index(fields=['created_by'], name='idx_ticket_creator'),
+            models.Index(fields=['assigned_to'], name='idx_ticket_assignee'),
+            models.Index(fields=['-created_at'], name='idx_ticket_created'),
+        ]
+
+    def __str__(self):
+        return f"#{self.id} - {self.title}"
 
