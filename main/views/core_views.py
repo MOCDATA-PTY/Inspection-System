@@ -4913,6 +4913,31 @@ def check_sync_status(request):
 
 
 @login_required(login_url='login')
+def check_sync_status(request):
+    """Check if any sync is currently running and return progress."""
+    from django.core.cache import cache
+
+    # Check both sync locks
+    google_sheets_lock = cache.get('sync_google_sheets_lock')
+    sql_server_lock = cache.get('sync_sql_server_lock')
+
+    # Get current progress
+    sync_progress = cache.get('sync_progress', {})
+
+    # Determine if any sync is running
+    is_running = bool(google_sheets_lock or sql_server_lock)
+
+    return JsonResponse({
+        'is_running': is_running,
+        'locks': {
+            'google_sheets': bool(google_sheets_lock),
+            'sql_server': bool(sql_server_lock)
+        },
+        'progress': sync_progress
+    })
+
+
+@login_required(login_url='login')
 def refresh_shipments(request):
     """Refresh the shipments table with fresh data from SQL Server."""
     clear_messages(request)

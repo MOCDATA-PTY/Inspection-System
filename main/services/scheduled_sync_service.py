@@ -226,14 +226,14 @@ class ScheduledSyncService:
 
             # Check specific sync intervals
             if sync_type in ['google_sheets', 'sql_server']:
-                # FIXED: Always sync every 1 hour (no settings check)
-                interval_hours = 1.0
+                # FIXED: Always sync every 3 hours (no settings check)
+                interval_hours = 3.0
 
                 # Check if enough time has passed
                 required_seconds = interval_hours * 3600
                 time_passed = time_since_last.total_seconds()
 
-                print(f"[TIME] {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s (1 hour)")
+                print(f"[TIME] {sync_type}: {time_passed:.1f}s since last sync, need {required_seconds:.1f}s (3 hours)")
                 return time_passed >= required_seconds
 
             elif sync_type == 'onedrive':

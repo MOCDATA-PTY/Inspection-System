@@ -1074,6 +1074,12 @@
             const text = document.getElementById('sync-inspections-text');
             const statusDiv = document.getElementById('sync-status');
 
+            // Check if background sync is running
+            if (text.textContent.includes('Data Refresh in Progress')) {
+                alert('A background data refresh is currently in progress. Please wait for it to complete.');
+                return;
+            }
+
             if (text.textContent.includes('Syncing')) {
                 const userConfirm = confirm('The sync button appears to be stuck. Would you like to reset it and try again?');
                 if (userConfirm) {
@@ -1435,6 +1441,87 @@
             }
         }
 
+        // Check if background sync is running and update UI accordingly
+        function checkBackgroundSync() {
+            fetch('{% url "check_sync_status" %}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const btn = document.getElementById('sync-inspections-btn');
+                const text = document.getElementById('sync-inspections-text');
+                const progressContainer = document.getElementById('sync-progress-container');
+                const progressBar = document.getElementById('sync-progress-bar');
+                const progressText = document.getElementById('sync-progress-text');
+                const progressDetails = document.getElementById('sync-progress-details');
+
+                if (data.is_running) {
+                    // Background sync is running - update button and show progress
+                    if (btn && text) {
+                        btn.disabled = true;
+                        text.textContent = 'Data Refresh in Progress...';
+                        btn.style.opacity = '0.7';
+                    }
+
+                    // Show progress if available
+                    if (data.progress && Object.keys(data.progress).length > 0) {
+                        const progress = data.progress;
+
+                        if (progressContainer) {
+                            progressContainer.classList.remove('hidden');
+                        }
+
+                        if (progressBar && progress.percent !== undefined) {
+                            progressBar.style.width = progress.percent + '%';
+                        }
+
+                        if (progressText && progress.message) {
+                            progressText.textContent = progress.message;
+                        }
+
+                        if (progressDetails) {
+                            let details = '';
+                            if (progress.current !== undefined && progress.total !== undefined) {
+                                details += `Processing ${progress.current} of ${progress.total}`;
+                            }
+                            if (progress.elapsed !== undefined) {
+                                details += ` • ${progress.elapsed}`;
+                            }
+                            progressDetails.textContent = details;
+                        }
+                    }
+
+                    // Continue checking while sync is running
+                    setTimeout(checkBackgroundSync, 2000);
+                } else {
+                    // No sync running - reset button to normal state
+                    if (btn && text && text.textContent === 'Data Refresh in Progress...') {
+                        btn.disabled = false;
+                        text.textContent = 'Sync Everything';
+                        btn.style.opacity = '1';
+                    }
+
+                    // Hide progress bar
+                    if (progressContainer) {
+                        progressContainer.classList.add('hidden');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error checking sync status:', error);
+                // On error, check again after a longer delay
+                setTimeout(checkBackgroundSync, 5000);
+            });
+        }
+
+        // Start checking for background sync on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkBackgroundSync();
+        });
+
         function resetButton() {
             const inspectionsBtn = document.getElementById('sync-inspections-btn');
             const inspectionsText = document.getElementById('sync-inspections-text');
@@ -1455,6 +1542,9 @@
             if (progressContainer) {
                 progressContainer.classList.add('hidden');
             }
+
+            // Restart background sync checking
+            checkBackgroundSync();
         }
 
         function resetClientsButton() {
