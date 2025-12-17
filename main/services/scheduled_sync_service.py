@@ -458,7 +458,7 @@ class ScheduledSyncService:
                 user=sql_server_config.get('USER'),
                 password=sql_server_config.get('PASSWORD'),
                 database=sql_server_config.get('NAME'),
-                timeout=30
+                timeout=180  # Increased from 30 to 180 seconds for large datasets
             )
             cursor = connection.cursor(as_dict=True)
             print(f"[OK] Connected successfully!\n")
