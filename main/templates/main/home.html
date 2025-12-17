@@ -1215,12 +1215,16 @@
                 }
             })
                 .then(response => {
+                    console.log('Received response from refresh_inspections:', response.status, response.statusText);
+
                     if (response.status === 302 || response.status === 401 || response.status === 403) {
                         throw new Error('Authentication required. Please refresh the page and log in again.');
                     }
 
                     if (response.ok) {
                         const contentType = response.headers.get('content-type');
+                        console.log('Response content-type:', contentType);
+
                         if (contentType && contentType.includes('application/json')) {
                             return response.json();
                         } else {
@@ -1231,11 +1235,17 @@
                     }
                 })
                 .then(data => {
+                    console.log('Parsed inspection sync response:', data);
+                    console.log('data.success:', data.success, 'data.status:', data.status);
+
                     if (data.success && data.status === 'started') {
+                        console.log('Sync started successfully, beginning to poll status...');
                         pollSyncStatus();
                     } else if (data.success) {
+                        console.log('Sync completed immediately (no polling needed)');
                         resetButton();
                     } else {
+                        console.log('Sync failed with error:', data.error);
                         statusDiv.innerHTML = `
                         <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                             <i class="fas fa-exclamation-circle mr-2"></i>
@@ -1246,7 +1256,9 @@
                     }
                 })
                 .catch(error => {
-                    console.error('Error starting sync:', error);
+                    console.error('Error in fetch chain for refresh_inspections:', error);
+                    console.error('Error message:', error.message);
+                    console.error('Error stack:', error.stack);
                     statusDiv.innerHTML = `
                     <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
                         <i class="fas fa-exclamation-circle mr-2"></i>
