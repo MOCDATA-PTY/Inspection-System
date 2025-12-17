@@ -449,39 +449,109 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            border-radius: var(--radius);
+            gap: 0.25rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 4px;
             border: none;
             font-weight: 500;
-            font-size: 0.875rem;
+            font-size: 0.6875rem;
             cursor: pointer;
             transition: all 0.15s ease;
             text-decoration: none;
             box-shadow: var(--shadow);
         }
-        
+
         .btn-primary {
-            background-color: var(--primary);
+            background: var(--primary);
             color: white;
+            border: 1px solid var(--primary);
         }
-        
+
         .btn-primary:hover {
-            background-color: #005a6b;
+            background: #005a6b;
+            border-color: #004a57;
         }
-        
+
+        .btn-primary:active {
+            background: #004450;
+            transform: scale(0.98);
+        }
+
         .btn-secondary {
-            background-color: #6b7280;
+            background: #6b7280;
+            color: white;
+            border: 1px solid #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+            border-color: #374151;
+        }
+
+        .btn-secondary:active {
+            background: #374151;
+            transform: scale(0.98);
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
             color: white;
         }
-        
-        .btn-secondary:hover {
-            background-color: #4b5563;
+
+        .btn-warning:hover {
+            background-color: #d97706;
         }
-        
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+            border: 1px solid #10b981;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            border-color: #047857;
+            transform: scale(1.02);
+        }
+
+        .btn-success:active {
+            background: #047857;
+            transform: scale(0.98);
+        }
+
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        [data-theme="dark"] .btn-primary {
+            background: #4db8d1;
+            color: #ffffff;
+            border-color: #4db8d1;
+        }
+
+        [data-theme="dark"] .btn-primary:hover {
+            background: #6ec9dd;
+            border-color: #6ec9dd;
+        }
+
+        [data-theme="dark"] .btn-primary:active {
+            background: #3da7bd;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #4b5563;
+            color: #f3f4f6;
+            border-color: #4b5563;
+        }
+
+        [data-theme="dark"] .btn-secondary:hover {
+            background: #6b7280;
+            border-color: #6b7280;
+        }
+
+        [data-theme="dark"] .btn-secondary:active {
+            background: #374151;
         }
         
         .export-content {
@@ -699,63 +769,104 @@
         /* Table styling */
         .table-responsive {
             overflow-x: auto;
-            margin: 0;
-            border-radius: var(--radius);
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            width: 100%;
+            background: white;
             -webkit-overflow-scrolling: touch;
-            max-width: 100%;
+        }
+
+        [data-theme="dark"] .table-responsive {
+            border: 1px solid #374151;
+            background-color: #1f2937;
         }
 
         #exportTable {
-            width: max-content;
+            width: 100%;
             border-collapse: collapse;
-            min-width: 100%;
-            table-layout: auto;
+            font-size: 0.7rem;
+            min-width: 800px;
+            background: white;
+        }
+
+        [data-theme="dark"] #exportTable {
+            background-color: #1f2937;
         }
 
         #exportTable thead {
-            background-color: var(--primary-light);
+            background: transparent;
             position: sticky;
             top: 0;
             z-index: 10;
         }
 
         #exportTable thead th {
+            background-color: #111827;
+            color: #f9fafb;
+            text-align: left;
+            padding: 6px 8px;
+            font-weight: 600;
+            white-space: nowrap;
+            border-bottom: 1px solid #374151;
+            font-size: 0.7rem;
             position: sticky;
             top: 0;
-            background-color: var(--primary-light);
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-            padding: 8px 12px;
-            font-size: 0.65rem;
-            font-weight: 600;
+            z-index: 10;
         }
 
-        #exportTable tbody tr {
-            background-color: var(--card-bg);
-            transition: background-color 0.2s ease;
-            contain: layout style paint;
-            will-change: background-color;
+        [data-theme="dark"] #exportTable thead th {
+            background-color: #111827;
+            color: #ffffff;
+            border-bottom: 1px solid #404040;
+        }
+
+        #exportTable tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        #exportTable tbody tr:nth-child(odd) {
+            background-color: white;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr:nth-child(even) {
+            background-color: #1a1f2e;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr:nth-child(odd) {
+            background-color: #1f2937;
         }
 
         #exportTable tbody tr:hover {
-            background-color: var(--primary-light);
+            background-color: rgba(0, 115, 135, 0.04);
+            transition: background-color 0.15s ease;
+        }
+
+        [data-theme="dark"] #exportTable tbody tr:hover {
+            background-color: rgba(77, 184, 209, 0.1);
         }
 
         #exportTable tbody tr.invoiced {
-            background-color: #4ade80;
+            background-color: #4ade80 !important;
         }
 
         #exportTable tbody tr.invoiced:hover {
-            background-color: #22c55e;
+            background-color: #22c55e !important;
         }
 
         #exportTable tbody td {
-            border-bottom: 1px solid var(--border);
-            font-size: 0.65rem;
-            line-height: 1.4;
-            vertical-align: middle;
-            padding: 8px 12px;
+            padding: 6px 8px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.7rem;
+            color: #374151;
             white-space: nowrap;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        [data-theme="dark"] #exportTable tbody td {
+            border-bottom: 1px solid #2d3748;
+            color: #e5e7eb;
         }
 
         .invoice-input {
@@ -1168,15 +1279,15 @@
 
                     <!-- Second row: Buttons -->
                     <div style="display: flex; gap: 8px; align-items: center;">
-                        <button onclick="applyDateFilter()" class="btn btn-primary" style="padding: 8px 14px; font-size: 0.75rem;">
+                        <button onclick="applyDateFilter()" class="btn btn-primary">
                             <i class="fas fa-filter"></i> Apply
                         </button>
 
-                        <button onclick="clearAllFilters()" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.75rem;">
+                        <button onclick="clearAllFilters()" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Clear
                         </button>
 
-                        <button type="button" class="btn btn-warning" onclick="showManageFeesModal()" style="padding: 8px 14px; font-size: 0.75rem; background-color: #f59e0b; color: white; border: none;">
+                        <button type="button" class="btn btn-warning" onclick="showManageFeesModal()">
                             <i class="fas fa-dollar-sign"></i> Manage Fees
                         </button>
                     </div>
