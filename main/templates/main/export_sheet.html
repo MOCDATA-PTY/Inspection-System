@@ -2662,6 +2662,12 @@
                         }
                         alert(message);
                         loadFees();
+
+                        // Refresh fee history if the modal is open
+                        const historyModal = document.getElementById('feeHistoryModal');
+                        if (historyModal && historyModal.classList.contains('show')) {
+                            loadFeeHistory();
+                        }
                     } else {
                         alert('Error updating fees: ' + data.message);
                     }
