@@ -510,6 +510,40 @@ class ScheduledSyncService:
             }
             print(f"[PERF] Loaded {len(clients_by_code)} clients with account codes")
 
+            # BULK OPERATIONS OPTIMIZATION: Process all inspections, then use bulk_create/bulk_update
+            # This converts ~10,000 queries into just 3 queries!
+            print(f"\n[PERF] Building inspection lists for bulk operations...")
+
+            # First, build unique keys for all SQL inspections
+            sql_inspection_keys = {
+                (sql_insp.get('Commodity'), sql_insp.get('Id'), sql_insp.get('DateOfInspection'))
+                for sql_insp in sql_inspections
+            }
+
+            # Fetch all existing inspections that match these keys in ONE query
+            from django.db.models import Q
+            existing_query = Q()
+            for commodity, remote_id, date_of_inspection in sql_inspection_keys:
+                existing_query |= Q(
+                    commodity=commodity,
+                    remote_id=remote_id,
+                    date_of_inspection=date_of_inspection
+                )
+
+            print(f"[PERF] Fetching existing inspections from database...")
+            existing_inspections = FoodSafetyAgencyInspection.objects.filter(existing_query)
+            existing_inspections_dict = {
+                (insp.commodity, insp.remote_id, insp.date_of_inspection): insp
+                for insp in existing_inspections
+            }
+            print(f"[PERF] Found {len(existing_inspections_dict)} existing inspections")
+
+            # Lists for bulk operations
+            inspections_to_create = []
+            inspections_to_update = []
+
+            print(f"[PERF] Processing {len(sql_inspections)} SQL inspections...")
+
             for idx, sql_insp in enumerate(sql_inspections, 1):
                 try:
                     inspection_id = sql_insp.get('Id')
@@ -595,27 +629,38 @@ class ScheduledSyncService:
                             print(f"      [WARNING]  Cannot look up client")
                             print(f"      [WARNING]  Client name set to: -")
 
-                    # PHASE 1: Update or create inspection WITH product name from SQL query
-                    # Using update_or_create to preserve km_traveled and hours fields
+                    # PHASE 1: Prepare inspection data for bulk operations
                     product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
                     is_direction_present = sql_insp.get('IsDirectionPresentForthisInspection', False)  # Get direction status
                     is_sample_taken = sql_insp.get('IsSampleTaken', False)  # Get sample status
 
-                    inspection, created = FoodSafetyAgencyInspection.objects.update_or_create(
-                        # Match on these unique fields
-                        commodity=commodity,
-                        remote_id=inspection_id,
-                        date_of_inspection=inspection_date,
-                        # Update these fields (km_traveled and hours are NOT here, so they're preserved!)
-                        defaults={
-                            'client_name': client_name,  # Use Google Sheets name if matched
-                            'internal_account_code': internal_account_code,  # Store account code for future matches
-                            'inspector_name': inspector_name,
-                            'product_name': product_name,  # Use product name from SQL query (already correct!)
-                            'is_direction_present_for_this_inspection': is_direction_present,  # COMPLIANCE STATUS
-                            'is_sample_taken': is_sample_taken  # SAMPLE STATUS
-                        }
-                    )
+                    # Check if inspection exists
+                    inspection_key = (commodity, inspection_id, inspection_date)
+                    existing_inspection = existing_inspections_dict.get(inspection_key)
+
+                    if existing_inspection:
+                        # UPDATE existing inspection (preserving km_traveled and hours!)
+                        existing_inspection.client_name = client_name
+                        existing_inspection.internal_account_code = internal_account_code
+                        existing_inspection.inspector_name = inspector_name
+                        existing_inspection.product_name = product_name
+                        existing_inspection.is_direction_present_for_this_inspection = is_direction_present
+                        existing_inspection.is_sample_taken = is_sample_taken
+                        inspections_to_update.append(existing_inspection)
+                    else:
+                        # CREATE new inspection
+                        inspections_to_create.append(FoodSafetyAgencyInspection(
+                            commodity=commodity,
+                            remote_id=inspection_id,
+                            date_of_inspection=inspection_date,
+                            client_name=client_name,
+                            internal_account_code=internal_account_code,
+                            inspector_name=inspector_name,
+                            product_name=product_name,
+                            is_direction_present_for_this_inspection=is_direction_present,
+                            is_sample_taken=is_sample_taken
+                            # km_traveled and hours will be NULL for new records (correct!)
+                        ))
 
                     synced_count += 1
 
@@ -640,6 +685,38 @@ class ScheduledSyncService:
                 except Exception as e:
                     print(f"\n   [WARNING]  Error syncing inspection {inspection_id}: {e}")
                     continue
+
+            # BULK OPERATIONS: Execute all creates and updates in just 2 queries!
+            print(f"\n[PERF] Executing bulk operations...")
+            print(f"   - Inspections to create: {len(inspections_to_create)}")
+            print(f"   - Inspections to update: {len(inspections_to_update)}")
+
+            from django.db import transaction
+            with transaction.atomic():
+                # Bulk create new inspections (1 query)
+                if inspections_to_create:
+                    FoodSafetyAgencyInspection.objects.bulk_create(
+                        inspections_to_create,
+                        batch_size=1000
+                    )
+                    print(f"[PERF] Created {len(inspections_to_create)} new inspections")
+
+                # Bulk update existing inspections (1 query)
+                # Specify fields to update - km_traveled and hours are NOT in this list, so they're preserved!
+                if inspections_to_update:
+                    FoodSafetyAgencyInspection.objects.bulk_update(
+                        inspections_to_update,
+                        fields=[
+                            'client_name',
+                            'internal_account_code',
+                            'inspector_name',
+                            'product_name',
+                            'is_direction_present_for_this_inspection',
+                            'is_sample_taken'
+                        ],
+                        batch_size=1000
+                    )
+                    print(f"[PERF] Updated {len(inspections_to_update)} existing inspections (km/hours preserved)")
 
             # SYNC COMPLETE - km/hours preserved automatically!
             print(f"\n" + "="*80)
