@@ -1123,9 +1123,13 @@
                 }
             })
             .then(data => {
+                console.log('Client sync response:', data);
+
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to sync clients');
                 }
+
+                console.log('Client sync successful, transitioning to inspection sync...');
 
                 // Clients synced successfully, now sync inspections
                 statusDiv.innerHTML = `
@@ -1142,7 +1146,9 @@
                 `;
 
                 // Continue with inspection sync
+                console.log('About to call startInspectionSync()...');
                 startInspectionSync();
+                console.log('startInspectionSync() called successfully');
             })
             .catch(error => {
                 console.error('Error syncing clients:', error);
@@ -1157,39 +1163,49 @@
         }
 
         function startInspectionSync() {
-            const text = document.getElementById('sync-inspections-text');
-            const statusDiv = document.getElementById('sync-status');
+            console.log('startInspectionSync() called');
 
-            statusDiv.innerHTML = `
-                <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
-                    <p class="text-sm text-primary font-semibold">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
-                        Step 2/3: Syncing SQL Server inspections...
-                    </p>
-                </div>
-            `;
+            try {
+                const text = document.getElementById('sync-inspections-text');
+                const statusDiv = document.getElementById('sync-status');
 
-            // Show and initialize progress bar
-            const progressContainer = document.getElementById('sync-progress-container');
-            const progressBar = document.getElementById('sync-progress-bar');
-            const progressText = document.getElementById('sync-progress-text');
-            const progressDetails = document.getElementById('sync-progress-details');
+                console.log('Updating status to show Step 2/3...');
+                statusDiv.innerHTML = `
+                    <div class="bg-blue-50 border-l-4 border-primary p-4 rounded">
+                        <p class="text-sm text-primary font-semibold">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Step 2/3: Syncing SQL Server inspections...
+                        </p>
+                    </div>
+                `;
 
-            progressContainer.classList.remove('hidden');
-            progressBar.style.width = '0%';
-            progressText.textContent = '0%';
-            progressDetails.textContent = 'Starting sync...';
+                // Show and initialize progress bar
+                console.log('Initializing progress bar elements...');
+                const progressContainer = document.getElementById('sync-progress-container');
+                const progressBar = document.getElementById('sync-progress-bar');
+                const progressText = document.getElementById('sync-progress-text');
+                const progressDetails = document.getElementById('sync-progress-details');
 
-            let pollCount = 0;
-            const maxPolls = 1800;
+                if (!progressContainer || !progressBar || !progressText || !progressDetails) {
+                    throw new Error('Progress bar elements not found in DOM');
+                }
 
-            const maxTimeout = setTimeout(() => {
-                console.log('Sync timeout reached - resetting button');
-                resetButton();
+                progressContainer.classList.remove('hidden');
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+                progressDetails.textContent = 'Starting sync...';
+
+                let pollCount = 0;
+                const maxPolls = 1800;
+
+                const maxTimeout = setTimeout(() => {
+                    console.log('Sync timeout reached - resetting button');
+                    resetButton();
             }, 3600000);
 
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
 
+            console.log('Calling refresh_inspections endpoint...');
             fetch('{% url "refresh_inspections" %}', {
                 method: 'POST',
                 headers: {
@@ -1346,8 +1362,22 @@
                         }
                     })
                     .catch(error => {
+                        console.error('Error polling sync status:', error);
                         resetButton();
                     });
+            }
+            } catch (error) {
+                console.error('Error in startInspectionSync():', error);
+                const statusDiv = document.getElementById('sync-status');
+                if (statusDiv) {
+                    statusDiv.innerHTML = `
+                        <div class="p-4 mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            Error starting inspection sync: ${error.message}
+                        </div>
+                    `;
+                }
+                resetButton();
             }
         }
 
