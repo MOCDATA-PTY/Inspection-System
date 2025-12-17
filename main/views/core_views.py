@@ -4409,14 +4409,38 @@ def refresh_clients(request):
     if request.method == 'POST':
         # Check if client sync is already running
         from django.core.cache import cache
-        if cache.get('client_sync_running'):
-            return JsonResponse({
-                'success': False,
-                'error': 'Client sync is already running. Please wait for it to complete.'
-            })
+        import time
 
-        # Set sync lock - expires after 1 hour as safety measure
-        cache.set('client_sync_running', True, 3600)  # 1 hour timeout
+        client_sync_lock_key = 'client_sync_running'
+        lock_value = cache.get(client_sync_lock_key)
+
+        if lock_value:
+            # Check if lock is stale (older than 10 minutes means it's stuck)
+            current_time = time.time()
+
+            # If lock exists but is just True (old format), assume it's stale
+            if lock_value is True:
+                print("[CLIENT SYNC] Found old-format lock - clearing it (assumed stale)")
+                cache.delete(client_sync_lock_key)
+            # If lock has timestamp, check if it's too old
+            elif isinstance(lock_value, (int, float)):
+                lock_age = current_time - lock_value
+                if lock_age > 600:  # 10 minutes in seconds
+                    print(f"[CLIENT SYNC] Found stale lock (age: {lock_age:.0f}s) - clearing it")
+                    cache.delete(client_sync_lock_key)
+                else:
+                    print(f"[CLIENT SYNC] Sync already in progress (age: {lock_age:.0f}s)")
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'Client sync is already running (for {lock_age:.0f} seconds). Please wait for it to complete.'
+                    })
+            else:
+                # Unknown format, clear it
+                print("[CLIENT SYNC] Found unknown lock format - clearing it")
+                cache.delete(client_sync_lock_key)
+
+        # Set sync lock with timestamp - expires after 15 minutes as safety measure
+        cache.set(client_sync_lock_key, time.time(), 900)
 
         print("\n" + "="*60)
         print(" STARTING CLIENT SYNC OPERATION")
@@ -4623,16 +4647,37 @@ def refresh_inspections(request):
 
                 # CHECK IF SYNC IS ALREADY RUNNING - Prevent concurrent syncs
                 sync_lock_key = 'inspection_sync_lock'
-                if cache.get(sync_lock_key):
-                    print("[SYNC] Sync already in progress - rejecting duplicate request")
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'A sync is already in progress. Please wait for it to complete.',
-                        'status': 'already_running'
-                    })
+                lock_value = cache.get(sync_lock_key)
 
-                # Acquire lock - expires after 1 hour (3600 seconds) as safety measure
-                cache.set(sync_lock_key, True, 3600)
+                if lock_value:
+                    # Check if lock is stale (older than 10 minutes means it's stuck)
+                    import time
+                    current_time = time.time()
+
+                    # If lock exists but is just True (old format), assume it's stale
+                    if lock_value is True:
+                        print("[SYNC] Found old-format lock - clearing it (assumed stale)")
+                        cache.delete(sync_lock_key)
+                    # If lock has timestamp, check if it's too old
+                    elif isinstance(lock_value, (int, float)):
+                        lock_age = current_time - lock_value
+                        if lock_age > 600:  # 10 minutes in seconds
+                            print(f"[SYNC] Found stale lock (age: {lock_age:.0f}s) - clearing it")
+                            cache.delete(sync_lock_key)
+                        else:
+                            print(f"[SYNC] Sync already in progress (age: {lock_age:.0f}s) - rejecting duplicate request")
+                            return JsonResponse({
+                                'success': False,
+                                'error': f'A sync is already in progress (running for {lock_age:.0f} seconds). Please wait for it to complete.',
+                                'status': 'already_running'
+                            })
+                    else:
+                        # Unknown format, clear it
+                        print("[SYNC] Found unknown lock format - clearing it")
+                        cache.delete(sync_lock_key)
+
+                # Acquire lock with timestamp - expires after 15 minutes (900 seconds) as safety measure
+                cache.set(sync_lock_key, time.time(), 900)
                 print("[SYNC] Lock acquired - starting sync operation")
 
                 # Store user info before starting background operation to avoid session issues
