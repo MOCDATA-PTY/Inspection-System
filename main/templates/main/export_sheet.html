@@ -2536,7 +2536,14 @@
                 return;
             }
 
-            const today = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const todayISO = today.toISOString().split('T')[0];
+            const todayFormatted = today.toLocaleDateString('en-ZA', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
             const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
             const headerBg = isDarkMode ? '#2a2a2a' : '#f9fafb';
             const headerBorder = isDarkMode ? '#404040' : '#e5e7eb';
@@ -2545,21 +2552,17 @@
 
             let html = `
                 <div style="padding: 1rem 1.25rem; background: ${headerBg}; border-bottom: 1px solid ${headerBorder};">
-                    <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.5rem;">
-                        <label for="effective-date-input" style="font-weight: 600; font-size: 0.8125rem; color: ${textColor};">
+                    <div style="margin-bottom: 0.5rem;">
+                        <div style="font-weight: 600; font-size: 0.8125rem; color: ${textColor}; margin-bottom: 0.375rem;">
                             Effective Date for Changes:
-                        </label>
-                        <input
-                            type="date"
-                            id="effective-date-input"
-                            value="${today}"
-                            style="padding: 0.375rem 0.5rem; font-size: 0.8125rem; border: 1px solid #d1d5db; border-radius: 5px; background: var(--card-bg); color: var(--text); transition: all 0.2s ease;"
-                            onfocus="this.style.borderColor='var(--primary)'; this.style.boxShadow='0 0 0 2px rgba(0, 120, 144, 0.1)';"
-                            onblur="this.style.borderColor='#d1d5db'; this.style.boxShadow='none';"
-                        />
+                        </div>
+                        <div style="display: inline-block; padding: 0.375rem 0.75rem; background: var(--primary); color: white; border-radius: 5px; font-size: 0.8125rem; font-weight: 500;">
+                            ${todayFormatted} (Today)
+                        </div>
+                        <input type="hidden" id="effective-date-input" value="${todayISO}" />
                     </div>
                     <p style="font-size: 0.75rem; color: ${subTextColor}; margin: 0; line-height: 1.4;">
-                        This date determines when the new fees become active. Past inspections will use historical rates.
+                        Fee changes will apply from today onwards. Past inspections will use historical rates.
                     </p>
                 </div>
             `;
@@ -2853,10 +2856,6 @@
     <!-- Fee History Modal -->
     <div id="feeHistoryModal" class="modal-backdrop">
         <div class="client-modal">
-            <div class="modal-header-new">
-                <h2 class="modal-title-new">Fee Change History</h2>
-                <button onclick="closeFeeHistoryModal()" class="modal-close-new">&times;</button>
-            </div>
             <div class="modal-body-new">
                 <div id="fee-history-list">
                     <!-- Fee history will be loaded here -->
