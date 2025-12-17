@@ -141,7 +141,7 @@
         }
 
         [data-theme="dark"] #exportTable tbody tr:hover {
-            background-color: #2d2d2d;
+            background-color: transparent;
         }
 
         [data-theme="dark"] #exportTable tbody tr.invoiced {
@@ -149,7 +149,7 @@
         }
 
         [data-theme="dark"] #exportTable tbody tr.invoiced:hover {
-            background-color: #265a28;
+            background-color: transparent;
         }
 
         [data-theme="dark"] #exportTable tbody td {
@@ -1020,7 +1020,7 @@
         }
 
         #exportTable tbody tr.invoiced:hover {
-            background-color: #22c55e !important;
+            background-color: transparent !important;
         }
 
         #exportTable tbody td {
@@ -1569,7 +1569,7 @@
                         </thead>
                         <tbody id="exportTableBody" class="bg-white divide-y divide-gray-200">
                             {% for item in invoice_items %}
-                            <tr class="hover:bg-gray-50 transition-colors {% if item.invoice_number %}invoiced{% endif %}"
+                            <tr class="{% if item.invoice_number %}invoiced{% endif %}"
                                 data-contact="{{ item.client_name }}"
                                 data-reference="{{ item.invoice_number|default:item.invoice_ref }}"
                                 data-rfi="{{ item.rfi_ref }}"
