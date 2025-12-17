@@ -381,7 +381,12 @@ class ScheduledSyncService:
             for row in sql_clients:
                 sql_id = row[0]
                 name = row[1]
+                # Strip trailing/leading spaces from client name and account code
+                if name:
+                    name = name.strip()
                 internal_account_code = row[2]
+                if internal_account_code:
+                    internal_account_code = internal_account_code.strip()
                 contact_number = row[3]
                 contact_email = row[4]
                 contact_number_inspections = row[5]
@@ -570,7 +575,12 @@ class ScheduledSyncService:
                 try:
                     inspection_id = sql_insp.get('Id')
                     client_name_sql = sql_insp.get('Client')  # Client name from SQL Server
+                    # Strip trailing/leading spaces from client name and account code
+                    if client_name_sql:
+                        client_name_sql = client_name_sql.strip()
                     internal_account_code = sql_insp.get('InternalAccountNumber')  # Account code from SQL Server
+                    if internal_account_code:
+                        internal_account_code = internal_account_code.strip()
                     inspection_date = sql_insp.get('DateOfInspection')
                     inspector_id = sql_insp.get('InspectorId')
                     commodity = sql_insp.get('Commodity')
@@ -610,7 +620,7 @@ class ScheduledSyncService:
                                 # Use SQL Server client name
                                 google_sheets_matched += 1
                                 client_match_found = True
-                                client_name = sql_client.name
+                                client_name = sql_client.name.strip() if sql_client.name else sql_client.name
                                 google_sheets_used += 1
 
                                 if show_detailed_log:
