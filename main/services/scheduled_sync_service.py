@@ -499,6 +499,17 @@ class ScheduledSyncService:
             print(f"   All data from SQL Server")
             print("="*80)
 
+            # PERFORMANCE OPTIMIZATION: Load all clients into memory once
+            # This prevents thousands of database queries in the loop below
+            print(f"\n[PERF] Loading all clients into memory for fast lookups...")
+            all_clients = Client.objects.all()
+            clients_by_code = {
+                client.internal_account_code: client
+                for client in all_clients
+                if client.internal_account_code
+            }
+            print(f"[PERF] Loaded {len(clients_by_code)} clients with account codes")
+
             for idx, sql_insp in enumerate(sql_inspections, 1):
                 try:
                     inspection_id = sql_insp.get('Id')
@@ -535,11 +546,9 @@ class ScheduledSyncService:
                     if not client_match_found and internal_account_code:
                         account_codes_found += 1
 
-                        # Look up client in SQL Server Client table by account code
+                        # Look up client in pre-loaded dictionary (FAST - no database query!)
                         try:
-                            sql_client = Client.objects.filter(
-                                internal_account_code=internal_account_code
-                            ).first()
+                            sql_client = clients_by_code.get(internal_account_code)
 
                             if sql_client and sql_client.name:
                                 # Use SQL Server client name
@@ -610,8 +619,8 @@ class ScheduledSyncService:
 
                     synced_count += 1
 
-                    # Progress indicator every 250 inspections (was 50 - reduced console spam)
-                    if idx % 250 == 0:
+                    # Progress indicator every 500 inspections (reduced from 250 for better performance)
+                    if idx % 500 == 0:
                         print(f"\n    Progress: {idx}/{len(sql_inspections)} inspections synced...")
                         print(f"      - Account codes found: {account_codes_found}")
                         print(f"      - SQL Server client matches: {google_sheets_matched}")

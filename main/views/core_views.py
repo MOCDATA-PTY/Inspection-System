@@ -4574,8 +4574,8 @@ def refresh_clients(request):
                 deleted_count = ClientAllocation.objects.filter(manually_added=False).delete()[0]
                 print(f"    Deleted {deleted_count} old synced clients")
 
-                # Bulk create all records in a single query
-                ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
+                # Bulk create all records in batches (increased batch size for better performance)
+                ClientAllocation.objects.bulk_create(bulk_records, batch_size=1000)
                 print(f"    Created {len(bulk_records)} new clients")
 
             # Detect AJAX request
