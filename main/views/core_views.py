@@ -4707,7 +4707,7 @@ def refresh_inspections(request):
                         request._sync_in_progress = True
                         print("\n" + "="*80)
                         print(" STARTING COMPLETE SYNC OPERATION (BACKGROUND)")
-                        print(" SQL Server → Clients + Inspections + Account Code Matching")
+                        print(" SQL Server -> Clients + Inspections + Account Code Matching")
                         print("="*80)
 
                         # USE NEW SYNC SERVICE - Syncs EVERYTHING in correct order
@@ -4715,15 +4715,15 @@ def refresh_inspections(request):
 
                         print("\n Step 1: Initializing Scheduled Sync Service...")
                         sync_service = ScheduledSyncService()
-                        print(" ✅ Sync Service initialized successfully")
+                        print(" [OK] Sync Service initialized successfully")
 
                         print("\n Step 2: Syncing SQL Server clients (names & account codes)...")
                         google_success = sync_service.sync_google_sheets()
 
                         if google_success:
-                            print(" ✅ SQL Server client sync completed!")
+                            print(" [OK] SQL Server client sync completed!")
                         else:
-                            print(" ⚠️ SQL Server client sync had issues (continuing anyway)")
+                            print(" [WARNING] SQL Server client sync had issues (continuing anyway)")
 
                         print("\n Step 3: Syncing SQL Server inspections...")
                         print(" (Matching account codes with SQL Server clients for names)")
@@ -4734,10 +4734,10 @@ def refresh_inspections(request):
                             from ..models import FoodSafetyAgencyInspection
                             total_count = FoodSafetyAgencyInspection.objects.count()
 
-                            print(f"\n ✅ COMPLETE SYNC SUCCESSFUL!")
+                            print(f"\n [OK] COMPLETE SYNC SUCCESSFUL!")
                             print(f"    Total inspections in database: {total_count}")
-                            print(f"    ✅ SQL Server is the source for all data!")
-                            print(f"    ✅ All account codes matched and names updated!")
+                            print(f"    [OK] SQL Server is the source for all data!")
+                            print(f"    [OK] All account codes matched and names updated!")
 
                             # Store result in cache for frontend to check FIRST (before clearing cache)
                             sync_result_data = {
@@ -4759,7 +4759,7 @@ def refresh_inspections(request):
                                 pass
                             print("    Cache cleared to ensure fresh data display")
                         else:
-                            print(f"\n ❌ SQL SERVER SYNC FAILED!")
+                            print(f"\n [ERROR] SQL SERVER SYNC FAILED!")
                             print(f"   Error: Sync returned False")
 
                             # Store error in cache
@@ -4769,7 +4769,7 @@ def refresh_inspections(request):
                             }, 300)
 
                     except Exception as e:
-                        print(f"\n ❌ SYNC EXCEPTION!")
+                        print(f"\n [ERROR] SYNC EXCEPTION!")
                         print(f"   Exception: {str(e)}")
                         import traceback
                         traceback.print_exc()
