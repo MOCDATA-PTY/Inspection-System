@@ -4651,8 +4651,10 @@ def refresh_inspections(request):
                 cache.delete(sync_lock_key)
                 cache.delete('sync_progress')
                 cache.delete('sync_result')
+                cache.delete('sync_google_sheets_lock')
+                cache.delete('sync_sql_server_lock')
 
-                print("[INSPECTION SYNC] Locks cleared - starting fresh sync")
+                print("[INSPECTION SYNC] All locks cleared - starting fresh sync")
 
                 # Acquire lock with timestamp - expires after 15 minutes (900 seconds) as safety measure
                 cache.set(sync_lock_key, time.time(), 900)
@@ -4675,12 +4677,12 @@ def refresh_inspections(request):
                         print(" SQL Server -> Clients + Inspections + Account Code Matching")
                         print("="*80)
 
-                        # USE NEW SYNC SERVICE - Syncs EVERYTHING in correct order
-                        from ..services.scheduled_sync_service import ScheduledSyncService
+                        # USE GLOBAL SYNC SERVICE - Syncs EVERYTHING in correct order
+                        from ..services.scheduled_sync_service import scheduled_sync_service
 
-                        print("\n Step 1: Initializing Scheduled Sync Service...")
-                        sync_service = ScheduledSyncService()
-                        print(" [OK] Sync Service initialized successfully")
+                        print("\n Step 1: Using global Scheduled Sync Service...")
+                        sync_service = scheduled_sync_service
+                        print(" [OK] Sync Service ready")
 
                         print("\n Step 2: Syncing SQL Server clients (names & account codes)...")
                         google_success = sync_service.sync_google_sheets()
