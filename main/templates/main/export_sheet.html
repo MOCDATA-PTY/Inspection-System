@@ -140,16 +140,8 @@
             background-color: #1a1a1a;
         }
 
-        [data-theme="dark"] #exportTable tbody tr:hover {
-            background-color: transparent;
-        }
-
         [data-theme="dark"] #exportTable tbody tr.invoiced {
             background-color: #1e4620;
-        }
-
-        [data-theme="dark"] #exportTable tbody tr.invoiced:hover {
-            background-color: transparent;
         }
 
         [data-theme="dark"] #exportTable tbody td {
@@ -243,7 +235,7 @@
         }
 
         body {
-            background: url("{% static 'img/food_safety_background.jpg' %}?v=2?v=2") no-repeat center center;
+            background: url("{% static 'img/food_safety_background.jpg' %}?v=2") no-repeat center center;
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -1006,21 +998,10 @@
             background-color: #1f2937;
         }
 
-        /* Hover effect disabled per user request */
-        #exportTable tbody tr:hover {
-            background-color: transparent;
-        }
-
-        [data-theme="dark"] #exportTable tbody tr:hover {
-            background-color: transparent;
-        }
+        /* Hover effect disabled per user request - rules removed entirely */
 
         #exportTable tbody tr.invoiced {
             background-color: #4ade80 !important;
-        }
-
-        #exportTable tbody tr.invoiced:hover {
-            background-color: transparent !important;
         }
 
         #exportTable tbody td {
