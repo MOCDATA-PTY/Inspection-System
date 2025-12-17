@@ -863,41 +863,104 @@ def process_excel_data(worksheet):
 
 @login_required
 def get_inspection_fees(request):
-    """Get all inspection fees"""
+    """Get all inspection fees with current and historical rate information"""
     from ..models import InspectionFee
 
-    fees = InspectionFee.objects.all().values('id', 'fee_code', 'fee_name', 'rate', 'description', 'last_updated')
-    return JsonResponse({'fees': list(fees)})
+    fees = InspectionFee.objects.all()
+    fees_data = []
+
+    for fee in fees:
+        # Get the most recent history entry to find current effective date
+        latest_history = fee.history.order_by('-effective_date').first()
+
+        fee_dict = {
+            'id': fee.id,
+            'fee_code': fee.fee_code,
+            'fee_name': fee.fee_name,
+            'rate': float(fee.rate),
+            'description': fee.description,
+            'last_updated': fee.last_updated.isoformat() if fee.last_updated else None,
+            'effective_date': latest_history.effective_date.isoformat() if latest_history else None,
+            'has_history': fee.history.exists(),
+            'history_count': fee.history.count()
+        }
+        fees_data.append(fee_dict)
+
+    return JsonResponse({'fees': fees_data})
 
 
 @login_required
 @require_POST
 def update_inspection_fees(request):
-    """Update inspection fees"""
+    """
+    Update inspection fees with versioning support.
+    Creates FeeHistory entries instead of directly overwriting rates.
+    """
     import json
-    from ..models import InspectionFee
+    from ..models import InspectionFee, FeeHistory
+    from datetime import date
+    from decimal import Decimal
 
     try:
         data = json.loads(request.body)
         fees_data = data.get('fees', [])
+        effective_date_str = data.get('effective_date')  # Optional: allow setting effective date
+
+        # Parse effective date or default to today
+        if effective_date_str:
+            try:
+                effective_date = date.fromisoformat(effective_date_str)
+            except (ValueError, TypeError):
+                effective_date = date.today()
+        else:
+            effective_date = date.today()
 
         updated_count = 0
+        errors = []
+
         for fee_data in fees_data:
             fee_id = fee_data.get('id')
             new_rate = fee_data.get('rate')
 
             if fee_id and new_rate is not None:
-                fee = InspectionFee.objects.get(id=fee_id)
-                fee.rate = new_rate
-                fee.updated_by = request.user
-                fee.save()
-                updated_count += 1
+                try:
+                    fee = InspectionFee.objects.get(id=fee_id)
+                    new_rate_decimal = Decimal(str(new_rate))
 
-        return JsonResponse({
+                    # Check if rate actually changed
+                    if fee.rate != new_rate_decimal:
+                        # Create a new FeeHistory entry
+                        FeeHistory.objects.create(
+                            fee=fee,
+                            rate=new_rate_decimal,
+                            effective_date=effective_date,
+                            created_by=request.user,
+                            notes=fee_data.get('notes', '')  # Optional notes about the change
+                        )
+
+                        # Update the current rate on the fee
+                        fee.rate = new_rate_decimal
+                        fee.updated_by = request.user
+                        fee.save()
+
+                        updated_count += 1
+
+                except InspectionFee.DoesNotExist:
+                    errors.append(f"Fee with ID {fee_id} not found")
+                except Exception as e:
+                    errors.append(f"Error updating fee {fee_id}: {str(e)}")
+
+        response_data = {
             'success': True,
             'message': f'Updated {updated_count} fees successfully',
-            'updated_count': updated_count
-        })
+            'updated_count': updated_count,
+            'effective_date': effective_date.isoformat()
+        }
+
+        if errors:
+            response_data['warnings'] = errors
+
+        return JsonResponse(response_data)
 
     except Exception as e:
         return JsonResponse({

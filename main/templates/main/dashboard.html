@@ -433,6 +433,9 @@
             <a href="{% url 'shipment_list' %}" class="btn btn-secondary">
                 <i class="fas fa-clipboard-check"></i> Inspections
             </a>
+            <a href="{% url 'submit_ticket' %}" class="btn btn-danger">
+                <i class="fas fa-ticket-alt"></i> Submit Ticket
+            </a>
             <a href="{% url 'settings' %}" class="btn btn-info">
                 <i class="fas fa-cog"></i> Settings
             </a>
@@ -459,11 +462,14 @@
                 <i class="fas fa-file-export"></i> Export Sheet
             </a>
             {% endif %}
+            <a href="{% url 'submit_ticket' %}" class="btn btn-danger">
+                <i class="fas fa-ticket-alt"></i> Submit Ticket
+            </a>
             <a href="{% url 'settings' %}" class="btn btn-info">
                 <i class="fas fa-cog"></i> Settings
             </a>
             {% endif %}
-            
+
             <!-- Logout Button -->
             <form action="{% url 'logout' %}" method="post" class="logout-form">
                 {% csrf_token %}

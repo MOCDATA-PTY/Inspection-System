@@ -809,19 +809,35 @@
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
                     <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'inspector_settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'fsa_operations_board' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-tasks mr-2 w-4 text-center text-cyan-400"></i>
+                            FSA Board
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{% url 'submit_ticket' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-ticket-alt mr-2 w-4 text-center text-red-400"></i>
+                            Submit Ticket
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'inspector_settings' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-cog mr-2 w-4 text-center"></i>
                             Settings
                         </a>

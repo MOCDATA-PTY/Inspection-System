@@ -304,7 +304,6 @@ class ScheduledSyncService:
 
             # Import SQL Server utilities and models
             from ..utils.sql_server_utils import SQLServerConnection
-            from ..models import ClientAllocation
             from django.db import transaction
 
             # Connect to SQL Server
@@ -356,12 +355,12 @@ class ScheduledSyncService:
 
             print(f"   [DATA] Found {len(sql_clients)} active clients in SQL Server")
 
-            # Prepare bulk data
+            # Prepare bulk data for Client table
             bulk_records = []
             seen_client_ids = set()
 
             for row in sql_clients:
-                client_id = row[0]
+                sql_id = row[0]
                 name = row[1]
                 internal_account_code = row[2]
                 contact_number = row[3]
@@ -374,40 +373,23 @@ class ScheduledSyncService:
                 province = row[10]
 
                 # Skip duplicate client IDs
-                if client_id in seen_client_ids:
+                if sql_id in seen_client_ids:
                     continue
-                seen_client_ids.add(client_id)
+                seen_client_ids.add(sql_id)
 
                 # Use inspection contact info if available, otherwise use general contact info
-                phone_number = contact_number_inspections or contact_number
                 email = contact_email_inspections or contact_email
 
-                # Determine active status
-                active_status = "Active" if is_active else "Inactive"
+                # Create unique client_id string (e.g., "SQL-12345")
+                client_id = f"SQL-{sql_id}"
 
-                # Parse internal account code to extract facility type, group type, and commodity
-                facility_type, group_type, commodity = parse_internal_account_code(internal_account_code)
-
-                # Auto-detect corporate group from client name
-                corporate_group = detect_corporate_group(name)
-
-                # Create ClientAllocation object (not yet saved to DB)
-                bulk_records.append(ClientAllocation(
+                # Create Client object (not yet saved to DB)
+                bulk_records.append(Client(
                     client_id=client_id,
-                    facility_type=facility_type,
-                    group_type=group_type,
-                    commodity=commodity,
-                    province=province,
-                    corporate_group=corporate_group,
-                    other=physical_address,
+                    name=name,
                     internal_account_code=internal_account_code,
-                    allocated=False,
-                    eclick_name=name,
-                    representative_email=email,
-                    phone_number=phone_number,
-                    duplicates=None,
-                    active_status=active_status,
-                    manually_added=False
+                    email=email if email else None,
+                    manual_email=None  # Preserve any manual emails during update
                 ))
 
             # Close SQL Server connection
@@ -415,11 +397,11 @@ class ScheduledSyncService:
 
             # Use atomic transaction for data integrity and speed
             with transaction.atomic():
-                # Only delete records synced from SQL Server (preserve manually added clients)
-                deleted_count = ClientAllocation.objects.filter(manually_added=False).delete()[0]
+                # Delete all existing SQL Server synced clients (those with client_id starting with "SQL-")
+                deleted_count = Client.objects.filter(client_id__startswith='SQL-').delete()[0]
 
                 # Bulk create all records in a single query
-                ClientAllocation.objects.bulk_create(bulk_records, batch_size=500)
+                Client.objects.bulk_create(bulk_records, batch_size=500)
 
             print(f"[OK] SQL Server client sync completed successfully")
             print(f"   - Clients deleted: {deleted_count}")
@@ -533,9 +515,8 @@ class ScheduledSyncService:
                         inspector_id_int = None
                     inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
 
-                    # IMPORTANT: Use SQL Server ClientAllocation for client names
+                    # IMPORTANT: Use SQL Server Client for client names
                     # SQL Server provides: inspection data, account code, and client names
-                    from ..models import ClientAllocation
                     client_name = None
                     client_match_found = False
 
@@ -554,17 +535,17 @@ class ScheduledSyncService:
                     if not client_match_found and internal_account_code:
                         account_codes_found += 1
 
-                        # Look up client in SQL Server ClientAllocation by account code
+                        # Look up client in SQL Server Client table by account code
                         try:
-                            sql_client = ClientAllocation.objects.filter(
+                            sql_client = Client.objects.filter(
                                 internal_account_code=internal_account_code
                             ).first()
 
-                            if sql_client and sql_client.eclick_name:
+                            if sql_client and sql_client.name:
                                 # Use SQL Server client name
                                 google_sheets_matched += 1
                                 client_match_found = True
-                                client_name = sql_client.eclick_name
+                                client_name = sql_client.name
                                 google_sheets_used += 1
 
                                 if show_detailed_log:

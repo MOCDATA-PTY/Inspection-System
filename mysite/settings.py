@@ -205,12 +205,21 @@ PREFER_ONEDRIVE = True
 # ZIP File Auto-Organization Settings
 AUTO_ORGANIZE_ZIP_FILES = True  # Automatically organize ZIP files by inspection number
 
-# Email Configuration - Using Microsoft Outlook/Office365 (Same credentials as E-Click project)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-mail.outlook.com'  # Microsoft Outlook SMTP server
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'FoodSafetyAgency@outlook.com')  # Use same email as E-Click
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # REQUIRED: Set the Outlook password
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'FoodSafetyAgency@outlook.com')
+# Email Configuration - Using Microsoft Graph API (Same as E-Click project)
+EMAIL_BACKEND = 'main.graph_email_backend.GraphEmailBackend'
+DEFAULT_FROM_EMAIL = 'info@eclick.co.za'
+
+# Microsoft Graph API Credentials
+GRAPH_CLIENT_ID = '2b89897f-049e-467e-9413-9d13a7a9259b'
+GRAPH_CLIENT_SECRET = 'p4n8Q~X3z4JW~6kwY8dz~jRuFOXbOpMtBUkHTaCY'
+GRAPH_TENANT_ID = 'e1aca71e-e160-4d3d-a40f-5738d03de05e'
+
+# Legacy SMTP Configuration (Backup)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp-mail.outlook.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'FoodSafetyAgency@outlook.com')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+# DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'FoodSafetyAgency@outlook.com')
 EMAIL_TIMEOUT = 30  # Connection timeout in seconds

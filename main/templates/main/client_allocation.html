@@ -1047,33 +1047,6 @@
             background-color: #404040 !important;
         }
 
-        @media (prefers-color-scheme: dark) {
-            .context-menu {
-                background: #2D2D2D !important;
-                border: 1px solid #404040 !important;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4) !important;
-            }
-
-            .context-menu-item {
-                color: #e0e0e0 !important;
-            }
-
-            .context-menu-item:hover {
-                background-color: #3a3a3a !important;
-            }
-
-            .context-menu-item.danger {
-                color: #ef4444 !important;
-            }
-
-            .context-menu-item.danger:hover {
-                background-color: rgba(239, 68, 68, 0.2) !important;
-            }
-
-            .context-menu-divider {
-                background-color: #404040 !important;
-            }
-        }
 
         tbody tr {
             cursor: pointer;
@@ -1839,7 +1812,7 @@
                 <ul class="px-2 py-2 space-y-1">
                     <li>
                         <a href="{% url 'home' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Home Center
                         </a>
@@ -1847,14 +1820,14 @@
                     {% if request.user.role == 'inspector' %}
                     <li>
                         <a href="{% url 'inspector_dashboard' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'shipment_list' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
@@ -1864,14 +1837,14 @@
 
                     <li>
                         <a href="{% url 'client_allocation' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px] active">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px] active">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
                             Client Allocation
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'shipment_list' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
                         </a>
@@ -1879,7 +1852,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'user_management' %}" title="Manage system users and permissions"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
                             User Management
                         </a>
@@ -1889,16 +1862,23 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'system_logs' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'fsa_operations_board' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-tasks mr-2 w-4 text-center text-cyan-400"></i>
+                            FSA Board
                         </a>
                     </li>
                     {% endif %}
                     {% if request.user.role == 'developer' %}
                     <li>
                         <a href="{% url 'onedrive_view' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
                             OneDrive View
                         </a>
@@ -1907,7 +1887,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'server_view' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
                             Server View
                         </a>
@@ -1916,7 +1896,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li>
                         <a href="{% url 'export_sheet' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
                             Export Sheet
                         </a>
@@ -1925,15 +1905,22 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'analytics_dashboard' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
                             Inspector Analytics
                         </a>
                     </li>
                     {% endif %}
                     <li>
+                        <a href="{% url 'submit_ticket' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-ticket-alt mr-2 w-4 text-center text-red-400"></i>
+                            Submit Ticket
+                        </a>
+                    </li>
+                    <li>
                         <a href="{% url 'settings' %}"
-                            class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -3502,47 +3489,95 @@
                         return;
                     }
 
-                    feesList.innerHTML = fees.map(fee => `
-                <div class="fee-item" style="
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 2px 5px;
-                    border-radius: 0px;
-                    margin: 4px;
-                ">
-                    <div style="flex: 1;">
-                        <div class="fee-name" style="font-weight: 600; font-size: 0.875rem;">${fee.fee_name}</div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-weight: 600; font-size: 0.875rem;">R</span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            value="${fee.rate}"
-                            data-fee-id="${fee.id}"
-                            class="fee-rate-input"
-                            style="
-                                width: 100px;
-                                padding: 6px 8px;
-                                font-size: 0.875rem;
-                                border-radius: 4px;
-                            "
-                        />
-                    </div>
-                </div>
-            `).join('');
+                    // Add effective date selector at the top
+                    const today = new Date().toISOString().split('T')[0];
+                    let html = `
+                        <div style="padding: 15px; background: var(--card-bg, #f8f9fa); border-bottom: 1px solid var(--border-color, #dee2e6); margin-bottom: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <label for="effective-date-input" style="font-weight: 600; font-size: 0.875rem; color: var(--text-color, #333);">
+                                    Effective Date for Changes:
+                                </label>
+                                <input
+                                    type="date"
+                                    id="effective-date-input"
+                                    value="${today}"
+                                    style="
+                                        padding: 6px 10px;
+                                        font-size: 0.875rem;
+                                        border: 1px solid var(--border-color, #ced4da);
+                                        border-radius: 4px;
+                                        background: var(--input-bg, white);
+                                        color: var(--text-color, #333);
+                                    "
+                                />
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-light, #6c757d); margin: 0;">
+                                This date determines when the new fees become active. Past inspections will use historical rates.
+                            </p>
+                        </div>
+                    `;
+
+                    // Add fee items
+                    html += fees.map(fee => {
+                        const effectiveDateText = fee.effective_date
+                            ? `Current since: ${new Date(fee.effective_date).toLocaleDateString()}`
+                            : 'No history';
+
+                        const historyBadge = fee.has_history
+                            ? `<span style="font-size: 0.7rem; color: var(--text-light, #6c757d); margin-left: 8px;" title="This fee has ${fee.history_count} historical version(s)">📊 ${fee.history_count} versions</span>`
+                            : '';
+
+                        return `
+                            <div class="fee-item" style="
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                                padding: 8px 15px;
+                                border-bottom: 1px solid var(--border-color, #e9ecef);
+                            ">
+                                <div style="flex: 1;">
+                                    <div class="fee-name" style="font-weight: 600; font-size: 0.875rem;">${fee.fee_name}</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-light, #6c757d); margin-top: 2px;">
+                                        ${effectiveDateText}${historyBadge}
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <span style="font-weight: 600; font-size: 0.875rem;">R</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value="${fee.rate}"
+                                        data-fee-id="${fee.id}"
+                                        data-original-rate="${fee.rate}"
+                                        class="fee-rate-input"
+                                        style="
+                                            width: 100px;
+                                            padding: 6px 8px;
+                                            font-size: 0.875rem;
+                                            border-radius: 4px;
+                                        "
+                                    />
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    feesList.innerHTML = html;
                 }
 
                 function saveAllFees() {
                     const feeInputs = document.querySelectorAll('.fee-rate-input');
+                    const effectiveDateInput = document.getElementById('effective-date-input');
+                    const effectiveDate = effectiveDateInput ? effectiveDateInput.value : null;
                     const updatedFees = [];
 
+                    // Only include fees that have changed
                     feeInputs.forEach(input => {
                         const feeId = input.getAttribute('data-fee-id');
                         const newRate = parseFloat(input.value);
+                        const originalRate = parseFloat(input.getAttribute('data-original-rate'));
 
-                        if (feeId && !isNaN(newRate)) {
+                        if (feeId && !isNaN(newRate) && newRate !== originalRate) {
                             updatedFees.push({
                                 id: parseInt(feeId),
                                 rate: newRate
@@ -3551,7 +3586,18 @@
                     });
 
                     if (updatedFees.length === 0) {
-                        alert('No fees to update');
+                        alert('No fees have been modified. Make changes to fees before saving.');
+                        return;
+                    }
+
+                    if (!effectiveDate) {
+                        alert('Please select an effective date for the fee changes.');
+                        return;
+                    }
+
+                    // Confirm before saving
+                    const confirmMessage = `You are about to update ${updatedFees.length} fee(s) with an effective date of ${effectiveDate}.\n\nThis will create new fee history records. Continue?`;
+                    if (!confirm(confirmMessage)) {
                         return;
                     }
 
@@ -3561,12 +3607,22 @@
                             'Content-Type': 'application/json',
                             'X-CSRFToken': getCookie('csrftoken')
                         },
-                        body: JSON.stringify({ fees: updatedFees })
+                        body: JSON.stringify({
+                            fees: updatedFees,
+                            effective_date: effectiveDate
+                        })
                     })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                alert(`Successfully updated ${data.updated_count} fees!`);
+                                let message = `Successfully updated ${data.updated_count} fees!`;
+                                if (data.effective_date) {
+                                    message += `\nEffective date: ${data.effective_date}`;
+                                }
+                                if (data.warnings && data.warnings.length > 0) {
+                                    message += '\n\nWarnings:\n' + data.warnings.join('\n');
+                                }
+                                alert(message);
                                 loadFees(); // Reload to show updated values
                             } else {
                                 alert('Error updating fees: ' + data.message);
@@ -3574,7 +3630,7 @@
                         })
                         .catch(error => {
                             console.error('Error saving fees:', error);
-                            alert('Failed to save fees');
+                            alert('Failed to save fees. Please try again.');
                         });
                 }
 
@@ -3780,29 +3836,6 @@
                 }
 
                 /* EXPLICIT DARK MODE STYLES - Using all possible selectors */
-                @media (prefers-color-scheme: dark) {
-                    .modal-content {
-                        background-color: #1a1a1a;
-                        color: #e0e0e0;
-                        border-color: #444;
-                    }
-
-                    .modal-body {
-                        background-color: #1a1a1a;
-                    }
-
-                    .modal-footer {
-                        background-color: #2a2a2a;
-                        border-color: #444;
-                    }
-
-                    .option-list-container,
-                    .form-control {
-                        background-color: #2a2a2a;
-                        color: #e0e0e0;
-                        border-color: #444;
-                    }
-                }
 
                 [data-theme="dark"] .modal-content,
                 .dark-mode .modal-content,
@@ -3872,16 +3905,6 @@
                     border-color: #444 !important;
                 }
 
-                @media (prefers-color-scheme: dark) {
-                    #current-options-display {
-                        background-color: #2a2a2a;
-                        border-color: #444;
-                    }
-
-                    #current-options-display h4 {
-                        color: #e0e0e0;
-                    }
-                }
 
                 /* Manage Fees Modal - Light mode styles */
                 .fee-item {
@@ -3931,26 +3954,6 @@
                     color: #999 !important;
                 }
 
-                @media (prefers-color-scheme: dark) {
-                    .fee-rate-input {
-                        background-color: #2a2a2a;
-                        color: #e0e0e0;
-                        border-color: #444;
-                    }
-
-                    .fee-item {
-                        background-color: #2a2a2a;
-                        border-color: #444;
-                    }
-
-                    .fee-name {
-                        color: #e0e0e0;
-                    }
-
-                    .fee-description {
-                        color: #999;
-                    }
-                }
 
                 /* Manage Fees button styling */
                 .btn-warning {

@@ -982,20 +982,20 @@
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'home' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Home Center
                         </a>
                     </li>
                     {% if request.user.role == 'inspector' %}
                     <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
@@ -1004,13 +1004,13 @@
 
 
                     <li>
-                        <a href="{% url 'client_allocation' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'client_allocation' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
                             Client Allocation
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
                         </a>
@@ -1018,7 +1018,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'user_management' %}" title="Manage system users and permissions"
-                           class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
                             User Management
                         </a>
@@ -1029,16 +1029,23 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'system_logs' %}"
-                           class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'fsa_operations_board' %}"
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-tasks mr-2 w-4 text-center text-cyan-400"></i>
+                            FSA Board
                         </a>
                     </li>
                     {% endif %}
 
                     {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
                             OneDrive View
                         </a>
@@ -1048,7 +1055,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'server_view' %}"
-                           class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
                             Server View
                         </a>
@@ -1058,7 +1065,7 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
                     <li>
                         <a href="{% url 'export_sheet' %}"
-                           class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
                             Export Sheet
                         </a>
@@ -1068,14 +1075,21 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'analytics_dashboard' %}"
-                           class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
                             Inspector Analytics
                         </a>
                     </li>
                     {% endif %}
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-3 py-2 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-base font-medium min-h-[44px]">
+                        <a href="{% url 'submit_ticket' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-ticket-alt mr-2 w-4 text-center text-red-400"></i>
+                            Submit Ticket
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'settings' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
