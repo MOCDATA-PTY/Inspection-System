@@ -672,38 +672,47 @@ class ScheduledSyncService:
                     print(f"\n   [WARNING]  Error syncing inspection {inspection_id}: {e}")
                     continue
 
-            # BULK OPERATIONS: Execute all creates and updates in just 2 queries!
-            print(f"\n[PERF] Executing bulk operations...")
+            # BULK OPERATIONS: Execute creates and updates in chunks to avoid timeout
+            print(f"\n[PERF] Executing bulk operations in chunks (no large transactions)...")
             print(f"   - Inspections to create: {len(inspections_to_create)}")
             print(f"   - Inspections to update: {len(inspections_to_update)}")
 
-            from django.db import transaction
-            with transaction.atomic():
-                # Bulk create new inspections (1 query)
-                # Duplicates are already filtered out, so this should never conflict
-                if inspections_to_create:
-                    FoodSafetyAgencyInspection.objects.bulk_create(
-                        inspections_to_create,
-                        batch_size=1000
-                    )
-                    print(f"[PERF] Created {len(inspections_to_create)} new inspections")
+            # Bulk create new inspections in chunks to avoid gunicorn timeout
+            # Each chunk is its own transaction, preventing long-running locks
+            if inspections_to_create:
+                chunk_size = 500
+                total_to_create = len(inspections_to_create)
+                print(f"[PERF] Creating {total_to_create} new inspections in chunks of {chunk_size}...")
 
-                # Bulk update existing inspections (1 query)
-                # Specify fields to update - km_traveled and hours are NOT in this list, so they're preserved!
-                if inspections_to_update:
-                    FoodSafetyAgencyInspection.objects.bulk_update(
-                        inspections_to_update,
-                        fields=[
-                            'client_name',
-                            'internal_account_code',
-                            'inspector_name',
-                            'product_name',
-                            'is_direction_present_for_this_inspection',
-                            'is_sample_taken'
-                        ],
-                        batch_size=1000
-                    )
-                    print(f"[PERF] Updated {len(inspections_to_update)} existing inspections (km/hours preserved)")
+                for i in range(0, total_to_create, chunk_size):
+                    chunk = inspections_to_create[i:i + chunk_size]
+                    FoodSafetyAgencyInspection.objects.bulk_create(chunk, batch_size=500)
+                    print(f"[PERF]   Created chunk {i//chunk_size + 1}/{(total_to_create + chunk_size - 1)//chunk_size} ({len(chunk)} inspections)")
+
+                print(f"[PERF] All {total_to_create} new inspections created successfully")
+
+            # Bulk update existing inspections in chunks to avoid gunicorn timeout
+            # Each chunk is its own transaction, preventing long-running locks
+            if inspections_to_update:
+                chunk_size = 500
+                total_to_update = len(inspections_to_update)
+                print(f"[PERF] Updating {total_to_update} existing inspections in chunks of {chunk_size}...")
+
+                update_fields = [
+                    'client_name',
+                    'internal_account_code',
+                    'inspector_name',
+                    'product_name',
+                    'is_direction_present_for_this_inspection',
+                    'is_sample_taken'
+                ]
+
+                for i in range(0, total_to_update, chunk_size):
+                    chunk = inspections_to_update[i:i + chunk_size]
+                    FoodSafetyAgencyInspection.objects.bulk_update(chunk, fields=update_fields, batch_size=500)
+                    print(f"[PERF]   Updated chunk {i//chunk_size + 1}/{(total_to_update + chunk_size - 1)//chunk_size} ({len(chunk)} inspections)")
+
+                print(f"[PERF] All {total_to_update} existing inspections updated successfully (km/hours preserved)")
 
             # SYNC COMPLETE - km/hours preserved automatically!
             print(f"\n" + "="*80)
