@@ -2781,21 +2781,27 @@
 
                 // Display all changes for this fee
                 records.forEach((record, index) => {
-                    const date = new Date(record.effective_date).toLocaleDateString('en-ZA', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    });
+                    const isInitialRate = record.previous_rate === null;
+
+                    // For initial rates, show "Beginning" instead of date
+                    const dateDisplay = isInitialRate
+                        ? 'Beginning'
+                        : new Date(record.effective_date + 'T12:00:00').toLocaleDateString('en-ZA', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+
                     const time = new Date(record.created_at).toLocaleTimeString('en-ZA', {
                         hour: '2-digit',
                         minute: '2-digit'
                     });
 
-                    const changeType = record.previous_rate === null ? 'Initial Rate' : 'Rate Change';
-                    const changeColor = record.previous_rate === null ? '#10b981' : '#f59e0b';
+                    const changeType = isInitialRate ? 'Initial Rate' : 'Rate Change';
+                    const changeColor = isInitialRate ? '#10b981' : '#f59e0b';
 
                     let changeText = '';
-                    if (record.previous_rate !== null) {
+                    if (!isInitialRate) {
                         const diff = record.rate - record.previous_rate;
                         const diffText = diff > 0 ? `+R${diff.toFixed(2)}` : `R${diff.toFixed(2)}`;
                         const diffColor = diff > 0 ? '#ef4444' : '#10b981';
@@ -2811,7 +2817,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <div style="flex: 1;">
                                     <div style="font-size: 0.8125rem; color: ${textColor}; margin-bottom: 0.25rem;">
-                                        <strong>Effective:</strong> ${date}
+                                        <strong>${isInitialRate ? '' : 'Effective: '}${dateDisplay}</strong>
                                     </div>
                                     <div style="font-size: 0.8125rem; color: ${textColor};">
                                         ${changeText}
@@ -2821,9 +2827,7 @@
                                     <span style="display: inline-block; padding: 0.25rem 0.625rem; background: ${changeColor}; color: white; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.25rem;">
                                         ${changeType}
                                     </span>
-                                    <div style="font-size: 0.7rem; color: ${subTextColor};">
-                                        ${time}
-                                    </div>
+                                    ${!isInitialRate ? `<div style="font-size: 0.7rem; color: ${subTextColor};">${time}</div>` : ''}
                                 </div>
                             </div>
                         </div>
