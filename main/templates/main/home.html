@@ -1288,6 +1288,8 @@
                         }
                     })
                     .then(data => {
+                        console.log(`[POLL ${pollCount}] Sync status:`, data);
+
                         if (data.success && data.message) {
                             // Sync completed successfully
                             const progressContainer = document.getElementById('sync-progress-container');
@@ -1348,6 +1350,8 @@
                                 const percent = data.progress.percent || 0;
                                 const message = data.progress.message || 'Processing...';
 
+                                console.log(`[POLL ${pollCount}] Progress: ${percent}% - ${message}`);
+
                                 // Update progress bar width
                                 progressBar.style.width = percent + '%';
 
@@ -1366,6 +1370,10 @@
                                     </p>
                                 </div>
                             `;
+                            } else {
+                                // No progress data yet - show waiting message but keep progress bar visible
+                                console.log(`[POLL ${pollCount}] No progress data yet, keeping progress bar at current state`);
+                                progressDetails.textContent = data.message || 'Starting sync...';
                             }
 
                             setTimeout(pollSyncStatus, 2000);
