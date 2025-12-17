@@ -694,12 +694,14 @@ class ScheduledSyncService:
             from django.db import transaction
             with transaction.atomic():
                 # Bulk create new inspections (1 query)
+                # Use ignore_conflicts=True to skip duplicates instead of crashing
                 if inspections_to_create:
                     FoodSafetyAgencyInspection.objects.bulk_create(
                         inspections_to_create,
-                        batch_size=1000
+                        batch_size=1000,
+                        ignore_conflicts=True
                     )
-                    print(f"[PERF] Created {len(inspections_to_create)} new inspections")
+                    print(f"[PERF] Created {len(inspections_to_create)} new inspections (duplicates skipped)")
 
                 # Bulk update existing inspections (1 query)
                 # Specify fields to update - km_traveled and hours are NOT in this list, so they're preserved!
