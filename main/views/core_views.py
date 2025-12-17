@@ -4406,6 +4406,13 @@ def refresh_clients(request):
 
     clear_messages(request)
 
+    # Ensure session is valid but don't modify it during long operations
+    if not request.session.session_key:
+        request.session.create()
+
+    # Set flag to prevent session modifications during sync
+    request._sync_in_progress = True
+
     if request.method == 'POST':
         # Check if client sync is already running
         from django.core.cache import cache
@@ -4450,6 +4457,11 @@ def refresh_clients(request):
             from ..utils.sql_server_utils import SQLServerConnection
             from ..models import ClientAllocation
             from django.db import transaction
+            from django.utils import timezone
+
+            # Update session activity timestamp to prevent timeout during long sync
+            request.session['last_activity'] = timezone.now().isoformat()
+            request.session.modified = True
 
             print(" Step 1: Connecting to SQL Server...")
             sql_conn = SQLServerConnection()
@@ -4464,9 +4476,6 @@ def refresh_clients(request):
             print(" SQL Server connection established successfully")
 
             print("\n Step 2: Fetching clients from SQL Server...")
-
-            # Force session save before long operation
-            request.session.save()
 
             # Fetch all active clients from SQL Server
             cursor = sql_conn.connection.cursor()
@@ -4588,6 +4597,10 @@ def refresh_clients(request):
 
             # Clear sync lock
             cache.delete('client_sync_running')
+
+            # Update session timestamp before returning to ensure session stays valid
+            request.session['last_activity'] = timezone.now().isoformat()
+            request.session.modified = True
 
             if is_ajax:
                 return JsonResponse({
