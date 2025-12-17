@@ -4657,6 +4657,7 @@ def refresh_inspections(request):
                 from django.http import JsonResponse
                 from django.core.cache import cache
                 import threading
+                import time
 
                 # CHECK IF SYNC IS ALREADY RUNNING - Prevent concurrent syncs
                 sync_lock_key = 'inspection_sync_lock'
@@ -4664,7 +4665,6 @@ def refresh_inspections(request):
 
                 if lock_value:
                     # Check if lock is stale (older than 10 minutes means it's stuck)
-                    import time
                     current_time = time.time()
 
                     # If lock exists but is just True (old format), assume it's stale
