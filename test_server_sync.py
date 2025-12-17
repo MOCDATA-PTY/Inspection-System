@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mysite.settings')
 django.setup()
 
-from main.services.scheduled_sync_service import ScheduledSyncService
+from main.services.scheduled_sync_service import scheduled_sync_service
 from django.core.cache import cache
 from main.models import FoodSafetyAgencyInspection
 
@@ -19,24 +19,26 @@ def test_server_sync():
     print("SERVER SYNC TEST - Direct Inspection Sync")
     print("="*80)
 
-    # Clear cache
-    print("\n1. Clearing cache...")
+    # Clear cache (including sync locks to allow fresh sync)
+    print("\n1. Clearing cache and sync locks...")
     cache.delete('sync_progress')
     cache.delete('sync_result')
     cache.delete('inspection_sync_lock')
+    cache.delete('sync_google_sheets_lock')
+    cache.delete('sync_sql_server_lock')
     print("   Cache cleared")
 
     # Get initial count
     initial_count = FoodSafetyAgencyInspection.objects.count()
     print(f"\n2. Initial inspection count: {initial_count}")
 
-    # Initialize service
-    print("\n3. Initializing ScheduledSyncService...")
+    # Use global service instance (don't create a new one!)
+    print("\n3. Using global ScheduledSyncService instance...")
     try:
-        sync_service = ScheduledSyncService()
-        print("   Service initialized successfully")
+        sync_service = scheduled_sync_service
+        print("   Service ready")
     except Exception as e:
-        print(f"   [ERROR] Failed to initialize: {e}")
+        print(f"   [ERROR] Failed to get service: {e}")
         import traceback
         traceback.print_exc()
         return

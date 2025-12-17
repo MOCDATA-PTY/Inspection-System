@@ -253,6 +253,25 @@ class ScheduledSyncService:
         """Sync client data from SQL Server."""
         from django.db import close_old_connections
 
+        # LOCK: Prevent concurrent syncs
+        lock_key = 'sync_google_sheets_lock'
+        if cache.get(lock_key):
+            print("[SKIP] Google Sheets sync already running (locked)")
+            return False
+
+        # Acquire lock (expires after 10 minutes to prevent deadlock)
+        cache.set(lock_key, True, 600)
+
+        try:
+            return self._do_sync_google_sheets()
+        finally:
+            # Always release lock
+            cache.delete(lock_key)
+
+    def _do_sync_google_sheets(self):
+        """Internal method that performs the actual sync."""
+        from django.db import close_old_connections
+
         # Mapping dictionaries for internal account codes
         FACILITY_TYPE_MAP = {
             'RE': 'Retailer',
@@ -428,6 +447,23 @@ class ScheduledSyncService:
     
     def sync_sql_server(self):
         """Sync inspection data with SQL Server - DELETE ALL then fetch fresh data."""
+        # LOCK: Prevent concurrent syncs
+        lock_key = 'sync_sql_server_lock'
+        if cache.get(lock_key):
+            print("[SKIP] SQL Server sync already running (locked)")
+            return False
+
+        # Acquire lock (expires after 30 minutes to prevent deadlock)
+        cache.set(lock_key, True, 1800)
+
+        try:
+            return self._do_sync_sql_server()
+        finally:
+            # Always release lock
+            cache.delete(lock_key)
+
+    def _do_sync_sql_server(self):
+        """Internal method that performs the actual sync."""
         try:
             print("\n" + "="*80)
             print("[SQL]  STARTING SQL SERVER SYNC (FULL REFRESH)")
