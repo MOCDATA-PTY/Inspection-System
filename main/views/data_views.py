@@ -979,12 +979,18 @@ def get_inspection_fee_history(request):
 
     history_data = []
     for record in history:
+        # Get the previous rate by finding the next older history record for the same fee
+        previous_history = FeeHistory.objects.filter(
+            fee=record.fee,
+            effective_date__lt=record.effective_date
+        ).order_by('-effective_date').first()
+
         history_dict = {
             'id': record.id,
             'fee_name': record.fee.fee_name,
             'fee_code': record.fee.fee_code,
             'rate': float(record.rate),
-            'previous_rate': float(record.previous_rate) if record.previous_rate else None,
+            'previous_rate': float(previous_history.rate) if previous_history else None,
             'effective_date': record.effective_date.isoformat(),
             'created_at': record.created_at.isoformat(),
             'created_by': record.created_by.username if record.created_by else None,
