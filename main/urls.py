@@ -26,7 +26,7 @@ from .views.core_views import (
     forgot_password, reset_password_confirm
 )
 from .views.data_views import (
-    export_shipments, get_inspection_fees, update_inspection_fees,
+    export_shipments, get_inspection_fees, update_inspection_fees, get_inspection_fee_history,
 )
 
 urlpatterns = [
@@ -65,6 +65,7 @@ urlpatterns = [
     path('update-invoice-number/', update_invoice_number, name='update_invoice_number'),
     path('api/fees/get/', get_inspection_fees, name='get_inspection_fees'),
     path('api/fees/update/', update_inspection_fees, name='update_inspection_fees'),
+    path('api/fees/history/', get_inspection_fee_history, name='get_inspection_fee_history'),
     path('inspections/files/', get_inspection_files, name='get_inspection_files'),
     path('inspections/download-file/', download_inspection_file, name='download_inspection_file'),
     path('inspections/download-all-files/', download_all_inspection_files, name='download_all_inspection_files'),

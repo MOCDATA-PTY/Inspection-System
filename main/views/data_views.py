@@ -969,3 +969,29 @@ def update_inspection_fees(request):
         }, status=400)
 
 
+@login_required
+def get_inspection_fee_history(request):
+    """Get complete history of all fee changes"""
+    from ..models import FeeHistory
+
+    # Get all fee history ordered by effective date (most recent first)
+    history = FeeHistory.objects.select_related('fee', 'created_by').order_by('-effective_date', '-created_at')
+
+    history_data = []
+    for record in history:
+        history_dict = {
+            'id': record.id,
+            'fee_name': record.fee.fee_name,
+            'fee_code': record.fee.fee_code,
+            'rate': float(record.rate),
+            'previous_rate': float(record.previous_rate) if record.previous_rate else None,
+            'effective_date': record.effective_date.isoformat(),
+            'created_at': record.created_at.isoformat(),
+            'created_by': record.created_by.username if record.created_by else None,
+            'notes': record.notes or ''
+        }
+        history_data.append(history_dict)
+
+    return JsonResponse({'history': history_data})
+
+
