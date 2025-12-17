@@ -514,29 +514,15 @@ class ScheduledSyncService:
             # This converts ~10,000 queries into just 3 queries!
             print(f"\n[PERF] Building inspection lists for bulk operations...")
 
-            # First, build unique keys for all SQL inspections
-            # NOTE: Use (commodity, remote_id) to match database unique constraint
-            sql_inspection_keys = {
-                (sql_insp.get('Commodity'), sql_insp.get('Id'))
-                for sql_insp in sql_inspections
-            }
-
-            # Fetch all existing inspections that match these keys in ONE query
-            from django.db.models import Q
-            existing_query = Q()
-            for commodity, remote_id in sql_inspection_keys:
-                existing_query |= Q(
-                    commodity=commodity,
-                    remote_id=remote_id
-                )
-
-            print(f"[PERF] Fetching existing inspections from database...")
-            existing_inspections = FoodSafetyAgencyInspection.objects.filter(existing_query)
+            # Fetch ALL existing inspections in ONE query (much faster than giant OR query)
+            # Build dictionary in memory for fast lookups
+            print(f"[PERF] Loading all existing inspections into memory...")
+            existing_inspections = FoodSafetyAgencyInspection.objects.all()
             existing_inspections_dict = {
                 (insp.commodity, insp.remote_id): insp
                 for insp in existing_inspections
             }
-            print(f"[PERF] Found {len(existing_inspections_dict)} existing inspections")
+            print(f"[PERF] Loaded {len(existing_inspections_dict)} existing inspections for fast lookups")
 
             # Lists for bulk operations
             inspections_to_create = []
