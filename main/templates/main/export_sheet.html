@@ -1012,7 +1012,7 @@
         }
 
         [data-theme="dark"] #exportTable tbody tr:hover {
-            background-color: rgba(77, 184, 209, 0.1);
+            background-color: rgba(77, 184, 209, 0.03);
         }
 
         #exportTable tbody tr.invoiced {
@@ -1187,9 +1187,63 @@
         }
 
         /* Export dropdown styling */
-        #exportDropdown > div:not([style*="height"]):hover {
-            background: var(--primary-light);
+        .export-dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            min-width: 200px;
+            z-index: 1000;
+            margin-top: 4px;
+        }
+
+        .export-dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.875rem;
+            color: var(--text);
+            transition: all 0.15s ease;
+        }
+
+        .export-dropdown-item:hover {
+            background-color: var(--primary-light);
             color: var(--primary);
+        }
+
+        .export-dropdown-item i {
+            width: 16px;
+            text-align: center;
+        }
+
+        .export-dropdown-separator {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        [data-theme="dark"] .export-dropdown-menu {
+            background: #1f2937;
+            border-color: #374151;
+        }
+
+        [data-theme="dark"] .export-dropdown-item {
+            color: #e5e7eb;
+        }
+
+        [data-theme="dark"] .export-dropdown-item:hover {
+            background-color: #374151;
+            color: #4db8d1;
         }
 
         .btn-success {
@@ -1462,6 +1516,32 @@
                         <button type="button" class="btn btn-warning" onclick="showManageFeesModal()">
                             <i class="fas fa-dollar-sign"></i> Manage Fees
                         </button>
+
+                        <div class="export-dropdown-container">
+                            <button type="button" class="btn btn-success" onclick="toggleExportDropdown()">
+                                <i class="fas fa-file-export"></i> Export <i class="fas fa-chevron-down" style="margin-left: 4px; font-size: 0.75rem;"></i>
+                            </button>
+                            <div id="exportDropdownMenu" class="export-dropdown-menu" style="display: none;">
+                                <div class="export-dropdown-item" onclick="exportToExcel(); hideExportDropdown();">
+                                    <i class="fas fa-file-excel"></i>
+                                    <span>Export to Excel</span>
+                                </div>
+                                <div class="export-dropdown-separator"></div>
+                                <div class="export-dropdown-item" onclick="exportAsGoogleSheets(); hideExportDropdown();">
+                                    <i class="fab fa-google"></i>
+                                    <span>Export as Google Sheets</span>
+                                </div>
+                                <div class="export-dropdown-separator"></div>
+                                <div class="export-dropdown-item" onclick="exportAsCSV(); hideExportDropdown();">
+                                    <i class="fas fa-file-csv"></i>
+                                    <span>Export as CSV</span>
+                                </div>
+                                <div class="export-dropdown-item" onclick="exportAsExcelCSV(); hideExportDropdown();">
+                                    <i class="fas fa-file-excel"></i>
+                                    <span>Export as Excel CSV</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -2027,6 +2107,28 @@
 
             URL.revokeObjectURL(url);
         }
+
+        // Toggle export dropdown menu
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById('exportDropdownMenu');
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+        }
+
+        // Hide export dropdown menu
+        function hideExportDropdown() {
+            document.getElementById('exportDropdownMenu').style.display = 'none';
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('exportDropdownMenu');
+            const container = event.target.closest('.export-dropdown-container');
+
+            if (!container && dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        });
 
         // Export to Excel using SheetJS
         async function exportToExcel() {
