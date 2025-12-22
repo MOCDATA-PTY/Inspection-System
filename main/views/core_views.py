@@ -6834,8 +6834,9 @@ def analytics_dashboard(request):
     
     # === FORECASTING ===
     # Simple linear trend forecasting for next 3 months
-    if len(monthly_inspections) >= 3:
-        recent_counts = [item['count'] for item in monthly_inspections[-3:]]
+    monthly_inspections_list = list(monthly_inspections)
+    if len(monthly_inspections_list) >= 3:
+        recent_counts = [item['count'] for item in monthly_inspections_list[-3:]]
         if len(recent_counts) >= 2:
             # Simple linear trend
             trend = (recent_counts[-1] - recent_counts[0]) / (len(recent_counts) - 1)
@@ -14612,6 +14613,66 @@ def format_file_size(size_bytes):
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
     return f"{s} {size_names[i]}"
+
+
+@login_required(login_url='login')
+def server_directory_tree(request):
+    """Get complete directory tree as JSON for the server view page."""
+    import os
+    from django.conf import settings as django_settings
+    from django.http import JsonResponse
+
+    media_root = django_settings.MEDIA_ROOT
+
+    def build_tree(path, name=None):
+        """Recursively build directory tree."""
+        tree = {
+            'name': name or os.path.basename(path) or 'Media',
+            'type': 'folder',
+            'children': [],
+            'file_count': 0
+        }
+
+        try:
+            items = os.listdir(path)
+            items.sort()
+
+            for item in items:
+                item_path = os.path.join(path, item)
+
+                if os.path.isdir(item_path):
+                    # Recursively build subtree
+                    subtree = build_tree(item_path, item)
+                    tree['children'].append(subtree)
+                    tree['file_count'] += subtree['file_count']
+                elif os.path.isfile(item_path):
+                    # Add file
+                    try:
+                        file_size = os.path.getsize(item_path)
+                        file_ext = os.path.splitext(item)[1]
+                        tree['children'].append({
+                            'name': item,
+                            'type': 'file',
+                            'size': format_file_size(file_size),
+                            'extension': file_ext
+                        })
+                        tree['file_count'] += 1
+                    except:
+                        # Skip files we can't access
+                        pass
+        except PermissionError:
+            # Skip directories we can't access
+            pass
+        except Exception as e:
+            print(f"Error reading {path}: {e}")
+
+        return tree
+
+    # Build the complete tree
+    tree = build_tree(media_root)
+
+    return JsonResponse(tree)
+
 
 @login_required(login_url='login')
 def server_status(request):
