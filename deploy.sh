@@ -22,6 +22,10 @@ echo "[5/7] Running migrations..."
 python3 manage.py makemigrations --merge --noinput 2>&1 | grep -v "No changes detected" || true
 python3 manage.py migrate --noinput || exit 1
 
+# Collect static files
+echo "[5.5/7] Collecting static files..."
+python3 manage.py collectstatic --noinput || exit 1
+
 # Restart services with timeout
 echo "[6/7] Restarting services..."
 timeout 30 sudo systemctl restart gunicorn || echo "Gunicorn restart timeout"
