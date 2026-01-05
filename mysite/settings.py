@@ -55,10 +55,12 @@ CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'https://127.0.0.1:8000',
     'https://localhost:8000',
+    'https://portal.fsa-pty.co.za',
+    'http://portal.fsa-pty.co.za',
 ]
 
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost', 'portal.fsa-pty.co.za', '82.25.97.159'])
 
 # Application definition
 INSTALLED_APPS = [
