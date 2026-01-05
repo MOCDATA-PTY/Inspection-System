@@ -526,6 +526,10 @@ class ScheduledSyncService:
             google_sheets_used = 0
             sql_server_fallback = 0
 
+            # NEW: Compliance tracking (to verify direction data is being read correctly)
+            non_compliant_count = 0
+            compliant_count = 0
+
             # Load inspector mappings from database (cache for performance)
             print(f"\n[MAPPING] Loading inspector mappings from database...")
             inspector_name_map = {}
@@ -671,8 +675,34 @@ class ScheduledSyncService:
 
                     # PHASE 1: Prepare inspection data for bulk operations
                     product_name = sql_insp.get('ProductName')  # Get product name from SQL query result
-                    is_direction_present = sql_insp.get('IsDirectionPresentForthisInspection', False)  # Get direction status
-                    is_sample_taken = sql_insp.get('IsSampleTaken', False)  # Get sample status
+
+                    # IMPORTANT: Properly convert SQL Server bit fields to Python boolean
+                    # SQL Server can return bit as: True/False, 1/0, '1'/'0', 'True'/'False'
+                    raw_direction = sql_insp.get('IsDirectionPresentForthisInspection', False)
+                    if isinstance(raw_direction, bool):
+                        is_direction_present = raw_direction
+                    elif isinstance(raw_direction, (int, float)):
+                        is_direction_present = bool(raw_direction)  # 0 = False, 1 = True
+                    elif isinstance(raw_direction, str):
+                        is_direction_present = raw_direction.lower() in ('true', '1', 'yes')
+                    else:
+                        is_direction_present = False
+
+                    raw_sample = sql_insp.get('IsSampleTaken', False)
+                    if isinstance(raw_sample, bool):
+                        is_sample_taken = raw_sample
+                    elif isinstance(raw_sample, (int, float)):
+                        is_sample_taken = bool(raw_sample)
+                    elif isinstance(raw_sample, str):
+                        is_sample_taken = raw_sample.lower() in ('true', '1', 'yes')
+                    else:
+                        is_sample_taken = False
+
+                    # Track compliance statistics
+                    if is_direction_present:
+                        non_compliant_count += 1
+                    else:
+                        compliant_count += 1
 
                     # Check if inspection exists (using database unique constraint key)
                     inspection_key = (commodity, inspection_id)
@@ -777,6 +807,7 @@ class ScheduledSyncService:
             print(f"   - SQL Server client matches: {google_sheets_matched}/{account_codes_found}")
             print(f"   - Product names from SQL query (no additional fetching needed)")
             print(f"   - KM/Hours data preserved automatically (not overwritten)")
+            print(f"   - COMPLIANCE STATUS: {non_compliant_count} non-compliant, {compliant_count} compliant")
             print("="*80)
 
             # STEP 3.5: RELATIONSHIP-BASED CLIENT NAME MATCHING

@@ -129,7 +129,7 @@ class DailyComplianceSyncService:
         return f"{inspection.id}_{inspection.date_of_inspection.strftime('%Y%m%d')}"
     
     def load_drive_files_standalone(self):
-        """Load Google Drive files from specific month folders (October 2025+) only."""
+        """Load Google Drive files from year folders (2025, 2026, etc.) containing month folders."""
         try:
             # Check if force stop was requested
             if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
@@ -141,54 +141,88 @@ class DailyComplianceSyncService:
             from datetime import datetime
 
             drive_service = GoogleDriveService()
-            # NEW: Parent folder that contains month folders
-            parent_folder_id = "1pzot8MQ-m3u0f9-BWxpBO40QgLmeZhRP"
+            # Parent folder containing year folders (2025, 2026, etc.)
+            parent_folder_id = "1Q8ZXVC2NhzrPpDCdwfHGt8o726fLtqE_"
 
-            print("[Cloud] Loading Google Drive files for daily sync (October 2025+)...")
-            print("[Wait] Fetching month folders...")
+            print("[Cloud] Loading Google Drive files for compliance sync (2025+)...")
+            print("[Wait] Fetching year folders...")
             start_time = datetime.now()
 
-            # Step 1: Get all folders in the parent folder
-            all_items = drive_service.list_files_in_folder(parent_folder_id, request=None, max_items=None)
-            print(f"[Retrieved] {len(all_items)} items from parent folder")
+            # Step 1: Get all year folders (2025, 2026, etc.)
+            all_year_items = drive_service.list_files_in_folder(parent_folder_id, request=None, max_items=None)
+            print(f"[Retrieved] {len(all_year_items)} items from parent folder")
 
-            # Step 2: Filter for month folders (October 2025+)
-            month_folders = []
-            for item in all_items:
-                # Check if it's a folder (mimeType = 'application/vnd.google-apps.folder')
+            # Filter for year folders (folders named with 4-digit years)
+            year_folders = []
+            for item in all_year_items:
                 if item.get('mimeType') != 'application/vnd.google-apps.folder':
                     continue
 
                 folder_name = item.get('name', '')
                 folder_id = item.get('id', '')
 
-                # Parse folder name like "October 2025", "November 2025"
-                # Pattern: Month Year
-                month_year_pattern = re.match(r'^([A-Za-z]+)\s+(\d{4})$', folder_name)
-                if month_year_pattern:
-                    month_name = month_year_pattern.group(1)
-                    year = int(month_year_pattern.group(2))
+                # Match 4-digit year folders (2025, 2026, etc.)
+                if re.match(r'^\d{4}$', folder_name):
+                    year = int(folder_name)
+                    # Only process year 2025 and onwards
+                    if year >= 2025:
+                        year_folders.append({
+                            'name': folder_name,
+                            'id': folder_id,
+                            'year': year
+                        })
+                        print(f"   ✅ Found year folder: {folder_name}")
+                    else:
+                        print(f"   ⏭️  Skipping: {folder_name} (before 2025)")
 
-                    try:
-                        # Parse month name to month number
-                        month_date = datetime.strptime(f"{month_name} {year}", "%B %Y")
-                        folder_date = month_date.date()
+            if not year_folders:
+                print("[WARNING] No year folders found (2025+)")
+                return {}
 
-                        # Only include folders from October 2025 onwards
-                        if folder_date >= date(2025, 10, 1):
-                            month_folders.append({
-                                'name': folder_name,
-                                'id': folder_id,
-                                'date': folder_date
-                            })
-                            print(f"   ✅ Including: {folder_name}")
-                        else:
-                            print(f"   ⏭️  Skipping: {folder_name} (before October 2025)")
-                    except ValueError:
-                        print(f"   ⚠️  Could not parse folder name: {folder_name}")
+            print(f"[OK] Found {len(year_folders)} year folder(s) to process")
+
+            # Step 2: Get month folders from each year folder
+            month_folders = []
+            for year_folder in sorted(year_folders, key=lambda x: x['year']):
+                print(f"\n[Fetching] Month folders from: {year_folder['name']}")
+                month_items = drive_service.list_files_in_folder(year_folder['id'], request=None, max_items=None)
+                print(f"   [Retrieved] {len(month_items)} items from {year_folder['name']}")
+
+                for item in month_items:
+                    # Check if it's a folder
+                    if item.get('mimeType') != 'application/vnd.google-apps.folder':
                         continue
 
-            print(f"[OK] Found {len(month_folders)} month folders to process (October 2025+)")
+                    folder_name = item.get('name', '')
+                    folder_id = item.get('id', '')
+
+                    # Parse folder name like "October 2025", "November 2025"
+                    # Pattern: Month Year
+                    month_year_pattern = re.match(r'^([A-Za-z]+)\s+(\d{4})$', folder_name)
+                    if month_year_pattern:
+                        month_name = month_year_pattern.group(1)
+                        year = int(month_year_pattern.group(2))
+
+                        try:
+                            # Parse month name to month number
+                            month_date = datetime.strptime(f"{month_name} {year}", "%B %Y")
+                            folder_date = month_date.date()
+
+                            # Only include folders from October 2025 onwards
+                            if folder_date >= date(2025, 10, 1):
+                                month_folders.append({
+                                    'name': folder_name,
+                                    'id': folder_id,
+                                    'date': folder_date
+                                })
+                                print(f"      ✅ Including: {folder_name}")
+                            else:
+                                print(f"      ⏭️  Skipping: {folder_name} (before October 2025)")
+                        except ValueError:
+                            print(f"      ⚠️  Could not parse folder name: {folder_name}")
+                            continue
+
+            print(f"\n[OK] Found {len(month_folders)} total month folders to process (October 2025+)")
 
             # Step 3: Load files from each month folder
             file_lookup = {}
@@ -255,8 +289,9 @@ class DailyComplianceSyncService:
                 print(f"   [OK] Processed {month_file_count} compliance files from {month_folder['name']}")
 
             load_time = (datetime.now() - start_time).total_seconds()
-            print(f"\n[COMPLETE] Loaded {len(file_lookup)} compliance files from {len(month_folders)} month folders in {load_time:.1f} seconds")
-            print(f"[Optimization] Only fetched from October 2025+ folders (much faster!)")
+            print(f"\n[COMPLETE] Loaded {len(file_lookup)} compliance files from {len(month_folders)} month folders across {len(year_folders)} year(s) in {load_time:.1f} seconds")
+            print(f"[Info] Processed year folders: {', '.join([yf['name'] for yf in year_folders])}")
+            print(f"[Optimization] Auto-detects new year folders (2026, 2027, etc.) as they become available")
 
             return file_lookup
 
@@ -289,18 +324,20 @@ class DailyComplianceSyncService:
     def process_compliance_documents(self):
         """Process compliance documents with skip logic."""
         print("Starting daily compliance document sync...")
-        
-        # Check if force stop was requested
-        if hasattr(self, '_force_stop_processing') and self._force_stop_processing:
-            print("Force stop requested - aborting sync")
-            return
-        
-        settings = self.get_system_settings()
-        if not settings or not settings.compliance_daily_sync_enabled:
-            print("Daily compliance sync is disabled.")
-            return
-        
+
+        # Set is_running to True for the duration of this processing
+        was_running = self.is_running
+        self.is_running = True
+
+        # Reset force stop flag
+        self._force_stop_processing = False
+
         try:
+            settings = self.get_system_settings()
+            if not settings or not settings.compliance_daily_sync_enabled:
+                print("Daily compliance sync is disabled.")
+                return
+
             # Load Google Drive files once at the start
             print("Loading Google Drive files...")
             file_lookup = self.load_drive_files_standalone()
@@ -346,10 +383,15 @@ class DailyComplianceSyncService:
                 try:
                     # Process compliance documents for this inspection - SEQUENTIAL APPROACH
                     print(f"🔄 Processing: {inspection.id}")
-                    
-                    # Get account code for this client
-                    account_code = self.get_client_account_code(inspection.client_name)
-                    
+
+                    # Use the inspection's own account code directly (from SQL Server)
+                    # This is more reliable than looking up by client name
+                    account_code = inspection.internal_account_code
+
+                    if not account_code:
+                        # Fallback: try to get from Client model if inspection doesn't have it
+                        account_code = self.get_client_account_code(inspection.client_name)
+
                     if not account_code:
                         print(f"⚠️  No account code found for client: {inspection.client_name}")
                         continue
@@ -447,9 +489,12 @@ class DailyComplianceSyncService:
             
             print(f"✅ Daily compliance sync completed!")
             print(f"📊 Processed: {documents_processed}, Skipped: {documents_skipped}")
-            
+
         except Exception as e:
             print(f"❌ Error in daily compliance sync: {e}")
+        finally:
+            # Restore original is_running state
+            self.is_running = was_running
 
     def _auto_restart_if_needed(self):
         """Auto-restart service if it was running before Django reloaded."""

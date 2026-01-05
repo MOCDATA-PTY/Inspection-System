@@ -32,8 +32,10 @@ class OneDriveDirectUploadService:
         self.is_running = False
         self.is_processing = False  # Track if currently processing
         self.access_token = None
+        self.authenticated = False
         self.last_sync = None
         self.service_thread = None  # Track service thread
+        self.token_monitor_thread = None  # Track token monitor thread
         self.stats = {
             'total_processed': 0,
             'total_uploaded': 0,
@@ -41,14 +43,49 @@ class OneDriveDirectUploadService:
             'last_run_time': None
         }
 
-        # DISABLED: Auto-restart OneDrive service
-        # OneDrive is not needed for compliance documents (they use Google Drive only)
-        # self._auto_restart_if_needed()
+        # Start token monitoring service to keep tokens fresh
+        self._start_persistent_token_monitor()
     
     def authenticate_onedrive(self):
         """Authenticate with OneDrive using saved tokens."""
-        # DISABLED: OneDrive not needed for compliance documents (Google Drive only)
-        return False
+        try:
+            token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
+            if not os.path.exists(token_file):
+                print("[ERROR] No OneDrive tokens found. Please authenticate in Settings first.")
+                return False
+
+            with open(token_file, 'r') as f:
+                token_data = json.load(f)
+
+            access_token = token_data.get('access_token')
+            expires_at = token_data.get('expires_at', 0)
+            current_time = datetime.now().timestamp()
+
+            # Check if token is still valid
+            if not access_token:
+                print("[ERROR] No access token found in file")
+                return False
+
+            # If token is expired or expires soon (within 1 hour), refresh it
+            if expires_at - current_time < 3600:
+                print("[INFO] Token expired or expiring soon, refreshing...")
+                if not self._refresh_token(token_data):
+                    print("[ERROR] Token refresh failed. Please re-authenticate in Settings.")
+                    return False
+                # Reload token after refresh
+                with open(token_file, 'r') as f:
+                    token_data = json.load(f)
+                access_token = token_data.get('access_token')
+
+            # Set the access token
+            self.access_token = access_token
+            self.authenticated = True
+            print("[OK] OneDrive authenticated successfully!")
+            return True
+
+        except Exception as e:
+            print(f"[ERROR] OneDrive authentication failed: {e}")
+            return False
 
     def ensure_token_valid(self, min_validity_seconds: int = 30 * 24 * 3600) -> bool:
         """Ensure access token is valid for at least min_validity_seconds by refreshing if needed.
@@ -71,55 +108,69 @@ class OneDriveDirectUploadService:
         """Refresh the access token using refresh token."""
         try:
             refresh_token = token_data.get('refresh_token')
-            if not refresh_token or refresh_token == 'null':
-                print("🔑 OneDrive authentication required - please re-authenticate in Settings")
+            if not refresh_token or refresh_token == 'null' or refresh_token == '':
+                print("[ERROR] No refresh token available - please re-authenticate in Settings")
                 return False
-            
+
+            # Check if we have client secret (required for refresh)
+            client_secret = getattr(settings, 'ONEDRIVE_CLIENT_SECRET', None)
+            if not client_secret:
+                print("[WARNING] OneDrive client secret not configured - refresh may fail")
+
             # For business accounts, use the common endpoint instead of consumers
             token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
             refresh_data = {
                 'client_id': settings.ONEDRIVE_CLIENT_ID,
-                'client_secret': settings.ONEDRIVE_CLIENT_SECRET,
                 'grant_type': 'refresh_token',
                 'refresh_token': refresh_token,
                 'scope': 'https://graph.microsoft.com/Files.ReadWrite.All offline_access'
             }
-            
-            response = requests.post(token_url, data=refresh_data)
-            
+
+            # Add client secret if available
+            if client_secret:
+                refresh_data['client_secret'] = client_secret
+
+            response = requests.post(token_url, data=refresh_data, timeout=30)
+
             if response.status_code == 200:
                 new_token_data = response.json()
                 access_token = new_token_data.get('access_token')
-                
+
                 if access_token:
-                    # Update token file
+                    # Preserve the refresh token (Microsoft may or may not return a new one)
+                    new_refresh_token = new_token_data.get('refresh_token', refresh_token)
+
+                    # Update token file with new access token
                     updated_tokens = {
                         'access_token': access_token,
-                        'refresh_token': new_token_data.get('refresh_token', refresh_token),
-                        'expires_in': new_token_data.get('expires_in'),
-                        'token_type': new_token_data.get('token_type'),
-                        'expires_at': datetime.now().timestamp() + new_token_data.get('expires_in', 3600)
+                        'refresh_token': new_refresh_token,  # Keep old refresh token if new one not provided
+                        'expires_in': new_token_data.get('expires_in', 3600),
+                        'token_type': new_token_data.get('token_type', 'Bearer'),
+                        'expires_at': datetime.now().timestamp() + new_token_data.get('expires_in', 3600),
+                        'last_refreshed': datetime.now().isoformat()
                     }
-                    
+
                     token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
                     with open(token_file, 'w') as f:
                         json.dump(updated_tokens, f, indent=2)
-                    
+
                     self.access_token = access_token
                     self.authenticated = True
-                    print("✅ OneDrive token refreshed successfully!")
+
+                    time_until_expiry = updated_tokens['expires_in'] / 3600
+                    print(f"[OK] OneDrive token refreshed! Valid for {time_until_expiry:.1f} hours")
                     return True
                 else:
-                    print("❌ No access token in refresh response")
+                    print("[ERROR] No access token in refresh response")
                     return False
             else:
-                print(f"❌ Token refresh failed: {response.status_code} - {response.text}")
-                # If refresh fails, try to get a new token through the auth flow
-                print("🔄 Attempting to get new token through auth flow...")
-                return self._get_new_token_via_auth_flow()
-                
+                error_data = response.json() if response.headers.get('content-type', '').startswith('application/json') else {}
+                error_msg = error_data.get('error_description', response.text)
+                print(f"[ERROR] Token refresh failed ({response.status_code}): {error_msg}")
+                return False
+
         except Exception as e:
-            print(f"❌ Token refresh failed: {e}")
+            print(f"[ERROR] Token refresh failed: {e}")
             return False
     
     def _get_new_token_via_auth_flow(self):
@@ -1091,43 +1142,45 @@ class OneDriveDirectUploadService:
             'total_errors': stats.get('total_errors', 0)
         }
     
-    def start_token_monitor(self):
-        """Start background token monitoring service."""
+    def _start_persistent_token_monitor(self):
+        """Start persistent token monitoring that runs independently."""
         def monitor_tokens():
-            while self.is_running:
+            while True:  # Run forever
                 try:
                     token_file = os.path.join(settings.BASE_DIR, 'onedrive_tokens.json')
                     if os.path.exists(token_file):
                         with open(token_file, 'r') as f:
                             token_data = json.load(f)
-                        
+
                         expires_at = token_data.get('expires_at', 0)
                         current_time = datetime.now().timestamp()
                         time_until_expiry = expires_at - current_time
-                        
-                        # Proactive refresh windows
-                        # If less than 7 days remaining, attempt refresh silently
+
+                        # Proactive refresh when less than 7 days remaining
                         if 0 < time_until_expiry < (7 * 24 * 3600):
-                            if not self._refresh_token(token_data):
-                                # If refresh fails and very close to expiry, attempt auto-reauth
-                                if time_until_expiry < 3600:
-                                    self._auto_reauthenticate()
-                        # If already expired or negative, attempt immediate refresh
+                            print(f"🔄 Token expires in {time_until_expiry/3600:.1f} hours, refreshing proactively...")
+                            self._refresh_token(token_data)
+                        # If expired, try to refresh immediately
                         elif time_until_expiry <= 0:
+                            print("⚠️ Token expired, attempting refresh...")
                             if not self._refresh_token(token_data):
-                                self._auto_reauthenticate()
-                    
-                    # Check every 5 minutes
-                    time.sleep(300)
-                    
+                                print("🔑 OneDrive token refresh failed - please re-authenticate in Settings")
+
+                    # Check every hour
+                    time.sleep(3600)
+
                 except Exception as e:
-                    print(f"❌ Token monitor error: {e}")
-                    time.sleep(300)
-        
-        # Start monitoring in background thread
-        monitor_thread = threading.Thread(target=monitor_tokens, daemon=True)
-        monitor_thread.start()
-        print("✅ Token monitoring service started")
+                    # Silent error - don't spam logs
+                    time.sleep(3600)
+
+        # Start monitoring in background daemon thread
+        if self.token_monitor_thread is None or not self.token_monitor_thread.is_alive():
+            self.token_monitor_thread = threading.Thread(target=monitor_tokens, daemon=True)
+            self.token_monitor_thread.start()
+
+    def start_token_monitor(self):
+        """Start background token monitoring service (legacy method for compatibility)."""
+        self._start_persistent_token_monitor()
 
 
 # Global service instance
