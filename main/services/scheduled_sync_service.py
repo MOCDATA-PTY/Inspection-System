@@ -148,7 +148,8 @@ class ScheduledSyncService:
         self.sync_thread = None
         self.last_sync_times = {
             'google_sheets': None,
-            'sql_server': None
+            'sql_server': None,
+            'compliance_documents': None
         }
         self.sync_stats = {
             'total_syncs': 0,
@@ -225,7 +226,7 @@ class ScheduledSyncService:
             time_since_last = current_time - last_sync
 
             # Check specific sync intervals
-            if sync_type in ['google_sheets', 'sql_server']:
+            if sync_type in ['google_sheets', 'sql_server', 'compliance_documents']:
                 # FIXED: Always sync every 3 hours (no settings check)
                 interval_hours = 3.0
 
@@ -474,8 +475,8 @@ class ScheduledSyncService:
             print("[SQL]  STARTING SQL SERVER SYNC (FULL REFRESH)")
             print("="*80)
 
-            from ..models import FoodSafetyAgencyInspection, Inspection
-            from ..views.data_views import FSA_INSPECTION_QUERY, INSPECTOR_NAME_MAP
+            from ..models import FoodSafetyAgencyInspection, Inspection, InspectorMapping
+            from ..views.data_views import FSA_INSPECTION_QUERY
             import pymssql
             from datetime import datetime, timedelta
 
@@ -524,6 +525,13 @@ class ScheduledSyncService:
             google_sheets_matched = 0
             google_sheets_used = 0
             sql_server_fallback = 0
+
+            # Load inspector mappings from database (cache for performance)
+            print(f"\n[MAPPING] Loading inspector mappings from database...")
+            inspector_name_map = {}
+            for mapping in InspectorMapping.objects.filter(is_active=True):
+                inspector_name_map[mapping.inspector_id] = mapping.inspector_name
+            print(f"   Loaded {len(inspector_name_map)} active inspector mappings")
 
             # Set initial progress
             cache.set('sync_progress', {
@@ -585,12 +593,12 @@ class ScheduledSyncService:
                     inspector_id = sql_insp.get('InspectorId')
                     commodity = sql_insp.get('Commodity')
 
-                    # Get inspector name from mapping
+                    # Get inspector name from database mapping
                     try:
                         inspector_id_int = int(inspector_id) if inspector_id is not None else None
                     except (TypeError, ValueError):
                         inspector_id_int = None
-                    inspector_name = INSPECTOR_NAME_MAP.get(inspector_id_int, 'Unknown')
+                    inspector_name = inspector_name_map.get(inspector_id_int, 'Unknown')
 
                     # IMPORTANT: Use SQL Server Client for client names
                     # SQL Server provides: inspection data, account code, and client names
@@ -674,6 +682,7 @@ class ScheduledSyncService:
                         # UPDATE existing inspection (preserving km_traveled and hours!)
                         existing_inspection.client_name = client_name
                         existing_inspection.internal_account_code = internal_account_code
+                        existing_inspection.inspector_id = inspector_id_int
                         existing_inspection.inspector_name = inspector_name
                         existing_inspection.product_name = product_name
                         existing_inspection.is_direction_present_for_this_inspection = is_direction_present
@@ -687,6 +696,7 @@ class ScheduledSyncService:
                             date_of_inspection=inspection_date,
                             client_name=client_name,
                             internal_account_code=internal_account_code,
+                            inspector_id=inspector_id_int,
                             inspector_name=inspector_name,
                             product_name=product_name,
                             is_direction_present_for_this_inspection=is_direction_present,
@@ -955,13 +965,47 @@ class ScheduledSyncService:
             return False
     
     def sync_compliance_documents(self):
-        """Sync compliance documents from Google Drive (REMOVED - OneDrive service handles this)."""
+        """Sync compliance documents from Google Drive every 3 hours."""
+        # LOCK: Prevent concurrent syncs
+        lock_key = 'sync_compliance_documents_lock'
+        if cache.get(lock_key):
+            print("[SKIP] Compliance documents sync already running (locked)")
+            return False
+
+        # Acquire lock (expires after 30 minutes to prevent deadlock)
+        cache.set(lock_key, True, 1800)
+
         try:
-            print("[WARNING] Compliance documents sync has been removed - OneDrive service handles this automatically")
-            return True  # Return True to avoid errors
-                
+            return self._do_sync_compliance_documents()
+        finally:
+            # Always release lock
+            cache.delete(lock_key)
+
+    def _do_sync_compliance_documents(self):
+        """Internal method that performs the actual compliance document sync."""
+        try:
+            print("\n" + "="*80)
+            print("[COMPLIANCE] STARTING COMPLIANCE DOCUMENTS SYNC FROM GOOGLE DRIVE")
+            print("="*80)
+
+            # Import the daily compliance sync service
+            from ..services.daily_compliance_sync import daily_sync_service
+
+            # Run the compliance document processing
+            print("[COMPLIANCE] Processing compliance documents...")
+            daily_sync_service.process_compliance_documents()
+
+            print("\n" + "="*80)
+            print("[OK] COMPLIANCE DOCUMENTS SYNC COMPLETED")
+            print("="*80)
+
+            self.last_sync_times['compliance_documents'] = datetime.now()
+            return True
+
         except Exception as e:
-            print(f"❌ Error in compliance documents sync: {e}")
+            print(f"\n❌ Error in compliance documents sync: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def sync_onedrive(self):
@@ -1153,12 +1197,13 @@ class ScheduledSyncService:
                 # Check if any syncs are due and run them
                 settings = self.get_system_settings()
 
-                # ALWAYS run syncs - no off switch
-                # Check if any syncs are due (runs every hour)
-                google_sheets_due = settings.get('google_sheets_enabled', True) and self.should_run_sync('google_sheets')
-                sql_server_due = settings.get('sql_server_enabled', True) and self.should_run_sync('sql_server')
+                # ALWAYS run syncs - no off switch - ignore enable/disable settings
+                # These syncs ALWAYS run when due to prevent missing inspection data
+                google_sheets_due = self.should_run_sync('google_sheets')
+                sql_server_due = self.should_run_sync('sql_server')
+                compliance_due = self.should_run_sync('compliance_documents')
 
-                if google_sheets_due or sql_server_due:
+                if google_sheets_due or sql_server_due or compliance_due:
                     print("[SYNC] Running scheduled syncs...")
                     sync_results = {}
 
@@ -1179,6 +1224,15 @@ class ScheduledSyncService:
                         except Exception as e:
                             print(f"[ERROR] SQL Server sync failed: {e}")
                             sync_results['sql_server'] = False
+
+                    # Compliance documents sync (runs AFTER clients and inspections are synced)
+                    if compliance_due:
+                        try:
+                            close_old_connections()  # Ensure fresh connection
+                            sync_results['compliance_documents'] = self.sync_compliance_documents()
+                        except Exception as e:
+                            print(f"[ERROR] Compliance documents sync failed: {e}")
+                            sync_results['compliance_documents'] = False
 
                     # Update statistics
                     self.sync_stats['total_syncs'] += len(sync_results)
@@ -1299,12 +1353,15 @@ class ScheduledSyncService:
                 success = self.sync_google_sheets()
             elif sync_type == 'sql_server':
                 success = self.sync_sql_server()
+            elif sync_type == 'compliance_documents':
+                success = self.sync_compliance_documents()
             elif sync_type == 'all':
-                # Run both Google Sheets and SQL Server sync
+                # Run all sync operations (Google Sheets, SQL Server, and Compliance Documents)
                 print("[SYNC] Running all sync operations...")
                 google_success = self.sync_google_sheets()
                 sql_success = self.sync_sql_server()
-                success = google_success and sql_success
+                compliance_success = self.sync_compliance_documents()
+                success = google_success and sql_success and compliance_success
                 if success:
                     return True, "All sync operations completed successfully"
                 else:

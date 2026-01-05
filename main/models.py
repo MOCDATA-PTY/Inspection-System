@@ -110,16 +110,23 @@ class InspectorMapping(models.Model):
 
 
 class SystemSettings(models.Model):
-    """System settings for automatic synchronization and preferences."""
-    
-    # Auto Sync Settings
-    auto_sync_enabled = models.BooleanField(default=False, verbose_name="Enable Auto Sync")
+    """System settings for automatic synchronization and preferences.
+
+    NOTE: Background sync is ALWAYS ENABLED to prevent missing inspection data.
+    The sync enable/disable fields below are kept for compatibility but are ignored.
+    """
+
+    # Auto Sync Settings (ALWAYS ENABLED - field kept for compatibility only)
+    auto_sync_enabled = models.BooleanField(default=True, verbose_name="Enable Auto Sync",
+                                           help_text="Background sync is ALWAYS enabled to prevent data loss")
     backup_frequency_days = models.IntegerField(default=7, verbose_name="Backup Frequency (days)")
     session_timeout_minutes = models.IntegerField(default=30, verbose_name="Session Timeout (minutes)")
-    
-    # Data Sync Settings (runs automatically in background)
-    google_sheets_enabled = models.BooleanField(default=True, verbose_name="Google Sheets Integration")
-    sql_server_enabled = models.BooleanField(default=True, verbose_name="SQL Server Integration")
+
+    # Data Sync Settings (ALWAYS runs automatically in background)
+    google_sheets_enabled = models.BooleanField(default=True, verbose_name="Google Sheets Integration",
+                                               help_text="Always syncs - field kept for compatibility")
+    sql_server_enabled = models.BooleanField(default=True, verbose_name="SQL Server Integration",
+                                            help_text="Always syncs - field kept for compatibility")
     sync_interval_hours = models.FloatField(default=1.0, verbose_name="Sync Interval (hours)")
     
     # Compliance Documents Settings
@@ -714,6 +721,89 @@ class SystemLog(models.Model):
             ip_address=ip_address,
             user_agent=user_agent
         )
+
+
+class Notification(models.Model):
+    """Model to store system notifications for admins"""
+    NOTIFICATION_TYPES = [
+        ('error', 'Error'),
+        ('warning', 'Warning'),
+        ('info', 'Info'),
+        ('success', 'Success'),
+        ('sync', 'Sync Issue'),
+        ('system', 'System Alert'),
+    ]
+
+    PRIORITY_LEVELS = [
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High'),
+        ('critical', 'Critical'),
+    ]
+
+    # Basic fields
+    title = models.CharField(max_length=255, help_text="Notification title")
+    message = models.TextField(help_text="Notification message/description")
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='info')
+    priority = models.CharField(max_length=20, choices=PRIORITY_LEVELS, default='medium')
+
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_read = models.BooleanField(default=False, db_index=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    # Target user (null = all super admins)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='notifications')
+
+    # Optional reference to related object
+    related_object_type = models.CharField(max_length=100, null=True, blank=True)
+    related_object_id = models.CharField(max_length=100, null=True, blank=True)
+
+    # Optional action URL
+    action_url = models.CharField(max_length=500, null=True, blank=True, help_text="URL to navigate when clicked")
+
+    class Meta:
+        db_table = 'notifications'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['-created_at', 'is_read']),
+        ]
+
+    def __str__(self):
+        return f"{self.notification_type.upper()}: {self.title}"
+
+    @classmethod
+    def create_notification(cls, title, message, notification_type='info', priority='medium', user=None, action_url=None):
+        """Helper method to create notifications"""
+        return cls.objects.create(
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            priority=priority,
+            user=user,
+            action_url=action_url
+        )
+
+    @classmethod
+    def notify_super_admins(cls, title, message, notification_type='info', priority='medium', action_url=None):
+        """Create notification for all super admins and developers"""
+        from django.contrib.auth.models import User
+        super_admins = User.objects.filter(role__in=['super_admin', 'developer'])
+
+        notifications = []
+        for admin in super_admins:
+            notifications.append(cls(
+                title=title,
+                message=message,
+                notification_type=notification_type,
+                priority=priority,
+                user=admin,
+                action_url=action_url
+            ))
+
+        if notifications:
+            cls.objects.bulk_create(notifications)
+        return notifications
 
 
 class ClientAllocation(models.Model):

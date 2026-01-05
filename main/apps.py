@@ -17,7 +17,7 @@ class MainConfig(AppConfig):
             threading.Thread(target=self._start_sync_service_on_startup, daemon=True).start()
 
     def _start_sync_service_on_startup(self):
-        """Start the scheduled sync service automatically if auto_sync is enabled."""
+        """Start the scheduled sync service automatically - ALWAYS ENABLED."""
         import time
 
         # Wait for Django to fully initialize
@@ -27,31 +27,34 @@ class MainConfig(AppConfig):
             from .models import SystemSettings
             from .services.scheduled_sync_service import start_scheduled_sync_service
 
-            # Check if auto_sync is enabled
+            # Get settings for display purposes
             settings = SystemSettings.objects.first()
-            if settings and settings.auto_sync_enabled:
-                print("\n" + "="*80)
-                print("AUTO-START: Auto Sync is enabled in settings")
-                print("   Starting Scheduled Sync Service automatically...")
-                print("="*80)
 
-                # Start the sync service
-                success, message = start_scheduled_sync_service()
+            print("\n" + "="*80)
+            print("AUTO-START: Starting Background Sync Service (ALWAYS ENABLED)")
+            print("   This service ALWAYS runs to prevent missing inspections")
+            print("="*80)
 
-                if success:
-                    print(f"[OK] {message}")
-                    print("   The service will automatically sync:")
-                    print("   - Google Sheets (client data)")
-                    print("   - SQL Server (inspection data)")
+            # ALWAYS start the sync service - no off switch
+            success, message = start_scheduled_sync_service()
+
+            if success:
+                print(f"[OK] {message}")
+                print("   The service will automatically sync:")
+                print("   - SQL Server (inspection data)")
+                print("   - Google Sheets (client data)")
+                print("   - Compliance documents")
+                if settings:
                     print(f"   Sync interval: {settings.sync_interval_hours} hours")
-                else:
-                    print(f"[WARNING] {message}")
-
-                print("="*80 + "\n")
+                print("   This service cannot be disabled to ensure data integrity")
             else:
-                print("\nAuto Sync is disabled - Scheduled Sync Service will not start automatically")
+                print(f"[WARNING] {message}")
+                print("   CRITICAL: Sync service failed to start - inspections may not update!")
+
+            print("="*80 + "\n")
 
         except Exception as e:
             # Don't crash the app if sync service fails to start
-            print(f"\n[WARNING] Could not auto-start sync service: {e}")
-            print("   You can manually start it from the Settings page.\n")
+            print(f"\n[CRITICAL WARNING] Could not auto-start sync service: {e}")
+            print("   Inspections will NOT automatically sync!")
+            print("   Please check logs and restart the server.\n")

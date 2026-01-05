@@ -9,6 +9,57 @@ from django.contrib.auth.models import User
 from .models import SystemLog
 import json
 
+
+class SecurityHeadersMiddleware:
+    """Middleware to add modern security headers to all responses"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        # Content Security Policy - Restricts resource loading
+        # Adjust this based on your needs (currently allows inline scripts for Django admin)
+        response['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+            "img-src 'self' data: https:; "
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self';"
+        )
+
+        # Permissions Policy - Control browser features
+        response['Permissions-Policy'] = (
+            "geolocation=(), "
+            "microphone=(), "
+            "camera=(), "
+            "payment=(), "
+            "usb=(), "
+            "magnetometer=(), "
+            "gyroscope=(), "
+            "accelerometer=()"
+        )
+
+        # X-Content-Type-Options - Prevent MIME sniffing
+        response['X-Content-Type-Options'] = 'nosniff'
+
+        # X-Frame-Options - Prevent clickjacking (redundant but belt-and-suspenders)
+        if 'X-Frame-Options' not in response:
+            response['X-Frame-Options'] = 'DENY'
+
+        # Referrer-Policy - Control referrer information
+        response['Referrer-Policy'] = 'same-origin'
+
+        # X-XSS-Protection - Legacy XSS filter (for older browsers)
+        response['X-XSS-Protection'] = '1; mode=block'
+
+        return response
+
 class SessionTimeoutMiddleware:
     """Middleware to enforce session timeout based on database settings"""
     

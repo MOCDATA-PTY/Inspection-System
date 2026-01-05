@@ -15,10 +15,10 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@=2jh*jwvj#7=oh+4+ae2)y9j4ixy@f4l^5sf-3iv$2elvp4y#'
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-@=2jh*jwvj#7=oh+4+ae2)y9j4ixy@f4l^5sf-3iv$2elvp4y#')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
 LOGIN_REDIRECT_URL = 'home'
 LOGIN_URL = 'login'
@@ -28,19 +28,15 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 print("Using database sessions to avoid Redis conflicts during sync operations")
 
 SESSION_COOKIE_AGE = 86400  # Keep users logged in for 1 day
-SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
-SESSION_COOKIE_HTTPONLY = True
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=False)  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
 SESSION_SAVE_EVERY_REQUEST = True  # Save session on every request for long operations
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active after closing the browser
-SESSION_COOKIE_SECURE = False  # Change to True if using HTTPS
-SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to cookies
 SESSION_COOKIE_SAMESITE = 'Lax'  # Prevent session issues with CSRF
 
 # CSRF Settings for better security and to prevent CSRF failures
-CSRF_COOKIE_SECURE = False  # Set to True if using HTTPS
-CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access for AJAX
+CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=False)  # Set to True if using HTTPS
+CSRF_COOKIE_HTTPONLY = env.bool('CSRF_COOKIE_HTTPONLY', default=True)  # Prevent JavaScript access to CSRF token
 CSRF_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_AGE = 86400  # 24 hours
 CSRF_COOKIE_NAME = 'csrftoken'  # Default CSRF cookie name
@@ -56,7 +52,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
-ALLOWED_HOSTS = ["*"]  # Change this to your actual domain in production
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -73,6 +69,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Enables static file serving in production
+    'main.middleware.SecurityHeadersMiddleware',  # Custom security headers middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,20 +102,20 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'inspection_system',
-        'USER': 'ethan',
-        'PASSWORD': 'MagnumOpus123',
-        'HOST': '82.25.97.159',
-        'PORT': '5432',
+        'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
+        'NAME': env('DB_NAME', default='inspection_system'),
+        'USER': env('DB_USER', default='ethan'),
+        'PASSWORD': env('DB_PASSWORD', default=''),
+        'HOST': env('DB_HOST', default='127.0.0.1'),
+        'PORT': env('DB_PORT', default='5432'),
     },
     'sql_server': {
-        'ENGINE': 'mssql',
-        'NAME': 'AFS',
-        'USER': 'FSAUser2',
-        'PASSWORD': 'password',
-        'HOST': '102.67.140.12',
-        'PORT': '1053',
+        'ENGINE': env('SQL_SERVER_ENGINE', default='mssql'),
+        'NAME': env('SQL_SERVER_NAME', default='AFS'),
+        'USER': env('SQL_SERVER_USER', default=''),
+        'PASSWORD': env('SQL_SERVER_PASSWORD', default=''),
+        'HOST': env('SQL_SERVER_HOST', default='127.0.0.1'),
+        'PORT': env('SQL_SERVER_PORT', default='1053'),
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'trusted_connection': 'no',
@@ -130,7 +127,7 @@ DATABASES = {
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': env('REDIS_URL', default='redis://127.0.0.1:6379/1'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'SOCKET_CONNECT_TIMEOUT': 30,  # Increased timeout
@@ -193,10 +190,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # OneDrive Integration Settings
 # =============================
 # Azure app registration values - Load from environment variables
-ONEDRIVE_CLIENT_ID = env('ONEDRIVE_CLIENT_ID', default='e6e7e71e-9f96-41ac-a4c2-5ae0f347e56f')
-ONEDRIVE_CLIENT_SECRET = env('ONEDRIVE_CLIENT_SECRET', default='.EF8Q~bdB4Njdl4tm0LuOgB4PA1sc636B7Z0Hb.Q')
+ONEDRIVE_CLIENT_ID = env('ONEDRIVE_CLIENT_ID', default='')
+ONEDRIVE_CLIENT_SECRET = env('ONEDRIVE_CLIENT_SECRET', default='')
 # Use production server URL for OneDrive callback
-ONEDRIVE_REDIRECT_URI = env('ONEDRIVE_REDIRECT_URI', default='http://45.33.7.175:8000/onedrive/callback')
+ONEDRIVE_REDIRECT_URI = env('ONEDRIVE_REDIRECT_URI', default='http://127.0.0.1:8000/onedrive/callback')
 
 # Feature flags
 ONEDRIVE_ENABLED = True
@@ -210,9 +207,9 @@ EMAIL_BACKEND = 'main.graph_email_backend.GraphEmailBackend'
 DEFAULT_FROM_EMAIL = 'info@eclick.co.za'
 
 # Microsoft Graph API Credentials
-GRAPH_CLIENT_ID = '2b89897f-049e-467e-9413-9d13a7a9259b'
-GRAPH_CLIENT_SECRET = 'p4n8Q~X3z4JW~6kwY8dz~jRuFOXbOpMtBUkHTaCY'
-GRAPH_TENANT_ID = 'e1aca71e-e160-4d3d-a40f-5738d03de05e'
+GRAPH_CLIENT_ID = env('GRAPH_CLIENT_ID', default='')
+GRAPH_CLIENT_SECRET = env('GRAPH_CLIENT_SECRET', default='')
+GRAPH_TENANT_ID = env('GRAPH_TENANT_ID', default='')
 
 # Legacy SMTP Configuration (Backup)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -223,3 +220,32 @@ GRAPH_TENANT_ID = 'e1aca71e-e160-4d3d-a40f-5738d03de05e'
 # EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 # DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'FoodSafetyAgency@outlook.com')
 EMAIL_TIMEOUT = 30  # Connection timeout in seconds
+
+# =============================
+# ENHANCED SECURITY SETTINGS
+# =============================
+
+# HTTPS/SSL Security
+SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=False)  # Redirect all HTTP to HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') if env.bool('USE_X_FORWARDED_PROTO', default=False) else None
+SECURE_HSTS_SECONDS = env.int('SECURE_HSTS_SECONDS', default=0)  # HTTP Strict Transport Security (0 = disabled)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=False)
+SECURE_HSTS_PRELOAD = env.bool('SECURE_HSTS_PRELOAD', default=False)
+
+# Content Security & Headers
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-sniffing
+SECURE_BROWSER_XSS_FILTER = True  # Enable browser XSS protection
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking (already set via middleware)
+
+# Additional Security Settings
+SECURE_REFERRER_POLICY = 'same-origin'  # Control referrer information
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'  # Prevent cross-origin attacks
+
+# File Upload Security
+ALLOWED_UPLOAD_EXTENSIONS = [
+    '.pdf', '.doc', '.docx', '.xls', '.xlsx',
+    '.jpg', '.jpeg', '.png', '.gif', '.bmp',
+    '.zip', '.rar', '.7z',
+    '.txt', '.csv'
+]
+MAX_FILE_SIZE_MB = 50  # Maximum file size in megabytes

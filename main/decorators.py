@@ -1,7 +1,11 @@
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.http import HttpResponse
 from functools import wraps
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.utils import timezone
+import hashlib
 
 def role_required(allowed_roles):
     """
@@ -139,3 +143,90 @@ def no_inspector_scientist(view_func):
         return view_func(request, *args, **kwargs)
     
     return _wrapped_view
+
+def ratelimit(max_attempts=5, window_seconds=300, block_duration=900):
+    """
+    Rate limiting decorator to prevent brute force attacks.
+    
+    Args:
+        max_attempts: Maximum number of attempts allowed (default: 5)
+        window_seconds: Time window in seconds to count attempts (default: 300 = 5 minutes)
+        block_duration: How long to block after max attempts (default: 900 = 15 minutes)
+    
+    Usage:
+        @ratelimit(max_attempts=5, window_seconds=300, block_duration=900)
+        def login_view(request):
+            ...
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # Get client identifier (IP + User Agent hash for better uniqueness)
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                client_ip = x_forwarded_for.split(',')[0].strip()
+            else:
+                client_ip = request.META.get('REMOTE_ADDR', 'unknown')
+            
+            user_agent = request.META.get('HTTP_USER_AGENT', '')
+            identifier = hashlib.sha256(f"{client_ip}:{user_agent}".encode()).hexdigest()[:16]
+            
+            # Cache keys
+            attempts_key = f'ratelimit:attempts:{identifier}'
+            blocked_key = f'ratelimit:blocked:{identifier}'
+            
+            # Check if currently blocked
+            if cache.get(blocked_key):
+                time_remaining = cache.ttl(blocked_key)
+                minutes_remaining = time_remaining // 60
+                return HttpResponse(
+                    f'Too many failed attempts. Please try again in {minutes_remaining} minutes.',
+                    status=429
+                )
+            
+            # For POST requests (actual login attempts), increment counter
+            if request.method == 'POST':
+                # Get current attempt count
+                attempts = cache.get(attempts_key, 0)
+                attempts += 1
+                
+                # Store updated attempts
+                cache.set(attempts_key, attempts, window_seconds)
+                
+                # Check if max attempts exceeded
+                if attempts > max_attempts:
+                    # Block the client
+                    cache.set(blocked_key, True, block_duration)
+                    cache.delete(attempts_key)
+                    
+                    # Log the security event
+                    try:
+                        from .models import SystemLog
+                        SystemLog.log_security_event(
+                            event_type='RATE_LIMIT_EXCEEDED',
+                            description=f'Rate limit exceeded from IP: {client_ip}',
+                            ip_address=client_ip,
+                            severity='WARNING'
+                        )
+                    except Exception as e:
+                        print(f"Failed to log rate limit event: {e}")
+                    
+                    return HttpResponse(
+                        f'Too many failed attempts. Your access has been temporarily blocked for {block_duration // 60} minutes.',
+                        status=429
+                    )
+            
+            # Call the actual view
+            response = view_func(request, *args, **kwargs)
+            
+            # If login was successful (check for redirect or success status), clear attempts
+            if request.method == 'POST' and (
+                (hasattr(response, 'status_code') and response.status_code == 302) or
+                (hasattr(request, 'user') and request.user.is_authenticated)
+            ):
+                cache.delete(attempts_key)
+            
+            return response
+        
+        return _wrapped_view
+    return decorator
