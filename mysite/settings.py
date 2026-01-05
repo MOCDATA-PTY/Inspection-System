@@ -7,12 +7,18 @@ from pathlib import Path
 import os
 import environ
 
-# Initialize environment variables
-env = environ.Env()
-environ.Env.read_env()
-
 # Build paths inside the projectccls
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initialize environment variables
+env = environ.Env()
+# Read .env file from the project root directory
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    environ.Env.read_env(str(env_file))
+    print(f"[Security] Loaded environment variables from: {env_file}")
+else:
+    print(f"[WARNING] .env file not found at: {env_file}")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-@=2jh*jwvj#7=oh+4+ae2)y9j4ixy@f4l^5sf-3iv$2elvp4y#')
@@ -105,16 +111,16 @@ DATABASES = {
         'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
         'NAME': env('DB_NAME', default='inspection_system'),
         'USER': env('DB_USER', default='ethan'),
-        'PASSWORD': env('DB_PASSWORD', default=''),
+        'PASSWORD': env('DB_PASSWORD', default='MagnumOpus123'),
         'HOST': env('DB_HOST', default='127.0.0.1'),
         'PORT': env('DB_PORT', default='5432'),
     },
     'sql_server': {
         'ENGINE': env('SQL_SERVER_ENGINE', default='mssql'),
         'NAME': env('SQL_SERVER_NAME', default='AFS'),
-        'USER': env('SQL_SERVER_USER', default=''),
-        'PASSWORD': env('SQL_SERVER_PASSWORD', default=''),
-        'HOST': env('SQL_SERVER_HOST', default='127.0.0.1'),
+        'USER': env('SQL_SERVER_USER', default='FSAUser2'),
+        'PASSWORD': env('SQL_SERVER_PASSWORD', default='password'),
+        'HOST': env('SQL_SERVER_HOST', default='102.67.140.12'),
         'PORT': env('SQL_SERVER_PORT', default='1053'),
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
@@ -171,7 +177,8 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000  # Allow more form fields
 DATA_UPLOAD_MAX_NUMBER_FILES = 100  # Allow more files
 
 # WhiteNoise settings (Compress and Cache static files)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Using CompressedStaticFilesStorage instead of Manifest version for better compatibility
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 # Media files (User uploads)
