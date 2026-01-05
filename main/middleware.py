@@ -20,13 +20,13 @@ class SecurityHeadersMiddleware:
         response = self.get_response(request)
 
         # Content Security Policy - Restricts resource loading
-        # Adjust this based on your needs (currently allows inline scripts for Django admin)
+        # Configured for Food Safety Agency application with CDN support
         response['Content-Security-Policy'] = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "img-src 'self' data: blob: https: http:; "
+            "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
             "connect-src 'self'; "
             "frame-ancestors 'none'; "
             "base-uri 'self'; "
