@@ -6366,19 +6366,48 @@ def home(request):
     
     
     def get_last_sync_status():
-        """Get last sync status"""
+        """Get last sync status from scheduled sync service"""
         try:
+            # First, try to get the actual sync service status
+            from ..services.scheduled_sync_service import scheduled_sync_service
+            if scheduled_sync_service and scheduled_sync_service.is_running:
+                # Get the most recent sync time from all sync types
+                last_sync_times = scheduled_sync_service.last_sync_times
+                most_recent = None
+
+                for sync_type, last_sync in last_sync_times.items():
+                    if last_sync:
+                        if most_recent is None or last_sync > most_recent:
+                            most_recent = last_sync
+
+                if most_recent:
+                    now = datetime.now()
+                    time_diff = now - most_recent
+
+                    if time_diff.total_seconds() < 60:  # Less than 1 minute
+                        return "Just now"
+                    elif time_diff.total_seconds() < 3600:  # Less than 1 hour
+                        minutes = int(time_diff.total_seconds() / 60)
+                        return f"{minutes} minute{'s' if minutes > 1 else ''} ago"
+                    elif time_diff.total_seconds() < 86400:  # Less than 1 day
+                        hours = int(time_diff.total_seconds() / 3600)
+                        return f"{hours} hour{'s' if hours > 1 else ''} ago"
+                    else:
+                        days = int(time_diff.total_seconds() / 86400)
+                        return f"{days} day{'s' if days > 1 else ''} ago"
+
+            # Fallback: Check when last inspection was created
             latest_inspection = FoodSafetyAgencyInspection.objects.order_by('-created_at').first()
             if latest_inspection:
                 now = timezone.now()
                 created_at = latest_inspection.created_at
-                
+
                 # Handle timezone-aware datetime comparison
                 if timezone.is_aware(created_at) and not timezone.is_aware(now):
                     now = timezone.make_aware(now)
                 elif not timezone.is_aware(created_at) and timezone.is_aware(now):
                     created_at = timezone.make_aware(created_at)
-                
+
                 time_diff = now - created_at
                 if time_diff.total_seconds() < 3600:  # Less than 1 hour
                     return "Just now"
@@ -6389,8 +6418,29 @@ def home(request):
                     days = int(time_diff.total_seconds() / 86400)
                     return f"{days} day{'s' if days > 1 else ''} ago"
             else:
-                return "No data"
-        except Exception:
+                return "Service not running"
+        except Exception as e:
+            # Fallback to inspection created_at if service check fails
+            try:
+                latest_inspection = FoodSafetyAgencyInspection.objects.order_by('-created_at').first()
+                if latest_inspection:
+                    now = timezone.now()
+                    created_at = latest_inspection.created_at
+
+                    if timezone.is_aware(created_at) and not timezone.is_aware(now):
+                        now = timezone.make_aware(now)
+                    elif not timezone.is_aware(created_at) and timezone.is_aware(now):
+                        created_at = timezone.make_aware(created_at)
+
+                    time_diff = now - created_at
+                    if time_diff.total_seconds() < 86400:
+                        hours = int(time_diff.total_seconds() / 3600)
+                        return f"{hours} hour{'s' if hours > 1 else ''} ago"
+                    else:
+                        days = int(time_diff.total_seconds() / 86400)
+                        return f"{days} day{'s' if days > 1 else ''} ago"
+            except Exception:
+                pass
             return "Unknown"
     
     # Check system status with caching to avoid performance issues
@@ -6418,7 +6468,20 @@ def home(request):
         cache.set('status_google_sheets', google_sheets_online, 30)
     
     last_sync = get_last_sync_status()
-    
+
+    # Check if scheduled sync service is running
+    def check_sync_service_status():
+        """Check if the scheduled sync service is running"""
+        try:
+            from ..services.scheduled_sync_service import scheduled_sync_service
+            if scheduled_sync_service and scheduled_sync_service.is_running:
+                return True
+            return False
+        except Exception:
+            return False
+
+    sync_service_running = check_sync_service_status()
+
     # Get recent activities from SystemLog
     def get_recent_activities():
         try:
@@ -6440,6 +6503,7 @@ def home(request):
             'postgresql_online': postgresql_online,
             'sql_server_online': sql_server_online,
             'google_sheets_online': google_sheets_online,
+            'sync_service_running': sync_service_running,
             'last_sync': last_sync
         },
         'recent_activities': recent_activities
@@ -6695,7 +6759,7 @@ def analytics_dashboard(request):
     # === COMPLIANCE ANALYTICS ===
     compliance_stats = FoodSafetyAgencyInspection.objects.aggregate(
         total=Count('id'),
-        compliant=Count('id', filter=Q(approved_status='YES')),
+        compliant=Count('id', filter=Q(approved_status='APPROVED')),
         non_compliant=Count('id', filter=Q(approved_status='PENDING'))
     )
     
@@ -6715,25 +6779,40 @@ def analytics_dashboard(request):
         rfi_rate = (rfi_stats['with_rfi'] / rfi_stats['total']) * 100
     
     # === INSPECTOR PERFORMANCE ===
-    inspector_performance = FoodSafetyAgencyInspection.objects.values('inspector_name').annotate(
+    inspector_performance = FoodSafetyAgencyInspection.objects.exclude(
+        Q(inspector_name__isnull=True) | Q(inspector_name='') | Q(inspector_name='Unknown')
+    ).values('inspector_name').annotate(
         total_inspections=Count('id'),
-        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        compliant=Count('id', filter=Q(approved_status='APPROVED')),
+        non_compliant=Count('id', filter=Q(approved_status='PENDING')),
         avg_hours=Avg('hours'),
         avg_distance=Avg('km_traveled'),
         last_inspection=Max('date_of_inspection')
     ).order_by('-total_inspections')[:15]
-    
+
     # Calculate compliance rate for each inspector
     for inspector in inspector_performance:
         if inspector['total_inspections'] > 0:
-            inspector['compliance_rate'] = (inspector['compliant_inspections'] / inspector['total_inspections']) * 100
+            inspector['compliance_rate'] = (inspector['compliant'] / inspector['total_inspections']) * 100
         else:
             inspector['compliance_rate'] = 0
-    
+        # For backwards compatibility
+        inspector['compliant_inspections'] = inspector['compliant']
+        inspector['count'] = inspector['total_inspections']
+
+    # === UNKNOWN INSPECTORS (for assignment) ===
+    unknown_inspectors = FoodSafetyAgencyInspection.objects.filter(
+        Q(inspector_name__isnull=True) | Q(inspector_name='') | Q(inspector_name='Unknown')
+    ).values('inspector_id', 'inspector_name').annotate(
+        total_inspections=Count('id'),
+        latest_inspection=Max('date_of_inspection'),
+        earliest_inspection=Min('date_of_inspection')
+    ).order_by('-total_inspections')
+
     # === CLIENT ANALYTICS ===
     client_analytics = FoodSafetyAgencyInspection.objects.values('client_name').annotate(
         total_inspections=Count('id'),
-        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        compliant_inspections=Count('id', filter=Q(approved_status='APPROVED')),
         avg_hours=Avg('hours'),
         avg_distance=Avg('km_traveled'),
         last_inspection=Max('date_of_inspection'),
@@ -6753,7 +6832,7 @@ def analytics_dashboard(request):
     # === COMMODITY ANALYSIS ===
     commodity_analysis = FoodSafetyAgencyInspection.objects.values('commodity').annotate(
         total_inspections=Count('id'),
-        compliant_inspections=Count('id', filter=Q(approved_status='YES')),
+        compliant_inspections=Count('id', filter=Q(approved_status='APPROVED')),
         avg_hours=Avg('hours'),
         avg_distance=Avg('km_traveled')
     ).order_by('-total_inspections')
@@ -6782,10 +6861,10 @@ def analytics_dashboard(request):
         day=TruncDay('date_of_inspection')
     ).values('day').annotate(
         count=Count('id'),
-        compliant=Count('id', filter=Q(approved_status='YES')),
+        compliant=Count('id', filter=Q(approved_status='APPROVED')),
         non_compliant=Count('id', filter=Q(approved_status='PENDING'))
     ).order_by('day')
-    
+
     # Weekly inspections for last 12 weeks
     weekly_inspections = FoodSafetyAgencyInspection.objects.filter(
         date_of_inspection__gte=now - timedelta(weeks=12)
@@ -6793,10 +6872,10 @@ def analytics_dashboard(request):
         week=TruncWeek('date_of_inspection')
     ).values('week').annotate(
         count=Count('id'),
-        compliant=Count('id', filter=Q(approved_status='YES')),
+        compliant=Count('id', filter=Q(approved_status='APPROVED')),
         non_compliant=Count('id', filter=Q(approved_status='PENDING'))
     ).order_by('week')
-    
+
     # Monthly inspections for last 12 months
     monthly_inspections = FoodSafetyAgencyInspection.objects.filter(
         date_of_inspection__gte=now - timedelta(days=365)
@@ -6804,7 +6883,7 @@ def analytics_dashboard(request):
         month=TruncMonth('date_of_inspection')
     ).values('month').annotate(
         count=Count('id'),
-        compliant=Count('id', filter=Q(approved_status='YES')),
+        compliant=Count('id', filter=Q(approved_status='APPROVED')),
         non_compliant=Count('id', filter=Q(approved_status='PENDING'))
     ).order_by('month')
     
@@ -6953,9 +7032,12 @@ def analytics_dashboard(request):
         'rfi_rate': round(rfi_rate or 0, 1),
         'rfi_stats': safe_json_dumps(rfi_stats, {'total': 0, 'with_rfi': 0, 'without_rfi': 0}),
         'month_growth_rate': round(month_growth_rate or 0, 1),
-        
+
         # Performance data
         'inspector_performance': safe_json_dumps(list(inspector_performance), []),
+        'active_inspectors_count': len(inspector_performance),
+        'unknown_inspectors': safe_json_dumps(list(unknown_inspectors), []),
+        'unknown_inspectors_count': len(unknown_inspectors),
         'client_analytics': safe_json_dumps(list(client_analytics), []),
         'commodity_analysis': safe_json_dumps(list(commodity_analysis), []),
         
@@ -7599,8 +7681,8 @@ def settings_view(request):
                                 best_days = 10**9
                                 
                                 for file_info in file_lookup.values():
-                                    if (file_info['commodity'].lower() == commodity and 
-                                        file_info['accountCode'] == account_code):
+                                    # Match by account code only (ignore commodity)
+                                    if file_info['accountCode'] == account_code:
                                         days_diff = abs((file_info['zipDate'] - inspection.date_of_inspection).days)
                                         if days_diff <= 15 and days_diff < best_days:
                                             best_file = file_info
@@ -9160,13 +9242,13 @@ def find_document_link_apps_script_replica(account_code, commodity, inspection_d
     best_match = None
     best_days_diff = float('inf')
     
-    # Search through file lookup exactly like Apps Script
+    # Search through file lookup - match by account code only
+    # Commodity is ignored because compliance docs may have different commodity prefix
     for file_key in file_lookup:
         file = file_lookup[file_key]
-        
-        # Exact matching logic from Apps Script
-        if (file['commodity'].lower() == commodity_str and 
-            file['accountCode'] == account_code):
+
+        # Match by account code only (ignore commodity mismatch)
+        if file['accountCode'] == account_code:
             
             try:
                 # Calculate days difference exactly like Apps Script
@@ -9480,10 +9562,9 @@ def download_compliance_documents(request):
                     
                     # If link found, extract file info and download
                     if document_link and '<a href=' in document_link:
-                        # Extract file info from the link
+                        # Extract file info from the link (by account code only)
                         for file_key, file_info in file_lookup.items():
-                            if (file_info['commodity'].lower() == str(inspection.commodity).lower().strip() and
-                                file_info['accountCode'] == account_code):
+                            if file_info['accountCode'] == account_code:
                                 
                                 # Create unique file identifier to prevent duplicates
                                 file_identifier = f"{file_info['name']}_{account_code}_{inspection.commodity}"
@@ -10550,8 +10631,8 @@ def pull_six_month_data_from_google_drive(request):
                 # Find matching files in Google Drive
                 matching_files = []
                 for file_key, file_info in file_lookup.items():
-                    if (file_info['commodity'].lower() == str(inspection.commodity).lower().strip() and
-                        file_info['accountCode'] == account_code):
+                    # Match by account code only (ignore commodity)
+                    if file_info['accountCode'] == account_code:
                         matching_files.append(file_info)
                 
                 if not matching_files:
@@ -13183,7 +13264,8 @@ def fetch_and_store_first_50_compliance_docs(request):
         if commodity == 'eggs':
             commodity = 'egg'
         for f in lookup.values():
-            if f['commodity'].lower() == commodity and f['accountCode'] == account_code:
+            # Match by account code only (ignore commodity)
+            if f['accountCode'] == account_code:
                 days = abs((f['zipDate'] - ins.date_of_inspection).days) if ins.date_of_inspection else 10**9
                 if days <= 15 and days < best_days:
                     best_days = days
@@ -13378,7 +13460,8 @@ def download_first_10_compliance_by_commodity(request):
             pass
         if not best:
             for f in lookup.values():
-                if f['commodity'].lower() == commodity_norm and f['accountCode'] == account_code:
+                # Match by account code only (ignore commodity)
+                if f['accountCode'] == account_code:
                     # Enforce ±15 days window
                     days = abs((f['zipDate'] - (ins.date_of_inspection or _dt.date.min)).days) if ins.date_of_inspection else 10**9
                     if days <= 15 and days < best_days:
@@ -13460,7 +13543,8 @@ def fetch_store_first_10_matched_docs(request):
         if commodity == 'eggs':
             commodity = 'egg'
         for f in lookup.values():
-            if f['commodity'].lower() == commodity and f['accountCode'] == account_code:
+            # Match by account code only (ignore commodity)
+            if f['accountCode'] == account_code:
                 days = abs((f['zipDate'] - (ins.date_of_inspection or f['zipDate'])).days)
                 if days <= 15 and days < best_days:
                     best_days = days
@@ -13874,6 +13958,121 @@ def system_logs(request):
     return render(request, 'main/system_logs.html', context)
 
 
+# =============================================================================
+# NOTIFICATION VIEWS
+# =============================================================================
+
+@login_required
+@role_required(['super_admin', 'developer'])
+def get_notifications(request):
+    """Get unread notification count and recent notifications"""
+    from ..models import Notification
+    from datetime import datetime
+
+    try:
+        # Get unread notifications for current user
+        unread_notifications = Notification.objects.filter(
+            user=request.user,
+            is_read=False
+        ).order_by('-created_at')[:10]  # Get last 10 unread
+
+        # Get all recent notifications (read and unread)
+        all_notifications = Notification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:20]  # Get last 20 total
+
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+
+        # Serialize notifications
+        notifications_data = []
+        for notif in all_notifications:
+            notifications_data.append({
+                'id': notif.id,
+                'title': notif.title,
+                'message': notif.message,
+                'type': notif.notification_type,
+                'priority': notif.priority,
+                'is_read': notif.is_read,
+                'created_at': notif.created_at.isoformat(),
+                'action_url': notif.action_url,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'unread_count': unread_count,
+            'notifications': notifications_data
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@role_required(['super_admin', 'developer'])
+def mark_notification_read(request, notification_id):
+    """Mark a single notification as read"""
+    from ..models import Notification
+    from django.utils import timezone
+
+    if request.method == 'POST':
+        try:
+            notification = Notification.objects.get(id=notification_id, user=request.user)
+            notification.is_read = True
+            notification.read_at = timezone.now()
+            notification.save()
+
+            return JsonResponse({'success': True})
+        except Notification.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+
+@login_required
+@role_required(['super_admin', 'developer'])
+def mark_all_notifications_read(request):
+    """Mark all notifications as read for the current user"""
+    from ..models import Notification
+    from django.utils import timezone
+
+    if request.method == 'POST':
+        try:
+            Notification.objects.filter(
+                user=request.user,
+                is_read=False
+            ).update(is_read=True, read_at=timezone.now())
+
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+
+@login_required
+@role_required(['super_admin', 'developer'])
+def delete_notification(request, notification_id):
+    """Delete a notification"""
+    from ..models import Notification
+
+    if request.method == 'POST':
+        try:
+            notification = Notification.objects.get(id=notification_id, user=request.user)
+            notification.delete()
+
+            return JsonResponse({'success': True})
+        except Notification.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Notification not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+    return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+
+
 @login_required
 @role_required(['super_admin', 'developer'])
 def fsa_operations_board(request):
@@ -13884,15 +14083,30 @@ def fsa_operations_board(request):
 
     # Load all tickets from the database
     from main.models import Ticket
+    from datetime import date
     tickets = Ticket.objects.all().select_related('created_by', 'assigned_to')
 
     # Get list of all users for assignment dropdown
     all_users = User.objects.filter(is_active=True).order_by('username')
 
+    # Calculate statistics
+    total_tickets = tickets.count()
+    open_tickets = tickets.filter(status='open').count()
+    in_progress_tickets = tickets.filter(status='in-progress').count()
+    resolved_today = tickets.filter(status='resolved', updated_at__date=date.today()).count()
+    high_priority_tickets = tickets.filter(priority='high').count()
+
     context = {
         'user': request.user,
         'tickets': tickets,
         'all_users': all_users,
+        'stats': {
+            'total': total_tickets,
+            'open': open_tickets,
+            'in_progress': in_progress_tickets,
+            'resolved_today': resolved_today,
+            'high_priority': high_priority_tickets,
+        }
     }
 
     return render(request, 'main/fsa_operations_board.html', context)
@@ -13956,8 +14170,8 @@ def submit_ticket(request):
         browser_info = request.POST.get('browser_info', '')
         additional_notes = request.POST.get('additional_notes', '')
 
-        # Validate required fields
-        if not title or not description or not issue_type or not affected_area:
+        # Validate required fields (only title, description, and issue_type are required)
+        if not title or not description or not issue_type:
             messages.error(request, 'Please fill in all required fields.')
             return redirect('submit_ticket')
 
@@ -13978,7 +14192,7 @@ def submit_ticket(request):
             title=title,
             description=description,
             issue_type=issue_type,
-            affected_area=affected_area,
+            affected_area=affected_area if affected_area else None,
             priority=priority,
             steps_to_reproduce=steps_to_reproduce if steps_to_reproduce else None,
             expected_behavior=expected_behavior if expected_behavior else None,
@@ -13992,78 +14206,40 @@ def submit_ticket(request):
             status='open'
         )
 
-        # Send email notification to Ethan
+        # Send email notification to Ethan and Anthony
         try:
             email_subject = f"New Ticket #{ticket.id}: {title}"
 
-            email_body = f"""Good day Ethan,
+            email_body = f"""Good day,
 
-A new ticket has been submitted to the Food Safety Agency Operations Board and assigned to you.
+A new ticket has been submitted to the Food Safety Agency Support Tickets system.
 
-TICKET DETAILS
-{"="*60}
-
-Ticket ID: #{ticket.id}
-Title: {title}
-Status: Open
+Issue: {title}
 Priority: {ticket.get_priority_display()}
 
-Issue Type: {issue_type}
-Affected Area: {affected_area}
-
-Description:
+Description
 {description}
-"""
-
-            if steps_to_reproduce:
-                email_body += f"""
-Steps to Reproduce:
-{steps_to_reproduce}
-"""
-
-            if expected_behavior:
-                email_body += f"""
-Expected Behavior:
-{expected_behavior}
-"""
-
-            if actual_behavior:
-                email_body += f"""
-Actual Behavior:
-{actual_behavior}
-"""
-
-            if impact_users:
-                email_body += f"""
-Impact: {impact_users} users affected
-"""
-
-            if is_blocking:
-                email_body += f"""
-Blocking Work: {is_blocking}
 """
 
             if browser_info:
                 email_body += f"""
-Browser/Device Info:
+Environment
 {browser_info}
 """
 
             if additional_notes:
                 email_body += f"""
-Additional Notes:
+Additional Information
 {additional_notes}
 """
 
             email_body += f"""
+Submitted by: {request.user.get_full_name() or request.user.username}
+Submitted on: {ticket.created_at.strftime('%B %d, %Y')}
 
-Submitted By: {request.user.get_full_name() or request.user.username}
-Created: {ticket.created_at.strftime('%Y-%m-%d %H:%M')}
-{"="*60}
+Please review and take the necessary action in the Support Tickets system.
 
-Please review this ticket in the FSA Operations Board.
-
-Best regards,
+Regards,
 Food Safety Agency System
 """
 
@@ -14071,14 +14247,14 @@ Food Safety Agency System
                 subject=email_subject,
                 message=email_body,
                 from_email='info@eclick.co.za',
-                recipient_list=['ethan.sevenster@moc-pty.com'],
+                recipient_list=['ethan.sevenster@moc-pty.com', 'anthony.penzes@moc-pty.com'],
                 fail_silently=True,  # Don't break if email fails
             )
         except Exception as e:
             # Log email error but don't stop ticket creation
             print(f"Failed to send email notification: {e}")
 
-        messages.success(request, f'✅ Ticket #{ticket.id} submitted successfully! Ethan has been notified via email.')
+        messages.success(request, f'✅ Ticket #{ticket.id} submitted successfully! Ethan and Anthony have been notified via email.')
         return redirect('submit_ticket')
 
     # GET request - show the form
@@ -14417,22 +14593,68 @@ def onedrive_callback(request):
                     
                     print(f" Tokens saved to: {token_file}")
                     print(" OneDrive authentication setup complete!")
-                    
-                    # Return success page
-                    return HttpResponse(f"""
+
+                    # Return success page with redirect to OneDrive View
+                    return HttpResponse("""
                     <html>
-                    <head><title>OneDrive Authentication Success</title></head>
+                    <head>
+                        <title>OneDrive Authentication Success</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                min-height: 100vh;
+                                margin: 0;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            }
+                            .success-card {
+                                background: white;
+                                padding: 3rem;
+                                border-radius: 12px;
+                                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                                text-align: center;
+                                max-width: 500px;
+                            }
+                            .success-icon {
+                                font-size: 4rem;
+                                color: #10b981;
+                                margin-bottom: 1rem;
+                            }
+                            h1 {
+                                color: #1f2937;
+                                margin-bottom: 1rem;
+                            }
+                            p {
+                                color: #6b7280;
+                                margin-bottom: 0.5rem;
+                            }
+                            .redirect-info {
+                                margin-top: 2rem;
+                                padding: 1rem;
+                                background: #f3f4f6;
+                                border-radius: 6px;
+                                color: #4b5563;
+                                font-size: 0.9rem;
+                            }
+                        </style>
+                    </head>
                     <body>
-                    <h1> OneDrive Authentication Successful!</h1>
-                    <p>Authorization code received: {code}</p>
-                    <p> Access and refresh tokens have been saved!</p>
-                    <p>You can now close this window and return to the application.</p>
-                    <script>
-                        // Auto-close after 3 seconds
-                        setTimeout(function() {{
-                            window.close();
-                        }}, 3000);
-                    </script>
+                        <div class="success-card">
+                            <div class="success-icon">✓</div>
+                            <h1>OneDrive Connected Successfully!</h1>
+                            <p>Your OneDrive account has been authenticated.</p>
+                            <p>Access and refresh tokens have been saved.</p>
+                            <div class="redirect-info">
+                                Redirecting to OneDrive View in 3 seconds...
+                            </div>
+                        </div>
+                        <script>
+                            setTimeout(function() {
+                                window.location.href = '/developer/onedrive-view/';
+                            }, 3000);
+                        </script>
                     </body>
                     </html>
                     """)
@@ -15340,15 +15562,52 @@ def reauthenticate_onedrive(request):
 
 
 @login_required
+@role_required(['developer'])
+def onedrive_auth(request):
+    """Initiate OneDrive OAuth authentication flow."""
+    from django.shortcuts import redirect
+    from django.conf import settings
+    import urllib.parse
+
+    try:
+        # Get OneDrive settings
+        client_id = getattr(settings, 'ONEDRIVE_CLIENT_ID', '')
+        redirect_uri = getattr(settings, 'ONEDRIVE_REDIRECT_URI', 'http://localhost:8000/onedrive/callback')
+
+        if not client_id:
+            return HttpResponse('<html><body><h1>Error</h1><p>OneDrive Client ID not configured in settings.</p></body></html>')
+
+        # Generate authorization URL
+        auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+        auth_params = {
+            'client_id': client_id,
+            'response_type': 'code',
+            'redirect_uri': redirect_uri,
+            'scope': 'https://graph.microsoft.com/Files.ReadWrite.All offline_access',
+            'response_mode': 'query',
+            'prompt': 'consent'  # Force consent to get refresh token
+        }
+
+        # Build full authorization URL
+        auth_url_with_params = f"{auth_url}?{urllib.parse.urlencode(auth_params)}"
+
+        # Redirect user to Microsoft OAuth page
+        return redirect(auth_url_with_params)
+
+    except Exception as e:
+        return HttpResponse(f'<html><body><h1>Error</h1><p>{str(e)}</p></body></html>')
+
+
+@login_required
 def get_onedrive_auth_url(request):
     """Get OneDrive authorization URL for manual authentication."""
     try:
         from django.conf import settings
-        
+
         # Check if OneDrive is enabled
         if not getattr(settings, 'ONEDRIVE_ENABLED', False):
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'message': 'OneDrive integration is not enabled in settings'
             })
         

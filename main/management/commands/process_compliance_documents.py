@@ -120,10 +120,9 @@ class Command(BaseCommand):
                         
                         # If link found, download to compliance folder
                         if document_link and '<a href=' in document_link:
-                            # Find the matching file in lookup
+                            # Find the matching file in lookup (by account code only)
                             for file_key, file_info in file_lookup.items():
-                                if (file_info['commodity'].lower() == str(inspection.commodity).lower().strip() and
-                                    file_info['accountCode'] == account_code):
+                                if file_info['accountCode'] == account_code:
                                     
                                     # Download to client's compliance folder
                                     downloaded_path = download_compliance_document(
@@ -158,21 +157,22 @@ class Command(BaseCommand):
                 )
             )
             
-            # Log to system
-            from django.contrib.auth.models import User
-            system_user = User.objects.get(username='developer')
-            SystemLog.log_activity(
-                user=system_user,
-                action='SYNC',
-                page='compliance_background',
-                description=f'Compliance document background processing: {downloaded_count} documents downloaded',
-                details={
-                    'processed': processed_count,
-                    'downloaded': downloaded_count,
-                    'errors': error_count,
-                    'processing_time': processing_time
-                }
-            )
+            # Log to system only if there was actual activity (downloads or errors)
+            if downloaded_count > 0 or error_count > 0:
+                from django.contrib.auth.models import User
+                system_user = User.objects.get(username='developer')
+                SystemLog.log_activity(
+                    user=system_user,
+                    action='SYNC',
+                    page='compliance_background',
+                    description=f'Compliance document background processing: {downloaded_count} documents downloaded',
+                    details={
+                        'processed': processed_count,
+                        'downloaded': downloaded_count,
+                        'errors': error_count,
+                        'processing_time': processing_time
+                    }
+                )
             
         except Exception as e:
             self.stdout.write(

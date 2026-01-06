@@ -179,7 +179,8 @@ class GoogleDriveService:
         best = None
         best_days = 10**9
         for file in file_lookup.values():
-            if file['commodity'].lower() == commodity_str and file['accountCode'] == account_code:
+            # Match by account code only (ignore commodity mismatch)
+            if file['accountCode'] == account_code:
                 days_diff = abs((file['zipDate'] - insp_date).days)
                 if days_diff <= 15 and days_diff < best_days:
                     best = file

@@ -421,8 +421,8 @@ class DailyComplianceSyncService:
                             best_days_diff = 999
 
                             for file_key, file_info in file_lookup.items():
-                                if (file_info.get('commodity', '').lower() == commodity_prefix and
-                                    file_info.get('accountCode') == account_code):
+                                # Match by account code only (ignore commodity)
+                                if file_info.get('accountCode') == account_code:
 
                                     # Calculate days difference - ensure both are date objects
                                     file_date = file_info['zipDate']
