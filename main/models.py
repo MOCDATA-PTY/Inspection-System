@@ -432,6 +432,9 @@ class FoodSafetyAgencyInspection(models.Model):
     # Invoice number (editable field for tracking invoiced items)
     invoice_number = models.CharField(max_length=100, blank=True, null=True, help_text="Invoice number assigned to this inspection")
 
+    # Manual entry flag - prevents sync from overwriting this inspection
+    is_manual = models.BooleanField(default=False, help_text="True if this inspection was manually entered (not synced from SQL Server)")
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

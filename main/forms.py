@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from .models import Client, Inspection, InspectorMapping
+from .models import Client, Inspection, InspectorMapping, FoodSafetyAgencyInspection
 
 class ClientForm(forms.ModelForm):
     """Form for creating/editing clients"""
@@ -253,3 +253,166 @@ class InspectorMappingForm(forms.ModelForm):
         if not inspector_name:
             raise ValidationError("Inspector name is required.")
         return inspector_name
+
+
+class FoodSafetyAgencyInspectionForm(forms.ModelForm):
+    """Form for manually creating/editing Food Safety Agency Inspections"""
+
+    COMMODITY_CHOICES = [
+        ('', '-- Select Commodity --'),
+        ('POULTRY', 'Poultry'),
+        ('RAW', 'Raw'),
+        ('PMP', 'PMP'),
+        ('EGGS', 'Eggs'),
+    ]
+
+    LAB_CHOICES = [
+        ('', '-- Select Lab --'),
+        ('lab_a', 'Lab A'),
+        ('lab_b', 'Lab B'),
+        ('lab_c', 'Lab C'),
+        ('lab_d', 'Lab D'),
+        ('lab_e', 'Lab E'),
+        ('lab_f', 'Lab F'),
+    ]
+
+    commodity = forms.ChoiceField(
+        choices=COMMODITY_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+        })
+    )
+
+    date_of_inspection = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        })
+    )
+
+    client_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Client name'
+        })
+    )
+
+    internal_account_code = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Internal account code (e.g., RE-IND-EGG-NA-5042)'
+        })
+    )
+
+    inspector_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Inspector name'
+        })
+    )
+
+    product_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Product name (e.g., Mince, Eggs)'
+        })
+    )
+
+    product_class = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Product class'
+        })
+    )
+
+    is_sample_taken = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    bought_sample = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'step': '0.01',
+            'class': 'form-control',
+            'placeholder': '0.00'
+        })
+    )
+
+    km_traveled = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'step': '0.1',
+            'class': 'form-control',
+            'placeholder': 'Kilometers traveled'
+        })
+    )
+
+    hours = forms.DecimalField(
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'step': '0.1',
+            'class': 'form-control',
+            'placeholder': 'Hours worked'
+        })
+    )
+
+    lab = forms.ChoiceField(
+        choices=LAB_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+        })
+    )
+
+    comment = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Additional comments...'
+        })
+    )
+
+    class Meta:
+        model = FoodSafetyAgencyInspection
+        fields = [
+            'commodity', 'date_of_inspection', 'client_name', 'internal_account_code',
+            'inspector_name', 'product_name', 'product_class',
+            'is_sample_taken', 'bought_sample', 'km_traveled', 'hours',
+            'lab', 'comment',
+            'fat', 'protein', 'calcium', 'dna', 'needs_retest'
+        ]
+        widgets = {
+            'fat': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'protein': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'calcium': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'dna': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'needs_retest': forms.Select(attrs={'class': 'form-control'}, choices=[
+                ('', '-- Select --'),
+                ('YES', 'Yes'),
+                ('NO', 'No'),
+            ]),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # Ensure required fields are provided
+        if not cleaned_data.get('commodity'):
+            self.add_error('commodity', 'Commodity is required.')
+        if not cleaned_data.get('date_of_inspection'):
+            self.add_error('date_of_inspection', 'Date of inspection is required.')
+        if not cleaned_data.get('client_name'):
+            self.add_error('client_name', 'Client name is required.')
+        if not cleaned_data.get('inspector_name'):
+            self.add_error('inspector_name', 'Inspector name is required.')
+
+        return cleaned_data

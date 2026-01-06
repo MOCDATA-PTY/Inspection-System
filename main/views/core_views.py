@@ -88,7 +88,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from django.core.paginator import Paginator
 from django.db.models import Q
-from ..forms import LoginForm, RegisterForm, ClientForm, InspectionForm, InspectorMappingForm
+from ..forms import LoginForm, RegisterForm, ClientForm, InspectionForm, InspectorMappingForm, FoodSafetyAgencyInspectionForm
 from ..models import Client, Inspection, Shipment, Settings, FoodSafetyAgencyInspection, SystemLog, InspectorMapping
 from django.views.decorators.csrf import csrf_exempt
 from ..decorators import role_required, inspector_restricted, financial_only, scientist_only, inspector_only_inspections, no_inspector_scientist
@@ -608,6 +608,110 @@ def delete_inspection(request, pk):
     }
     
     return render(request, 'main/inspection_confirm_delete.html', context)
+
+
+# =============================================================================
+# MANUAL FSA INSPECTION ENTRY
+# =============================================================================
+
+@login_required(login_url='login')
+@role_required(['admin', 'super_admin', 'developer'])
+def add_fsa_inspection(request):
+    """Add a new Food Safety Agency inspection manually."""
+    clear_messages(request)
+
+    if request.method == 'POST':
+        form = FoodSafetyAgencyInspectionForm(request.POST)
+        if form.is_valid():
+            try:
+                inspection = form.save(commit=False)
+                # Mark as manual entry so sync won't overwrite
+                inspection.is_manual = True
+                # Generate a unique negative remote_id for manual entries
+                from django.db.models import Min
+                min_remote_id = FoodSafetyAgencyInspection.objects.filter(
+                    is_manual=True
+                ).aggregate(Min('remote_id'))['remote_id__min']
+                if min_remote_id is None or min_remote_id >= 0:
+                    inspection.remote_id = -1
+                else:
+                    inspection.remote_id = min_remote_id - 1
+                inspection.save()
+                messages.success(request, f"Inspection for {inspection.client_name} added successfully!")
+                return redirect('shipment_list')
+            except Exception as e:
+                messages.error(request, f"Error adding inspection: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').title()}: {error}")
+    else:
+        form = FoodSafetyAgencyInspectionForm()
+
+    context = {
+        'form': form,
+        'action': 'Add'
+    }
+
+    return render(request, 'main/fsa_inspection_form.html', context)
+
+
+@login_required(login_url='login')
+@role_required(['admin', 'super_admin', 'developer'])
+def edit_fsa_inspection(request, pk):
+    """Edit an existing Food Safety Agency inspection."""
+    clear_messages(request)
+
+    inspection = get_object_or_404(FoodSafetyAgencyInspection, pk=pk)
+
+    if request.method == 'POST':
+        form = FoodSafetyAgencyInspectionForm(request.POST, instance=inspection)
+        if form.is_valid():
+            try:
+                inspection = form.save()
+                messages.success(request, f"Inspection for {inspection.client_name} updated successfully!")
+                return redirect('shipment_list')
+            except Exception as e:
+                messages.error(request, f"Error updating inspection: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').title()}: {error}")
+    else:
+        form = FoodSafetyAgencyInspectionForm(instance=inspection)
+
+    context = {
+        'form': form,
+        'inspection': inspection,
+        'action': 'Edit'
+    }
+
+    return render(request, 'main/fsa_inspection_form.html', context)
+
+
+@login_required(login_url='login')
+@role_required(['admin', 'super_admin', 'developer'])
+def delete_fsa_inspection(request, pk):
+    """Delete a Food Safety Agency inspection."""
+    clear_messages(request)
+
+    inspection = get_object_or_404(FoodSafetyAgencyInspection, pk=pk)
+
+    if request.method == 'POST':
+        try:
+            inspection_info = f"{inspection.client_name} - {inspection.date_of_inspection}"
+            inspection.delete()
+            messages.success(request, f"Inspection {inspection_info} deleted successfully!")
+            return redirect('shipment_list')
+        except Exception as e:
+            messages.error(request, f"Error deleting inspection: {str(e)}")
+            return redirect('shipment_list')
+
+    context = {
+        'inspection': inspection
+    }
+
+    return render(request, 'main/fsa_inspection_confirm_delete.html', context)
 
 
 # =============================================================================

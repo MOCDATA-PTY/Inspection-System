@@ -4,6 +4,7 @@ from .views.core_views import (
     settings_view, inspector_settings_view, session_status, refresh_shipments, refresh_clients,
     refresh_inspections, check_sync_status, shipment_list, edit_shipment, delete_shipment,
     delete_inspection, upload_document, user_management, system_logs, fsa_operations_board, submit_ticket, update_ticket_status, refresh_tokens,
+    add_fsa_inspection, edit_fsa_inspection, delete_fsa_inspection,
     update_bought_sample, update_group_approved, update_sample_taken, dashboard, compliance_documents, onedrive_view, compliance_linking_page,
     get_inspection_data, process_document_links, download_compliance_documents,
     process_all_compliance_documents, start_compliance_document_download,
@@ -16,14 +17,15 @@ from .views.core_views import (
     list_any_50_drive_files, fetch_store_any_50_drive_files, drive_any10_page,
     download_first_10_compliance_by_commodity, scheduled_sync_service_status,
     start_scheduled_sync_service, stop_scheduled_sync_service, run_manual_sync,
-    save_system_settings, get_system_settings, start_daily_compliance_sync, stop_daily_compliance_sync, daily_compliance_sync_status, performance_monitor, server_status,
+    save_system_settings, get_system_settings, start_daily_compliance_sync, stop_daily_compliance_sync, daily_compliance_sync_status, performance_monitor, server_directory_tree, server_status,
     check_compliance_documents_batch, populate_six_month_files, pull_six_month_data_from_google_drive, get_client_all_files, get_page_clients_files, get_page_clients_file_status, update_sent_status, client_autocomplete_api, onedrive_callback, inspector_dashboard, analytics_dashboard,
     scheduled_backup_service_status, start_scheduled_backup_service, stop_scheduled_backup_service, run_manual_backup,
     master_service_control_status, start_all_services, stop_all_services,
     onedrive_service_status, start_onedrive_service, stop_onedrive_service, test_onedrive_connection,
-    reauthenticate_onedrive, get_onedrive_auth_url, export_sheet, export_to_google_sheets, update_invoice_number, export_client_allocations, add_client_allocation, edit_client_allocation,
+    reauthenticate_onedrive, get_onedrive_auth_url, onedrive_auth, export_sheet, export_to_google_sheets, update_invoice_number, export_client_allocations, add_client_allocation, edit_client_allocation,
     get_dropdown_options, delete_dropdown_option, delete_client_allocation, send_password_reset_email,
-    forgot_password, reset_password_confirm
+    forgot_password, reset_password_confirm, get_notifications, mark_notification_read,
+    mark_all_notifications_read, delete_notification
 )
 from .views.data_views import (
     export_shipments, get_inspection_fees, update_inspection_fees, get_inspection_fee_history,
@@ -76,6 +78,10 @@ urlpatterns = [
     path('inspections/delete/<int:pk>/', delete_shipment, name='delete_shipment'),
     path('edit-inspection/<str:inspection_id>/', views.edit_inspection, name='edit_inspection'),
     path('delete-inspection/<str:inspection_id>/', delete_inspection, name='delete_inspection'),
+    # Manual FSA Inspection Entry
+    path('inspections/add/', add_fsa_inspection, name='add_fsa_inspection'),
+    path('inspections/edit-fsa/<int:pk>/', edit_fsa_inspection, name='edit_fsa_inspection'),
+    path('inspections/delete-fsa/<int:pk>/', delete_fsa_inspection, name='delete_fsa_inspection'),
     path('upload-document/', upload_document, name='upload_document'),
     path('delete-inspection-file/', views.delete_inspection_file, name='delete_inspection_file'),
     path('list-uploaded-files/', views.list_uploaded_files, name='list_uploaded_files'),
@@ -137,6 +143,15 @@ urlpatterns = [
     path('submit-ticket/', submit_ticket, name='submit_ticket'),
     path('tickets/<int:ticket_id>/update-status/', update_ticket_status, name='update_ticket_status'),
     path('api/refresh-tokens/', refresh_tokens, name='refresh_tokens'),
+
+    # =============================================================================
+    # NOTIFICATION URLS
+    # =============================================================================
+    path('api/notifications/', get_notifications, name='get_notifications'),
+    path('api/notifications/<int:notification_id>/read/', mark_notification_read, name='mark_notification_read'),
+    path('api/notifications/mark-all-read/', mark_all_notifications_read, name='mark_all_notifications_read'),
+    path('api/notifications/<int:notification_id>/delete/', delete_notification, name='delete_notification'),
+
     path('developer/compliance-documents/', compliance_documents, name='compliance_documents'),
     path('developer/onedrive-view/', onedrive_view, name='onedrive_view'),
     path('developer/compliance-documents/linking/', compliance_linking_page, name='compliance_linking_page'),
@@ -195,6 +210,7 @@ urlpatterns = [
     # PERFORMANCE MONITORING URLS
     # =============================================================================
     path('server-view/', performance_monitor, name='server_view'),
+    path('server-directory-tree/', server_directory_tree, name='server_directory_tree'),
     path('server-status/', server_status, name='server_status'),
     
     # =============================================================================
@@ -215,6 +231,7 @@ urlpatterns = [
     # =============================================================================
     # ONEDRIVE SERVICE CONTROL URLS
     # =============================================================================
+    path('onedrive/auth/', onedrive_auth, name='onedrive_auth'),
     path('onedrive-service/status/', onedrive_service_status, name='onedrive_service_status'),
     path('onedrive-service/start/', start_onedrive_service, name='start_onedrive_service'),
     path('onedrive-service/stop/', stop_onedrive_service, name='stop_onedrive_service'),

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ action }} Inspection - Food Safety Agency</title>
+    <link rel="icon" type="image/png" href="{% static 'img/Food safetyagencylogo.png' %}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #007890;
+            --primary-light: #e6f3f7;
+            --secondary: #EC343C;
+            --background: #f9fafb;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+        body {
+            background: var(--background);
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .form-card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.1);
+        }
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #005a6b;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--primary-light);
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-4">
+                <img src="{% static 'img/Food safetyagencylogo.png' %}" alt="Logo" class="h-12">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">{{ action }} Inspection</h1>
+                    <p class="text-gray-500">Food Safety Agency (Pty) Ltd</p>
+                </div>
+            </div>
+            <a href="{% url 'shipment_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Inspections
+            </a>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Form -->
+        <form method="post" class="form-card p-6">
+            {% csrf_token %}
+
+            <!-- Basic Information -->
+            <h3 class="section-title"><i class="fas fa-info-circle mr-2"></i>Basic Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label">Commodity *</label>
+                    {{ form.commodity }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Inspection *</label>
+                    {{ form.date_of_inspection }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Client Name *</label>
+                    {{ form.client_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Internal Account Code</label>
+                    {{ form.internal_account_code }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Inspector Name *</label>
+                    {{ form.inspector_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lab</label>
+                    {{ form.lab }}
+                </div>
+            </div>
+
+            <!-- Product Information -->
+            <h3 class="section-title mt-6"><i class="fas fa-box mr-2"></i>Product Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    {{ form.product_name }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Product Class</label>
+                    {{ form.product_class }}
+                </div>
+            </div>
+
+            <!-- Sample & Travel Information -->
+            <h3 class="section-title mt-6"><i class="fas fa-vial mr-2"></i>Sample & Travel</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="form-group">
+                    <div class="checkbox-item">
+                        {{ form.is_sample_taken }}
+                        <label>Sample Taken</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Bought Sample (R)</label>
+                    {{ form.bought_sample }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">KM Traveled</label>
+                    {{ form.km_traveled }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Hours</label>
+                    {{ form.hours }}
+                </div>
+            </div>
+
+            <!-- Testing Parameters -->
+            <h3 class="section-title mt-6"><i class="fas fa-flask mr-2"></i>Testing Parameters</h3>
+            <div class="checkbox-group mb-4">
+                <div class="checkbox-item">
+                    {{ form.fat }}
+                    <label>Fat</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.protein }}
+                    <label>Protein</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.calcium }}
+                    <label>Calcium</label>
+                </div>
+                <div class="checkbox-item">
+                    {{ form.dna }}
+                    <label>DNA</label>
+                </div>
+            </div>
+            <div class="form-group" style="max-width: 200px;">
+                <label class="form-label">Needs Retest</label>
+                {{ form.needs_retest }}
+            </div>
+
+            <!-- Comments -->
+            <h3 class="section-title mt-6"><i class="fas fa-comment mr-2"></i>Comments</h3>
+            <div class="form-group">
+                {{ form.comment }}
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex gap-4 mt-8 pt-6 border-t">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save mr-2"></i> {{ action }} Inspection
+                </button>
+                <a href="{% url 'shipment_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

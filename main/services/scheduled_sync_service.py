@@ -569,13 +569,16 @@ class ScheduledSyncService:
 
             # Fetch ALL existing inspections in ONE query (much faster than giant OR query)
             # Build dictionary in memory for fast lookups
+            # IMPORTANT: Exclude manual entries (is_manual=True) from sync - they should not be overwritten
             print(f"[PERF] Loading all existing inspections into memory...")
-            existing_inspections = FoodSafetyAgencyInspection.objects.all()
+            existing_inspections = FoodSafetyAgencyInspection.objects.filter(is_manual=False)
             existing_inspections_dict = {
                 (insp.commodity, insp.remote_id): insp
                 for insp in existing_inspections
             }
+            manual_count = FoodSafetyAgencyInspection.objects.filter(is_manual=True).count()
             print(f"[PERF] Loaded {len(existing_inspections_dict)} existing inspections for fast lookups")
+            print(f"[PERF] Skipping {manual_count} manual entries (will not be overwritten)")
 
             # Lists for bulk operations
             inspections_to_create = []
