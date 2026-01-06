@@ -171,9 +171,9 @@ class DailyComplianceSyncService:
                             'id': folder_id,
                             'year': year
                         })
-                        print(f"   ✅ Found year folder: {folder_name}")
+                        print(f"   [OK] Found year folder: {folder_name}")
                     else:
-                        print(f"   ⏭️  Skipping: {folder_name} (before 2025)")
+                        print(f"   [SKIP] Skipping: {folder_name} (before 2025)")
 
             if not year_folders:
                 print("[WARNING] No year folders found (2025+)")
@@ -215,11 +215,11 @@ class DailyComplianceSyncService:
                                     'id': folder_id,
                                     'date': folder_date
                                 })
-                                print(f"      ✅ Including: {folder_name}")
+                                print(f"      [OK] Including: {folder_name}")
                             else:
-                                print(f"      ⏭️  Skipping: {folder_name} (before October 2025)")
+                                print(f"      [SKIP]  Skipping: {folder_name} (before October 2025)")
                         except ValueError:
-                            print(f"      ⚠️  Could not parse folder name: {folder_name}")
+                            print(f"      [WARN]  Could not parse folder name: {folder_name}")
                             continue
 
             print(f"\n[OK] Found {len(month_folders)} total month folders to process (October 2025+)")
@@ -318,7 +318,7 @@ class DailyComplianceSyncService:
             return None
             
         except Exception as e:
-            print(f"❌ Error getting account code for {client_name}: {e}")
+            print(f"[ERROR] Error getting account code for {client_name}: {e}")
             return None
 
     def process_compliance_documents(self):
@@ -377,7 +377,7 @@ class DailyComplianceSyncService:
                 # Skip if already processed
                 if self.is_document_processed(document_id):
                     documents_skipped += 1
-                    print(f"⏭️  Skipping already processed: {inspection.id}")
+                    print(f"[SKIP]  Skipping already processed: {inspection.id}")
                     continue
                 
                 try:
@@ -393,7 +393,7 @@ class DailyComplianceSyncService:
                         account_code = self.get_client_account_code(inspection.client_name)
 
                     if not account_code:
-                        print(f"⚠️  No account code found for client: {inspection.client_name}")
+                        print(f"[WARN]  No account code found for client: {inspection.client_name}")
                         continue
                     
                     # Find document links using account code
@@ -405,7 +405,7 @@ class DailyComplianceSyncService:
                     )
                     
                     if document_link and document_link != "Document Not Found":
-                        print(f"✅ Found compliance document for {inspection.id} (Account: {account_code})")
+                        print(f"[OK] Found compliance document for {inspection.id} (Account: {account_code})")
 
                         # IMMEDIATELY DOWNLOAD the document
                         try:
@@ -455,26 +455,26 @@ class DailyComplianceSyncService:
                                 )
 
                                 if downloaded_path:
-                                    print(f"✅ Downloaded successfully: {best_match['name']} -> {downloaded_path}")
+                                    print(f"[OK] Downloaded successfully: {best_match['name']} -> {downloaded_path}")
                                     documents_processed += 1
                                 else:
-                                    print(f"❌ Download failed for: {best_match['name']}")
+                                    print(f"[ERROR] Download failed for: {best_match['name']}")
                             else:
-                                print(f"⚠️  Could not find matching file for download (Account: {account_code}, Commodity: {commodity_prefix})")
+                                print(f"[WARN]  Could not find matching file for download (Account: {account_code}, Commodity: {commodity_prefix})")
 
                         except Exception as download_error:
-                            print(f"❌ Download error for {inspection.id}: {download_error}")
+                            print(f"[ERROR] Download error for {inspection.id}: {download_error}")
 
                         # Mark as processed only after successful download attempt
                         self.add_to_processed_cache(document_id)
                     else:
-                        print(f"⚠️  No document found for {inspection.id} (Account: {account_code})")
+                        print(f"[WARN]  No document found for {inspection.id} (Account: {account_code})")
                     
                     # Small delay to prevent overwhelming the system
                     time.sleep(0.2)  # Slightly longer delay for download operations
                     
                 except Exception as e:
-                    print(f"❌ Error processing {inspection.id}: {e}")
+                    print(f"[ERROR] Error processing {inspection.id}: {e}")
                     continue
             
             # Update statistics
@@ -487,11 +487,11 @@ class DailyComplianceSyncService:
             settings.compliance_last_processed_date = datetime.now()
             settings.save()
             
-            print(f"✅ Daily compliance sync completed!")
+            print(f"[OK] Daily compliance sync completed!")
             print(f"📊 Processed: {documents_processed}, Skipped: {documents_skipped}")
 
         except Exception as e:
-            print(f"❌ Error in daily compliance sync: {e}")
+            print(f"[ERROR] Error in daily compliance sync: {e}")
         finally:
             # Restore original is_running state
             self.is_running = was_running
