@@ -125,30 +125,50 @@
 
         .logout-btn {
             width: 100%;
-            background: #ef4444;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
-            border: 1px solid #dc2626;
-            padding: 0.75rem 1rem;
-            border-radius: 4px;
+            border: none;
+            padding: 0.625rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.625rem;
-            font-weight: 500;
+            gap: 0.5rem;
+            font-weight: 600;
             font-size: 0.875rem;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
         }
 
         .logout-btn:hover {
-            background: #dc2626;
-            border-color: #b91c1c;
-            color: #ffffff;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
         }
 
         .logout-btn:active {
-            background: #b91c1c;
-            transform: scale(0.98);
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(220, 38, 38, 0.3);
+        }
+
+        .logout-btn i {
+            font-size: 1rem;
+        }
+
+        /* Dark mode logout button */
+        [data-theme="dark"] .logout-btn {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            box-shadow: 0 2px 4px rgba(248, 113, 113, 0.3);
+        }
+
+        [data-theme="dark"] .logout-btn:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
+        }
+
+        [data-theme="dark"] .logout-btn:active {
+            box-shadow: 0 1px 2px rgba(248, 113, 113, 0.3);
         }
 
         #sidebar .text-sidebar-text {
@@ -237,8 +257,11 @@
             background: var(--background);  /* Fallback color while image loads */
             color: var(--text);
             line-height: 1.5;
-            padding: var(--spacing);
+            padding: 0;
+            margin: 0;
             position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         /* Load background image after page loads for better performance */
@@ -294,6 +317,11 @@
             margin-bottom: var(--spacing);
             border: 1px solid var(--border);
             width: 100%;
+        }
+
+        [data-theme="dark"] .card {
+            background: var(--card-bg);
+            border-color: var(--border);
         }
         
         .card-header {
@@ -421,34 +449,44 @@
             padding: 6px 12px;
             font-size: 0.75rem;
         }
-        
+
         .table {
             width: 100%;
             border-collapse: collapse;
             margin: 0;
         }
-        
+
         .table th,
         .table td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
-        
+
         .table th {
             background-color: var(--primary-light);
             color: var(--text);
             font-weight: 600;
             font-size: 0.875rem;
+            white-space: nowrap;
         }
-        
+
         .table td {
             color: var(--text);
             font-size: 0.875rem;
         }
-        
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 120, 144, 0.05);
+        }
+
+        [data-theme="dark"] .table tbody tr:hover {
+            background-color: rgba(77, 184, 209, 0.1);
+        }
+
         .table-responsive {
-            overflow-x: auto;
+            overflow-x: visible;
+            overflow-y: visible;
         }
         
         .risk-high {
@@ -603,6 +641,65 @@
                 max-width: 100%;
             }
         }
+
+        /* Floating Notification Bell - Top Right */
+        .notification-bell-float {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #007890 0%, #005a6d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 120, 144, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .notification-bell-float:hover {
+            background: linear-gradient(135deg, #005a6d 0%, #004a58 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 120, 144, 0.4);
+        }
+
+        .notification-bell-float i {
+            color: #ffffff;
+            font-size: 18px;
+        }
+
+        .notification-bell-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #EC343C;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            border: 2px solid white;
+        }
+
+        .notification-bell-badge.hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .notification-bell-float {
+                top: 12px;
+                right: 70px;
+                width: 38px;
+                height: 38px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -610,6 +707,14 @@
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
         <i class="fas fa-bars text-xl"></i>
     </button>
+
+    <!-- Floating Notification Bell - Top Right (Super Admin & Developer) -->
+    {% if request.user.role == 'super_admin' or request.user.role == 'developer' %}
+    <div id="notification-bell" class="notification-bell-float" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="notification-bell-badge hidden">0</span>
+    </div>
+    {% endif %}
 
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
@@ -629,40 +734,46 @@
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'home' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Home Center
                         </a>
                     </li>
                     {% if request.user.role == 'inspector' %}
                     <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'inspector_dashboard' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
                     {% else %}
                     <li>
-                        <a href="{% url 'client_allocation' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'client_allocation' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
                             Client Allocation
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
                         </a>
                     </li>
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'user_management' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'user_management' %}" title="Manage system users and permissions"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
                             User Management
                         </a>
@@ -671,45 +782,17 @@
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
-                        <a href="{% url 'system_logs' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'system_logs' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'fsa_operations_board' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-tasks mr-2 w-4 text-center text-cyan-400"></i>
-                            FSA Board
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if request.user.role == 'developer' %}
-                    <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
-                            OneDrive View
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
-                    <li>
-                        <a href="{% url 'server_view' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
-                            Server View
-                        </a>
-                    </li>
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
-                    <li>
-                        <a href="{% url 'export_sheet' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
-                            Export Sheet
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li>
-                        <a href="{% url 'analytics_dashboard' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
-                            Inspector Analytics
+                        <a href="{% url 'fsa_operations_board' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-ticket-alt mr-2 w-4 text-center text-cyan-400"></i>
+                            Support Tickets
                         </a>
                     </li>
                     {% endif %}
@@ -720,8 +803,45 @@
                             Submit Ticket
                         </a>
                     </li>
+                    {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'onedrive_view' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    <li>
+                        <a href="{% url 'server_view' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
+                            Server View
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
+                    <li>
+                        <a href="{% url 'export_sheet' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
+                            Export Sheet
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    <li>
+                        <a href="{% url 'analytics_dashboard' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px] bg-white bg-opacity-20">
+                            <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
+                            Inspector Analytics
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{% url 'settings' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -742,14 +862,14 @@
         </div>
 
         <!-- Main Content -->
-        <div class="flex-1 w-full lg:ml-64 h-screen overflow-hidden">
+        <div class="flex-1 w-full lg:ml-64">
             <!-- Header -->
             <div class="pt-12 pb-4 text-center px-4" style="background: transparent;">
                 <h1 class="text-xl lg:text-2xl font-semibold mb-1" style="color: #ffffff;">Food Safety Agency (Pty) Ltd</h1>
-                <h2 class="text-sm lg:text-base font-normal" style="color: #ffffff;">Inspector Analytics Dashboard</h2>
+                <h2 class="text-sm lg:text-base font-normal" style="color: #ffffff;">All Inspectors Analytics Dashboard</h2>
             </div>
 
-        <div class="px-4 lg:px-6" style="height: calc(100vh - 140px); overflow-y: auto;">
+        <div class="px-4 lg:px-6" style="overflow: visible;">
 
         <!-- Messages Section -->
         {% if messages %}
@@ -763,92 +883,134 @@
         </div>
         {% endif %}
 
-        <!-- Compact Dashboard Grid -->
-        <div style="display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 1400px; margin: 0 auto;">
+        <!-- Quick Stats Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="card" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary);">{{ total_food_safety_inspections }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">Total Inspections</div>
+            </div>
+            <div class="card" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #10b981;">{{ compliance_rate|floatformat:1 }}%</div>
+                <div style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">Client Compliance Rate</div>
+            </div>
+            <div class="card" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #f59e0b;">{{ active_inspectors_count }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">Active Inspectors</div>
+            </div>
+            <div class="card" style="padding: 1.25rem; text-align: center;">
+                <div style="font-size: 2.5rem; font-weight: 700; color: #ef4444;">{{ this_month_inspections }}</div>
+                <div style="font-size: 0.875rem; color: var(--text-light); margin-top: 0.5rem;">This Month</div>
+            </div>
+        </div>
 
-            <!-- Key Stats Row -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-users" style="font-size: 1.25rem; color: var(--primary); margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ total_clients }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Total Clients</div>
+        <!-- Unknown Inspectors Section -->
+        {% if unknown_inspectors_count > 0 %}
+        <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;">
+            <div class="card-header" style="background: rgba(245, 158, 11, 0.1);">
+                <div class="card-title">
+                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <span>Unknown Inspectors Requiring Assignment ({{ unknown_inspectors_count }})</span>
                 </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-clipboard-check" style="font-size: 1.25rem; color: #10b981; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ total_food_safety_inspections }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Total Inspections</div>
+            </div>
+            <div class="card-body">
+                <p style="color: var(--text-light); margin-bottom: 1rem; font-size: 0.875rem;">
+                    The following inspector IDs have inspections but no assigned name. Please assign proper inspector names to these IDs in your system.
+                </p>
+                <div class="table-responsive">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border);">
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.875rem;">Inspector ID</th>
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.875rem;">Current Name</th>
+                                <th style="text-align: center; padding: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.875rem;">Total Inspections</th>
+                                <th style="text-align: center; padding: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.875rem;">Latest Inspection</th>
+                                <th style="text-align: center; padding: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.875rem;">Earliest Inspection</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unknownInspectorsTable">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-calendar-week" style="font-size: 1.25rem; color: #3b82f6; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ this_week_inspections }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">This Week</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Charts Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem;">
+            <!-- Inspections Over Time -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Inspections Over Time</span>
+                    </div>
+                    <select id="timeRange" class="form-control" style="width: auto; min-width: 120px;">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly" selected>Monthly</option>
+                    </select>
                 </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-calendar-day" style="font-size: 1.25rem; color: #f59e0b; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ this_month_inspections }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">This Month</div>
-                </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-calendar-alt" style="font-size: 1.25rem; color: #8b5cf6; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{{ recent_inspections }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Last 30 Days</div>
-                </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-check-circle" style="font-size: 1.25rem; color: #10b981; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="compliant-count">{{ compliant_inspections|default:"0" }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Compliant</div>
-                </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-times-circle" style="font-size: 1.25rem; color: #ef4444; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="non-compliant-count">{{ non_compliant_inspections|default:"0" }}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Non-Compliant</div>
-                </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-shield-alt" style="font-size: 1.25rem; color: #7c3aed; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;">{% if compliance_rate %}{{ compliance_rate }}%{% else %}0%{% endif %}</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">Compliance Rate</div>
-                </div>
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border); text-align: center;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem; color: #ef4444; margin-bottom: 6px;"></i>
-                    <div style="font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 2px;" id="high-risk-count">0</div>
-                    <div style="font-size: 0.7rem; color: var(--text-light); text-transform: uppercase;">High-Risk Clients</div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="inspectionsChart"></canvas>
                 </div>
             </div>
 
-            <!-- Charts and Table Row -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-
-                <!-- Inspection Trend Chart -->
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border);">
-                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-chart-line" style="color: var(--primary);"></i>
-                        Inspection Trends
-                    </h3>
-                    <div style="height: 200px; display: flex; align-items: center; justify-content: center;">
-                        <canvas id="inspectionsChart" width="400" height="180"></canvas>
+            <!-- Inspector Performance -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-user-tie"></i>
+                        <span>Top Inspectors</span>
                     </div>
                 </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="inspectorsChart"></canvas>
+                </div>
+            </div>
 
-                <!-- Top 5 High-Risk Clients -->
-                <div style="background: var(--card-bg); border-radius: 8px; padding: 12px; border: 1px solid var(--border);">
-                    <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>
-                        Top 5 High-Risk Clients
-                    </h3>
-                    <div style="max-height: 200px; overflow-y: auto;">
-                        <table style="width: 100%; font-size: 0.75rem;">
-                            <thead style="position: sticky; top: 0; background: var(--card-bg); border-bottom: 1px solid var(--border);">
-                                <tr style="text-align: left;">
-                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600;">Client</th>
-                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600; text-align: center;">Inspections</th>
-                                    <th style="padding: 6px 8px; color: var(--text-light); font-weight: 600; text-align: center;">Risk</th>
-                                </tr>
-                            </thead>
-                            <tbody id="highRiskTableBody">
-                                <!-- Data will be populated by JavaScript -->
-                            </tbody>
-                        </table>
+            <!-- Compliance Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Client Compliance Status</span>
                     </div>
+                </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="complianceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Commodity Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-seedling"></i>
+                        <span>Top Commodities</span>
+                    </div>
+                </div>
+                <div class="card-body" style="height: 350px;">
+                    <canvas id="commodityChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Width Charts -->
+        <div style="margin-top: 1.5rem;">
+            <!-- Inspector Comparison Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-users"></i>
+                        <span>All Inspectors - Client Findings Breakdown</span>
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--text-light); font-style: italic;">
+                        Finding non-compliance indicates good inspector work (identifying client issues)
+                    </div>
+                </div>
+                <div class="card-body" style="height: 450px;">
+                    <canvas id="inspectorComparisonChart"></canvas>
                 </div>
             </div>
         </div>
@@ -1694,18 +1856,196 @@
             }
         }
 
-        // Populate High-Risk Clients Table (Top 5 Only)
+        // Populate All Inspectors Table
+        function populateInspectorsTable() {
+            const tbody = document.getElementById('inspectorsTableBody');
+            if (!tbody || !chartData.inspectors || chartData.inspectors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--text-light);">No inspector data available</td></tr>';
+                return;
+            }
+
+            const data = chartData.inspectors;
+
+            tbody.innerHTML = data.map((inspector, index) => {
+                const avgPerMonth = inspector.avg_per_month || 0;
+                const totalInspections = inspector.total_inspections || 0;
+                const rawMeat = inspector.raw_meat || 0;
+                const poultry = inspector.poultry || 0;
+                const eggs = inspector.eggs || 0;
+
+                return `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 12px; color: var(--text); font-weight: 500;">
+                            <i class="fas fa-user-tie" style="margin-right: 6px; color: var(--primary);"></i>
+                            ${inspector.inspector_name || 'Unknown'}
+                        </td>
+                        <td style="padding: 12px; text-align: center; color: var(--text); font-weight: 600;">${totalInspections}</td>
+                        <td style="padding: 12px; text-align: center; color: #ef4444;" title="Raw Meat inspections">${rawMeat}</td>
+                        <td style="padding: 12px; text-align: center; color: #f59e0b;" title="Poultry inspections">${poultry}</td>
+                        <td style="padding: 12px; text-align: center; color: #10b981;" title="Eggs inspections">${eggs}</td>
+                        <td style="padding: 12px; text-align: center; color: var(--text); font-weight: 600;">${avgPerMonth.toFixed(1)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Table Sorting Function
+        let sortDirection = {};
+        function sortTable(columnIndex) {
+            const table = document.getElementById('inspectorsTable');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Initialize sort direction for this column
+            if (!sortDirection[columnIndex]) {
+                sortDirection[columnIndex] = 'asc';
+            } else {
+                sortDirection[columnIndex] = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            }
+
+            const direction = sortDirection[columnIndex];
+
+            rows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].textContent.trim();
+                let bValue = b.cells[columnIndex].textContent.trim();
+
+                // Remove % sign and convert to number if present
+                aValue = aValue.replace('%', '');
+                bValue = bValue.replace('%', '');
+
+                // Try to convert to number
+                const aNum = parseFloat(aValue);
+                const bNum = parseFloat(bValue);
+
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return direction === 'asc' ? aNum - bNum : bNum - aNum;
+                } else {
+                    return direction === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+                }
+            });
+
+            // Clear and repopulate tbody
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        // Create Inspector Comparison Chart
+        function createInspectorComparisonChart() {
+            const ctx = document.getElementById('inspectorComparisonChart');
+            if (!ctx) {
+                console.error('Inspector comparison chart canvas not found');
+                return;
+            }
+
+            if (!chartData.inspectors || chartData.inspectors.length === 0) {
+                ctx.parentElement.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-user-tie"></i>
+                        <h3>No Inspector Data</h3>
+                        <p>No inspector performance data available.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const data = chartData.inspectors.slice(0, 15); // Top 15 inspectors
+            const labels = data.map(item => item.inspector_name || 'Unknown');
+            const inspections = data.map(item => item.total_inspections || 0);
+            const compliantData = data.map(item => item.compliant || 0);
+            const nonCompliantData = data.map(item => item.non_compliant || 0);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Compliant',
+                            data: compliantData,
+                            backgroundColor: '#10b981',
+                            borderColor: '#059669',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Non-Compliant',
+                            data: nonCompliantData,
+                            backgroundColor: '#ef4444',
+                            borderColor: '#dc2626',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex;
+                                    const total = compliantData[index] + nonCompliantData[index];
+                                    const rate = total > 0 ? ((compliantData[index] / total) * 100).toFixed(1) : 0;
+                                    return `Client Compliance Rate: ${rate}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937',
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 9
+                                }
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#1f2937'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Populate High-Risk Clients Table (Top 10)
         function populateHighRiskTable() {
             const tbody = document.getElementById('highRiskTableBody');
-            if (!tbody || !chartData.highRiskClients) return;
+            if (!tbody) return;
+
+            if (!chartData.highRiskClients || chartData.highRiskClients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="padding: 16px; text-align: center; color: var(--text-light);">No high-risk clients found</td></tr>';
+                return;
+            }
 
             const data = chartData.highRiskClients;
-            document.getElementById('high-risk-count').textContent = data.length;
 
-            // Show only top 5 clients
-            const top5 = data.slice(0, 5);
+            // Show top 10 clients
+            const top10 = data.slice(0, 10);
 
-            tbody.innerHTML = top5.map(client => {
+            tbody.innerHTML = top10.map(client => {
                 const riskColor = client.risk_score >= 70 ? '#ef4444' :
                                  client.risk_score >= 40 ? '#f59e0b' : '#10b981';
 
@@ -1717,11 +2057,6 @@
                     </tr>
                 `;
             }).join('');
-
-            // If no data, show message
-            if (top5.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="padding: 16px; text-align: center; color: var(--text-light);">No high-risk clients found</td></tr>';
-            }
         }
 
         // View Client Details (placeholder)
@@ -1785,74 +2120,105 @@
             document.body.classList.add('bg-loaded');
         });
 
-        // Initialize all charts and components
+        // Initialize all components
+        // Populate Unknown Inspectors Table
+        function populateUnknownInspectorsTable() {
+            const tableBody = document.getElementById('unknownInspectorsTable');
+            if (!tableBody) return;
+
+            const unknownInspectors = {{ unknown_inspectors|safe }};
+
+            if (!unknownInspectors || unknownInspectors.length === 0) {
+                return;
+            }
+
+            let html = '';
+            unknownInspectors.forEach(inspector => {
+                const inspectorId = inspector.inspector_id !== null ? inspector.inspector_id : 'NULL';
+                const inspectorName = inspector.inspector_name || 'Unknown';
+                const totalInspections = inspector.total_inspections || 0;
+                const latestInspection = inspector.latest_inspection
+                    ? new Date(inspector.latest_inspection).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                    : 'N/A';
+                const earliestInspection = inspector.earliest_inspection
+                    ? new Date(inspector.earliest_inspection).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+                    : 'N/A';
+
+                html += `
+                    <tr style="border-bottom: 1px solid var(--border);">
+                        <td style="padding: 0.75rem; font-weight: 600; color: #f59e0b; font-size: 0.875rem;">
+                            <i class="fas fa-id-badge"></i> ${inspectorId}
+                        </td>
+                        <td style="padding: 0.75rem; color: var(--text-light); font-size: 0.875rem; font-style: italic;">
+                            ${inspectorName}
+                        </td>
+                        <td style="padding: 0.75rem; text-align: center; font-weight: 600; color: var(--text); font-size: 0.875rem;">
+                            ${totalInspections}
+                        </td>
+                        <td style="padding: 0.75rem; text-align: center; color: var(--text); font-size: 0.875rem;">
+                            ${latestInspection}
+                        </td>
+                        <td style="padding: 0.75rem; text-align: center; color: var(--text); font-size: 0.875rem;">
+                            ${earliestInspection}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = html;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Initializing analytics dashboard...');
-            
+            console.log('Initializing All Inspectors Analytics Dashboard...');
+
+            // Populate unknown inspectors table
+            try {
+                populateUnknownInspectorsTable();
+                console.log('Unknown inspectors table populated');
+            } catch (error) {
+                console.error('Error populating unknown inspectors table:', error);
+            }
+
+            // Create all charts
             try {
                 createInspectionsChart();
                 console.log('Inspections chart created');
             } catch (error) {
                 console.error('Error creating inspections chart:', error);
             }
-            
-            try {
-                createComplianceChart();
-                console.log('Compliance chart created');
-            } catch (error) {
-                console.error('Error creating compliance chart:', error);
-            }
-            
+
             try {
                 createInspectorsChart();
                 console.log('Inspectors chart created');
             } catch (error) {
                 console.error('Error creating inspectors chart:', error);
             }
-            
+
+            try {
+                createComplianceChart();
+                console.log('Compliance chart created');
+            } catch (error) {
+                console.error('Error creating compliance chart:', error);
+            }
+
             try {
                 createCommodityChart();
                 console.log('Commodity chart created');
             } catch (error) {
                 console.error('Error creating commodity chart:', error);
             }
-            
+
             try {
-                createDistanceChart();
-                console.log('Distance chart created');
+                createInspectorComparisonChart();
+                console.log('Inspector comparison chart created');
             } catch (error) {
-                console.error('Error creating distance chart:', error);
+                console.error('Error creating inspector comparison chart:', error);
             }
-            
-            try {
-                createRiskChart();
-                console.log('Risk chart created');
-            } catch (error) {
-                console.error('Error creating risk chart:', error);
-            }
-            
-            try {
-                createCompaniesChart();
-                console.log('Companies chart created');
-            } catch (error) {
-                console.error('Error creating companies chart:', error);
-            }
-            
-            try {
-                populateHighRiskTable();
-                console.log('High risk table populated');
-            } catch (error) {
-                console.error('Error populating high risk table:', error);
-            }
-            
-            try {
-                handleTimeRangeChange();
-                console.log('Time range change handler initialized');
-            } catch (error) {
-                console.error('Error initializing time range change handler:', error);
-            }
-            
-            console.log('Analytics dashboard initialization complete');
+
+            // Setup time range selector
+            handleTimeRangeChange();
+
+            console.log('All Inspectors Analytics Dashboard initialization complete');
         });
 
         // Mobile Menu Toggle
@@ -1899,6 +2265,143 @@
                 }
             }
         });
+
+        // ================================================================
+        // NOTIFICATION SYSTEM
+        // ================================================================
+        {% if request.user.role == 'super_admin' or request.user.role == 'developer' %}
+        let notificationModal = null;
+
+        // Fetch notifications from server
+        async function fetchNotifications() {
+            try {
+                const response = await fetch('/api/notifications/');
+                if (!response.ok) throw new Error('Failed to fetch notifications');
+                const data = await response.json();
+                updateNotificationBell(data.unread_count);
+                return data.notifications;
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+                return [];
+            }
+        }
+
+        // Update notification bell badge
+        function updateNotificationBell(count) {
+            const badge = document.getElementById('notification-badge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Show notification modal
+        async function showNotificationModal() {
+            const notifications = await fetchNotifications();
+
+            // Create modal HTML
+            const modalHTML = `
+                <div id="notification-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 8px; width: 90%; max-width: 500px; max-height: 80vh; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; font-size: 1.125rem; font-weight: 600;">Notifications</h3>
+                            <button onclick="closeNotificationModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">&times;</button>
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            ${notifications.length > 0 ? notifications.map(n => `
+                                <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; ${n.is_read ? 'background: #f9fafb;' : 'background: #fff;'}">
+                                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                                        <div style="flex: 1;">
+                                            <p style="margin: 0 0 0.5rem 0; font-weight: ${n.is_read ? '400' : '600'};">${n.message}</p>
+                                            <small style="color: #6b7280;">${new Date(n.created_at).toLocaleString()}</small>
+                                        </div>
+                                        <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                                            ${!n.is_read ? `<button onclick="markAsRead(${n.id})" style="padding: 0.25rem 0.5rem; background: #007890; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Mark Read</button>` : ''}
+                                            <button onclick="deleteNotification(${n.id})" style="padding: 0.25rem 0.5rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Delete</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('') : '<p style="padding: 2rem; text-align: center; color: #6b7280;">No notifications</p>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // Close notification modal
+        function closeNotificationModal() {
+            const modal = document.getElementById('notification-modal');
+            if (modal) modal.remove();
+        }
+
+        // Mark notification as read
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/mark-read/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                if (response.ok) {
+                    closeNotificationModal();
+                    showNotificationModal();
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Delete notification
+        async function deleteNotification(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/delete/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                if (response.ok) {
+                    closeNotificationModal();
+                    showNotificationModal();
+                }
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+            }
+        }
+
+        // Get CSRF token from cookies
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initialize notification system
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationBell = document.getElementById('notification-bell');
+            if (notificationBell) {
+                notificationBell.addEventListener('click', showNotificationModal);
+                fetchNotifications();
+                setInterval(fetchNotifications, 30000);
+            }
+        });
+        {% endif %}
     </script>
 </body>
 </html>

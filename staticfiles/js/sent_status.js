@@ -643,6 +643,9 @@ function refreshDropdownState(groupId, newComplianceStatus) {
     // Update compliance status attribute
     dropdown.setAttribute('data-compliance-status', newComplianceStatus);
     
+    // Check if user can override (admin/super_admin/developer/financial_admin)
+    const canOverride = dropdown.getAttribute('data-can-override') === 'true';
+
     // Update dropdown state based on new compliance status
     if (newComplianceStatus === 'complete') {
         // Enable dropdown
@@ -650,6 +653,12 @@ function refreshDropdownState(groupId, newComplianceStatus) {
         dropdown.classList.remove('disabled-dropdown');
         dropdown.title = 'Mark as sent when documents are delivered';
         console.log('✅ Enabled dropdown for group:', groupId);
+    } else if (canOverride) {
+        // Admin users can override - keep dropdown enabled
+        dropdown.disabled = false;
+        dropdown.classList.remove('disabled-dropdown');
+        dropdown.title = `Admin override: Mark as sent (Status: ${newComplianceStatus})`;
+        console.log('✅ Admin override - keeping dropdown enabled for group:', groupId);
     } else {
         // Keep dropdown disabled if files are still incomplete
         if (dropdown.value !== 'YES') { // Don't disable if already sent
@@ -711,32 +720,50 @@ function validateActualFilesForGroup(groupId, dropdown, complianceStatus) {
         if (!hasInvoice) missing.push('Invoice files');
         if (!hasCompliance) missing.push('Compliance documents');
         
-        // Dropdown should be enabled ONLY if ALL files are present
+        // Check if user can override (admin/super_admin/developer/financial_admin)
+        const canOverride = dropdown.getAttribute('data-can-override') === 'true';
+
+        // Dropdown should be enabled ONLY if ALL files are present (or user can override)
         const allFilesPresent = hasRFI && hasInvoice && hasCompliance;
-        
-        if (!allFilesPresent) {
+
+        if (!allFilesPresent && !canOverride) {
             dropdown.disabled = true;
             dropdown.classList.add('disabled-dropdown');
             dropdown.title = `Cannot mark as "Sent" - Missing: ${missing.join(', ')}`;
             dropdown.style.opacity = '0.6';
             dropdown.style.cursor = 'not-allowed';
-            
+
             console.log('DISABLED [REAL FILES] Disabled dropdown - Missing:', missing);
+        } else if (!allFilesPresent && canOverride) {
+            // Admin can override - enable dropdown
+            dropdown.disabled = false;
+            dropdown.classList.remove('disabled-dropdown');
+            dropdown.title = `Admin override: Mark as sent (Missing: ${missing.join(', ')})`;
+            dropdown.style.opacity = '';
+            dropdown.style.cursor = '';
+
+            console.log('✅ [REAL FILES] Admin override - Enabled dropdown despite missing:', missing);
         } else {
             dropdown.disabled = false;
             dropdown.classList.remove('disabled-dropdown');
             dropdown.title = 'Mark as sent when documents are delivered';
             dropdown.style.opacity = '';
             dropdown.style.cursor = '';
-            
+
             console.log('✅ [REAL FILES] Enabled dropdown - All files present');
         }
     })
     .catch(error => {
         console.error('❌ [REAL FILES] Error checking files:', error);
-        // On error, disable dropdown to be safe
-        dropdown.disabled = true;
-        dropdown.title = 'Cannot validate files - try refreshing page';
+        // On error, check if admin can override
+        const canOverride = dropdown.getAttribute('data-can-override') === 'true';
+        if (canOverride) {
+            dropdown.disabled = false;
+            dropdown.title = 'Admin override: Cannot validate files - proceed with caution';
+        } else {
+            dropdown.disabled = true;
+            dropdown.title = 'Cannot validate files - try refreshing page';
+        }
     });
 }
 
@@ -853,11 +880,16 @@ function resetIncompleteSentRows() {
                     groupRow.removeAttribute('data-was-sent');
                     groupRow.removeAttribute('data-sent-timestamp');
                     
-                    // Re-check compliance status and disable dropdown if needed
-                    if (complianceStatus !== 'complete') {
+                    // Re-check compliance status and disable dropdown if needed (unless admin)
+                    const canOverride = dropdown.getAttribute('data-can-override') === 'true';
+                    if (complianceStatus !== 'complete' && !canOverride) {
                         dropdown.disabled = true;
                         dropdown.classList.add('disabled-dropdown');
                         dropdown.title = `Cannot change status - All required files must be uploaded first (Status: ${complianceStatus})`;
+                    } else if (complianceStatus !== 'complete' && canOverride) {
+                        dropdown.disabled = false;
+                        dropdown.classList.remove('disabled-dropdown');
+                        dropdown.title = `Admin override: Mark as sent (Status: ${complianceStatus})`;
                     }
                     
                     // Re-enable all interactive elements
@@ -922,20 +954,30 @@ function validateAllSentStatusDropdowns() {
         
         // Only check if not already sent
         if (currentValue !== 'YES' && groupId) {
+            // Check if user can override (admin/super_admin/developer/financial_admin)
+            const canOverride = dropdown.getAttribute('data-can-override') === 'true';
+
             // Check compliance status first (most reliable)
-            if (complianceStatus !== 'complete') {
+            if (complianceStatus !== 'complete' && !canOverride) {
                 // Disable the entire dropdown and add visual indicator
                 dropdown.disabled = true;
                 dropdown.classList.add('disabled-dropdown');
                 dropdown.title = `Cannot change status - All required files must be uploaded first (Status: ${complianceStatus})`;
-                
+
                 console.log('DISABLED Disabled entire dropdown for group:', groupId, 'Compliance status:', complianceStatus);
+            } else if (complianceStatus !== 'complete' && canOverride) {
+                // Admin can override - keep dropdown enabled
+                dropdown.disabled = false;
+                dropdown.classList.remove('disabled-dropdown');
+                dropdown.title = `Admin override: Mark as sent (Status: ${complianceStatus})`;
+
+                console.log('✅ Admin override - Enabled dropdown for group:', groupId, 'Compliance status:', complianceStatus);
             } else {
                 // Enable the dropdown
                 dropdown.disabled = false;
                 dropdown.classList.remove('disabled-dropdown');
                 dropdown.title = 'Mark as sent when documents are delivered';
-                
+
                 console.log('✅ Enabled dropdown for group:', groupId, 'Compliance status:', complianceStatus);
             }
             

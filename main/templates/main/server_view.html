@@ -13,7 +13,7 @@
 
     <!-- Preconnect to CDNs for faster loading -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin">
 
     <!-- Async Font Awesome loading for better performance -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
@@ -71,149 +71,99 @@
             --sidebar-text: #ffffff;
             --primary-light: #1a3a40;
         }
-        
+
         /* Sidebar theme styles */
         #sidebar {
             background-color: var(--sidebar-bg) !important;
             color: var(--sidebar-text) !important;
         }
-        
+
         #sidebar a {
             color: var(--sidebar-text) !important;
         }
-        
+
         #sidebar a:hover {
             background-color: rgba(255, 255, 255, 0.1) !important;
         }
-        
+
         #sidebar .border-slate-600 {
             border-color: #334155 !important;
         }
 
         .logout-btn {
             width: 100%;
-            background: #ef4444;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: #ffffff;
-            border: 1px solid #dc2626;
-            padding: 0.75rem 1rem;
-            border-radius: 4px;
+            border: none;
+            padding: 0.625rem 1rem;
+            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.625rem;
-            font-weight: 500;
+            gap: 0.5rem;
+            font-weight: 600;
             font-size: 0.875rem;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
         }
 
         .logout-btn:hover {
-            background: #dc2626;
-            border-color: #b91c1c;
-            color: #ffffff;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.4);
         }
 
         .logout-btn:active {
-            background: #b91c1c;
-            transform: scale(0.98);
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(220, 38, 38, 0.3);
         }
-        
+
+        .logout-btn i {
+            font-size: 1rem;
+        }
+
+        /* Dark mode logout button */
+        [data-theme="dark"] .logout-btn {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            box-shadow: 0 2px 4px rgba(248, 113, 113, 0.3);
+        }
+
+        [data-theme="dark"] .logout-btn:hover {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 8px rgba(248, 113, 113, 0.4);
+        }
+
+        [data-theme="dark"] .logout-btn:active {
+            box-shadow: 0 1px 2px rgba(248, 113, 113, 0.3);
+        }
+
         #sidebar .text-sidebar-text {
             color: var(--sidebar-text) !important;
         }
-        
+
         /* Force sidebar to be dark in both themes */
         [data-theme="light"] #sidebar {
             background-color: #1e293b !important;
             color: #f1f5f9 !important;
         }
-        
+
         [data-theme="light"] #sidebar a {
             color: #f1f5f9 !important;
         }
-        
+
         [data-theme="dark"] #sidebar {
             background-color: #1a1a1a !important;
             color: #ffffff !important;
         }
-        
+
         [data-theme="dark"] #sidebar a {
             color: #ffffff !important;
         }
-        
+
         /* Ensure smooth sidebar transitions */
         #sidebar, #sidebar *, #sidebar a, #sidebar .border-slate-600 {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
-        }
-        
-        /* Additional theme-specific styles for better visibility */
-        [data-theme="dark"] .metric-card {
-            background: #2d2d2d !important;
-            color: #ffffff !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="dark"] .chart-container {
-            background: #1a1a1a !important;
-            color: #ffffff !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="dark"] .metric-card h3 {
-            color: #ffffff !important;
-        }
-
-        [data-theme="dark"] .chart-container h3 {
-            color: #ffffff !important;
-        }
-
-        [data-theme="dark"] .file-item {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="dark"] .file-item:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="dark"] .file-name {
-            color: #ffffff !important;
-        }
-
-        [data-theme="dark"] .file-details {
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-
-        /* Light theme specific styles for sidebar look */
-        [data-theme="light"] .chart-container {
-            background: #1e293b !important;
-            color: #f1f5f9 !important;
-            border-color: rgba(255, 255, 255, 0.2) !important;
-        }
-
-        [data-theme="light"] .chart-container h3 {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="light"] .chart-container h3 i {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="light"] .file-item {
-            background: rgba(255, 255, 255, 0.05) !important;
-            border-color: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="light"] .file-item:hover {
-            background: rgba(255, 255, 255, 0.1) !important;
-        }
-
-        [data-theme="light"] .file-name {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="light"] .file-details {
-            color: rgba(241, 245, 249, 0.7) !important;
         }
 
         /* Ensure smooth transitions between themes */
@@ -230,7 +180,7 @@
         }
 
         body {
-            background: var(--background);  /* Fallback color while image loads */
+            background: var(--background);
             color: var(--text);
             line-height: 1.5;
             overflow-x: hidden;
@@ -254,7 +204,7 @@
             z-index: -1;
             pointer-events: none;
         }
-        
+
         /* Mobile menu button */
         .mobile-menu-btn {
             display: none;
@@ -276,21 +226,21 @@
             transform: translate3d(0, 0, 0);
             will-change: transform;
         }
-        
+
         .mobile-menu-btn:active {
             transform: translate3d(0, 0, 0) scale(0.95);
         }
-        
+
         .mobile-menu-btn:hover {
             background-color: rgba(255, 255, 255, 0.15) !important;
         }
-        
+
         /* Mobile-first layout */
         .page-container {
             display: flex;
             min-height: 100vh;
         }
-        
+
         /* Sidebar positioning */
         #sidebar {
             position: fixed;
@@ -301,7 +251,7 @@
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
-        
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -315,223 +265,28 @@
             text-align: center;
             margin-bottom: 2rem;
         }
-        
+
         .header h1 {
             color: white;
             font-size: 1.5rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        
+
         .header h2 {
             color: white;
             font-size: 1rem;
             font-weight: 400;
         }
-        
-        /* Performance Grid */
-        .performance-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
 
-        /* File Grid - Enhanced responsive design */
-        .file-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        /* Single folder takes full width */
-        .file-grid.single-folder {
-            grid-template-columns: 1fr;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            transition: all 0.3s ease;
-            cursor: pointer;
-            min-height: 80px;
-        }
-
-        .file-item:hover {
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
-        }
-
-        .folder-item {
-            border-left: 4px solid #f59e0b;
-        }
-
-        .file-icon {
-            font-size: 2rem;
-            margin-right: 1rem;
-            flex-shrink: 0;
-        }
-
-        .file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: var(--sidebar-text);
-            margin-bottom: 0.25rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .file-details {
-            font-size: 0.85rem;
-            color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .file-size {
-            font-weight: 500;
-        }
-
-        .file-date {
-            opacity: 0.8;
-        }
-
-        .file-preview {
-            margin-left: 1rem;
-            flex-shrink: 0;
-        }
-
-        /* Breadcrumb Navigation */
-        .breadcrumb-nav {
-            margin-top: 1rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .breadcrumb-link {
-            color: white;
-            text-decoration: none;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            transition: background-color 0.3s ease;
-        }
-
-        .breadcrumb-link:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .breadcrumb-separator {
-            color: rgba(255, 255, 255, 0.6);
-            margin: 0 0.25rem;
-        }
-
-        .breadcrumb-current {
-            color: white;
-            font-weight: 600;
-            padding: 0.25rem 0.5rem;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        /* Folder Link Styles */
-        .folder-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .folder-link:hover {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .folder-arrow {
-            margin-left: auto;
-            padding-left: 1rem;
-        }
-
-        .folder-item:hover .folder-arrow i {
-            color: var(--primary) !important;
-            transform: translateX(4px);
-            transition: all 0.3s ease;
-        }
-
-        .metric-card {
+        /* Card Styles */
+        .card {
             background: var(--card-bg);
             border-radius: var(--radius);
             box-shadow: var(--shadow-lg);
-            padding: 1.5rem;
             border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden;
         }
-        
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--info));
-        }
-        
-        .metric-card h3 {
-            display: flex;
-            align-items: center;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 0.5rem;
-        }
-        
-        .metric-card h3 i {
-            margin-right: 0.75rem;
-            font-size: 1.1rem;
-        }
-        
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .metric-description {
-            color: var(--text-light);
-            font-size: 0.9rem;
-            margin-bottom: 1rem;
-        }
-        
-        .metric-trend {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-        
-        .trend-up { color: var(--success); }
-        .trend-down { color: var(--danger); }
-        .trend-stable { color: var(--text-light); }
-        
+
         /* Chart Container */
         .chart-container {
             background: var(--sidebar-bg);
@@ -541,12 +296,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             margin-top: 1.5rem;
         }
-        
-        .chart-container canvas {
-            max-height: 300px !important;
-            height: 300px !important;
-        }
-        
+
         .chart-container h3 {
             display: flex;
             align-items: center;
@@ -561,34 +311,276 @@
             font-size: 1.1rem;
             color: var(--sidebar-text);
         }
-        
-        /* Status Indicators */
-        .status-indicator {
-            display: inline-flex;
+
+        /* Directory Tree Styles */
+        .directory-tree {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--sidebar-text);
+        }
+
+        .tree-item {
+            display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tree-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding-left: 0.5rem;
+        }
+
+        .tree-item:last-child {
+            border-bottom: none;
+        }
+
+        .tree-indent {
+            display: inline-block;
+            width: 1.5rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tree-icon {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+            text-align: center;
+        }
+
+        .tree-name {
+            flex: 1;
+            color: var(--sidebar-text);
             font-weight: 500;
         }
-        
-        .status-good {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
+
+        .tree-count {
+            margin-left: auto;
+            padding-left: 1rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
         }
-        
-        .status-warning {
-            background: rgba(245, 158, 11, 0.1);
-            color: var(--warning);
+
+        .tree-size {
+            margin-left: 0.75rem;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.85rem;
+            font-weight: normal;
         }
-        
-        .status-critical {
-            background: rgba(236, 52, 60, 0.1);
-            color: var(--danger);
+
+        .folder-collapsed > .tree-children {
+            display: none;
         }
-        
-        
+
+        .folder-expanded > .tree-children {
+            display: block;
+        }
+
+        .tree-children {
+            margin-left: 1.5rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding-left: 0.5rem;
+        }
+
+        .toggle-icon {
+            width: 1rem;
+            text-align: center;
+            margin-right: 0.5rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .folder-row {
+            display: flex;
+            align-items: center;
+        }
+
+        /* Search and Filter Styles - Matching client_allocation.html */
+        .search-filter-container {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 0.625rem 0.75rem;
+            margin-bottom: 5px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .filter-title {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .form-label {
+            font-size: 0.6875rem;
+            font-weight: 500;
+            color: var(--text);
+            margin-bottom: 0.2rem;
+        }
+
+        .form-control {
+            padding: 0.4rem 0.55rem;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            transition: all 0.2s ease;
+            color: var(--text);
+            background-color: var(--card-bg);
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        select.form-control {
+            padding-right: 30px;
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23333" d="M6 8L0 0h12z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px;
+            cursor: pointer;
+        }
+
+        [data-theme="dark"] .form-control {
+            background-color: #3a3a3a;
+            color: #ffffff;
+            border-color: #404040;
+        }
+
+        [data-theme="dark"] .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 120, 144, 0.2);
+        }
+
+        [data-theme="dark"] select.form-control {
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="8" viewBox="0 0 12 8"><path fill="%23e0e0e0" d="M6 8L0 0h12z"/></svg>');
+        }
+
+        [data-theme="dark"] .search-filter-container {
+            background-color: #2d2d2d;
+            border-color: #404040;
+        }
+
+        [data-theme="dark"] .filter-title {
+            color: #ffffff;
+        }
+
+        [data-theme="dark"] .form-label {
+            color: #ffffff;
+        }
+
+        .search-input-wrapper {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .search-input {
+            padding-left: 35px !important;
+        }
+
+        .clear-search {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            cursor: pointer;
+            display: none;
+            font-size: 14px;
+        }
+
+        .clear-search:hover {
+            color: var(--text);
+        }
+
+        .clear-search.show {
+            display: block;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius);
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.875rem;
+        }
+
+        .stat-value {
+            color: var(--sidebar-text);
+            font-weight: 600;
+        }
+
+        .hidden-item {
+            display: none !important;
+        }
+
+        .expand-collapse-btns {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .control-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius);
+            color: var(--sidebar-text);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
         /* Sidebar overlay */
         .sidebar-overlay {
             position: fixed;
@@ -601,361 +593,157 @@
             display: none;
             backdrop-filter: blur(2px);
         }
-        
+
         .sidebar-overlay.show {
             display: block;
         }
-        
+
         /* Enhanced Mobile styles */
         @media (max-width: 1024px) {
             .mobile-menu-btn {
                 display: flex !important;
             }
-            
+
             #sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
                 width: 280px;
                 box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
             }
-            
+
             #sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
                 margin-left: 0 !important;
                 padding: 1rem !important;
             }
-            
+
             .header {
                 padding-top: 5rem !important;
                 padding-bottom: 1.5rem !important;
                 padding-left: 1rem !important;
                 padding-right: 1rem !important;
             }
-            
+
             .header h1 {
                 font-size: 1.5rem !important;
             }
-            
+
             .header h2 {
                 font-size: 0.95rem !important;
             }
-            
-            .breadcrumb-nav {
-                margin-left: 1rem;
-                margin-right: 1rem;
-                padding: 0.75rem 1rem;
-                font-size: 0.875rem;
-            }
-            
-            .breadcrumb-link, .breadcrumb-current {
-                font-size: 0.875rem;
-            }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                gap: 0.875rem;
-            }
         }
-        
-        /* Tablet styles */
-        @media (max-width: 768px) {
-            #sidebar {
-                width: 85%;
-                max-width: 320px;
-            }
-            
-            .main-content {
-                padding: 0.75rem !important;
-            }
-            
-            .header {
-                padding-top: 4.5rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.375rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.9rem !important;
-            }
-            
-            .chart-container {
-                padding: 1.25rem !important;
-                margin-top: 1rem !important;
-            }
-            
-            .chart-container h3 {
-                font-size: 1.1rem !important;
-            }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
-                gap: 0.875rem !important;
-            }
-            
-            .file-item {
-                padding: 0.875rem !important;
-                min-height: 70px;
-            }
-            
-            .file-icon {
-                font-size: 1.5rem !important;
-                margin-right: 0.875rem !important;
-            }
-            
-            .file-name {
-                font-size: 0.9rem !important;
-            }
-            
-            .file-details {
-                font-size: 0.8rem !important;
-            }
-            
-            .metric-card {
-                padding: 1.25rem !important;
-            }
-            
-            .breadcrumb-nav {
-                flex-wrap: wrap;
-                gap: 0.375rem;
-                padding: 0.625rem 0.875rem;
-            }
-        }
-        
-        /* Small mobile styles */
-        @media (max-width: 640px) {
-            .mobile-menu-btn {
-                top: 10px !important;
-                left: 10px !important;
-                width: 44px !important;
-                height: 44px !important;
-            }
-            
-            #sidebar {
-                width: 90%;
-            }
-            
-            .header {
-                padding-top: 4rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.25rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.875rem !important;
-            }
-            
-            .chart-container {
-                padding: 1rem !important;
-            }
-            
-            .chart-container h3 {
-                font-size: 1rem !important;
-            }
-            
-            .file-grid {
-                grid-template-columns: 1fr !important;
-                gap: 0.75rem !important;
-            }
-            
-            .file-item {
-                padding: 0.75rem !important;
-                min-height: 65px;
-            }
-            
-            .metric-card {
-                padding: 1rem !important;
-            }
-            
-        }
-        
-        /* Extra small mobile styles */
-        @media (max-width: 480px) {
-            #sidebar {
-                width: 100%;
-                max-width: 100%;
-            }
-            
-            .mobile-menu-btn {
-                top: 8px !important;
-                left: 8px !important;
-                width: 40px !important;
-                height: 40px !important;
-            }
-            
-            .main-content {
-                padding: 0.5rem !important;
-            }
-            
-            .header {
-                padding-top: 3.5rem !important;
-                padding-bottom: 1rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.125rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.8rem !important;
-            }
-            
-            .chart-container {
-                padding: 0.875rem !important;
-                margin-top: 0.75rem !important;
-            }
-            
-            .chart-container h3 {
-                font-size: 0.95rem !important;
-                margin-bottom: 0.75rem !important;
-            }
-            
-            .file-item {
-                padding: 0.625rem !important;
-                flex-wrap: wrap;
-                min-height: 60px;
-            }
-            
-            .file-icon {
-                font-size: 1.25rem !important;
-                margin-right: 0.625rem !important;
-            }
-            
-            .file-name {
-                font-size: 0.85rem !important;
-            }
-            
-            .file-details {
-                font-size: 0.75rem !important;
-                flex-wrap: wrap;
-            }
-            
-            .file-preview img {
-                max-width: 40px !important;
-                max-height: 40px !important;
-            }
-            
-            .metric-card {
-                padding: 0.875rem !important;
-            }
-            
-            .metric-value {
-                font-size: 2rem !important;
-            }
-            
-            
-            .breadcrumb-nav {
-                padding: 0.5rem 0.625rem;
-                font-size: 0.75rem;
-                gap: 0.25rem;
-            }
-            
-            .breadcrumb-link, .breadcrumb-current {
-                font-size: 0.75rem;
-                padding: 0.125rem 0.375rem;
-            }
-        }
-        
+
         /* Desktop styles */
         @media (min-width: 1025px) {
             .main-content {
                 padding: 2rem;
                 margin-left: 16rem;
             }
-            
+
             .header {
                 padding: 2rem 0;
             }
-            
+
             .header h1 {
                 font-size: 1.75rem;
             }
-            
+
             .header h2 {
                 font-size: 1rem;
             }
-            
-            .performance-grid {
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 2rem;
-            }
-            
-            .metric-card {
-                padding: 2rem;
-            }
-            
+
             .chart-container {
                 padding: 2rem;
             }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            }
         }
-        
-        @media (min-width: 1200px) {
-            .performance-grid {
-                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            }
+
+    /* Floating Notification Bell - Top Right */
+    .notification-bell-float {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #007890 0%, #005a6d 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 120, 144, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .notification-bell-float:hover {
+        background: linear-gradient(135deg, #005a6d 0%, #004050 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 120, 144, 0.4);
+    }
+
+    .notification-bell-float:active {
+        transform: translateY(0);
+    }
+
+    .notification-bell-float i {
+        color: white;
+        font-size: 16px;
+    }
+
+    .notification-bell-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #EC343C;
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        border-radius: 10px;
+        min-width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Mobile responsiveness for notification bell */
+    @media (max-width: 768px) {
+        .notification-bell-float {
+            top: 15px;
+            right: 15px;
+            width: 36px;
+            height: 36px;
         }
-        
-        /* Touch-friendly adjustments */
-        @media (hover: none) and (pointer: coarse) {
-            button, a, .file-item {
-                min-height: 44px !important;
-            }
-            
-            #sidebar a:hover {
-                background-color: transparent !important;
-            }
-            
-            #sidebar a:active {
-                background-color: rgba(255, 255, 255, 0.1) !important;
-            }
-            
-            .file-item:hover {
-                transform: none;
-            }
-            
-            .file-item:active {
-                transform: scale(0.98);
-            }
+
+        .notification-bell-float i {
+            font-size: 15px;
         }
-        
-        /* Landscape orientation adjustments */
-        @media (max-height: 500px) and (orientation: landscape) {
-            .header {
-                padding-top: 2rem !important;
-                padding-bottom: 1rem !important;
-            }
-            
-            .header h1 {
-                font-size: 1.25rem !important;
-            }
-            
-            .header h2 {
-                font-size: 0.875rem !important;
-            }
-            
-            .chart-container {
-                padding: 1rem !important;
-            }
-            
-            .file-item {
-                padding: 0.75rem !important;
-                min-height: 55px;
-            }
+
+        .notification-bell-badge {
+            font-size: 9px;
+            min-width: 16px;
+            height: 16px;
         }
+    }
+
+    @media (max-width: 480px) {
+        .notification-bell-float {
+            top: 10px;
+            right: 60px; /* Move left to avoid menu button */
+            width: 34px;
+            height: 34px;
+        }
+
+        .notification-bell-float i {
+            font-size: 14px;
+        }
+    }
     </style>
 </head>
 <body>
@@ -963,7 +751,15 @@
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle menu">
         <i class="fas fa-bars text-xl"></i>
     </button>
-    
+
+    <!-- Floating Notification Bell - Top Right (Super Admin & Developer) -->
+    {% if request.user.role == 'super_admin' or request.user.role == 'developer' %}
+    <div id="notification-bell" class="notification-bell-float" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span id="notification-badge" class="notification-bell-badge hidden">0</span>
+    </div>
+    {% endif %}
+
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
 
@@ -982,35 +778,38 @@
             <div class="flex-1 flex flex-col justify-between overflow-y-auto">
                 <ul class="px-2 py-2 space-y-1">
                     <li>
-                        <a href="{% url 'home' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'home' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-home mr-2 w-4 text-center"></i>
                             Home Center
                         </a>
                     </li>
                     {% if request.user.role == 'inspector' %}
                     <li>
-                        <a href="{% url 'inspector_dashboard' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'inspector_dashboard' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-chart-line mr-2 w-4 text-center"></i>
                             My Analytics
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-clipboard-check mr-2 w-4 text-center"></i>
                             Inspections
                         </a>
                     </li>
                     {% else %}
-
-
                     <li>
-                        <a href="{% url 'client_allocation' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'client_allocation' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-address-book mr-2 w-4 text-center"></i>
                             Client Allocation
                         </a>
                     </li>
                     <li>
-                        <a href="{% url 'shipment_list' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'shipment_list' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-file-invoice mr-2 w-4 text-center"></i>
                             Inspection Records
                         </a>
@@ -1018,66 +817,26 @@
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'user_management' %}" title="Manage system users and permissions"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-user-shield mr-2 w-4 text-center text-blue-500"></i>
                             User Management
                         </a>
                     </li>
                     {% endif %}
-
                     {% endif %}
                     {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
                     <li>
                         <a href="{% url 'system_logs' %}"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-history mr-2 w-4 text-center text-yellow-500"></i>
                             System Logs
                         </a>
                     </li>
                     <li>
                         <a href="{% url 'fsa_operations_board' %}"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-tasks mr-2 w-4 text-center text-cyan-400"></i>
-                            FSA Board
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% if request.user.role == 'developer' %}
-                    <li>
-                        <a href="{% url 'onedrive_view' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
-                            OneDrive View
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
-                    <li>
-                        <a href="{% url 'server_view' %}"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
-                            Server View
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
-                    <li>
-                        <a href="{% url 'export_sheet' %}"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
-                            Export Sheet
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
-                    <li>
-                        <a href="{% url 'analytics_dashboard' %}"
-                           class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
-                            <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
-                            Inspector Analytics
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-ticket-alt mr-2 w-4 text-center text-cyan-400"></i>
+                            Support Tickets
                         </a>
                     </li>
                     {% endif %}
@@ -1088,8 +847,45 @@
                             Submit Ticket
                         </a>
                     </li>
+                    {% if request.user.role == 'developer' %}
                     <li>
-                        <a href="{% url 'settings' %}" class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                        <a href="{% url 'onedrive_view' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-cloud mr-2 w-4 text-center text-blue-400"></i>
+                            OneDrive View
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    <li>
+                        <a href="{% url 'server_view' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px] bg-white bg-opacity-20">
+                            <i class="fas fa-database mr-2 w-4 text-center text-orange-400"></i>
+                            Server View
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' or request.user.role == 'financial_admin' %}
+                    <li>
+                        <a href="{% url 'export_sheet' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-file-download mr-2 w-4 text-center text-emerald-400"></i>
+                            Export Sheet
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if request.user.role == 'developer' or request.user.role == 'super_admin' %}
+                    <li>
+                        <a href="{% url 'analytics_dashboard' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
+                            <i class="fas fa-chart-bar mr-2 w-4 text-center text-blue-400"></i>
+                            Inspector Analytics
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a href="{% url 'settings' %}"
+                            class="flex items-center px-2.5 py-1.5 text-sidebar-text hover:bg-white hover:bg-opacity-10 hover:translate-x-1 transition-all duration-200 rounded-lg text-sm font-medium min-h-[32px]">
                             <i class="fas fa-sliders-h mr-2 w-4 text-center"></i>
                             Settings
                         </a>
@@ -1111,92 +907,88 @@
 
         <!-- Main Content -->
         <div class="main-content ml-64">
-            
-            <div class="header">
-                <h1>Server View</h1>
-                <h2>Browse and manage media folder contents</h2>
-                
-                <!-- Breadcrumb Navigation -->
-                <div class="breadcrumb-nav">
-                    {% for breadcrumb in breadcrumbs %}
-                        {% if not forloop.last %}
-                            <a href="{% url 'server_view' %}?path={{ breadcrumb.path|urlencode }}" class="breadcrumb-link">
-                                {{ breadcrumb.name }}
-                            </a>
-                            <span class="breadcrumb-separator">/</span>
-                        {% else %}
-                            <span class="breadcrumb-current">{{ breadcrumb.name }}</span>
-                        {% endif %}
-                    {% endfor %}
+
+            <!-- Quick Stats -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem; margin-top: 3rem;">
+                <div class="card" style="padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 0.65rem; color: var(--text-light); margin-bottom: 0.15rem;">Folders</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="folderCountCard">-</div>
+                </div>
+                <div class="card" style="padding: 0.5rem; text-align: center;">
+                    <div style="font-size: 0.65rem; color: var(--text-light); margin-bottom: 0.15rem;">Files</div>
+                    <div style="font-size: 1.25rem; font-weight: 700; color: #f59e0b;" id="fileCountCard">-</div>
                 </div>
             </div>
 
-
-            <!-- Folders Section -->
-            {% if media_folders %}
-            <div class="chart-container">
-                <h3>
-                    <i class="fas fa-folder"></i>
-                    Folders ({{ media_folders|length }})
-                </h3>
-                <div class="file-grid{% if media_folders|length == 1 %} single-folder{% endif %}">
-                    {% for folder in media_folders %}
-                    <a href="{% url 'server_view' %}?path={{ folder.nav_path|urlencode }}" class="file-item folder-item folder-link">
-                        <div class="file-icon">
-                            <i class="{{ folder.icon }}" style="color: #f59e0b;"></i>
-                        </div>
-                        <div class="file-info">
-                            <div class="file-name">{{ folder.name }}</div>
-                            <div class="file-details">{{ folder.file_count }} files</div>
-                        </div>
-                        <div class="folder-arrow">
-                            <i class="fas fa-chevron-right" style="color: #6b7280;"></i>
-                        </div>
-                    </a>
-                    {% endfor %}
+            <!-- Search and Filter Section -->
+            <div class="search-filter-container">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i> Filter Files & Folders (Real-Time)
                 </div>
-            </div>
-            {% endif %}
 
-            <!-- Files Section -->
-            {% if media_files %}
-            <div class="chart-container">
-                <h3>
-                    <i class="fas fa-file"></i>
-                    Files ({{ media_files|length }})
-                </h3>
-                <div class="file-grid">
-                    {% for file in media_files %}
-                    <div class="file-item">
-                        <div class="file-icon">
-                            <i class="{{ file.icon }}" style="color: {% if file.type == 'image' %}#ec4899{% elif file.type == 'pdf' %}#dc2626{% elif file.type == 'document' %}#2563eb{% elif file.type == 'spreadsheet' %}#059669{% elif file.type == 'archive' %}#7c3aed{% else %}#6b7280{% endif %};"></i>
+                <div class="filter-grid">
+                    <!-- Search Box -->
+                    <div class="form-field">
+                        <label class="form-label">Search</label>
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="form-control search-input" id="searchBox" placeholder="Search files and folders...">
+                            <i class="fas fa-times clear-search" id="clearSearch"></i>
                         </div>
-                        <div class="file-info">
-                            <div class="file-name" title="{{ file.name }}">{{ file.name }}</div>
-                            <div class="file-details">
-                                <span class="file-size">{{ file.size_formatted }}</span>
-                                <span class="file-date">{{ file.modified|date:"M d, Y H:i" }}</span>
-                            </div>
-                        </div>
-                        {% if file.type == 'image' %}
-                        <div class="file-preview">
-                            <img src="{{ MEDIA_URL }}{{ file.relative_path }}" alt="{{ file.name }}" style="max-width: 50px; max-height: 50px; object-fit: cover; border-radius: 4px;">
-                        </div>
-                        {% endif %}
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
 
-            {% if not media_files and not media_folders %}
-            <div class="chart-container">
-                <div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.7);">
-                    <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; color: rgba(255, 255, 255, 0.5);"></i>
-                    <p>No files or folders found in the media directory.</p>
+                    <!-- Document Category Filter -->
+                    <div class="form-field">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="EGGS">EGGS</option>
+                            <option value="RAW">RAW</option>
+                            <option value="PMP">PMP</option>
+                            <option value="POULTRY">POULTRY</option>
+                            <option value="Compliance">Compliance</option>
+                        </select>
+                    </div>
+
+                    <!-- Document Type Filter -->
+                    <div class="form-field">
+                        <label class="form-label">Document Type</label>
+                        <select class="form-control" id="docTypeFilter">
+                            <option value="all">All Types</option>
+                            <option value="RFI">RFI</option>
+                            <option value="Invoice">Invoice</option>
+                            <option value="Lab">Lab</option>
+                            <option value="Retest">Retest</option>
+                            <option value="Form">Form</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem;">
+                    <button class="control-btn" id="expandAllBtn">
+                        <i class="fas fa-plus-square"></i> Expand All
+                    </button>
+                    <button class="control-btn" id="collapseAllBtn">
+                        <i class="fas fa-minus-square"></i> Collapse All
+                    </button>
                 </div>
             </div>
-            {% endif %}
+
+            <!-- Directory Tree Section -->
+            <div class="chart-container">
+                <h3>
+                    <i class="fas fa-sitemap"></i>
+                    Media Directory Structure
+                </h3>
+                <div class="directory-tree" id="directoryTree">
+                    <div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.7);">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem;"></i>
+                        <p>Loading directory structure...</p>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
@@ -1213,11 +1005,11 @@
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebar = document.getElementById('sidebar');
             const sidebarOverlay = document.getElementById('sidebar-overlay');
-            
+
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 sidebarOverlay.classList.toggle('show');
-                
+
                 const icon = mobileMenuBtn.querySelector('i');
                 if (sidebar.classList.contains('show')) {
                     icon.className = 'fas fa-times text-xl';
@@ -1225,15 +1017,15 @@
                     icon.className = 'fas fa-bars text-xl';
                 }
             }
-            
+
             if (mobileMenuBtn) {
                 mobileMenuBtn.addEventListener('click', toggleSidebar);
             }
-            
+
             if (sidebarOverlay) {
                 sidebarOverlay.addEventListener('click', toggleSidebar);
             }
-            
+
             const navLinks = sidebar.querySelectorAll('a');
             navLinks.forEach(link => {
                 link.addEventListener('click', function() {
@@ -1242,7 +1034,7 @@
                     }
                 });
             });
-            
+
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 1024) {
                     sidebar.classList.remove('show');
@@ -1253,8 +1045,9 @@
                     }
                 }
             });
-            
+
             initTheme();
+            loadDirectoryTree();
         });
 
 
@@ -1262,15 +1055,579 @@
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const serverTheme = '{{ settings.dark_mode|yesno:"dark,light" }}';
-            
+
             let activeTheme = 'light';
             if (savedTheme) {
                 activeTheme = savedTheme;
             } else if (serverTheme) {
                 activeTheme = serverTheme;
             }
-            
+
             document.documentElement.setAttribute('data-theme', activeTheme);
+        }
+
+        // Load directory tree via AJAX
+        function loadDirectoryTree() {
+            fetch('{% url "server_directory_tree" %}')
+                .then(response => response.json())
+                .then(data => {
+                    renderDirectoryTree(data);
+                })
+                .catch(error => {
+                    console.error('Error loading directory tree:', error);
+                    document.getElementById('directoryTree').innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: rgba(255, 255, 255, 0.7);">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #f59e0b;"></i>
+                            <p>Error loading directory structure</p>
+                        </div>
+                    `;
+                });
+        }
+
+        let globalTree = null;
+        let searchTerm = '';
+        let categoryFilter = 'all';
+        let docTypeFilter = 'all';
+
+        function renderDirectoryTree(tree) {
+            globalTree = tree;
+            const container = document.getElementById('directoryTree');
+            container.innerHTML = renderNode(tree, 0);
+            updateStats();
+            initializeSearchAndFilters();
+        }
+
+        function renderNode(node, level) {
+            let html = '';
+            const indent = '│   '.repeat(level);
+
+            if (node.type === 'folder') {
+                const hasChildren = node.children && node.children.length > 0;
+                const toggleIcon = hasChildren ? '<i class="fas fa-chevron-down"></i>' : '<i class="fas fa-minus"></i>';
+
+                html += `
+                    <div class="folder-item folder-expanded" data-level="${level}">
+                        <div class="tree-item folder-row" onclick="toggleFolder(this.parentElement)">
+                            <span class="toggle-icon">${hasChildren ? toggleIcon : ''}</span>
+                            <span class="tree-icon"><i class="fas fa-folder" style="color: #f59e0b;"></i></span>
+                            <span class="tree-name">${node.name}</span>
+                            <span class="tree-count">${node.file_count} files</span>
+                        </div>
+                        <div class="tree-children">
+                `;
+
+                if (hasChildren) {
+                    node.children.forEach(child => {
+                        html += renderNode(child, level + 1);
+                    });
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                const iconColor = getFileIconColor(node.extension);
+                const icon = getFileIcon(node.extension);
+
+                html += `
+                    <div class="tree-item" data-level="${level}">
+                        <span class="toggle-icon"></span>
+                        <span class="tree-icon"><i class="${icon}" style="color: ${iconColor};"></i></span>
+                        <span class="tree-name">${node.name}</span>
+                        <span class="tree-size">${node.size}</span>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        function toggleFolder(folderElement) {
+            folderElement.classList.toggle('folder-expanded');
+            folderElement.classList.toggle('folder-collapsed');
+
+            const toggleIcon = folderElement.querySelector('.toggle-icon i');
+            if (toggleIcon) {
+                if (folderElement.classList.contains('folder-expanded')) {
+                    toggleIcon.className = 'fas fa-chevron-down';
+                } else {
+                    toggleIcon.className = 'fas fa-chevron-right';
+                }
+            }
+        }
+
+        function getFileIcon(extension) {
+            const ext = extension.toLowerCase();
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) {
+                return 'fas fa-image';
+            } else if (ext === '.pdf') {
+                return 'fas fa-file-pdf';
+            } else if (['.doc', '.docx'].includes(ext)) {
+                return 'fas fa-file-word';
+            } else if (['.xls', '.xlsx'].includes(ext)) {
+                return 'fas fa-file-excel';
+            } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+                return 'fas fa-file-archive';
+            } else if (['.txt', '.log'].includes(ext)) {
+                return 'fas fa-file-alt';
+            } else {
+                return 'fas fa-file';
+            }
+        }
+
+        function getFileIconColor(extension) {
+            const ext = extension.toLowerCase();
+            if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].includes(ext)) {
+                return '#ec4899';
+            } else if (ext === '.pdf') {
+                return '#dc2626';
+            } else if (['.doc', '.docx'].includes(ext)) {
+                return '#2563eb';
+            } else if (['.xls', '.xlsx'].includes(ext)) {
+                return '#059669';
+            } else if (['.zip', '.rar', '.7z'].includes(ext)) {
+                return '#7c3aed';
+            } else {
+                return '#6b7280';
+            }
+        }
+
+        // Search and Filter Functions
+        function initializeSearchAndFilters() {
+            const searchBox = document.getElementById('searchBox');
+            const clearSearch = document.getElementById('clearSearch');
+            const categoryFilterEl = document.getElementById('categoryFilter');
+            const docTypeFilterEl = document.getElementById('docTypeFilter');
+            const expandAllBtn = document.getElementById('expandAllBtn');
+            const collapseAllBtn = document.getElementById('collapseAllBtn');
+
+            // Search functionality
+            searchBox.addEventListener('input', function(e) {
+                searchTerm = e.target.value.toLowerCase();
+                if (searchTerm) {
+                    clearSearch.classList.add('show');
+                } else {
+                    clearSearch.classList.remove('show');
+                }
+                applyFilters();
+            });
+
+            clearSearch.addEventListener('click', function() {
+                searchBox.value = '';
+                searchTerm = '';
+                clearSearch.classList.remove('show');
+                applyFilters();
+            });
+
+            // Category filter dropdown
+            categoryFilterEl.addEventListener('change', function() {
+                categoryFilter = this.value;
+                applyFilters();
+            });
+
+            // Document type filter dropdown
+            docTypeFilterEl.addEventListener('change', function() {
+                docTypeFilter = this.value;
+                applyFilters();
+            });
+
+            // Expand/Collapse all
+            expandAllBtn.addEventListener('click', expandAll);
+            collapseAllBtn.addEventListener('click', collapseAll);
+        }
+
+        function applyFilters() {
+            const allItems = document.querySelectorAll('.folder-item, .tree-item');
+
+            // First pass: Determine which items match the filters
+            allItems.forEach(item => {
+                const isFolder = item.classList.contains('folder-item');
+                const treeName = item.querySelector('.tree-name');
+
+                if (!treeName) return;
+
+                const itemName = treeName.textContent.toLowerCase();
+                let matches = true;
+
+                // Apply search filter
+                if (searchTerm && !itemName.includes(searchTerm)) {
+                    matches = false;
+                }
+
+                // Apply category filter (EGGS, RAW, PMP, POULTRY, Compliance)
+                if (categoryFilter !== 'all' && matches) {
+                    const folderName = treeName.textContent.trim();
+                    if (!folderName.includes(categoryFilter)) {
+                        matches = false;
+                    }
+                }
+
+                // Apply document type filter (RFI, Invoice, Lab, Retest, Form, Other)
+                if (docTypeFilter !== 'all' && matches) {
+                    const itemNameLower = treeName.textContent.toLowerCase();
+                    const docTypeLower = docTypeFilter.toLowerCase();
+
+                    if (docTypeFilter === 'Other') {
+                        // Show files that don't contain any of the known types
+                        const knownTypes = ['rfi', 'invoice', 'lab', 'retest', 'form'];
+                        const hasKnownType = knownTypes.some(type => itemNameLower.includes(type));
+                        if (hasKnownType) {
+                            matches = false;
+                        }
+                    } else {
+                        // Show files that contain the selected type
+                        if (!itemNameLower.includes(docTypeLower)) {
+                            matches = false;
+                        }
+                    }
+                }
+
+                // Store the match result as a data attribute
+                item.dataset.matches = matches;
+            });
+
+            // Second pass: Show items that match OR are folders containing matching items
+            allItems.forEach(item => {
+                const isFolder = item.classList.contains('folder-item');
+                const matches = item.dataset.matches === 'true';
+
+                let shouldShow = matches;
+
+                if (isFolder) {
+                    // For folders: show if they match OR if they contain any matching descendants
+                    const childrenContainer = item.querySelector('.tree-children');
+                    if (childrenContainer) {
+                        const descendants = childrenContainer.querySelectorAll('.folder-item, .tree-item');
+                        const hasMatchingDescendants = Array.from(descendants).some(
+                            descendant => descendant.dataset.matches === 'true'
+                        );
+
+                        if (hasMatchingDescendants || matches) {
+                            shouldShow = true;
+                        }
+                    }
+
+                    // If searching for a folder name and it matches, show all its children
+                    if (searchTerm && matches) {
+                        const childrenContainer = item.querySelector('.tree-children');
+                        if (childrenContainer) {
+                            const allChildren = childrenContainer.querySelectorAll('.folder-item, .tree-item');
+                            allChildren.forEach(child => {
+                                child.dataset.showAsChild = 'true';
+                            });
+                        }
+                    }
+                }
+
+                // If this item is marked to be shown as a child of a matching folder, show it
+                if (item.dataset.showAsChild === 'true') {
+                    shouldShow = true;
+                }
+
+                // Show/hide item
+                if (shouldShow) {
+                    item.classList.remove('hidden-item');
+                } else {
+                    item.classList.add('hidden-item');
+                }
+            });
+
+            // Third pass: Expand folders that contain matching items
+            if (searchTerm || currentFilter !== 'all') {
+                document.querySelectorAll('.folder-item').forEach(folder => {
+                    if (folder.classList.contains('hidden-item')) return;
+
+                    const childrenContainer = folder.querySelector('.tree-children');
+                    if (childrenContainer) {
+                        const visibleChildren = Array.from(
+                            childrenContainer.querySelectorAll('.folder-item, .tree-item')
+                        ).filter(child => !child.classList.contains('hidden-item'));
+
+                        if (visibleChildren.length > 0) {
+                            folder.classList.add('folder-expanded');
+                            folder.classList.remove('folder-collapsed');
+                            const toggleIcon = folder.querySelector('.toggle-icon i');
+                            if (toggleIcon) {
+                                toggleIcon.className = 'fas fa-chevron-down';
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Clean up temporary data attributes
+            allItems.forEach(item => {
+                delete item.dataset.showAsChild;
+            });
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const allFolders = document.querySelectorAll('.folder-item').length;
+            const allFiles = document.querySelectorAll('.tree-item:not(.folder-row)').length;
+
+            // Update stat cards at the top
+            document.getElementById('folderCountCard').textContent = allFolders;
+            document.getElementById('fileCountCard').textContent = allFiles;
+        }
+
+        function expandAll() {
+            document.querySelectorAll('.folder-item').forEach(folder => {
+                if (!folder.classList.contains('hidden-item')) {
+                    folder.classList.add('folder-expanded');
+                    folder.classList.remove('folder-collapsed');
+                    const toggleIcon = folder.querySelector('.toggle-icon i');
+                    if (toggleIcon) {
+                        toggleIcon.className = 'fas fa-chevron-down';
+                    }
+                }
+            });
+        }
+
+        // ================================================================
+        // NOTIFICATION SYSTEM
+        // ================================================================
+        {% if request.user.role == 'super_admin' or request.user.role == 'developer' %}
+        let notificationModal = null;
+
+        // Fetch notifications and update badge
+        async function fetchNotifications() {
+            try {
+                const response = await fetch('/api/notifications/');
+                const data = await response.json();
+
+                if (data.success) {
+                    updateNotificationBadge(data.unread_count);
+                    return data.notifications;
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
+            return [];
+        }
+
+        // Update notification badge
+        function updateNotificationBadge(count) {
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        // Show notification modal
+        async function showNotificationModal() {
+            const notifications = await fetchNotifications();
+
+            // Create modal HTML
+            const modalHTML = `
+                <div id="notification-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: rgba(0, 0, 0, 0.5);">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+                        <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                <i class="fas fa-bell text-yellow-400 mr-2"></i>
+                                Notifications
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <button onclick="markAllAsRead()" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                    <i class="fas fa-check-double mr-1"></i>Mark All Read
+                                </button>
+                                <button onclick="closeNotificationModal()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400">
+                                    <i class="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-y-auto max-h-[60vh]" id="notification-list">
+                            ${notifications.length === 0 ? `
+                                <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-bell-slash text-4xl mb-2"></i>
+                                    <p>No notifications</p>
+                                </div>
+                            ` : notifications.map(notif => createNotificationHTML(notif)).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            const existing = document.getElementById('notification-modal');
+            if (existing) existing.remove();
+
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Create HTML for a single notification
+        function createNotificationHTML(notif) {
+            const typeColors = {
+                'error': 'bg-red-100 border-red-500 text-red-900 dark:bg-red-900 dark:text-red-100',
+                'warning': 'bg-yellow-100 border-yellow-500 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100',
+                'info': 'bg-blue-100 border-blue-500 text-blue-900 dark:bg-blue-900 dark:text-blue-100',
+                'success': 'bg-green-100 border-green-500 text-green-900 dark:bg-green-900 dark:text-green-100',
+                'sync': 'bg-purple-100 border-purple-500 text-purple-900 dark:bg-purple-900 dark:text-purple-100',
+                'system': 'bg-gray-100 border-gray-500 text-gray-900 dark:bg-gray-700 dark:text-gray-100',
+            };
+
+            const typeIcons = {
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle',
+                'success': 'fa-check-circle',
+                'sync': 'fa-sync',
+                'system': 'fa-cog',
+            };
+
+            const bgColor = typeColors[notif.type] || typeColors['info'];
+            const icon = typeIcons[notif.type] || typeIcons['info'];
+            const timeAgo = getTimeAgo(notif.created_at);
+            const opacity = notif.is_read ? 'opacity-60' : '';
+
+            return `
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 ${opacity}" data-notification-id="${notif.id}">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full ${bgColor} flex items-center justify-center">
+                            <i class="fas ${icon}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white">${notif.title}</h4>
+                                ${!notif.is_read ? '<span class="bg-blue-500 w-2 h-2 rounded-full"></span>' : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">${notif.message}</p>
+                            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span><i class="far fa-clock mr-1"></i>${timeAgo}</span>
+                                <div class="flex gap-2">
+                                    ${!notif.is_read ? `<button onclick="markAsRead(${notif.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                        <i class="fas fa-check mr-1"></i>Mark Read
+                                    </button>` : ''}
+                                    <button onclick="deleteNotification(${notif.id})" class="text-red-600 hover:text-red-800 dark:text-red-400">
+                                        <i class="fas fa-trash mr-1"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Get time ago string
+        function getTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const seconds = Math.floor((now - date) / 1000);
+
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+            if (seconds < 604800) return Math.floor(seconds / 86400) + ' days ago';
+            return date.toLocaleDateString();
+        }
+
+        // Close notification modal
+        function closeNotificationModal() {
+            const modal = document.getElementById('notification-modal');
+            if (modal) {
+                modal.remove();
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Mark notification as read
+        async function markAsRead(notificationId) {
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/read/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    }
+                });
+
+                if (response.ok) {
+                    // Refresh the modal
+                    closeNotificationModal();
+                    showNotificationModal();
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Mark all notifications as read
+        async function markAllAsRead() {
+            try {
+                const response = await fetch('/api/notifications/mark-all-read/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    }
+                });
+
+                if (response.ok) {
+                    closeNotificationModal();
+                    updateNotificationBadge(0);
+                }
+            } catch (error) {
+                console.error('Error marking all notifications as read:', error);
+            }
+        }
+
+        // Delete notification
+        async function deleteNotification(notificationId) {
+            if (!confirm('Are you sure you want to delete this notification?')) return;
+
+            try {
+                const response = await fetch(`/api/notifications/${notificationId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                    }
+                });
+
+                if (response.ok) {
+                    // Refresh the modal
+                    closeNotificationModal();
+                    showNotificationModal();
+                }
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+            }
+        }
+
+        // Initialize notification system
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationBell = document.getElementById('notification-bell');
+            if (notificationBell) {
+                notificationBell.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showNotificationModal();
+                });
+
+                // Fetch notifications every 30 seconds
+                fetchNotifications();
+                setInterval(fetchNotifications, 30000);
+            }
+        });
+        {% endif %}
+
+        function collapseAll() {
+            document.querySelectorAll('.folder-item').forEach(folder => {
+                folder.classList.add('folder-collapsed');
+                folder.classList.remove('folder-expanded');
+                const toggleIcon = folder.querySelector('.toggle-icon i');
+                if (toggleIcon) {
+                    toggleIcon.className = 'fas fa-chevron-right';
+                }
+            });
         }
     </script>
 </body>

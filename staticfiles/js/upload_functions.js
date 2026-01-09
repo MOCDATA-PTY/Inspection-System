@@ -1578,7 +1578,7 @@ async function deleteFile(filePath, fileName) {
                         
                         const specificButton = document.getElementById(specificButtonId);
                         if (specificButton) {
-                            // Reset this specific button to grey
+                            // Reset this specific button to GREY (no file uploaded)
                             specificButton.disabled = false;
                             specificButton.classList.remove('uploaded', 'btn-success');
                             specificButton.className = 'btn btn-secondary btn-sm';
@@ -1650,42 +1650,82 @@ async function deleteFile(filePath, fileName) {
                 console.log(`🔧 Calling updateButtonAfterDeletion for ${documentType} with client: ${clientName}, date: ${inspectionDate}`);
                 updateButtonAfterDeletion(clientName, inspectionDate, documentType);
                 
-                // Also directly reset the button to gray state
+                // Also directly reset the button to GREY state (no files)
                 const groupId = window.currentFilesGroupId;
                 console.log(`🔧 [DIRECT RESET] Group ID from window: ${groupId}`);
                 console.log(`🔧 [DIRECT RESET] Document type: ${documentType}`);
                 if (groupId) {
-                    const buttonId = `${documentType}-${groupId}`;
-                    console.log(`🔧 [DIRECT RESET] Looking for button ID: ${buttonId}`);
-                    const button = document.getElementById(buttonId);
-                    console.log(`🔧 [DIRECT RESET] Button found:`, button ? 'YES' : 'NO');
-                    if (button) {
-                        console.log(`🔧 [DIRECT RESET] Directly resetting ${documentType} button to gray state`);
-                        button.disabled = false;
-                        button.className = 'btn btn-secondary btn-sm';
-                        button.style.backgroundColor = '#6c757d';
-                        button.style.borderColor = '#6c757d';
-                        button.style.color = 'white';
-                        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-                        button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
-                        button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
-                        button.setAttribute('data-file-deleted', 'true');
-                        button.setAttribute('data-last-updated', Date.now().toString());
+                    // Try both button ID patterns: desktop uses 'rfi-btn-' prefix, mobile uses 'rfi-mobile-'
+                    const desktopButtonId = `${documentType}-btn-${groupId}`;
+                    const mobileButtonId = `${documentType}-mobile-${groupId}`;
+                    const legacyButtonId = `${documentType}-${groupId}`;
 
-                        // Re-enable onclick functionality
+                    console.log(`🔧 [DIRECT RESET] Looking for desktop button ID: ${desktopButtonId}`);
+                    console.log(`🔧 [DIRECT RESET] Looking for mobile button ID: ${mobileButtonId}`);
+
+                    // Find all possible buttons
+                    const desktopButton = document.getElementById(desktopButtonId);
+                    const mobileButton = document.getElementById(mobileButtonId);
+                    const legacyButton = document.getElementById(legacyButtonId);
+
+                    // Reset desktop button if found
+                    if (desktopButton) {
+                        console.log(`🔧 [DIRECT RESET] Found desktop button, resetting to GREY state`);
+                        desktopButton.disabled = false;
+                        desktopButton.style.backgroundColor = '#6c757d';
+                        desktopButton.style.borderColor = '#6c757d';
+                        desktopButton.style.color = 'white';
+                        desktopButton.style.opacity = '1';
+                        desktopButton.style.cursor = 'pointer';
+                        desktopButton.innerHTML = documentType.toUpperCase();
+                        desktopButton.title = `Upload ${documentType.toUpperCase()}`;
+                        desktopButton.setAttribute('data-file-deleted', 'true');
+                        desktopButton.setAttribute('data-last-updated', Date.now().toString());
+                        console.log(`SUCCESS Desktop ${documentType.toUpperCase()} button reset to GREY state`);
+                    }
+
+                    // Reset mobile button if found
+                    if (mobileButton) {
+                        console.log(`🔧 [DIRECT RESET] Found mobile button, resetting to GREY state`);
+                        mobileButton.disabled = false;
+                        mobileButton.style.backgroundColor = '#6c757d';
+                        mobileButton.style.borderColor = '#6c757d';
+                        mobileButton.style.color = 'white';
+                        mobileButton.style.opacity = '1';
+                        mobileButton.style.cursor = 'pointer';
+                        mobileButton.innerHTML = `<i class="fas fa-upload mr-1"></i> ${documentType.toUpperCase()}`;
+                        mobileButton.title = `Upload ${documentType.toUpperCase()}`;
+                        mobileButton.setAttribute('data-file-deleted', 'true');
+                        mobileButton.setAttribute('data-last-updated', Date.now().toString());
+
+                        // Re-enable onclick functionality for mobile
                         if (documentType === 'rfi') {
-                            button.onclick = function() { uploadRFI(groupId); };
+                            mobileButton.onclick = function() { uploadRFI(groupId); };
                         } else if (documentType === 'invoice') {
-                            button.onclick = function() { uploadInvoice(groupId); };
+                            mobileButton.onclick = function() { uploadInvoice(groupId); };
                         } else if (documentType === 'occurrence') {
-                            button.onclick = function() { uploadOccurrence(groupId); };
+                            mobileButton.onclick = function() { uploadOccurrence(groupId); };
                         } else if (documentType === 'composition') {
-                            button.onclick = function() { uploadComposition(groupId); };
+                            mobileButton.onclick = function() { uploadComposition(groupId); };
                         }
-                        console.log(`SUCCESS ${documentType.toUpperCase()} button directly reset to gray state`);
-                    } else {
-                        console.log(`⚠️ Button not found for direct reset: ${buttonId}`);
+                        console.log(`SUCCESS Mobile ${documentType.toUpperCase()} button reset to GREY state`);
+                    }
+
+                    // Reset legacy button if found (fallback)
+                    if (legacyButton && !desktopButton && !mobileButton) {
+                        console.log(`🔧 [DIRECT RESET] Found legacy button, resetting to GREY state`);
+                        legacyButton.disabled = false;
+                        legacyButton.style.backgroundColor = '#6c757d';
+                        legacyButton.style.borderColor = '#6c757d';
+                        legacyButton.style.color = 'white';
+                        legacyButton.style.opacity = '1';
+                        legacyButton.style.cursor = 'pointer';
+                        legacyButton.innerHTML = documentType.toUpperCase();
+                        console.log(`SUCCESS Legacy ${documentType.toUpperCase()} button reset to GREY state`);
+                    }
+
+                    if (!desktopButton && !mobileButton && !legacyButton) {
+                        console.log(`⚠️ No buttons found for direct reset`);
                     }
                 }
             }
@@ -1744,14 +1784,14 @@ async function deleteFile(filePath, fileName) {
                         delete uploadStatus[buttonId];
                         localStorage.setItem('uploadStatus', JSON.stringify(uploadStatus));
 
-                        // Force the button to stay in uploadable state - GREY
+                        // Force the button to stay in uploadable state - RED (no file)
                         button.disabled = false;
                         button.className = 'btn btn-secondary btn-sm';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
                         button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
 
@@ -1858,9 +1898,9 @@ async function deleteFile(filePath, fileName) {
                                     console.log(`🔧 [VIEW FILES] Current background-color: ${button.style.backgroundColor}`);
 
                                     if (totalFiles === 0) {
-                                        // NO FILES - Set to RED immediately with !important
-                                        console.log(`🔴 [VIEW FILES] Setting button to RED (0 files)`);
-                                        button.className = 'btn btn-sm btn-view-files btn-danger';
+                                        // NO FILES - Set to GREY immediately with !important
+                                        console.log(`🔴 [VIEW FILES] Setting button to GREY (0 files)`);
+                                        button.className = 'btn btn-sm btn-view-files btn-secondary';
                                         button.style.setProperty('background-color', '#dc3545', 'important');
                                         button.style.setProperty('border-color', '#dc3545', 'important');
                                         button.style.setProperty('color', 'white', 'important');
@@ -2984,7 +3024,7 @@ function updateViewFilesButtonColor(clientName, fileStatus) {
             }
             
             // Remove existing color classes including the problematic btn-files-none
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-danger');
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-checking', 'btn-warning', 'btn-secondary');
             
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -3146,7 +3186,7 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
             }
             
             // Remove existing color classes including the problematic btn-files-none
-            button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-danger', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
+            button.classList.remove('btn-success', 'btn-warning', 'btn-info', 'btn-secondary', 'btn-files-none', 'btn-files-partial', 'btn-files-checking');
             
             // Apply color based on file status
             switch (fileStatus) {
@@ -3194,7 +3234,7 @@ function updateViewFilesButtonColorSpecific(clientName, inspectionDate, fileStat
                     });
                     break;
                 case 'no_files':
-                    button.classList.add('btn-files-none');  // Changed from btn-danger to match template
+                    button.classList.add('btn-files-none');  // Changed from btn-secondary to match template
                     button.title = 'No files available';
                     const ts4 = new Date().toLocaleTimeString();
                     console.log(`   🔴 [${ts4}] CHANGED TO RED - Applied RED color to button (btn-files-none)`);
@@ -3294,17 +3334,17 @@ function updateRFIButtonColorDelayed(groupId) {
                     button.onclick = null;
                     console.log('SUCCESS [DELAYED] Updated RFI button to green success state');
                 } else {
-                    // Update to grey state (no file)
+                    // Update to GREY state (no file)
                     button.disabled = false;
                     button.className = 'btn btn-sm btn-secondary';
                     button.style.backgroundColor = '#6c757d';
                     button.style.borderColor = '#6c757d';
                     button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                    button.style.cursor = 'pointer';
                     button.innerHTML = 'RFI';
                     button.title = 'Upload RFI file';
                     button.onclick = () => uploadRFI(groupId);
-                    console.log('GREY [DELAYED] Updated RFI button to grey state (no file)');
+                    console.log('RED [DELAYED] Updated RFI button to GREY state (no file)');
                 }
             } else {
                 console.warn('RFI button not found for delayed update:', buttonId);
@@ -3382,17 +3422,17 @@ function updateCompositionButtonColorDelayed(groupId) {
                     button.onclick = null;
                     console.log('SUCCESS [DELAYED] Updated Composition button to green success state');
                 } else {
-                    // Update to grey state (no file)
+                    // Update to GREY state (no file)
                     button.disabled = false;
                     button.className = 'btn btn-sm btn-secondary';
                     button.style.backgroundColor = '#6c757d';
                     button.style.borderColor = '#6c757d';
                     button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                    button.style.cursor = 'pointer';
                     button.innerHTML = 'Composition';
                     button.title = 'Upload Composition file';
                     button.onclick = () => uploadComposition(groupId);
-                    console.log('GREY [DELAYED] Updated Composition button to grey state (no file)');
+                    console.log('RED [DELAYED] Updated Composition button to GREY state (no file)');
                 }
             } else {
                 console.warn('Composition button not found for delayed update:', buttonId);
@@ -3475,17 +3515,17 @@ function updateOccurrenceButtonColorDelayed(groupId) {
                     button.onclick = null;
                     console.log('SUCCESS [DELAYED] Updated Occurrence button to green success state');
                 } else {
-                    // Update to grey state (no file)
+                    // Update to GREY state (no file)
                     button.disabled = false;
                     button.className = 'btn btn-sm btn-secondary';
                     button.style.backgroundColor = '#6c757d';
                     button.style.borderColor = '#6c757d';
                     button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                    button.style.cursor = 'pointer';
                     button.innerHTML = 'Occurrence';
                     button.title = 'Upload Occurrence file';
                     button.onclick = () => uploadOccurrence(groupId);
-                    console.log('GREY [DELAYED] Updated Occurrence button to grey state (no file)');
+                    console.log('RED [DELAYED] Updated Occurrence button to GREY state (no file)');
                 }
             } else {
                 console.warn('Occurrence button not found for delayed update:', buttonId);
@@ -3499,13 +3539,13 @@ function updateOccurrenceButtonColorDelayed(groupId) {
     });
 }
 
-// Function to reset RFI and Invoice buttons to grey when View Files button goes red
+// Function to reset RFI and Invoice buttons to GREY when View Files button goes red (no files)
 function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
-    console.log('INFO [RESET] Resetting RFI and Invoice buttons to grey for:', clientName, 'on', inspectionDate);
-    
+    console.log('INFO [RESET] Resetting RFI and Invoice buttons to GREY for:', clientName, 'on', inspectionDate);
+
     // Find the row for this client and date
     const rows = document.querySelectorAll('tr[data-client-name="' + clientName + '"][data-inspection-date="' + inspectionDate + '"]');
-    
+
     rows.forEach(row => {
         // Find RFI button
         const rfiButton = row.querySelector('button[id*="rfi-"]');
@@ -3515,11 +3555,11 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
             const rfiButtonLastUpdated = parseInt(rfiButton.getAttribute('data-last-updated') || '0');
             const rfiButtonTimeSinceUpdate = Date.now() - rfiButtonLastUpdated;
             const rfiButtonRecentlyReset = rfiButtonRecentlyDeleted && rfiButtonTimeSinceUpdate < 10000; // 10 seconds
-            
+
             if (rfiButtonRecentlyReset) {
                 console.log('⏭️ [RESET] Skipping RFI button reset - recently updated by file deletion');
             } else {
-                console.log('INFO [RESET] Found RFI button, resetting to grey...');
+                console.log('INFO [RESET] Found RFI button, resetting to GREY...');
                 rfiButton.disabled = false;
                 rfiButton.className = 'btn btn-sm btn-secondary';
                 rfiButton.style.backgroundColor = '#6c757d';
@@ -3528,12 +3568,12 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
                 rfiButton.style.cursor = 'pointer';
                 rfiButton.innerHTML = 'RFI';
                 rfiButton.title = 'Upload RFI file';
-                
+
                 // Restore the onclick function
                 const groupId = rfiButton.id.replace('rfi-', '');
                 rfiButton.onclick = () => uploadRFI(groupId);
-                
-                console.log('SUCCESS [RESET] RFI button reset to grey');
+
+                console.log('SUCCESS [RESET] RFI button reset to GREY');
             }
         } else {
             console.log('⚠️ [RESET] RFI button not found');
@@ -3551,7 +3591,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
             if (invoiceButtonRecentlyReset) {
                 console.log('⏭️ [RESET] Skipping Invoice button reset - recently updated by file deletion');
             } else {
-                console.log('INFO [RESET] Found Invoice button, resetting to grey...');
+                console.log('INFO [RESET] Found Invoice button, resetting to GREY...');
                 invoiceButton.disabled = false;
                 invoiceButton.className = 'btn btn-sm btn-secondary';
                 invoiceButton.style.backgroundColor = '#6c757d';
@@ -3560,12 +3600,12 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
                 invoiceButton.style.cursor = 'pointer';
                 invoiceButton.innerHTML = 'Invoice';
                 invoiceButton.title = 'Upload Invoice file';
-                
+
                 // Restore the onclick function
                 const groupId = invoiceButton.id.replace('invoice-', '');
                 invoiceButton.onclick = () => uploadInvoice(groupId);
-                
-                console.log('SUCCESS [RESET] Invoice button reset to grey');
+
+                console.log('SUCCESS [RESET] Invoice button reset to GREY');
             }
         } else {
             console.log('⚠️ [RESET] Invoice button not found');
@@ -3582,7 +3622,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
     // Reset RFI button by group ID
     const rfiButtonById = document.getElementById('rfi-' + groupId);
     if (rfiButtonById) {
-        console.log('INFO [RESET] Found RFI button by ID, resetting to grey...');
+        console.log('INFO [RESET] Found RFI button by ID, resetting to GREY...');
         rfiButtonById.disabled = false;
         rfiButtonById.className = 'btn btn-sm btn-secondary';
         rfiButtonById.style.backgroundColor = '#6c757d';
@@ -3592,13 +3632,13 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
         rfiButtonById.innerHTML = 'RFI';
         rfiButtonById.title = 'Upload RFI file';
         rfiButtonById.onclick = () => uploadRFI(groupId);
-        console.log('SUCCESS [RESET] RFI button reset to grey (by ID)');
+        console.log('SUCCESS [RESET] RFI button reset to GREY (by ID)');
     }
     
     // Reset Invoice button by group ID
     const invoiceButtonById = document.getElementById('invoice-' + groupId);
     if (invoiceButtonById) {
-        console.log('INFO [RESET] Found Invoice button by ID, resetting to grey...');
+        console.log('INFO [RESET] Found Invoice button by ID, resetting to GREY...');
         invoiceButtonById.disabled = false;
         invoiceButtonById.className = 'btn btn-sm btn-secondary';
         invoiceButtonById.style.backgroundColor = '#6c757d';
@@ -3608,7 +3648,7 @@ function resetRFIAndInvoiceButtonsToGrey(clientName, inspectionDate) {
         invoiceButtonById.innerHTML = 'Invoice';
         invoiceButtonById.title = 'Upload Invoice file';
         invoiceButtonById.onclick = () => uploadInvoice(groupId);
-        console.log('SUCCESS [RESET] Invoice button reset to grey (by ID)');
+        console.log('SUCCESS [RESET] Invoice button reset to GREY (by ID)');
     }
 }
 
@@ -3680,7 +3720,7 @@ function updateInvoiceButtonColorDelayed(groupId) {
                 } else {
                     // Update to red error state (file was deleted or not found)
                     button.disabled = false;
-                    button.className = 'btn btn-sm btn-danger';
+                    button.className = 'btn btn-sm btn-secondary';
                     button.style.backgroundColor = '#dc3545';
                     button.style.borderColor = '#dc3545';
                     button.style.opacity = '1';
@@ -4150,13 +4190,13 @@ async function processRFIButtons(rfiButtons) {
                         button.onclick = null;
                         console.log(`SUCCESS Updated RFI button to GREEN for: ${clientName}`);
                     } else {
-                        // Update to grey state (no file)
+                        // Update to GREY state (no file)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI file';
                         button.onclick = () => uploadRFI(groupId);
@@ -4239,14 +4279,14 @@ function immediateRFIButtonCheck(groupId, clientName, inspectionDate) {
                             button.onclick = null;
                             console.log(`SUCCESS [IMMEDIATE] Updated ${type} RFI button to GREEN for: ${clientName}`);
                         } else {
-                            // Update to grey state (no file)
+                            // Update to GREY state (no file)
                             button.disabled = false;
                             button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                             button.style.backgroundColor = '#6c757d';
                             button.style.borderColor = '#6c757d';
                             button.style.color = 'white';
                             button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                            button.style.cursor = 'pointer';
                             button.innerHTML = 'RFI';
                             button.title = 'Upload RFI file';
                             button.onclick = () => uploadRFI(groupId);
@@ -4332,14 +4372,14 @@ function immediateInvoiceButtonCheck(groupId, clientName, inspectionDate) {
                             button.onclick = null;
                             console.log(`SUCCESS [IMMEDIATE] Updated ${type} Invoice button to GREEN for: ${clientName}`);
                         } else {
-                            // Update to grey state (no file)
+                            // Update to GREY state (no file)
                             button.disabled = false;
                             button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                             button.style.backgroundColor = '#6c757d';
                             button.style.borderColor = '#6c757d';
                             button.style.color = 'white';
                             button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                            button.style.cursor = 'pointer';
                             button.innerHTML = 'Invoice';
                             button.title = 'Upload Invoice file';
                             button.onclick = () => uploadInvoice(groupId);
@@ -4424,13 +4464,13 @@ function immediateOccurrenceButtonCheck(groupId, clientName, inspectionDate) {
                             button.onclick = null;
                             console.log(`SUCCESS [IMMEDIATE] Updated ${type} Occurrence button to GREEN for: ${clientName}`);
                         } else {
-                            // Update to grey state (no file)
+                            // Update to GREY state (no file)
                             button.disabled = false;
                             button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                             button.style.backgroundColor = '#6c757d';
                             button.style.borderColor = '#6c757d';
                             button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                            button.style.cursor = 'pointer';
                             button.innerHTML = 'Occurrence';
                             button.title = 'Upload Occurrence file';
                             button.onclick = () => uploadOccurrence(groupId);
@@ -4508,14 +4548,13 @@ function immediateLabButtonCheck(groupId, clientName, inspectionDate) {
                         button.onclick = null;
                         console.log(`SUCCESS [IMMEDIATE] Updated Lab button to GREEN for: ${clientName}`);
                     } else {
-                        // Update to grey state (no file)
+                        // Update to GREY state (no file)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-                        button.title = 'Upload COA file';
+                        button.style.cursor = 'pointer';
                         button.title = 'Upload COA file';
                         button.onclick = () => uploadLab(groupId);
                         console.log(`GREY [IMMEDIATE] Updated Lab button to GREY for: ${clientName}`);
@@ -4590,13 +4629,13 @@ function immediateRetestButtonCheck(groupId, clientName, inspectionDate) {
                         button.onclick = null;
                         console.log(`SUCCESS [IMMEDIATE] Updated Retest button to GREEN for: ${clientName}`);
                     } else {
-                        // Update to grey state (no file)
+                        // Update to GREY state (no file)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'Retest';
                         button.title = 'Upload Retest file';
                         button.onclick = () => uploadRetest(groupId);
@@ -4672,13 +4711,13 @@ function immediateLabFormButtonCheck(groupId, clientName, inspectionDate) {
                         button.onclick = null;
                         console.log(`SUCCESS [IMMEDIATE] Updated Lab Form button to GREEN for: ${clientName}`);
                     } else {
-                        // Update to grey state (no file)
+                        // Update to GREY state (no file)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'Lab Form';
                         button.title = 'Upload Lab Form file';
                         button.onclick = () => uploadLabForm(groupId);
@@ -4778,14 +4817,14 @@ async function initializeRFIButtonsSimple() {
                         button.onclick = null;
                         console.log(`SUCCESS [SIMPLE] Set ${clientName} RFI button to GREEN`);
                     } else {
-                        // GREY - No RFI file
+                        // RED - No RFI file (user wants RED not grey)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'RFI';
                         button.title = 'Upload RFI file';
                         button.onclick = () => uploadRFI(groupId);
@@ -4871,14 +4910,14 @@ async function initializeInvoiceButtonsSimple() {
                         button.onclick = null;
                         console.log(`SUCCESS [SIMPLE] Set ${clientName} Invoice button to GREEN`);
                     } else {
-                        // GREY - No Invoice file
+                        // RED - No Invoice file (user wants RED not grey)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'Invoice';
                         button.title = 'Upload Invoice file';
                         button.onclick = () => uploadInvoice(groupId);
@@ -4968,14 +5007,14 @@ async function initializeOccurrenceButtonsSimple() {
                         button.onclick = null;
                         console.log(`SUCCESS [SIMPLE] Set ${clientName} Occurrence button to GREEN`);
                     } else {
-                        // GREY - No Occurrence file
+                        // RED - No Occurrence file (user wants RED not grey)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary w-full bg-gray-400 text-white py-2 px-3 rounded-lg text-xs font-medium hover:bg-gray-500 transition-colors duration-200';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.color = 'white';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'Occurrence';
                         button.title = 'Upload Occurrence file';
                         button.onclick = () => uploadOccurrence(groupId);
@@ -5058,13 +5097,13 @@ async function initializeCompositionButtonsSimple() {
                         button.onclick = null;
                         console.log(`SUCCESS [SIMPLE] Set ${clientName} Composition button to GREEN`);
                     } else {
-                        // GREY - No Composition file
+                        // RED - No Composition file (user wants RED not grey)
                         button.disabled = false;
                         button.className = 'btn btn-sm btn-secondary';
                         button.style.backgroundColor = '#6c757d';
                         button.style.borderColor = '#6c757d';
                         button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                        button.style.cursor = 'pointer';
                         button.innerHTML = 'Composition';
                         button.title = 'Upload Composition file';
                         button.onclick = () => uploadComposition(groupId);
@@ -5120,8 +5159,8 @@ function makeViewFilesButtonOrange(groupId) {
 
         // Remove ALL possible color-related classes
         const classesToRemove = [
-            'btn-danger', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking',
-            'bg-primary', 'bg-primary-dark', 'bg-red-500', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500',
+            'btn-secondary', 'btn-warning', 'btn-success', 'btn-files-none', 'btn-files-partial', 'btn-files-checking',
+            'bg-primary', 'bg-primary-dark', 'bg-gray-400', 'bg-green-500', 'bg-yellow-500', 'bg-orange-500',
             'bg-blue-500', 'bg-gray-500', 'hover:bg-primary-dark', 'bg-danger', 'bg-secondary'
         ];
         classesToRemove.forEach(cls => viewFilesButton.classList.remove(cls));
@@ -5204,7 +5243,7 @@ async function checkButtonFileStatus(button, groupId, clientName, inspectionDate
                 button.style.borderColor = '#6c757d';
                 button.style.color = 'white';
                 button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+                button.style.cursor = 'pointer';
                 button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
                 button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
 
@@ -5312,13 +5351,13 @@ function updateFilesButtonBasedOnIndividualButtons(groupId, clientName, inspecti
 
     // Update Files button color based on individual button states
     // Remove all status classes
-    matchingFilesButton.classList.remove('btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-view-files-green', 'btn-view-files-red', 'btn-view-files-orange', 'btn-warning', 'btn-danger', 'btn-files-checking');
+    matchingFilesButton.classList.remove('btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-view-files-green', 'btn-view-files-red', 'btn-view-files-orange', 'btn-warning', 'btn-secondary', 'btn-files-checking');
 
     if (!hasAnyFiles) {
-        // All buttons are grey (no files) - set Files button to RED
+        // All buttons are grey (no files) - set Files button to GREY
         matchingFilesButton.classList.add('btn-files-none');
         matchingFilesButton.title = 'No files found';
-        console.log(`   🔴 Set Files button to RED (no files)`);
+        console.log(`   🔴 Set Files button to GREY (no files)`);
     } else {
         // At least one file exists - set to ORANGE (partial)
         matchingFilesButton.classList.add('btn-files-partial');
@@ -5441,7 +5480,7 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
                 console.log(`COLOR [IMMEDIATE] Updating button color to ${fileStatus} for ${clientName}`);
 
                 // Remove existing color classes - use TEMPLATE classes (btn-files-*)
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-secondary');
 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -5485,10 +5524,10 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
             // No files found - set to red
             console.log(`📊 [IMMEDIATE] No files found after deletion - setting to no_files`);
             matchingButtons.forEach(button => {
-                console.log(`COLOR [IMMEDIATE] Setting button to RED (no files) for ${clientName}`);
+                console.log(`COLOR [IMMEDIATE] Setting button to GREY (no files) for ${clientName}`);
 
                 // Remove existing color classes - use TEMPLATE classes (btn-files-*)
-                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
+                button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-secondary');
 
                 // Find the status icon
                 const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -5508,10 +5547,10 @@ function updateViewFilesButtonAfterFileDeletion(clientName, inspectionDate) {
         console.error(`ERROR [IMMEDIATE] Error checking file status after deletion:`, error);
         // Fallback to no_files status
         matchingButtons.forEach(button => {
-            console.log(`COLOR [IMMEDIATE] Error fallback - setting button to RED (no files) for ${clientName}`);
+            console.log(`COLOR [IMMEDIATE] Error fallback - setting button to GREY (no files) for ${clientName}`);
 
             // Remove existing color classes - use TEMPLATE classes (btn-files-*)
-            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-danger');
+            button.classList.remove('btn-view-files-green', 'btn-view-files-red', 'btn-view-files-blue', 'btn-view-files-orange', 'btn-files-none', 'btn-files-partial', 'btn-files-complete', 'btn-files-checking', 'btn-warning', 'btn-secondary');
 
             // Find the status icon
             const statusIcon = button.querySelector('i[class*="fa-"]');
@@ -5656,7 +5695,7 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
     if (button) {
         console.log(`SUCCESS Found ${documentType} button: ${buttonId}`);
 
-            // Reset button to default state (no files) - GREY
+            // Reset button to default state (no files) - RED
             button.disabled = false;
             button.classList.remove('uploaded', 'btn-success');
             button.className = 'btn btn-secondary btn-sm';
@@ -5664,7 +5703,7 @@ function updateButtonAfterDeletion(clientName, inspectionDate, documentType) {
             button.style.borderColor = '#6c757d';
             button.style.color = 'white';
             button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+            button.style.cursor = 'pointer';
             button.innerHTML = documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase();
             button.title = `Upload ${documentType.charAt(0).toUpperCase() + documentType.slice(1).toLowerCase()}`;
 
@@ -6348,15 +6387,15 @@ function resetButtonImmediately(documentType, groupId, clientName, inspectionDat
         buttonsToReset.forEach(({ button, type }) => {
             console.log(`🔧 Resetting ${type.toUpperCase()} ${documentType} button: ${button.id}`);
 
-            // Reset button to default state (uploadable) - GREY
+            // Reset button to default state (uploadable) - RED
             button.disabled = false;
-            button.classList.remove('uploaded', 'btn-success');
+            button.classList.remove('uploaded', 'btn-success', 'btn-secondary', 'bg-gray-400');
             button.classList.add('btn-secondary', 'btn-sm', 'w-full', 'bg-gray-400', 'text-white', 'py-2', 'px-3', 'rounded-lg', 'text-xs', 'font-medium');
             button.style.backgroundColor = '#6c757d';
             button.style.borderColor = '#6c757d';
             button.style.color = 'white';
             button.style.opacity = '1';
-        button.style.cursor = 'pointer';
+            button.style.cursor = 'pointer';
 
             // Set appropriate content based on document type
             // Desktop buttons: No icons in grey state, only checkmarks in green state
@@ -6452,10 +6491,10 @@ function updateMainTableButtons(documentType, groupId, clientName, inspectionDat
     
     if (button) {
         console.log(`SUCCESS Found main table button: ${buttonId}`);
-        
-        // Reset button to default state - GREY
+
+        // Reset button to default state - RED
         button.disabled = false;
-        button.classList.remove('uploaded', 'btn-success');
+        button.classList.remove('uploaded', 'btn-success', 'btn-secondary');
         button.classList.add('btn-secondary', 'btn-sm');
         button.style.backgroundColor = '#6c757d';
         button.style.borderColor = '#6c757d';

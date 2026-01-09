@@ -1,0 +1,6 @@
+tree 892360f3987c74336ef1c3eb4ae190c730f853c7
+parent de05c9008cd11f3a886f0eed4095cc2e01435e99
+author MOCDATA-PTY <noreply@github.com> 1763551027 -0800
+committer MOCDATA-PTY <noreply@github.com> 1763551027 -0800
+
+Enhance compliance locator to search inside inspection folder and categorize documents

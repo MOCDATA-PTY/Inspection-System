@@ -108,40 +108,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
+# Use SQLite for local development - easy fresh start with empty database
 DATABASES = {
     'default': {
-        'ENGINE': env('DB_ENGINE', default='django.db.backends.postgresql'),
-        'NAME': env('DB_NAME', default='inspection_system'),
-        'USER': env('DB_USER', default='ethan'),
-        'PASSWORD': env('DB_PASSWORD', default='MagnumOpus123'),
-        'HOST': env('DB_HOST', default='127.0.0.1'),
-        'PORT': env('DB_PORT', default='5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db_wizard.sqlite3',
     },
-    'sql_server': {
-        'ENGINE': env('SQL_SERVER_ENGINE', default='mssql'),
-        'NAME': env('SQL_SERVER_NAME', default='AFS'),
-        'USER': env('SQL_SERVER_USER', default='FSAUser2'),
-        'PASSWORD': env('SQL_SERVER_PASSWORD', default='password'),
-        'HOST': env('SQL_SERVER_HOST', default='102.67.140.12'),
-        'PORT': env('SQL_SERVER_PORT', default='1053'),
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'trusted_connection': 'no',
-        },
-    }
+    # SQL Server disabled - we only want local/manual inspections
+    # 'sql_server': {
+    #     'ENGINE': env('SQL_SERVER_ENGINE', default='mssql'),
+    #     'NAME': env('SQL_SERVER_NAME', default='AFS'),
+    #     'USER': env('SQL_SERVER_USER', default='FSAUser2'),
+    #     'PASSWORD': env('SQL_SERVER_PASSWORD', default='password'),
+    #     'HOST': env('SQL_SERVER_HOST', default='102.67.140.12'),
+    #     'PORT': env('SQL_SERVER_PORT', default='1053'),
+    #     'OPTIONS': {
+    #         'driver': 'ODBC Driver 17 for SQL Server',
+    #         'trusted_connection': 'no',
+    #     },
+    # }
 }
 
-# Redis Caching for Maximum Performance
+# Use local memory cache for development (no Redis dependency)
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': env('REDIS_URL', default='redis://127.0.0.1:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'SOCKET_CONNECT_TIMEOUT': 30,  # Increased timeout
-            'SOCKET_TIMEOUT': 30,  # Increased timeout
-            'CONNECTION_POOL_KWARGS': {'max_connections': 50},
-        }
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
     }
 }
 
